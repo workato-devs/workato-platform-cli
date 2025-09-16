@@ -373,7 +373,7 @@ class ConfigManager:
                 f"({existing_profile_data.region_url})"
             )
 
-        region = self.select_region_interactive()
+        region = self.select_region_interactive(profile_name)
         if not region or not region.url:
             click.echo("❌ Setup cancelled")
             sys.exit(1)
@@ -765,7 +765,9 @@ class ConfigManager:
 
         return True, f"{region_info.name} ({region_info.url})"
 
-    def select_region_interactive(self) -> RegionInfo | None:
+    def select_region_interactive(
+        self, profile_name: str | None = None
+    ) -> RegionInfo | None:
         """Interactive region selection"""
         regions = list(AVAILABLE_REGIONS.values())
 
@@ -801,10 +803,22 @@ class ConfigManager:
         # Handle custom URL
         if selected_region.region == "custom":
             click.echo()
+
+            # Get selected profile's custom URL as default
+            profile_data = None
+            if profile_name:
+                profile_data = self.profile_manager.get_profile(profile_name)
+            else:
+                profile_data = self.profile_manager.get_current_profile_data()
+
+            current_url = "https://www.workato.com"  # fallback default
+            if profile_data and profile_data.region == "custom":
+                current_url = profile_data.region_url
+
             custom_url = click.prompt(
                 "Enter your custom Workato base URL",
                 type=str,
-                default=self.api_host,
+                default=current_url,
             )
 
             # Validate URL security
