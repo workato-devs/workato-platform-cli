@@ -66,7 +66,7 @@ async def _pull_project(
             click.echo("❌ Could not determine project root directory")
             return
     else:
-        # Find the workspace root (where .workato config is)
+        # Find the workspace root (where workato/ config is)
         workspace_root = config_manager.get_project_root()
         if not workspace_root:
             workspace_root = Path.cwd()
@@ -78,7 +78,7 @@ async def _pull_project(
         project_dir.mkdir(exist_ok=True)
 
         # Create project-specific .workato directory with only project metadata
-        project_workato_dir = project_dir / ".workato"
+        project_workato_dir = project_dir / "workato"
         project_workato_dir.mkdir(exist_ok=True)
 
         # Save only project-specific metadata (no credentials/profiles)
@@ -304,7 +304,7 @@ def merge_directories(
     # Exclude .workato directory from deletion
     for rel_path in local_files - remote_files:
         # Skip files in .workato directory
-        if rel_path.parts[0] == ".workato":
+        if rel_path.parts[0] == "workato":
             continue
 
         local_file = local_path / rel_path

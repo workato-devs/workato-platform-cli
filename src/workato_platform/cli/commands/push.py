@@ -118,8 +118,8 @@ async def push(
         try:
             with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                 for root, dirs, files in os.walk(project_dir):
-                    # Exclude .workato directories from traversal
-                    dirs[:] = [d for d in dirs if d != ".workato"]
+                    # Exclude workato directories from traversal
+                    dirs[:] = [d for d in dirs if d != "workato"]
 
                     for file in files:
                         file_path = Path(root) / file

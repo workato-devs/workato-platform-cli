@@ -155,10 +155,10 @@ async def list_projects(
         current_indicator = " (current)" if project_name == current_project_name else ""
 
         # Check if project has configuration
-        project_config_file = project_dir / ".workato" / "config.json"
+        project_config_file = project_dir / "workato" / "config.json"
         if project_config_file.exists():
             try:
-                project_config = ConfigManager(project_dir / ".workato")
+                project_config = ConfigManager(project_dir / "workato")
                 config_data = project_config.load_config()
                 click.echo(f"  • {project_name}{current_indicator}")
                 if config_data.project_name:
@@ -197,7 +197,7 @@ async def use(
         return
 
     # Check if project has configuration
-    project_config_file = project_dir / ".workato" / "config.json"
+    project_config_file = project_dir / "workato" / "config.json"
     if not project_config_file.exists():
         click.echo(f"❌ Project '{project_name}' is not configured")
         click.echo("💡 Navigate to the project directory and run 'workato init'")
@@ -206,7 +206,7 @@ async def use(
     # Update workspace-level config to point to this project
     try:
         workspace_config = config_manager.load_config()
-        project_config_manager = ConfigManager(project_dir / ".workato")
+        project_config_manager = ConfigManager(project_dir / "workato")
         project_config = project_config_manager.load_config()
 
         # Copy project-specific data to workspace config
@@ -261,11 +261,11 @@ async def switch(
 
     for project_dir in sorted(project_dirs):
         project_name = project_dir.name
-        project_config_file = project_dir / ".workato" / "config.json"
+        project_config_file = project_dir / "workato" / "config.json"
 
         if project_config_file.exists():
             try:
-                project_config = ConfigManager(project_dir / ".workato")
+                project_config = ConfigManager(project_dir / "workato")
                 config_data = project_config.load_config()
 
                 # Create display name
