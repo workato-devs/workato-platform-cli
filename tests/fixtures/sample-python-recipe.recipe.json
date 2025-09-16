@@ -1,0 +1,129 @@
+{
+  "name": "test",
+  "description": "",
+  "version": 3,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "google_drive",
+    "name": "new_file_or_folder",
+    "as": "062a45fd",
+    "keyword": "trigger",
+    "dynamicPickListSelection": {
+      "folderId": {
+        "ids": [
+          "0ANd5W4VUAlOvUk9PVA"
+        ],
+        "titles": [
+          "My Drive"
+        ]
+      }
+    },
+    "toggleCfg": {
+      "folderId": true
+    },
+    "input": {
+      "folderId": "0ANd5W4VUAlOvUk9PVA"
+    },
+    "block": [
+      {
+        "number": 1,
+        "provider": "py_eval",
+        "name": "invoke_custom_py_code",
+        "as": "6b3944ac",
+        "keyword": "action",
+        "input": {
+          "code": "def main(input):\n  pass\n",
+          "name": "call python",
+          "code_input": {
+            "schema": "[{\"label\":\"data\",\"name\":\"data\",\"type\":\"string\",\"optional\":true,\"details\":{\"real_name\":\"data\"},\"parent\":[\"code_input\",\"data\"],\"control_type\":\"text\"}]",
+            "data": {
+              "data": "=_('data.google_drive.062a45fd')"
+            }
+          }
+        },
+        "extended_output_schema": [
+          {
+            "label": "Output",
+            "name": "output",
+            "properties": [
+
+            ],
+            "type": "object"
+          }
+        ],
+        "extended_input_schema": [
+          {
+            "control_type": "form-schema-builder",
+            "hint": "Define the input fields that will be passed to your Python code",
+            "label": "Input fields",
+            "name": "code_input",
+            "optional": true,
+            "override": true,
+            "properties": [
+              {
+                "control_type": "text",
+                "label": "Schema",
+                "extends_schema": true,
+                "type": "string",
+                "name": "schema"
+              },
+              {
+                "properties": [
+                  {
+                    "control_type": "text",
+                    "label": "data",
+                    "name": "data",
+                    "type": "string",
+                    "optional": true,
+                    "details": {
+                      "real_name": "data"
+                    },
+                    "parent": [
+                      "code_input",
+                      "data"
+                    ]
+                  }
+                ],
+                "label": "Data",
+                "type": "object",
+                "name": "data"
+              }
+            ],
+            "sticky": true,
+            "type": "object"
+          }
+        ],
+        "visible_config_fields": [
+          "name",
+          "code_input",
+          "code_output_schema_json",
+          "code",
+          "code_input.data.data"
+        ],
+        "uuid": "b0d8b142-bc7c-4bde-9f8e-31ad223617a3"
+      }
+    ],
+    "uuid": "0d014188-d1ee-425c-b515-592668043934",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "py_eval",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "google_drive",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "drive.connection.json",
+        "name": "drive",
+        "folder": ""
+      }
+    }
+  ]
+}

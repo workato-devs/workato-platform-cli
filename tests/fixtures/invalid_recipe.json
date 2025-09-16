@@ -1,0 +1,20 @@
+{
+  "name": "Invalid Recipe",
+  "description": "This recipe has validation errors",
+  "trigger": {
+    "provider": "invalid_provider",
+    "input": {
+      "missing_required_field": true
+    }
+  },
+  "actions": [
+    {
+      "provider": "http",
+      "name": "malformed_action",
+      "input": {
+        "url": "not-a-valid-url",
+        "method": "INVALID_METHOD"
+      }
+    }
+  ]
+}

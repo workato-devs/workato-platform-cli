@@ -1,0 +1,3706 @@
+{
+  "active_reg_online": [
+    {
+      "name": "events_for_picklist",
+      "parameters": []
+    }
+  ],
+  "adobe_experience_manager": [
+    {
+      "name": "folder_path",
+      "parameters": [
+        "__parent_id"
+      ]
+    },
+    {
+      "name": "path",
+      "parameters": []
+    }
+  ],
+  "airtable": [
+    {
+      "name": "bases",
+      "parameters": []
+    },
+    {
+      "name": "tables",
+      "parameters": [
+        "base_id"
+      ]
+    },
+    {
+      "name": "views",
+      "parameters": [
+        "base_id",
+        "table_id"
+      ]
+    }
+  ],
+  "amazon_s3": [
+    {
+      "name": "buckets",
+      "parameters": []
+    }
+  ],
+  "amazon_s3_secondary": [
+    {
+      "name": "buckets",
+      "parameters": []
+    }
+  ],
+  "anaplan": [
+    {
+      "name": "workspaces_list",
+      "parameters": []
+    }
+  ],
+  "apttus": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "apttus_intelligent_cloud": [
+    {
+      "name": "object_list",
+      "parameters": []
+    }
+  ],
+  "asana": [
+    {
+      "name": "workspaces",
+      "parameters": []
+    }
+  ],
+  "ascent_erp": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "aws_lambda": [
+    {
+      "name": "functions",
+      "parameters": []
+    }
+  ],
+  "aws_sns": [
+    {
+      "name": "topic_arn_list",
+      "parameters": []
+    }
+  ],
+  "bamboohr": [
+    {
+      "name": "get_fields_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "table_list",
+      "parameters": []
+    }
+  ],
+  "basecamp": [
+    {
+      "name": "my_projects_todolists",
+      "parameters": []
+    },
+    {
+      "name": "my_projects",
+      "parameters": []
+    },
+    {
+      "name": "my_people",
+      "parameters": []
+    },
+    {
+      "name": "my_calendars",
+      "parameters": []
+    }
+  ],
+  "bigtincan": [
+    {
+      "name": "form_id",
+      "parameters": []
+    },
+    {
+      "name": "channel_id",
+      "parameters": []
+    }
+  ],
+  "bim360": [
+    {
+      "name": "hub_list",
+      "parameters": []
+    },
+    {
+      "name": "project_list",
+      "parameters": [
+        "hub_id"
+      ]
+    },
+    {
+      "name": "folders_list",
+      "parameters": [
+        "hub_id",
+        "project_id"
+      ]
+    },
+    {
+      "name": "folder_items",
+      "parameters": [
+        "project_id",
+        "folder_id"
+      ]
+    },
+    {
+      "name": "item_versions",
+      "parameters": [
+        "project_id",
+        "item_id"
+      ]
+    },
+    {
+      "name": "file_types",
+      "parameters": []
+    },
+    {
+      "name": "version_types",
+      "parameters": []
+    },
+    {
+      "name": "resource_types",
+      "parameters": []
+    },
+    {
+      "name": "issue_child_objects",
+      "parameters": []
+    },
+    {
+      "name": "issue_container_lists",
+      "parameters": [
+        "hub_id"
+      ]
+    },
+    {
+      "name": "issue_type",
+      "parameters": [
+        "hub_id",
+        "project_id"
+      ]
+    },
+    {
+      "name": "issue_sub_type",
+      "parameters": [
+        "hub_id",
+        "project_id",
+        "ng_issue_type_id"
+      ]
+    },
+    {
+      "name": "project_types",
+      "parameters": []
+    },
+    {
+      "name": "assigned_type_list",
+      "parameters": []
+    },
+    {
+      "name": "status_list",
+      "parameters": []
+    },
+    {
+      "name": "issue_status_list",
+      "parameters": []
+    },
+    {
+      "name": "service_types",
+      "parameters": []
+    }
+  ],
+  "box": [
+    {
+      "name": "my_folders",
+      "parameters": []
+    },
+    {
+      "name": "enterprise_users",
+      "parameters": []
+    },
+    {
+      "name": "my_folders_csv_file",
+      "parameters": []
+    },
+    {
+      "name": "template_list",
+      "parameters": []
+    },
+    {
+      "name": "my_folders_wo_root",
+      "parameters": []
+    },
+    {
+      "name": "list_user_files",
+      "parameters": []
+    }
+  ],
+  "brick_ftp": [
+    {
+      "name": "folder_list",
+      "parameters": []
+    }
+  ],
+  "capsulecrm": [
+    {
+      "name": "list_milestones",
+      "parameters": []
+    }
+  ],
+  "cisco_spark": [
+    {
+      "name": "rooms",
+      "parameters": []
+    }
+  ],
+  "concur": [
+    {
+      "name": "my_lists",
+      "parameters": []
+    },
+    {
+      "name": "payment_type_picklist",
+      "parameters": []
+    },
+    {
+      "name": "expense_type_picklist",
+      "parameters": []
+    },
+    {
+      "name": "attendee_type_picklist",
+      "parameters": []
+    },
+    {
+      "name": "expense_group_picklist",
+      "parameters": []
+    }
+  ],
+  "coupa": [
+    {
+      "name": "create_object_types",
+      "parameters": []
+    },
+    {
+      "name": "update_object_types",
+      "parameters": []
+    },
+    {
+      "name": "object_types",
+      "parameters": []
+    },
+    {
+      "name": "suppliers",
+      "parameters": []
+    },
+    {
+      "name": "trigger_object_types",
+      "parameters": []
+    },
+    {
+      "name": "accelerate_statuses",
+      "parameters": []
+    },
+    {
+      "name": "accounts",
+      "parameters": []
+    },
+    {
+      "name": "account_types",
+      "parameters": []
+    },
+    {
+      "name": "addresses",
+      "parameters": []
+    },
+    {
+      "name": "all_countries",
+      "parameters": []
+    },
+    {
+      "name": "attachment_objects",
+      "parameters": []
+    },
+    {
+      "name": "approval_limits",
+      "parameters": []
+    },
+    {
+      "name": "asn_headers",
+      "parameters": []
+    },
+    {
+      "name": "audit_statuses",
+      "parameters": []
+    },
+    {
+      "name": "content_groups",
+      "parameters": []
+    },
+    {
+      "name": "contract_types",
+      "parameters": []
+    },
+    {
+      "name": "contracts",
+      "parameters": []
+    },
+    {
+      "name": "comments",
+      "parameters": []
+    },
+    {
+      "name": "commodities",
+      "parameters": []
+    },
+    {
+      "name": "consents",
+      "parameters": []
+    },
+    {
+      "name": "countries",
+      "parameters": []
+    },
+    {
+      "name": "currencies",
+      "parameters": []
+    },
+    {
+      "name": "default_locales",
+      "parameters": []
+    },
+    {
+      "name": "departments",
+      "parameters": []
+    },
+    {
+      "name": "document_types",
+      "parameters": []
+    },
+    {
+      "name": "expense_categories",
+      "parameters": []
+    },
+    {
+      "name": "frugalities",
+      "parameters": []
+    },
+    {
+      "name": "integration_history_actions",
+      "parameters": []
+    },
+    {
+      "name": "integration_statuses",
+      "parameters": []
+    },
+    {
+      "name": "inventory_types",
+      "parameters": []
+    },
+    {
+      "name": "invoice_line_types",
+      "parameters": []
+    },
+    {
+      "name": "invoice_matching_levels",
+      "parameters": []
+    },
+    {
+      "name": "items",
+      "parameters": []
+    },
+    {
+      "name": "lookup_values",
+      "parameters": []
+    },
+    {
+      "name": "lookups",
+      "parameters": []
+    },
+    {
+      "name": "match_types",
+      "parameters": []
+    },
+    {
+      "name": "order_types",
+      "parameters": []
+    },
+    {
+      "name": "payment_methods",
+      "parameters": []
+    },
+    {
+      "name": "payment_terms",
+      "parameters": []
+    },
+    {
+      "name": "periods",
+      "parameters": []
+    },
+    {
+      "name": "po_transmission_methods",
+      "parameters": []
+    },
+    {
+      "name": "receipts",
+      "parameters": []
+    },
+    {
+      "name": "remit_to_address_objects",
+      "parameters": []
+    },
+    {
+      "name": "requisitions",
+      "parameters": []
+    },
+    {
+      "name": "roles",
+      "parameters": []
+    },
+    {
+      "name": "security_types",
+      "parameters": []
+    },
+    {
+      "name": "service_types",
+      "parameters": []
+    },
+    {
+      "name": "shipping_terms",
+      "parameters": []
+    },
+    {
+      "name": "system_catalogs",
+      "parameters": []
+    },
+    {
+      "name": "tax_codes",
+      "parameters": []
+    },
+    {
+      "name": "tax_registrations",
+      "parameters": []
+    },
+    {
+      "name": "term_types",
+      "parameters": []
+    },
+    {
+      "name": "transmission_statuses",
+      "parameters": []
+    },
+    {
+      "name": "units",
+      "parameters": []
+    },
+    {
+      "name": "uoms",
+      "parameters": []
+    },
+    {
+      "name": "users",
+      "parameters": []
+    },
+    {
+      "name": "user_groups",
+      "parameters": []
+    },
+    {
+      "name": "warehouses",
+      "parameters": []
+    },
+    {
+      "name": "yes_or_no_options",
+      "parameters": []
+    }
+  ],
+  "deputy": [
+    {
+      "name": "employee_role_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "stress_profile_pick_list",
+      "parameters": []
+    }
+  ],
+  "docparser": [
+    {
+      "name": "parsers",
+      "parameters": []
+    }
+  ],
+  "docusign": [
+    {
+      "name": "get_values",
+      "parameters": []
+    }
+  ],
+  "docusign_secondary": [
+    {
+      "name": "get_values",
+      "parameters": []
+    }
+  ],
+  "dropbox": [
+    {
+      "name": "get_folder_tree",
+      "parameters": []
+    },
+    {
+      "name": "get_folder_and_csv_tree",
+      "parameters": []
+    },
+    {
+      "name": "get_file_tree",
+      "parameters": []
+    }
+  ],
+  "event_brite": [
+    {
+      "name": "list_organizations",
+      "parameters": []
+    },
+    {
+      "name": "get_user_events_desc",
+      "parameters": []
+    },
+    {
+      "name": "get_contact_list_pick_list",
+      "parameters": []
+    }
+  ],
+  "evernote": [
+    {
+      "name": "get_notebooks",
+      "parameters": []
+    },
+    {
+      "name": "get_latest_notes",
+      "parameters": []
+    }
+  ],
+  "expensify": [
+    {
+      "name": "currency_list",
+      "parameters": []
+    }
+  ],
+  "fairsail": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "feedly": [
+    {
+      "name": "list_categories",
+      "parameters": []
+    },
+    {
+      "name": "list_tags",
+      "parameters": []
+    }
+  ],
+  "financialforce": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "forcecom": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "fresh_books": [
+    {
+      "name": "category_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "status_pick_list",
+      "parameters": []
+    }
+  ],
+  "fresh_desk": [
+    {
+      "name": "get_all_contacts_list",
+      "parameters": []
+    },
+    {
+      "name": "get_all_agents_list",
+      "parameters": []
+    }
+  ],
+  "ftps": [
+    {
+      "name": "directories",
+      "parameters": []
+    }
+  ],
+  "ftps_secondary": [
+    {
+      "name": "directories",
+      "parameters": []
+    }
+  ],
+  "github": [
+    {
+      "name": "orgs",
+      "parameters": []
+    },
+    {
+      "name": "repository",
+      "parameters": [
+        "owner"
+      ]
+    },
+    {
+      "name": "repos",
+      "parameters": [
+        "org"
+      ]
+    },
+    {
+      "name": "issue",
+      "parameters": []
+    },
+    {
+      "name": "milestones",
+      "parameters": []
+    },
+    {
+      "name": "pullrequest",
+      "parameters": []
+    },
+    {
+      "name": "repo_owner",
+      "parameters": []
+    },
+    {
+      "name": "repository_name",
+      "parameters": [
+        "repository_owner"
+      ]
+    },
+    {
+      "name": "repos_name",
+      "parameters": [
+        "user"
+      ]
+    }
+  ],
+  "gmail": [
+    {
+      "name": "mailbox_labels",
+      "parameters": []
+    }
+  ],
+  "google_big_query": [
+    {
+      "name": "projects_picklist",
+      "parameters": []
+    },
+    {
+      "name": "datasets_picklist",
+      "parameters": []
+    },
+    {
+      "name": "tables_picklist",
+      "parameters": []
+    },
+    {
+      "name": "columns_picklist",
+      "parameters": []
+    }
+  ],
+  "google_calendar": [
+    {
+      "name": "my_calendars",
+      "parameters": []
+    },
+    {
+      "name": "tasklist_picklist",
+      "parameters": []
+    }
+  ],
+  "google_contacts": [
+    {
+      "name": "get_contact_groups_pick_list",
+      "parameters": []
+    }
+  ],
+  "google_drive": [
+    {
+      "name": "folders",
+      "parameters": []
+    },
+    {
+      "name": "files",
+      "parameters": []
+    }
+  ],
+  "google_sheets": [
+    {
+      "name": "sheets_pick_list_v3",
+      "parameters": []
+    },
+    {
+      "name": "sheets_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "teamdrives_list",
+      "parameters": []
+    },
+    {
+      "name": "spreadsheets_pick_list",
+      "parameters": [
+        "with_sheets",
+        "offset"
+      ]
+    },
+    {
+      "name": "teamdrives_picklist",
+      "parameters": []
+    }
+  ],
+  "google_translate": [
+    {
+      "name": "list_languages",
+      "parameters": []
+    }
+  ],
+  "hipchat": [
+    {
+      "name": "room_public",
+      "parameters": []
+    },
+    {
+      "name": "room_private",
+      "parameters": []
+    }
+  ],
+  "hubspot": [
+    {
+      "name": "get_lists",
+      "parameters": []
+    },
+    {
+      "name": "contact_property_list",
+      "parameters": []
+    },
+    {
+      "name": "property_list",
+      "parameters": []
+    },
+    {
+      "name": "get_list",
+      "parameters": []
+    },
+    {
+      "name": "get_workflows",
+      "parameters": []
+    },
+    {
+      "name": "deal_pipelines",
+      "parameters": []
+    },
+    {
+      "name": "deal_stages",
+      "parameters": []
+    },
+    {
+      "name": "owners_picklist",
+      "parameters": []
+    }
+  ],
+  "ibm_workspace": [
+    {
+      "name": "space_list",
+      "parameters": []
+    }
+  ],
+  "infusionsoft": [
+    {
+      "name": "get_category_picklist",
+      "parameters": []
+    },
+    {
+      "name": "stage_list",
+      "parameters": []
+    },
+    {
+      "name": "user_list",
+      "parameters": []
+    }
+  ],
+  "insightly": [
+    {
+      "name": "category_list",
+      "parameters": []
+    },
+    {
+      "name": "currency_list",
+      "parameters": []
+    }
+  ],
+  "instagram": [
+    {
+      "name": "my_follows",
+      "parameters": []
+    }
+  ],
+  "intacct": [
+    {
+      "name": "bankaccount_picklist",
+      "parameters": []
+    },
+    {
+      "name": "customers",
+      "parameters": []
+    },
+    {
+      "name": "departments",
+      "parameters": []
+    },
+    {
+      "name": "employees",
+      "parameters": []
+    },
+    {
+      "name": "expense_types",
+      "parameters": []
+    },
+    {
+      "name": "glaccount_picklist",
+      "parameters": []
+    },
+    {
+      "name": "intacct_objects",
+      "parameters": []
+    },
+    {
+      "name": "items",
+      "parameters": []
+    },
+    {
+      "name": "locations",
+      "parameters": []
+    },
+    {
+      "name": "projects",
+      "parameters": []
+    },
+    {
+      "name": "vendors",
+      "parameters": []
+    }
+  ],
+  "intercom": [
+    {
+      "name": "admin_pick_list",
+      "parameters": []
+    }
+  ],
+  "jdbc": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": []
+    }
+  ],
+  "jdbc_secondary": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": []
+    }
+  ],
+  "jira": [
+    {
+      "name": "assignee_picklist",
+      "parameters": [
+        "query",
+        "demo",
+        "project",
+        "KAN"
+      ]
+    },
+    {
+      "name": "priority_picklist",
+      "parameters": []
+    },
+    {
+      "name": "status_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_project_issuetypes",
+      "parameters": []
+    },
+    {
+      "name": "resolution_picklist",
+      "parameters": []
+    }
+  ],
+  "jira_secondary": [
+    {
+      "name": "assignee_picklist",
+      "parameters": [
+        "query",
+        "demo",
+        "project",
+        "KAN"
+      ]
+    },
+    {
+      "name": "priority_picklist",
+      "parameters": []
+    },
+    {
+      "name": "status_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_project_issuetypes",
+      "parameters": []
+    },
+    {
+      "name": "resolution_picklist",
+      "parameters": []
+    }
+  ],
+  "jira_service_desk": [
+    {
+      "name": "service_desk",
+      "parameters": []
+    },
+    {
+      "name": "request_type",
+      "parameters": [
+        "service_desk_id"
+      ]
+    }
+  ],
+  "jms": [
+    {
+      "name": "workato_schema_list",
+      "parameters": []
+    }
+  ],
+  "jobscience": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "jump_cloud": [
+    {
+      "name": "create_association_types",
+      "parameters": []
+    },
+    {
+      "name": "create_objects",
+      "parameters": []
+    },
+    {
+      "name": "delete_association_types",
+      "parameters": []
+    },
+    {
+      "name": "delete_objects",
+      "parameters": []
+    },
+    {
+      "name": "get_objects",
+      "parameters": []
+    },
+    {
+      "name": "list_objects",
+      "parameters": []
+    },
+    {
+      "name": "list_objects_by_id",
+      "parameters": []
+    },
+    {
+      "name": "search_objects",
+      "parameters": []
+    },
+    {
+      "name": "search_by",
+      "parameters": []
+    },
+    {
+      "name": "update_objects",
+      "parameters": []
+    },
+    {
+      "name": "trigger_objects",
+      "parameters": []
+    },
+    {
+      "name": "target_list",
+      "parameters": []
+    }
+  ],
+  "kafka": [
+    {
+      "name": "topic_list",
+      "parameters": []
+    },
+    {
+      "name": "workato_schema_list",
+      "parameters": []
+    }
+  ],
+  "kenandy": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "knack": [
+    {
+      "name": "objects",
+      "parameters": []
+    }
+  ],
+  "linked_objects": [
+    {
+      "name": "linkable_objects",
+      "parameters": []
+    }
+  ],
+  "linkedin": [
+    {
+      "name": "status_list",
+      "parameters": []
+    }
+  ],
+  "lookup_table": [
+    {
+      "name": "lookup_table_list",
+      "parameters": []
+    }
+  ],
+  "magento": [
+    {
+      "name": "type_id",
+      "parameters": []
+    },
+    {
+      "name": "attributes",
+      "parameters": []
+    }
+  ],
+  "mailchimp": [
+    {
+      "name": "mailing_lists",
+      "parameters": []
+    },
+    {
+      "name": "mailing_lists_v3",
+      "parameters": []
+    },
+    {
+      "name": "languages",
+      "parameters": []
+    }
+  ],
+  "marketo": [
+    {
+      "name": "my_lists",
+      "parameters": []
+    },
+    {
+      "name": "fields_list",
+      "parameters": []
+    },
+    {
+      "name": "lead_activities_types",
+      "parameters": []
+    },
+    {
+      "name": "lookup_types",
+      "parameters": []
+    },
+    {
+      "name": "custom_objects_picklist",
+      "parameters": []
+    },
+    {
+      "name": "my_lists_with_ids",
+      "parameters": []
+    },
+    {
+      "name": "partitions",
+      "parameters": []
+    },
+    {
+      "name": "lead_fields",
+      "parameters": []
+    },
+    {
+      "name": "lead_fields_for_upsert",
+      "parameters": []
+    }
+  ],
+  "marketo_secondary": [
+    {
+      "name": "my_lists",
+      "parameters": []
+    },
+    {
+      "name": "fields_list",
+      "parameters": []
+    },
+    {
+      "name": "lead_activities_types",
+      "parameters": []
+    },
+    {
+      "name": "lookup_types",
+      "parameters": []
+    },
+    {
+      "name": "custom_objects_picklist",
+      "parameters": []
+    },
+    {
+      "name": "my_lists_with_ids",
+      "parameters": []
+    },
+    {
+      "name": "partitions",
+      "parameters": []
+    },
+    {
+      "name": "lead_fields",
+      "parameters": []
+    },
+    {
+      "name": "lead_fields_for_upsert",
+      "parameters": []
+    }
+  ],
+  "microsoft_dynamics_crm": [
+    {
+      "name": "crm_object",
+      "parameters": []
+    },
+    {
+      "name": "crm_fields",
+      "parameters": [
+        "object_name"
+      ]
+    },
+    {
+      "name": "crm_audit_object",
+      "parameters": []
+    },
+    {
+      "name": "crm_with_date_object",
+      "parameters": []
+    },
+    {
+      "name": "crm_with_updated_date_object",
+      "parameters": []
+    }
+  ],
+  "microsoft_sharepoint": [
+    {
+      "name": "list",
+      "parameters": []
+    },
+    {
+      "name": "folders",
+      "parameters": []
+    },
+    {
+      "name": "name_list",
+      "parameters": []
+    }
+  ],
+  "miro_board": [
+    {
+      "name": "boards",
+      "parameters": []
+    },
+    {
+      "name": "frames",
+      "parameters": []
+    },
+    {
+      "name": "board_access_by_link",
+      "parameters": []
+    },
+    {
+      "name": "board_access_by_team",
+      "parameters": []
+    }
+  ],
+  "mixpanel": [
+    {
+      "name": "funnel_pick_list",
+      "parameters": []
+    }
+  ],
+  "mssql": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": [
+        "limit"
+      ]
+    },
+    {
+      "name": "tables_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "columns_pick_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "procedures_pick_list",
+      "parameters": []
+    }
+  ],
+  "mssql_secondary": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": [
+        "limit"
+      ]
+    },
+    {
+      "name": "tables_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "columns_pick_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "procedures_pick_list",
+      "parameters": []
+    }
+  ],
+  "mysql": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": []
+    },
+    {
+      "name": "tables_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "procedures_list",
+      "parameters": []
+    },
+    {
+      "name": "columns_pick_list",
+      "parameters": [
+        "table"
+      ]
+    }
+  ],
+  "mysql_secondary": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": []
+    },
+    {
+      "name": "tables_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "procedures_list",
+      "parameters": []
+    },
+    {
+      "name": "columns_pick_list",
+      "parameters": [
+        "table"
+      ]
+    }
+  ],
+  "namely": [
+    {
+      "name": "job_title",
+      "parameters": []
+    }
+  ],
+  "nationbuilder": [
+    {
+      "name": "my_published_events",
+      "parameters": []
+    }
+  ],
+  "netsuite": [
+    {
+      "name": "body_custom_fields",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "custom_object_fields",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "column_custom_fields",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "netsuite_add_update_objects",
+      "parameters": []
+    },
+    {
+      "name": "get_custom_types_script",
+      "parameters": []
+    },
+    {
+      "name": "netsuite_objects",
+      "parameters": []
+    },
+    {
+      "name": "netsuite_classification_search_types",
+      "parameters": []
+    },
+    {
+      "name": "custom_body_pick_list",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "custom_column_pick_list",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "netsuite_standard_search_types",
+      "parameters": []
+    },
+    {
+      "name": "saved_search_list",
+      "parameters": [
+        "netsuite_search_type"
+      ]
+    },
+    {
+      "name": "join_object_list",
+      "parameters": [
+        "netsuite_search_type"
+      ]
+    },
+    {
+      "name": "object_field_list",
+      "parameters": [
+        "netsuite_search_type",
+        "object_list"
+      ]
+    },
+    {
+      "name": "get_custom_types",
+      "parameters": []
+    },
+    {
+      "name": "custom_saved_search_list",
+      "parameters": []
+    },
+    {
+      "name": "join_custom_object_list",
+      "parameters": []
+    },
+    {
+      "name": "object_custom_field_list",
+      "parameters": [
+        "object_list"
+      ]
+    },
+    {
+      "name": "netsuite_attach_contact_types",
+      "parameters": []
+    },
+    {
+      "name": "netsuite_attach_file_types",
+      "parameters": []
+    },
+    {
+      "name": "get_search_types",
+      "parameters": []
+    },
+    {
+      "name": "get_search_objects",
+      "parameters": [
+        "category"
+      ]
+    },
+    {
+      "name": "netsuite_search_objects",
+      "parameters": []
+    },
+    {
+      "name": "field_list",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "netsuite_execute_search_types",
+      "parameters": []
+    },
+    {
+      "name": "custom_object_pick_list",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "subsidary_list",
+      "parameters": []
+    },
+    {
+      "name": "entity_list",
+      "parameters": []
+    },
+    {
+      "name": "item_location_list",
+      "parameters": []
+    },
+    {
+      "name": "case_status_list",
+      "parameters": []
+    },
+    {
+      "name": "case_priority_list",
+      "parameters": []
+    },
+    {
+      "name": "case_issue_list",
+      "parameters": []
+    },
+    {
+      "name": "case_assignee_list",
+      "parameters": []
+    },
+    {
+      "name": "standard_field_list",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "custom_field_list",
+      "parameters": []
+    }
+  ],
+  "netsuite_secondary": [
+    {
+      "name": "body_custom_fields",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "custom_object_fields",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "column_custom_fields",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "netsuite_add_update_objects",
+      "parameters": []
+    },
+    {
+      "name": "get_custom_types_script",
+      "parameters": []
+    },
+    {
+      "name": "netsuite_objects",
+      "parameters": []
+    },
+    {
+      "name": "netsuite_classification_search_types",
+      "parameters": []
+    },
+    {
+      "name": "custom_body_pick_list",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "custom_column_pick_list",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "netsuite_standard_search_types",
+      "parameters": []
+    },
+    {
+      "name": "saved_search_list",
+      "parameters": [
+        "netsuite_search_type"
+      ]
+    },
+    {
+      "name": "join_object_list",
+      "parameters": [
+        "netsuite_search_type"
+      ]
+    },
+    {
+      "name": "object_field_list",
+      "parameters": [
+        "netsuite_search_type",
+        "object_list"
+      ]
+    },
+    {
+      "name": "get_custom_types",
+      "parameters": []
+    },
+    {
+      "name": "custom_saved_search_list",
+      "parameters": []
+    },
+    {
+      "name": "join_custom_object_list",
+      "parameters": []
+    },
+    {
+      "name": "object_custom_field_list",
+      "parameters": [
+        "object_list"
+      ]
+    },
+    {
+      "name": "netsuite_attach_contact_types",
+      "parameters": []
+    },
+    {
+      "name": "netsuite_attach_file_types",
+      "parameters": []
+    },
+    {
+      "name": "get_search_types",
+      "parameters": []
+    },
+    {
+      "name": "get_search_objects",
+      "parameters": [
+        "category"
+      ]
+    },
+    {
+      "name": "netsuite_search_objects",
+      "parameters": []
+    },
+    {
+      "name": "field_list",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "netsuite_execute_search_types",
+      "parameters": []
+    },
+    {
+      "name": "custom_object_pick_list",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "subsidary_list",
+      "parameters": []
+    },
+    {
+      "name": "entity_list",
+      "parameters": []
+    },
+    {
+      "name": "item_location_list",
+      "parameters": []
+    },
+    {
+      "name": "case_status_list",
+      "parameters": []
+    },
+    {
+      "name": "case_priority_list",
+      "parameters": []
+    },
+    {
+      "name": "case_issue_list",
+      "parameters": []
+    },
+    {
+      "name": "case_assignee_list",
+      "parameters": []
+    },
+    {
+      "name": "standard_field_list",
+      "parameters": [
+        "netsuite_object"
+      ]
+    },
+    {
+      "name": "custom_field_list",
+      "parameters": []
+    }
+  ],
+  "okta": [
+    {
+      "name": "events",
+      "parameters": []
+    },
+    {
+      "name": "event_select",
+      "parameters": [
+        "eventcategory"
+      ]
+    },
+    {
+      "name": "result_types",
+      "parameters": []
+    }
+  ],
+  "onedrive": [
+    {
+      "name": "my_drive_folders",
+      "parameters": []
+    },
+    {
+      "name": "select_csv_file",
+      "parameters": []
+    }
+  ],
+  "onprem_command_line_scripts": [
+    {
+      "name": "script_list_pick_list",
+      "parameters": []
+    }
+  ],
+  "onprem_files": [
+    {
+      "name": "my_folders",
+      "parameters": []
+    },
+    {
+      "name": "my_files",
+      "parameters": []
+    },
+    {
+      "name": "columns_pick_list",
+      "parameters": [
+        "file",
+        "column_separator"
+      ]
+    }
+  ],
+  "onprem_files_secondary": [
+    {
+      "name": "my_folders",
+      "parameters": []
+    },
+    {
+      "name": "my_files",
+      "parameters": []
+    },
+    {
+      "name": "columns_pick_list",
+      "parameters": [
+        "file",
+        "column_separator"
+      ]
+    }
+  ],
+  "oracle": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": [
+        "limit"
+      ]
+    },
+    {
+      "name": "packages_list",
+      "parameters": []
+    }
+  ],
+  "oracle_ebs": [
+    {
+      "name": "get_operations",
+      "parameters": [
+        "service_name"
+      ]
+    }
+  ],
+  "oracle_secondary": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": [
+        "limit"
+      ]
+    },
+    {
+      "name": "packages_list",
+      "parameters": []
+    }
+  ],
+  "out_systems": [
+    {
+      "name": "module_list",
+      "parameters": []
+    },
+    {
+      "name": "module_entities",
+      "parameters": [
+        "module_name"
+      ]
+    },
+    {
+      "name": "module_list_create",
+      "parameters": []
+    },
+    {
+      "name": "module_entities_create",
+      "parameters": [
+        "module_name"
+      ]
+    },
+    {
+      "name": "module_list_update",
+      "parameters": []
+    },
+    {
+      "name": "module_entities_update",
+      "parameters": [
+        "module_name"
+      ]
+    }
+  ],
+  "outlook": [
+    {
+      "name": "my_calendars",
+      "parameters": []
+    },
+    {
+      "name": "timezones",
+      "parameters": []
+    },
+    {
+      "name": "my_folder_objs",
+      "parameters": []
+    },
+    {
+      "name": "my_calendar_objs",
+      "parameters": []
+    }
+  ],
+  "percolate": [
+    {
+      "name": "object_types",
+      "parameters": []
+    },
+    {
+      "name": "tenant_licenses",
+      "parameters": []
+    },
+    {
+      "name": "platforms",
+      "parameters": [
+        "scope_ids"
+      ]
+    },
+    {
+      "name": "schemas",
+      "parameters": [
+        "scope_ids",
+        "platform_id"
+      ]
+    },
+    {
+      "name": "upsert_object_types",
+      "parameters": []
+    },
+    {
+      "name": "channels",
+      "parameters": [
+        "scope_ids",
+        "platform_id"
+      ]
+    },
+    {
+      "name": "folders",
+      "parameters": [
+        "scope_id"
+      ]
+    },
+    {
+      "name": "trigger_object_types",
+      "parameters": []
+    },
+    {
+      "name": "quorums",
+      "parameters": []
+    },
+    {
+      "name": "on_approved_list",
+      "parameters": []
+    },
+    {
+      "name": "participant_outcomes",
+      "parameters": []
+    },
+    {
+      "name": "approval_statuses",
+      "parameters": []
+    },
+    {
+      "name": "subject_types",
+      "parameters": []
+    },
+    {
+      "name": "access_scopes",
+      "parameters": []
+    },
+    {
+      "name": "approval_workflow_list",
+      "parameters": []
+    },
+    {
+      "name": "asset_types",
+      "parameters": []
+    },
+    {
+      "name": "transcoding_statuses",
+      "parameters": []
+    },
+    {
+      "name": "orientation_list",
+      "parameters": []
+    },
+    {
+      "name": "user_tenants",
+      "parameters": []
+    },
+    {
+      "name": "event_change_types",
+      "parameters": []
+    },
+    {
+      "name": "get_object_types",
+      "parameters": []
+    },
+    {
+      "name": "campaign_workflow_list",
+      "parameters": [
+        "scope_id"
+      ]
+    },
+    {
+      "name": "post_workflow_list",
+      "parameters": [
+        "scope_id"
+      ]
+    },
+    {
+      "name": "terms_list",
+      "parameters": []
+    },
+    {
+      "name": "post_statuses",
+      "parameters": []
+    }
+  ],
+  "pipedrive": [
+    {
+      "name": "stage_list",
+      "parameters": []
+    },
+    {
+      "name": "user_list",
+      "parameters": []
+    }
+  ],
+  "plan_grid": [
+    {
+      "name": "create_object_list",
+      "parameters": []
+    },
+    {
+      "name": "update_object_list",
+      "parameters": []
+    },
+    {
+      "name": "get_objects",
+      "parameters": []
+    },
+    {
+      "name": "search_objects",
+      "parameters": []
+    },
+    {
+      "name": "upload_object_list",
+      "parameters": []
+    },
+    {
+      "name": "object_list",
+      "parameters": []
+    },
+    {
+      "name": "object_list_new",
+      "parameters": []
+    },
+    {
+      "name": "project_list",
+      "parameters": []
+    },
+    {
+      "name": "project_types",
+      "parameters": []
+    },
+    {
+      "name": "project_folders",
+      "parameters": [
+        "project_uid"
+      ]
+    }
+  ],
+  "podio": [
+    {
+      "name": "organization_list",
+      "parameters": []
+    },
+    {
+      "name": "workspace_list",
+      "parameters": [
+        "organization_id"
+      ]
+    },
+    {
+      "name": "space_app_list",
+      "parameters": [
+        "workspace_id"
+      ]
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": []
+    },
+    {
+      "name": "tables_pick_list",
+      "parameters": []
+    }
+  ],
+  "postgresql_secondary": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": []
+    },
+    {
+      "name": "tables_pick_list",
+      "parameters": []
+    }
+  ],
+  "prontoforms": [
+    {
+      "name": "get_form_list",
+      "parameters": []
+    }
+  ],
+  "propel": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "quickbase": [
+    {
+      "name": "table_field_list",
+      "parameters": [
+        "table_id"
+      ]
+    },
+    {
+      "name": "sort_field_list",
+      "parameters": [
+        "table_id"
+      ]
+    },
+    {
+      "name": "table_field_list_app_token",
+      "parameters": [
+        "table_id",
+        "apptoken"
+      ]
+    },
+    {
+      "name": "sort_field_list_app_token",
+      "parameters": [
+        "table_id",
+        "apptoken"
+      ]
+    },
+    {
+      "name": "table_input_field_list",
+      "parameters": [
+        "table_id"
+      ]
+    },
+    {
+      "name": "table_input_field_list_app_token",
+      "parameters": [
+        "table_id",
+        "apptoken"
+      ]
+    },
+    {
+      "name": "table_input_field_list_app_token_upsert",
+      "parameters": []
+    },
+    {
+      "name": "list_applications",
+      "parameters": []
+    },
+    {
+      "name": "list_tables",
+      "parameters": [
+        "app_name"
+      ]
+    },
+    {
+      "name": "list_reports_in_table",
+      "parameters": [
+        "table_id"
+      ]
+    },
+    {
+      "name": "list_tables_upsert",
+      "parameters": [
+        "app_name"
+      ]
+    }
+  ],
+  "quickbase_secondary": [
+    {
+      "name": "table_field_list",
+      "parameters": [
+        "table_id"
+      ]
+    },
+    {
+      "name": "sort_field_list",
+      "parameters": [
+        "table_id"
+      ]
+    },
+    {
+      "name": "table_field_list_app_token",
+      "parameters": [
+        "table_id",
+        "apptoken"
+      ]
+    },
+    {
+      "name": "sort_field_list_app_token",
+      "parameters": [
+        "table_id",
+        "apptoken"
+      ]
+    },
+    {
+      "name": "table_input_field_list",
+      "parameters": [
+        "table_id"
+      ]
+    },
+    {
+      "name": "table_input_field_list_app_token",
+      "parameters": [
+        "table_id",
+        "apptoken"
+      ]
+    },
+    {
+      "name": "table_input_field_list_app_token_upsert",
+      "parameters": []
+    },
+    {
+      "name": "list_applications",
+      "parameters": []
+    },
+    {
+      "name": "list_tables",
+      "parameters": [
+        "app_name"
+      ]
+    },
+    {
+      "name": "list_reports_in_table",
+      "parameters": [
+        "table_id"
+      ]
+    },
+    {
+      "name": "list_tables_upsert",
+      "parameters": [
+        "app_name"
+      ]
+    }
+  ],
+  "quickbooks": [
+    {
+      "name": "get_customers",
+      "parameters": []
+    },
+    {
+      "name": "currency_list",
+      "parameters": []
+    },
+    {
+      "name": "get_customer_tax_code",
+      "parameters": []
+    },
+    {
+      "name": "get_terms",
+      "parameters": []
+    },
+    {
+      "name": "get_payment_methods",
+      "parameters": []
+    },
+    {
+      "name": "get_accounts",
+      "parameters": []
+    },
+    {
+      "name": "get_classes",
+      "parameters": []
+    },
+    {
+      "name": "get_vendors",
+      "parameters": []
+    },
+    {
+      "name": "get_tax_codes",
+      "parameters": []
+    },
+    {
+      "name": "get_purchase_accounts",
+      "parameters": []
+    },
+    {
+      "name": "get_entities",
+      "parameters": []
+    },
+    {
+      "name": "get_items",
+      "parameters": []
+    },
+    {
+      "name": "get_payable_accounts",
+      "parameters": []
+    },
+    {
+      "name": "get_tax_rates",
+      "parameters": []
+    },
+    {
+      "name": "get_departments",
+      "parameters": []
+    },
+    {
+      "name": "get_accounts_receivable",
+      "parameters": []
+    },
+    {
+      "name": "get_purchase_items",
+      "parameters": []
+    },
+    {
+      "name": "get_customer_types",
+      "parameters": []
+    }
+  ],
+  "raisers_edge": [
+    {
+      "name": "constituent_type",
+      "parameters": []
+    },
+    {
+      "name": "online_presence_types",
+      "parameters": []
+    },
+    {
+      "name": "constituent_code_types",
+      "parameters": []
+    },
+    {
+      "name": "custom_field_category_list",
+      "parameters": []
+    }
+  ],
+  "redshift": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": []
+    },
+    {
+      "name": "tables_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "databases_pick_list",
+      "parameters": [
+        "host",
+        "port",
+        "username",
+        "password"
+      ]
+    },
+    {
+      "name": "columns_pick_list",
+      "parameters": [
+        "table"
+      ]
+    }
+  ],
+  "relateiq": [
+    {
+      "name": "contacts_list",
+      "parameters": []
+    }
+  ],
+  "replicon": [
+    {
+      "name": "get_employee_types_for_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_policy_set_for_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_permission_set_for_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_timesheet_approval_path_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_department_picklist",
+      "parameters": []
+    },
+    {
+      "name": "invoice_sync_status",
+      "parameters": []
+    },
+    {
+      "name": "get_all_project_status_label",
+      "parameters": []
+    },
+    {
+      "name": "get_currency_list",
+      "parameters": []
+    },
+    {
+      "name": "billing_rate_list",
+      "parameters": []
+    },
+    {
+      "name": "break_type_list",
+      "parameters": []
+    },
+    {
+      "name": "activity_list",
+      "parameters": []
+    }
+  ],
+  "sagelive": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "salesforce": [
+    {
+      "name": "sobject_input_field_list",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "sobject_table_list",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "sobject_parent_table_list",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "sobject_field_list",
+      "parameters": []
+    },
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    },
+    {
+      "name": "sobject_with_mdate",
+      "parameters": []
+    },
+    {
+      "name": "all_events",
+      "parameters": []
+    },
+    {
+      "name": "sobject_with_cdate",
+      "parameters": []
+    },
+    {
+      "name": "createable_sobjects",
+      "parameters": []
+    },
+    {
+      "name": "updateable_sobjects",
+      "parameters": []
+    },
+    {
+      "name": "upsertable_sobjects",
+      "parameters": []
+    },
+    {
+      "name": "external_fields_list",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "get_all_process_definition",
+      "parameters": []
+    },
+    {
+      "name": "opportunity_Type",
+      "parameters": []
+    },
+    {
+      "name": "opportunity_StageName",
+      "parameters": []
+    },
+    {
+      "name": "opportunity_LeadSource",
+      "parameters": []
+    },
+    {
+      "name": "account_Type",
+      "parameters": []
+    },
+    {
+      "name": "account_Industry",
+      "parameters": []
+    },
+    {
+      "name": "account_Ownership",
+      "parameters": []
+    },
+    {
+      "name": "account_Rating",
+      "parameters": []
+    },
+    {
+      "name": "lead_Salutation",
+      "parameters": []
+    },
+    {
+      "name": "lead_Status",
+      "parameters": []
+    },
+    {
+      "name": "lead_LeadSource",
+      "parameters": []
+    },
+    {
+      "name": "lead_Industry",
+      "parameters": []
+    },
+    {
+      "name": "lead_Rating",
+      "parameters": []
+    },
+    {
+      "name": "contact_Salutation",
+      "parameters": []
+    },
+    {
+      "name": "case_Status",
+      "parameters": []
+    },
+    {
+      "name": "case_Origin",
+      "parameters": []
+    },
+    {
+      "name": "case_Type",
+      "parameters": []
+    },
+    {
+      "name": "case_Reason",
+      "parameters": []
+    },
+    {
+      "name": "case_Priority",
+      "parameters": []
+    },
+    {
+      "name": "campaign_Type",
+      "parameters": []
+    },
+    {
+      "name": "campaign_Status",
+      "parameters": []
+    },
+    {
+      "name": "campaignMember_Status",
+      "parameters": []
+    },
+    {
+      "name": "get_reports",
+      "parameters": []
+    },
+    {
+      "name": "all_deletable_sobjects",
+      "parameters": []
+    },
+    {
+      "name": "sobject_fields",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "upsert_sobject_fields",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "sobject_field_values_list",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "get_duplicate_record_sets",
+      "parameters": []
+    }
+  ],
+  "salesforce_chatter": [
+    {
+      "name": "topics_list",
+      "parameters": []
+    }
+  ],
+  "salesforce_marketing_cloud": [
+    {
+      "name": "data_extensions",
+      "parameters": []
+    },
+    {
+      "name": "fields_list",
+      "parameters": [
+        "key"
+      ]
+    },
+    {
+      "name": "list_templates",
+      "parameters": []
+    }
+  ],
+  "salesforce_secondary": [
+    {
+      "name": "sobject_input_field_list",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "sobject_table_list",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "sobject_parent_table_list",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "sobject_field_list",
+      "parameters": []
+    },
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    },
+    {
+      "name": "sobject_with_mdate",
+      "parameters": []
+    },
+    {
+      "name": "all_events",
+      "parameters": []
+    },
+    {
+      "name": "sobject_with_cdate",
+      "parameters": []
+    },
+    {
+      "name": "createable_sobjects",
+      "parameters": []
+    },
+    {
+      "name": "updateable_sobjects",
+      "parameters": []
+    },
+    {
+      "name": "upsertable_sobjects",
+      "parameters": []
+    },
+    {
+      "name": "external_fields_list",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "get_all_process_definition",
+      "parameters": []
+    },
+    {
+      "name": "opportunity_Type",
+      "parameters": []
+    },
+    {
+      "name": "opportunity_StageName",
+      "parameters": []
+    },
+    {
+      "name": "opportunity_LeadSource",
+      "parameters": []
+    },
+    {
+      "name": "account_Type",
+      "parameters": []
+    },
+    {
+      "name": "account_Industry",
+      "parameters": []
+    },
+    {
+      "name": "account_Ownership",
+      "parameters": []
+    },
+    {
+      "name": "account_Rating",
+      "parameters": []
+    },
+    {
+      "name": "lead_Salutation",
+      "parameters": []
+    },
+    {
+      "name": "lead_Status",
+      "parameters": []
+    },
+    {
+      "name": "lead_LeadSource",
+      "parameters": []
+    },
+    {
+      "name": "lead_Industry",
+      "parameters": []
+    },
+    {
+      "name": "lead_Rating",
+      "parameters": []
+    },
+    {
+      "name": "contact_Salutation",
+      "parameters": []
+    },
+    {
+      "name": "case_Status",
+      "parameters": []
+    },
+    {
+      "name": "case_Origin",
+      "parameters": []
+    },
+    {
+      "name": "case_Type",
+      "parameters": []
+    },
+    {
+      "name": "case_Reason",
+      "parameters": []
+    },
+    {
+      "name": "case_Priority",
+      "parameters": []
+    },
+    {
+      "name": "campaign_Type",
+      "parameters": []
+    },
+    {
+      "name": "campaign_Status",
+      "parameters": []
+    },
+    {
+      "name": "campaignMember_Status",
+      "parameters": []
+    },
+    {
+      "name": "get_reports",
+      "parameters": []
+    },
+    {
+      "name": "all_deletable_sobjects",
+      "parameters": []
+    },
+    {
+      "name": "sobject_fields",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "upsert_sobject_fields",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "sobject_field_values_list",
+      "parameters": [
+        "sobject_name"
+      ]
+    },
+    {
+      "name": "get_duplicate_record_sets",
+      "parameters": []
+    }
+  ],
+  "sap": [
+    {
+      "name": "idoc_list_outbound",
+      "parameters": []
+    },
+    {
+      "name": "idoc_list_inbound",
+      "parameters": []
+    },
+    {
+      "name": "rfm_list",
+      "parameters": []
+    },
+    {
+      "name": "bapi_list",
+      "parameters": []
+    }
+  ],
+  "sap_erp": [
+    {
+      "name": "type_pick_list_for_trigger",
+      "parameters": []
+    },
+    {
+      "name": "type_pick_list",
+      "parameters": [
+        "service_name"
+      ]
+    },
+    {
+      "name": "all_fields_picklist",
+      "parameters": [
+        "service_name",
+        "type"
+      ]
+    },
+    {
+      "name": "type_pick_list_to_create",
+      "parameters": [
+        "service_name"
+      ]
+    },
+    {
+      "name": "type_pick_list_to_update",
+      "parameters": [
+        "service_name"
+      ]
+    }
+  ],
+  "service_max": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "service_now": [
+    {
+      "name": "tables_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "templates_pick_list",
+      "parameters": [
+        "table"
+      ]
+    }
+  ],
+  "service_now_secondary": [
+    {
+      "name": "tables_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "templates_pick_list",
+      "parameters": [
+        "table"
+      ]
+    }
+  ],
+  "sftp": [
+    {
+      "name": "directories",
+      "parameters": []
+    }
+  ],
+  "sftp_secondary": [
+    {
+      "name": "directories",
+      "parameters": []
+    }
+  ],
+  "slack": [
+    {
+      "name": "get_user_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_channel_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_group_picklist",
+      "parameters": []
+    },
+    {
+      "name": "button_recipe_list",
+      "parameters": []
+    }
+  ],
+  "slack_bot": [
+    {
+      "name": "nlu_shared_account_list",
+      "parameters": []
+    },
+    {
+      "name": "application_picklist",
+      "parameters": []
+    },
+    {
+      "name": "events_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "get_params_fields",
+      "parameters": [
+        "parameters"
+      ]
+    },
+    {
+      "name": "document_type_list",
+      "parameters": [
+        "domain"
+      ]
+    },
+    {
+      "name": "domains_pick_list",
+      "parameters": []
+    },
+    {
+      "name": "get_conversations_picklist",
+      "parameters": []
+    },
+    {
+      "name": "bot_command_pick_list",
+      "parameters": []
+    }
+  ],
+  "slack_secondary": [
+    {
+      "name": "get_user_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_channel_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_group_picklist",
+      "parameters": []
+    },
+    {
+      "name": "button_recipe_list",
+      "parameters": []
+    }
+  ],
+  "smartsheet": [
+    {
+      "name": "sheets",
+      "parameters": []
+    },
+    {
+      "name": "columns_list",
+      "parameters": [
+        "sheet_id"
+      ]
+    },
+    {
+      "name": "reports",
+      "parameters": []
+    }
+  ],
+  "snowflake": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": []
+    },
+    {
+      "name": "stage_list",
+      "parameters": []
+    },
+    {
+      "name": "file_format_list",
+      "parameters": []
+    }
+  ],
+  "snowflake_secondary": [
+    {
+      "name": "columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "sql_columns_list",
+      "parameters": [
+        "sql",
+        "output_schema"
+      ]
+    },
+    {
+      "name": "unique_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "timestamp_columns_list",
+      "parameters": [
+        "table"
+      ]
+    },
+    {
+      "name": "tables_list",
+      "parameters": []
+    },
+    {
+      "name": "stage_list",
+      "parameters": []
+    },
+    {
+      "name": "file_format_list",
+      "parameters": []
+    }
+  ],
+  "soap": [
+    {
+      "name": "template_list",
+      "parameters": []
+    }
+  ],
+  "splunk": [
+    {
+      "name": "saved_searches_query",
+      "parameters": []
+    },
+    {
+      "name": "saved_searches",
+      "parameters": []
+    }
+  ],
+  "steelbrick": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "surveymonkey": [
+    {
+      "name": "survey_pick_list",
+      "parameters": []
+    }
+  ],
+  "taskray": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "teams_bot": [
+    {
+      "name": "get_folder_tree",
+      "parameters": []
+    },
+    {
+      "name": "choice_set_picklist",
+      "parameters": []
+    },
+    {
+      "name": "bot_command_picklist",
+      "parameters": []
+    }
+  ],
+  "trackvia": [
+    {
+      "name": "apps",
+      "parameters": []
+    },
+    {
+      "name": "views",
+      "parameters": [
+        "app_name"
+      ]
+    },
+    {
+      "name": "document_fields",
+      "parameters": [
+        "view_id"
+      ]
+    },
+    {
+      "name": "mime_types",
+      "parameters": []
+    }
+  ],
+  "trello": [
+    {
+      "name": "get_board_picklist",
+      "parameters": []
+    }
+  ],
+  "tsheets": [
+    {
+      "name": "user_picklist",
+      "parameters": []
+    },
+    {
+      "name": "jobcode_picklist",
+      "parameters": []
+    }
+  ],
+  "twilio": [
+    {
+      "name": "sms_numbers",
+      "parameters": []
+    },
+    {
+      "name": "voice_numbers",
+      "parameters": []
+    }
+  ],
+  "twitter_ads": [
+    {
+      "name": "field_list",
+      "parameters": []
+    }
+  ],
+  "utility": [
+    {
+      "name": "linkable_objects",
+      "parameters": []
+    }
+  ],
+  "veeva": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "vend": [
+    {
+      "name": "get_payment_type",
+      "parameters": []
+    },
+    {
+      "name": "get_products_picklist",
+      "parameters": []
+    }
+  ],
+  "vlocity": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ],
+  "webmerge": [
+    {
+      "name": "documents",
+      "parameters": []
+    },
+    {
+      "name": "routes",
+      "parameters": []
+    }
+  ],
+  "workato_app": [
+    {
+      "name": "connection_list",
+      "parameters": []
+    },
+    {
+      "name": "invitation_list",
+      "parameters": []
+    },
+    {
+      "name": "recipe_list",
+      "parameters": []
+    }
+  ],
+  "workato_mapper": [
+    {
+      "name": "workato_schema_list",
+      "parameters": []
+    }
+  ],
+  "workato_pub_sub": [
+    {
+      "name": "topic_list",
+      "parameters": []
+    }
+  ],
+  "workato_service": [
+    {
+      "name": "service_recipe_list",
+      "parameters": []
+    }
+  ],
+  "workato_template": [
+    {
+      "name": "template_list",
+      "parameters": []
+    }
+  ],
+  "workato_variable": [
+    {
+      "name": "$$\\_line_list",
+      "parameters": []
+    }
+  ],
+  "workday": [
+    {
+      "name": "web_services_pl",
+      "parameters": []
+    },
+    {
+      "name": "trigger_objects",
+      "parameters": []
+    },
+    {
+      "name": "objects",
+      "parameters": []
+    },
+    {
+      "name": "custom_objects",
+      "parameters": []
+    }
+  ],
+  "workday_rest": [
+    {
+      "name": "job_change_reason",
+      "parameters": []
+    },
+    {
+      "name": "supervisory_organization",
+      "parameters": []
+    }
+  ],
+  "workflow": [
+    {
+      "name": "list_workflow_user_pick_list",
+      "parameters": []
+    }
+  ],
+  "workfront": [
+    {
+      "name": "objects",
+      "parameters": []
+    },
+    {
+      "name": "forms",
+      "parameters": [
+        "object_type"
+      ]
+    }
+  ],
+  "workplace_bot": [
+    {
+      "name": "get_users",
+      "parameters": []
+    },
+    {
+      "name": "bot_command_picklist",
+      "parameters": []
+    }
+  ],
+  "wrike": [
+    {
+      "name": "custom_fields",
+      "parameters": []
+    },
+    {
+      "name": "folders",
+      "parameters": []
+    },
+    {
+      "name": "timelog_categories",
+      "parameters": []
+    },
+    {
+      "name": "custom_statuses",
+      "parameters": []
+    },
+    {
+      "name": "task_status",
+      "parameters": []
+    },
+    {
+      "name": "accounts",
+      "parameters": []
+    },
+    {
+      "name": "field_list",
+      "parameters": []
+    }
+  ],
+  "wrike_secondary": [
+    {
+      "name": "custom_fields",
+      "parameters": []
+    },
+    {
+      "name": "folders",
+      "parameters": []
+    },
+    {
+      "name": "timelog_categories",
+      "parameters": []
+    },
+    {
+      "name": "custom_statuses",
+      "parameters": []
+    },
+    {
+      "name": "task_status",
+      "parameters": []
+    },
+    {
+      "name": "accounts",
+      "parameters": []
+    },
+    {
+      "name": "field_list",
+      "parameters": []
+    }
+  ],
+  "wufoo": [
+    {
+      "name": "get_forms_list",
+      "parameters": []
+    }
+  ],
+  "xactly": [
+    {
+      "name": "tables",
+      "parameters": []
+    }
+  ],
+  "xero": [
+    {
+      "name": "currencies",
+      "parameters": []
+    },
+    {
+      "name": "branding_theme_for_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_items_for_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_accounts_for_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_tax_types_for_picklist",
+      "parameters": []
+    },
+    {
+      "name": "get_accounts_for_prepayment_picklist",
+      "parameters": []
+    }
+  ],
+  "zendesk": [
+    {
+      "name": "ticket_form_list",
+      "parameters": []
+    },
+    {
+      "name": "ticket_type",
+      "parameters": []
+    },
+    {
+      "name": "ticket_priority",
+      "parameters": []
+    },
+    {
+      "name": "ticket_status",
+      "parameters": []
+    },
+    {
+      "name": "locales_list",
+      "parameters": []
+    },
+    {
+      "name": "custom_objects_picklist",
+      "parameters": []
+    },
+    {
+      "name": "relationship_picklist",
+      "parameters": []
+    }
+  ],
+  "zendesk_secondary": [
+    {
+      "name": "ticket_form_list",
+      "parameters": []
+    },
+    {
+      "name": "ticket_type",
+      "parameters": []
+    },
+    {
+      "name": "ticket_priority",
+      "parameters": []
+    },
+    {
+      "name": "ticket_status",
+      "parameters": []
+    },
+    {
+      "name": "locales_list",
+      "parameters": []
+    },
+    {
+      "name": "custom_objects_picklist",
+      "parameters": []
+    },
+    {
+      "name": "relationship_picklist",
+      "parameters": []
+    }
+  ],
+  "zenefits": [
+    {
+      "name": "companies",
+      "parameters": []
+    },
+    {
+      "name": "employee_events",
+      "parameters": []
+    },
+    {
+      "name": "employment_events",
+      "parameters": []
+    }
+  ],
+  "zoho_invoice": [
+    {
+      "name": "currency_rate_picklist",
+      "parameters": []
+    }
+  ],
+  "zohocrm": [
+    {
+      "name": "account_picklist",
+      "parameters": []
+    },
+    {
+      "name": "vendor_picklist",
+      "parameters": []
+    },
+    {
+      "name": "campaign_picklist",
+      "parameters": []
+    }
+  ],
+  "zuora_forcecom": [
+    {
+      "name": "all_sobjects",
+      "parameters": []
+    }
+  ]
+}

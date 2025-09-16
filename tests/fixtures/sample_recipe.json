@@ -1,0 +1,36 @@
+{
+  "name": "Sample HTTP to Database Recipe",
+  "description": "Fetches data from an API and stores it in a database",
+  "trigger": {
+    "provider": "scheduler",
+    "name": "scheduled_job",
+    "input": {
+      "interval": "60",
+      "start_date": "2024-01-01T00:00:00Z",
+      "timezone": "UTC"
+    }
+  },
+  "actions": [
+    {
+      "provider": "http",
+      "name": "get_request",
+      "input": {
+        "url": "https://api.example.com/users",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{.connection.token}}",
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "provider": "postgresql",
+      "name": "insert_rows",
+      "input": {
+        "connection": "my_postgres_db",
+        "table": "users",
+        "rows": "{{.steps.get_request.data}}"
+      }
+    }
+  ]
+}

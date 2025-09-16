@@ -1,0 +1,226 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "workato-platform-cli"
+dynamic = ["version"]
+description = "CLI tool for the Workato Platform"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Workato CLI Team" },
+]
+keywords = ["workato", "cli", "automation", "api"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "asyncclick>=8.0.0",
+    "inquirer>=3.1.0",
+    "pydantic>=2.11.7",
+    "dependency-injector>=4.41.0",
+    "aiohttp>=3.8.0",
+    "aiohttp-retry>=2.8.0",
+    "python-dateutil>=2.8.0",
+    "typing-extensions>=4.0.0",
+    "packaging>=21.0",
+    "cbor2>=5.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.10.0",
+    "pytest-cov>=4.0.0",
+    "coverage[toml]>=7.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+]
+
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.10.0",
+    "coverage>=7.0.0",
+]
+
+[project.scripts]
+workato = "workato_platform.cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/workato/workato-platform-cli"
+Repository = "https://github.com/workato/workato-platform-cli.git"
+Issues = "https://github.com/workato/workato-platform-cli/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/workato_platform"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""
+
+# Ruff configuration (replaces Black, isort, flake8, and more)
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "client",  # Exclude generated API client
+    "src/workato_platform/_version.py",  # Exclude generated version file
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "N",    # pep8-naming
+    "S",    # flake8-bandit (security)
+    "T20",  # flake8-print
+    "SIM",  # flake8-simplify
+]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"**/test_*.py" = ["B011"]
+"**/*_test.py" = ["B011"]
+
+# Ruff isort configuration
+[tool.ruff.lint.isort]
+force-single-line = false
+lines-between-types = 1
+lines-after-imports = 2
+known-first-party = ["workato_platform"]
+known-third-party = ["workato_api"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+# Ruff formatter (replaces Black)
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "src"
+exclude = [
+    "src/workato_platform/client/workato_api/.*",
+    "test/*"
+]
+
+[[tool.mypy.overrides]]
+module = "workato_platform.client.workato_api.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "inquirer.*",
+    "dependency_injector.*",
+    "asyncclick.*",
+]
+ignore_missing_imports = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+pythonpath = ["src"]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src/workato_platform"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "client/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/workato_platform/_version.py"
+
+[dependency-groups]
+dev = [
+    "build>=1.3.0",
+    "hatch-vcs>=0.5.0",
+    "mypy>=1.17.1",
+    "pre-commit>=4.3.0",
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.10.0",
+    "ruff>=0.12.11",
+    "types-click>=7.0.0",
+    "urllib3>=2.5.0",
+]

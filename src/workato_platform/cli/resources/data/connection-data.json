@@ -1,0 +1,7364 @@
+{
+  "active_directory": {
+    "input": [
+      {
+        "label": "Company identifier",
+        "name": "company_identifier",
+        "type": "string"
+      },
+      {
+        "label": "FTP host",
+        "name": "ftp_host",
+        "type": "string"
+      },
+      {
+        "label": "FTP user",
+        "name": "ftp_user",
+        "type": "string"
+      },
+      {
+        "label": "FTP password",
+        "name": "ftp_password",
+        "type": "string"
+      },
+      {
+        "label": "PGP public key",
+        "name": "pgp_key",
+        "type": "string"
+      }
+    ],
+    "name": "Active Directory",
+    "oauth": false,
+    "personalization": false,
+    "provider": "active_directory",
+    "secure_tunnel": false
+  },
+  "active_reg_online": {
+    "input": [
+      {
+        "hint": "API token is found at the bottom of the RegOnline 'Edit User' screen.",
+        "label": "API Token",
+        "name": "api_token",
+        "type": "string"
+      }
+    ],
+    "name": "RegOnline\u00ae by Lanyon",
+    "oauth": false,
+    "personalization": false,
+    "provider": "active_reg_online",
+    "secure_tunnel": false
+  },
+  "adp7": {
+    "input": [
+      {
+        "default": "false",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      },
+      {
+        "label": "Client ID",
+        "name": "client_id",
+        "type": "string"
+      },
+      {
+        "label": "Client secret",
+        "name": "client_secret",
+        "type": "string"
+      },
+      {
+        "label": "SSL client certificate",
+        "name": "ssl_client_cert",
+        "type": "string"
+      },
+      {
+        "label": "SSL client key",
+        "name": "ssl_client_key",
+        "type": "string"
+      },
+      {
+        "label": "Custom CA certificate",
+        "name": "ssl_key_passphrase",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "hint": "If <b>Yes</b>, sensitive information will be returned in the response. If <b>No</b>, it will not be returned.",
+        "label": "Unmask sensitive information?",
+        "name": "unmask",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "ADP Workforce Now",
+    "oauth": false,
+    "personalization": false,
+    "provider": "adp7",
+    "secure_tunnel": false
+  },
+  "air_regi": {
+    "input": [],
+    "name": "AirREGI",
+    "oauth": true,
+    "personalization": true,
+    "provider": "air_regi",
+    "secure_tunnel": false
+  },
+  "airbrake": {
+    "input": [
+      {
+        "label": "Api key",
+        "name": "api_key",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Airbrake",
+    "oauth": false,
+    "personalization": false,
+    "provider": "airbrake",
+    "secure_tunnel": false
+  },
+  "airtable": {
+    "input": [
+      {
+        "hint": "Select 'OAuth 2.0' or 'Personal access token' for current methods, 'API key' is unsupported.",
+        "label": "Authentication type",
+        "name": "authentication_type",
+        "optional": false,
+        "options": [
+          "OAuth 2.0",
+          "Personal access token",
+          "API key (Deprecated)"
+        ],
+        "type": "select"
+      },
+      {
+        "conditional": {
+          "field": "authentication_type",
+          "value": "Personal access token"
+        },
+        "hint": "Enter your personal access token here if 'Personal access token' is the selected authentication type.",
+        "label": "Personal access token",
+        "name": "personal_access_token",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Airtable",
+    "oauth": true,
+    "personalization": false,
+    "provider": "airtable",
+    "secure_tunnel": false
+  },
+  "amazon_lex_nlu": {
+    "input": [
+      {
+        "hint": "Amazon Lex Bot Name",
+        "label": "Bot name",
+        "name": "bot_name",
+        "type": "string"
+      },
+      {
+        "hint": "Amazon Lex Bot Alias",
+        "label": "Bot alias",
+        "name": "bot_alias",
+        "type": "string"
+      },
+      {
+        "hint": "Region",
+        "label": "Region",
+        "name": "region",
+        "type": "string"
+      },
+      {
+        "hint": "IAM User: Access Key Id (AWS managed policy \"AmazonLexRunBotsOnly\" should be attached to the user)",
+        "label": "Access key ID",
+        "name": "access_key_id",
+        "type": "string"
+      },
+      {
+        "hint": "IAM User: Secret Access Key",
+        "label": "Secret access key",
+        "name": "secret_access_key",
+        "type": "string"
+      }
+    ],
+    "name": "Amazon Lex",
+    "oauth": false,
+    "personalization": false,
+    "provider": "amazon_lex_nlu",
+    "secure_tunnel": false
+  },
+  "amazon_s3": {
+    "input": [
+      {
+        "default": "key_secret",
+        "hint": "            Learn more about Amazon S3 authorization support <a href=\"http://docs.workato.com/connectors/s3.html#connection-setup\" target=\"_blank\">here</a>.\n",
+        "label": "Authorization type",
+        "name": "auth_type",
+        "optional": false,
+        "pick_list": [
+          [
+            "Access key",
+            "key_secret"
+          ],
+          [
+            "IAM role",
+            "role_based"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "Follow <a href=\"http://docs.workato.com/connectors/s3.html#connection-setup\" target=\"_blank\">this guide</a> to create an IAM role in your S3, then input the IAM ARN here.\nWorkato S3 account (ID: <b>484634596152</b>) will assume this IAM role to access your instance.\n<a href=\"https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user.html\" target=\"_blank\">Learn more</a>.\n",
+        "label": "IAM role ARN",
+        "name": "assume_role",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Go to <b>AWS account name</b> > <b>My Security Credentials</b> > <b>Users</b>. Get API key from existing user or create new user.",
+        "label": "Access key ID",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Go to <b>AWS account name</b> > <b>My Security Credentials</b> > <b>Users</b>. Get secret key from existing user or create new user.",
+        "label": "Secret access key",
+        "name": "secret_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "External ID was created when you first created the IAM role in S3.\n<a href=\"https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html\" target=\"_blank\">Learn more</a>\n",
+        "label": "External ID",
+        "name": "external_id",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Use to restrict connection to specified bucket. Needed when this user has only limited\n<a href=\"http://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html#using-with-s3-actions-related-to-buckets\" target=\"_blank\">s3:ListBucket</a> access.\n",
+        "label": "Restrict to bucket",
+        "name": "restrict_to_bucket",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Use to restrict connection to specified bucket and object or path. Needed when this user has only limited\n<a href=\"http://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html#using-with-s3-actions-related-to-buckets\" target=\"_blank\">s3:ListBucket</a> access.'\n",
+        "label": "Restrict to path",
+        "name": "restrict_to_path",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Region is typically provided in the S3 account URL. If your account URL is <b>https://eu-west-1.console.s3.amazon.com</b>, use <b>eu-west-1</b> as the region.",
+        "label": "Region",
+        "name": "region",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Use to boost download speed. One thread is used by default.",
+        "label": "Download threads",
+        "name": "download_threads",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Amazon S3",
+    "oauth": false,
+    "personalization": false,
+    "provider": "amazon_s3",
+    "secure_tunnel": false
+  },
+  "amazon_s3_secondary": {
+    "input": [
+      {
+        "default": "key_secret",
+        "hint": "            Learn more about Amazon S3 authorization support <a href=\"http://docs.workato.com/connectors/s3.html#connection-setup\" target=\"_blank\">here</a>.\n",
+        "label": "Authorization type",
+        "name": "auth_type",
+        "optional": false,
+        "pick_list": [
+          [
+            "Access key",
+            "key_secret"
+          ],
+          [
+            "IAM role",
+            "role_based"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "Follow <a href=\"http://docs.workato.com/connectors/s3.html#connection-setup\" target=\"_blank\">this guide</a> to create an IAM role in your S3, then input the IAM ARN here.\nWorkato S3 account (ID: <b>484634596152</b>) will assume this IAM role to access your instance.\n<a href=\"https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user.html\" target=\"_blank\">Learn more</a>.\n",
+        "label": "IAM role ARN",
+        "name": "assume_role",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Go to <b>AWS account name</b> > <b>My Security Credentials</b> > <b>Users</b>. Get API key from existing user or create new user.",
+        "label": "Access key ID",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Go to <b>AWS account name</b> > <b>My Security Credentials</b> > <b>Users</b>. Get secret key from existing user or create new user.",
+        "label": "Secret access key",
+        "name": "secret_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "External ID was created when you first created the IAM role in S3.\n<a href=\"https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html\" target=\"_blank\">Learn more</a>\n",
+        "label": "External ID",
+        "name": "external_id",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Use to restrict connection to specified bucket. Needed when this user has only limited\n<a href=\"http://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html#using-with-s3-actions-related-to-buckets\" target=\"_blank\">s3:ListBucket</a> access.\n",
+        "label": "Restrict to bucket",
+        "name": "restrict_to_bucket",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Use to restrict connection to specified bucket and object or path. Needed when this user has only limited\n<a href=\"http://docs.aws.amazon.com/AmazonS3/latest/dev/using-with-s3-actions.html#using-with-s3-actions-related-to-buckets\" target=\"_blank\">s3:ListBucket</a> access.'\n",
+        "label": "Restrict to path",
+        "name": "restrict_to_path",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Region is typically provided in the S3 account URL. If your account URL is <b>https://eu-west-1.console.s3.amazon.com</b>, use <b>eu-west-1</b> as the region.",
+        "label": "Region",
+        "name": "region",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Use to boost download speed. One thread is used by default.",
+        "label": "Download threads",
+        "name": "download_threads",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Amazon S3 (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "amazon_s3_secondary",
+    "secure_tunnel": false
+  },
+  "amcards": {
+    "input": [
+      {
+        "hint": "Click <a target='_blank' href=https://amcards.com/profile/generate-access-token>here</a> to get access token",
+        "label": "Access token",
+        "name": "access_token",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "AMcards",
+    "oauth": false,
+    "personalization": false,
+    "provider": "amcards",
+    "secure_tunnel": false
+  },
+  "anaplan": {
+    "input": [
+      {
+        "default": "basic_auth",
+        "label": "Authentication type",
+        "name": "authentication_type",
+        "pick_list": [
+          [
+            "Certificate authentication",
+            "certificate_auth"
+          ],
+          [
+            "Username/password",
+            "basic_auth"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "             Enter a PEM-format certificate string. Learn how to obtain a CA certificate and convert to a PEM string\n             <a href=\"https://help.anaplan.com/anapedia/Content/Administration_and_Security/Tenant_Administration/Security/ProcuringCACertificates.htm\" target=\"_blank\">here</a>.\n",
+        "label": "Certificate",
+        "name": "certificate",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Enter a PEM-format private key string.",
+        "label": "Private key",
+        "name": "private_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Anaplan",
+    "oauth": false,
+    "personalization": false,
+    "provider": "anaplan",
+    "secure_tunnel": false
+  },
+  "api_ai_nlu": {
+    "input": [
+      {
+        "hint": "Can be found at the generated json file.",
+        "label": "Project name",
+        "name": "project_name",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Create a client access token using this <a target='_blank' href='https://docs.workato.com/connectors/dialogflow.html'>link</a>.",
+        "label": "Client access token",
+        "name": "client_access_token",
+        "type": "string"
+      }
+    ],
+    "name": "Google Dialogflow",
+    "oauth": false,
+    "personalization": false,
+    "provider": "api_ai_nlu",
+    "secure_tunnel": false
+  },
+  "apttus": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Apttus",
+    "oauth": true,
+    "personalization": true,
+    "provider": "apttus",
+    "secure_tunnel": false
+  },
+  "apttus_intelligent_cloud": {
+    "input": [
+      {
+        "hint": "Your AIC cloud name as found in your apttus AIC URL",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Client ID",
+        "name": "client_id",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Client secret",
+        "name": "client_secret",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Your directory ID can be found <a target=\"_blank\" href=\"https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/Properties\">here</a>.",
+        "label": "Directory ID",
+        "name": "directory_id",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Apttus Intelligent Cloud",
+    "oauth": false,
+    "personalization": false,
+    "provider": "apttus_intelligent_cloud",
+    "secure_tunnel": false
+  },
+  "ariba": {
+    "input": [
+      {
+        "label": "Network user ID",
+        "name": "network_user_id",
+        "type": "string"
+      },
+      {
+        "label": "Shared secret",
+        "name": "shared_secret",
+        "type": "string"
+      },
+      {
+        "label": "Buyer network user ID",
+        "name": "buyer_network_user_id",
+        "type": "string"
+      },
+      {
+        "default": "http://www.workato.com/ariba/purchase_order/1/78",
+        "hint": "URL for submitting the purchase order cXML",
+        "label": "Purchase order URL",
+        "name": "purchase_order_url",
+        "type": "string"
+      }
+    ],
+    "name": "Ariba",
+    "oauth": false,
+    "personalization": false,
+    "provider": "ariba",
+    "secure_tunnel": false
+  },
+  "ascent_erp": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "AscentERP",
+    "oauth": true,
+    "personalization": true,
+    "provider": "ascent_erp",
+    "secure_tunnel": false
+  },
+  "aws_cognito": {
+    "input": [
+      {
+        "hint": "You can find the API Key on the <a target='_blank' href='https://airtable.com/account'>account</a> page.",
+        "label": "API key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Amazon Cognito",
+    "oauth": false,
+    "personalization": false,
+    "provider": "aws_cognito",
+    "secure_tunnel": false
+  },
+  "aws_lambda": {
+    "input": [
+      {
+        "hint": "Select your AWS account name > Security Credentials > Users. Get API key from existing user or create user (with AWSLambdaFullAccess permission) ",
+        "label": "Access Key ID",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Select your AWS account name > Security Credentials > Users. Get secret key from existing user or create user (with AWSLambdaFullAccess permission) ",
+        "label": "Secret Access Key",
+        "name": "secret_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "If your account url is https://eu-west-1.console.aws.amazon.com then use eu-west-1 as the region",
+        "label": "Region",
+        "name": "region",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "AWS Lambda",
+    "oauth": false,
+    "personalization": false,
+    "provider": "aws_lambda",
+    "secure_tunnel": false
+  },
+  "aws_sns": {
+    "input": [
+      {
+        "hint": "Select your AWS account name > Security Credentials > Users. Get API key from existing user or create user",
+        "label": "Access Key ID",
+        "name": "access_key_id",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Select your AWS account name > Security Credentials > Users. Get secret key from existing user or create user",
+        "label": "Secret Access Key",
+        "name": "secret_access_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "If your account url is https://eu-west-1.console.aws.amazon.com then use eu-west-1 as the region",
+        "label": "Region",
+        "name": "region",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Amazon SNS",
+    "oauth": false,
+    "personalization": false,
+    "provider": "aws_sns",
+    "secure_tunnel": false
+  },
+  "bamboohr": {
+    "input": [
+      {
+        "hint": "Can be found at https://[sub domain].bamboohr.com/settings/permissions/api.php",
+        "label": "API token",
+        "name": "api_token",
+        "type": "string"
+      },
+      {
+        "hint": "Your Bamboo HR subdomain is most often your company name",
+        "label": "Sub-domain",
+        "name": "subdomain",
+        "type": "string"
+      }
+    ],
+    "name": "BambooHR",
+    "oauth": false,
+    "personalization": false,
+    "provider": "bamboohr",
+    "secure_tunnel": false
+  },
+  "basecamp": {
+    "input": [
+      {
+        "hint": "Your account ID is the numeric portion of the browser URL shown when you're logged in. <br>For example, If URL is https://basecamp.com/2551808/, your account ID is 2551808.",
+        "label": "Account ID",
+        "name": "account_id",
+        "type": "integer"
+      }
+    ],
+    "name": "Basecamp 2",
+    "oauth": true,
+    "personalization": true,
+    "provider": "basecamp",
+    "secure_tunnel": false
+  },
+  "bigtincan": {
+    "input": [
+      {
+        "hint": "Email ID of the user",
+        "label": "User name",
+        "name": "userName",
+        "type": "string"
+      },
+      {
+        "hint": "Password for login",
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "hint": "Log in to your Bill.com account, select gear icon, select settings then select profiles under your company.<br>The Organization ID is at the end of the URL, after 'https://www.bill.com/Organization?Id='",
+        "label": "Organization ID",
+        "name": "orgId",
+        "type": "string"
+      }
+    ],
+    "name": "Bigtincan",
+    "oauth": false,
+    "personalization": false,
+    "provider": "bigtincan",
+    "secure_tunnel": false
+  },
+  "bitbucket": {
+    "input": [
+      {
+        "hint": "Host (and optional port) of your server. Eg. http://localhost:7990/rest/api",
+        "label": "Bitbucket hostname",
+        "name": "hostname",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Bitbucket",
+    "oauth": true,
+    "personalization": true,
+    "provider": "bitbucket",
+    "secure_tunnel": false
+  },
+  "box": {
+    "input": [
+      {
+        "label": "Advanced settings",
+        "name": "advanced_settings",
+        "optional": true,
+        "properties": [
+          {
+            "hint": "                     Select <a href=\"https://developer.box.com/docs/scopes\" target=\"_blank\">permissions</a>\n                      to request for this connection. Minimum permissions that will always be requested are: Manage files and folders, groups, and webhooks.\n",
+            "label": "Requested permissions (Oauth scopes)",
+            "name": "api_scope",
+            "optional": true,
+            "type": "string"
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "name": "Box",
+    "oauth": true,
+    "personalization": true,
+    "provider": "box",
+    "secure_tunnel": false
+  },
+  "brick_ftp": {
+    "input": [
+      {
+        "hint": "Enable REST and get key at https://<b>yoursite</b>.brickftp.com/sites/edit?group=api",
+        "label": "API Key",
+        "name": "api_key",
+        "type": "string"
+      }
+    ],
+    "name": "BrickFTP",
+    "oauth": false,
+    "personalization": false,
+    "provider": "brick_ftp",
+    "secure_tunnel": false
+  },
+  "capsulecrm": {
+    "input": [
+      {
+        "hint": "Can be found at https://(your subdomain).capsulecrm.com/users/api",
+        "label": "API token",
+        "name": "api_token",
+        "type": "string"
+      },
+      {
+        "hint": "Your Capsule CRM subdomain is most often your company name",
+        "label": "Sub-domain",
+        "name": "subdomain",
+        "type": "string"
+      }
+    ],
+    "name": "Capsule CRM",
+    "oauth": false,
+    "personalization": false,
+    "provider": "capsulecrm",
+    "secure_tunnel": false
+  },
+  "chargify": {
+    "input": [
+      {
+        "hint": "Can be generated from the \u201cAPI Access\u201d tab of your seller dashboard",
+        "label": "API Key",
+        "name": "api_key",
+        "type": "string"
+      },
+      {
+        "hint": "Your Chargify subdomain is most often your company name",
+        "label": "Sub-domain",
+        "name": "subdomain",
+        "type": "string"
+      }
+    ],
+    "name": "Chargify",
+    "oauth": false,
+    "personalization": false,
+    "provider": "chargify",
+    "secure_tunnel": false
+  },
+  "clearbit": {
+    "input": [
+      {
+        "hint": "Can be found here: https://dashboard.clearbit.com/keys",
+        "label": "Api key",
+        "name": "api_key",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Clearbit",
+    "oauth": false,
+    "personalization": false,
+    "provider": "clearbit",
+    "secure_tunnel": false
+  },
+  "cloud_watch": {
+    "input": [
+      {
+        "hint": "Select your AWS account name-> My Security Credentials-> Users. Get API key from existing user or create user (with Amazon CloudWatch permission) ",
+        "label": "Access Key ID",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Select your AWS account name-> My Security Credentials-> Users. Get secret key from existing user or create user (with Amazon CloudWatch permission) ",
+        "label": "Secret Access Key",
+        "name": "secret_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "If your account url is https://eu-west-1.console.aws.amazon.com then use eu-west-1 as the region",
+        "label": "Region",
+        "name": "region",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Cloud Watch",
+    "oauth": false,
+    "personalization": false,
+    "provider": "cloud_watch",
+    "secure_tunnel": false
+  },
+  "codeship": {
+    "input": [
+      {
+        "hint": "Go to My Account->Account settings and get API key",
+        "label": "API key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Codeship",
+    "oauth": false,
+    "personalization": false,
+    "provider": "codeship",
+    "secure_tunnel": false
+  },
+  "concur": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to an implementation instance? <a href=\"https://docs.workato.com/connectors/concur.html\">Learn more</a>.",
+        "label": "Implementation instance",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      },
+      {
+        "hint": "Specify the username or user ID.",
+        "label": "Username",
+        "name": "user_name",
+        "type": "string"
+      },
+      {
+        "hint": "Password for login.",
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "hint": "Select the location of your implementation server.",
+        "label": "Location",
+        "name": "location",
+        "pick_list": [
+          [
+            "US Implementation",
+            "us-impl"
+          ],
+          [
+            "EU Implementation",
+            "emea-impl"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "Client ID of your implementation application.",
+        "label": "Client ID",
+        "name": "client_id",
+        "type": "string"
+      },
+      {
+        "hint": "Client secret of your implementation application.",
+        "label": "Client secret",
+        "name": "client_secret",
+        "type": "string"
+      }
+    ],
+    "name": "Concur",
+    "oauth": true,
+    "personalization": true,
+    "provider": "concur",
+    "secure_tunnel": false
+  },
+  "confluence": {
+    "input": [
+      {
+        "hint": "Your Jira Service Desk name as found in your URL. For on-premise instances, select an on-prem agent below.",
+        "label": "Confluence subdomain",
+        "name": "subdomain",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Root URI (protocol, optional port, hostname) of your Confluence host, for example, http://confluence.intranet.acme.com:7654",
+        "label": "Confluence root URI",
+        "name": "root_uri",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "hint": "Is authentication based on API tokens? If Yes, provide <b>Email</b> & <b>API token</b>. If No, provide <b>Username</b> & <b>Password</b>.",
+        "label": "API token authentication?",
+        "name": "api_token_auth",
+        "optional": true,
+        "type": "number"
+      },
+      {
+        "label": "Email",
+        "name": "email",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "            Get/create API tokens by going to <a href='https://id.atlassian.com/manage/api-tokens' target='_blank' ><b>id.atlassian.com</b></a> > <b>API tokens</b> > <b>Create API token</b>.\n",
+        "label": "API token",
+        "name": "apitoken",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Your user name (not email)",
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Confluence",
+    "oauth": false,
+    "personalization": false,
+    "provider": "confluence",
+    "secure_tunnel": false
+  },
+  "confluence_secondary": {
+    "input": [
+      {
+        "hint": "Your Jira Service Desk name as found in your URL. For on-premise instances, select an on-prem agent below.",
+        "label": "Confluence subdomain",
+        "name": "subdomain",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Root URI (protocol, optional port, hostname) of your Confluence host, for example, http://confluence.intranet.acme.com:7654",
+        "label": "Confluence root URI",
+        "name": "root_uri",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "hint": "Is authentication based on API tokens? If Yes, provide <b>Email</b> & <b>API token</b>. If No, provide <b>Username</b> & <b>Password</b>.",
+        "label": "API token authentication?",
+        "name": "api_token_auth",
+        "optional": true,
+        "type": "number"
+      },
+      {
+        "label": "Email",
+        "name": "email",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "            Get/create API tokens by going to <a href='https://id.atlassian.com/manage/api-tokens' target='_blank' ><b>id.atlassian.com</b></a> > <b>API tokens</b> > <b>Create API token</b>.\n",
+        "label": "API token",
+        "name": "apitoken",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Your user name (not email)",
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Confluence (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "confluence_secondary",
+    "secure_tunnel": false
+  },
+  "coupa": {
+    "input": [
+      {
+        "hint": "Enter your Coupa URL.<br>Eg: https://<b>your-instance-name.coupacloud</b>.com",
+        "label": "Host",
+        "name": "host",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Select the <b>Setup</b> tab and select <b>API Keys</b> under <b>Integrations</b> to generate API key.<br>Or go to <b>https://your-instance-name.coupacloud.com/api_keys</b> to generate API key.",
+        "label": "API key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Coupa",
+    "oauth": false,
+    "personalization": false,
+    "provider": "coupa",
+    "secure_tunnel": false
+  },
+  "cxml": {
+    "input": [
+      {
+        "label": "Network user ID",
+        "name": "network_user_id",
+        "type": "string"
+      },
+      {
+        "label": "Shared secret",
+        "name": "shared_secret",
+        "type": "string"
+      },
+      {
+        "label": "Buyer network user ID",
+        "name": "buyer_network_user_id",
+        "type": "string"
+      },
+      {
+        "default": "http://www.workato.com/ariba/purchase_order/1/78",
+        "hint": "URL for submitting the purchase order cXML",
+        "label": "Purchase order URL",
+        "name": "purchase_order_url",
+        "type": "string"
+      }
+    ],
+    "name": "cXML",
+    "oauth": false,
+    "personalization": false,
+    "provider": "cxml",
+    "secure_tunnel": false
+  },
+  "docparser": {
+    "input": [
+      {
+        "hint": "Go to Account -> API Access to get the API key",
+        "label": "API Key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "docparser",
+    "oauth": false,
+    "personalization": false,
+    "provider": "docparser",
+    "secure_tunnel": false
+  },
+  "docusign": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a demo account?",
+        "label": "Demo",
+        "name": "demo",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "DocuSign",
+    "oauth": true,
+    "personalization": true,
+    "provider": "docusign",
+    "secure_tunnel": false
+  },
+  "docusign_secondary": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a demo account?",
+        "label": "Demo",
+        "name": "demo",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "DocuSign (Secondary)",
+    "oauth": true,
+    "personalization": true,
+    "provider": "docusign_secondary",
+    "secure_tunnel": false
+  },
+  "etapestry": {
+    "input": [
+      {
+        "label": "Login ID",
+        "name": "loginId",
+        "type": "string"
+      },
+      {
+        "hint": "Password for login",
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      }
+    ],
+    "name": "eTapestry",
+    "oauth": false,
+    "personalization": false,
+    "provider": "etapestry",
+    "secure_tunnel": false
+  },
+  "fairsail": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Fairsail",
+    "oauth": true,
+    "personalization": true,
+    "provider": "fairsail",
+    "secure_tunnel": false
+  },
+  "financialforce": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "FinancialForce",
+    "oauth": true,
+    "personalization": true,
+    "provider": "financialforce",
+    "secure_tunnel": false
+  },
+  "fresh_books": {
+    "input": [
+      {
+        "hint": "From your FreshBooks page, My Account - FreshBooks API",
+        "label": "Authentication Token",
+        "name": "auth_token",
+        "type": "string"
+      },
+      {
+        "hint": "Your account name as it appears in your FreshBooks web address, usually your company name",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "type": "string"
+      }
+    ],
+    "name": "FreshBooks",
+    "oauth": false,
+    "personalization": false,
+    "provider": "fresh_books",
+    "secure_tunnel": false
+  },
+  "ftps": {
+    "input": [
+      {
+        "default": "ftp-s",
+        "hint": "Select secure/non-secure FTP as per your FTP server. Make sure you have whitelisted Workato IP addresses. <a href=\"http://docs.workato.com/security.html\" target=\"_blank\">Learn more</a>",
+        "label": "Server type",
+        "name": "servertype",
+        "pick_list": [
+          [
+            "FTP-S",
+            "FTP-S"
+          ],
+          [
+            "FTP",
+            "FTP"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "Verify FTPS server certificate",
+        "label": "Verify cert",
+        "name": "verify_cert",
+        "optional": true,
+        "type": "boolean"
+      },
+      {
+        "hint": "should be defined only for FTP-S",
+        "label": "Ftps conn",
+        "name": "ftps_conn",
+        "optional": true,
+        "pick_list": [
+          [
+            "Explicit",
+            "Explicit"
+          ],
+          [
+            "Implicit",
+            "Implicit"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "For example, companyname.sampleftp.com",
+        "label": "Host name",
+        "name": "hostname",
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      }
+    ],
+    "name": "FTP/FTPS",
+    "oauth": false,
+    "personalization": false,
+    "provider": "ftps",
+    "secure_tunnel": false
+  },
+  "fullcontact": {
+    "input": [
+      {
+        "hint": "<a href=\"https://portal.fullcontact.com/admin\" target=\"_blank\" rel=\"noopener\">How do I find my Fullcontact API key?</a>",
+        "label": "API key",
+        "name": "apiKey",
+        "type": "string"
+      }
+    ],
+    "name": "FullContact",
+    "oauth": false,
+    "personalization": false,
+    "provider": "fullcontact",
+    "secure_tunnel": false
+  },
+  "gmail": {
+    "input": [
+      {
+        "hint": "Based on Google's updated security policies, Gmail triggers or download attachment\nactions can only be used by paid G Suite account. To use them, enable this setting\nand request your G Suite admin to whitelist the Workato Gmail Connector app and\ngrant it read email permission before linking your GMail account here.\n<a href=\"https://docs.workato.com/connectors/gmail.html\" target=\"_blank\">Learn more</a>\n",
+        "label": "Read email permission",
+        "name": "read_email_permission",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Gmail",
+    "oauth": true,
+    "personalization": true,
+    "provider": "gmail",
+    "secure_tunnel": false
+  },
+  "goombal": {
+    "input": [
+      {
+        "label": "Email",
+        "name": "Email",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "Password",
+        "type": "string"
+      },
+      {
+        "hint": "Leave empty to default to <b>app</b>",
+        "label": "Instance",
+        "name": "instance",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Goombal",
+    "oauth": false,
+    "personalization": false,
+    "provider": "goombal",
+    "secure_tunnel": false
+  },
+  "hipchat": {
+    "input": [
+      {
+        "hint": "If your HipChat url is https://abc.hipchat.com, then subdomain is 'abc'",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Go to yourdomain.hipchat.com/account/api and create new token. Select \"View Group\" or \"View Room\" as one of the scopes",
+        "label": "Access token",
+        "name": "auth_token",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "HipChat",
+    "oauth": false,
+    "personalization": false,
+    "provider": "hipchat",
+    "secure_tunnel": false
+  },
+  "hubspot": {
+    "input": [
+      {
+        "label": "Advanced settings",
+        "name": "advanced_settings",
+        "optional": true,
+        "properties": [
+          {
+            "default": "contacts",
+            "hint": "               Select the areas of HubSpot this connection will have access to. Selecting scopes which your HubSpot account does not have access to will result in an error. Our default selection should be enough when working with contacts, companies, and deals.\n",
+            "label": "Scopes",
+            "name": "scopes",
+            "optional": true,
+            "type": "string"
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "name": "HubSpot",
+    "oauth": true,
+    "personalization": true,
+    "provider": "hubspot",
+    "secure_tunnel": false
+  },
+  "insightly": {
+    "input": [
+      {
+        "hint": "Click the drop-down at the top right corner of the home page. API KEY found under the 'User settings'",
+        "label": "Api key",
+        "name": "api_key",
+        "type": "string"
+      }
+    ],
+    "name": "Insightly",
+    "oauth": false,
+    "personalization": false,
+    "provider": "insightly",
+    "secure_tunnel": false
+  },
+  "intacct": {
+    "input": [
+      {
+        "label": "Login username",
+        "name": "login_username",
+        "type": "string"
+      },
+      {
+        "label": "Login password",
+        "name": "login_password",
+        "type": "string"
+      },
+      {
+        "label": "Company ID",
+        "name": "company_id",
+        "type": "string"
+      },
+      {
+        "hint": "If not specified, it takes the top level(all entities)",
+        "label": "Location ID",
+        "name": "location_id",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Sage Intacct",
+    "oauth": false,
+    "personalization": false,
+    "provider": "intacct",
+    "secure_tunnel": false
+  },
+  "intercom": {
+    "input": [
+      {
+        "hint": "                   Provide comma separated Intercom user IDs, for example, <b>54253</b>, for Workato to retrieve the custom fields set up for these users.\n                   Maximum of <b>3</b> user IDs can be provided.\n",
+        "label": "Example user IDs",
+        "name": "user_ids",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Intercom",
+    "oauth": true,
+    "personalization": true,
+    "provider": "intercom",
+    "secure_tunnel": false
+  },
+  "jdbc": {
+    "input": [
+      {
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "label": "Schema",
+        "name": "schema_name",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "JDBC",
+    "oauth": false,
+    "personalization": false,
+    "provider": "jdbc",
+    "secure_tunnel": false
+  },
+  "jdbc_secondary": {
+    "input": [
+      {
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "label": "Schema",
+        "name": "schema_name",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "JDBC (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "jdbc_secondary",
+    "secure_tunnel": false
+  },
+  "jenkins": {
+    "input": [
+      {
+        "hint": "                  Host (and optional port) of your Jenkins server. Eg. http://workato-jenkins.<br>\n                  Go to Manage Jenkins-> Configure Global Security. Uncheck <b>Prevent Cross Site Request Forgery exploits</b>.\n",
+        "label": "Jenkins root URI",
+        "name": "root_uri",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Jenkins",
+    "oauth": false,
+    "personalization": false,
+    "provider": "jenkins",
+    "secure_tunnel": false
+  },
+  "jira": {
+    "input": [
+      {
+        "hint": "Refer to the URL of your Jira account and complete the above URL. For example, <b>workato.atlassian.net</b>",
+        "label": "Host name",
+        "name": "host_name",
+        "type": "string"
+      },
+      {
+        "hint": "Refer to the URL of your Jira account and specify the above URL.<br>for example, <b>http://workato.atlassian.net</b>",
+        "label": "Host name with protocol",
+        "name": "host_url",
+        "type": "string"
+      },
+      {
+        "hint": "Select an authentication method",
+        "label": "Authentication Type",
+        "name": "auth_type",
+        "pick_list": [
+          [
+            "API Token",
+            "api_token"
+          ],
+          [
+            "OAuth 2.0",
+            "oauth"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "label": "Email",
+        "name": "email",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Get/create API tokens by going to <a href='https://id.atlassian.com' target='_blank' ><b>id.atlassian.com</b></a> > <b>API tokens</b> > <b>Create API token</b>.\n",
+        "label": "API token",
+        "name": "apitoken",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Jira",
+    "oauth": true,
+    "personalization": false,
+    "provider": "jira",
+    "secure_tunnel": false
+  },
+  "jira_secondary": {
+    "input": [
+      {
+        "hint": "Refer to the URL of your Jira account and complete the above URL. For example, <b>workato.atlassian.net</b>",
+        "label": "Host name",
+        "name": "host_name",
+        "type": "string"
+      },
+      {
+        "hint": "Refer to the URL of your Jira account and specify the above URL.<br>for example, <b>http://workato.atlassian.net</b>",
+        "label": "Host name with protocol",
+        "name": "host_url",
+        "type": "string"
+      },
+      {
+        "hint": "Select an authentication method",
+        "label": "Authentication Type",
+        "name": "auth_type",
+        "pick_list": [
+          [
+            "API Token",
+            "api_token"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "label": "Email",
+        "name": "email",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "             Get/create API tokens by going to <a href='https://id.atlassian.com' target='_blank' ><b>id.atlassian.com</b></a> > <b>API tokens</b> > <b>Create API token</b>.\n",
+        "label": "API token",
+        "name": "apitoken",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Jira (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "jira_secondary",
+    "secure_tunnel": false
+  },
+  "jira_service_desk": {
+    "input": [
+      {
+        "hint": "Refer to the URL of your Jira account and complete the above URL. For example, <b>workato.atlassian.net</b>",
+        "label": "Host name",
+        "name": "host_name",
+        "type": "string"
+      },
+      {
+        "hint": "Refer to the URL of your Jira account and specify the above URL.<br>for example, <b>http://workato.atlassian.net</b>",
+        "label": "Host name with protocol",
+        "name": "host_url",
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "hint": "Is authentication based on API tokens? If Yes, provide <b>Email</b> & <b>API token</b>. If No, provide <b>Username</b> & <b>Password</b>.",
+        "label": "API token authentication?",
+        "name": "api_token_auth",
+        "type": "boolean"
+      },
+      {
+        "label": "Email",
+        "name": "email",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "             Get/create API tokens by going to <a href='https://id.atlassian.com' target='_blank' ><b>id.atlassian.com</b></a> > <b>API tokens</b> > <b>Create API token</b>.\n",
+        "label": "API token",
+        "name": "apitoken",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "JIRA Service Desk",
+    "oauth": false,
+    "personalization": false,
+    "provider": "jira_service_desk",
+    "secure_tunnel": false
+  },
+  "jms": {
+    "input": [
+      {
+        "label": "On-prem JMS connection profile",
+        "name": "profile",
+        "type": "string"
+      }
+    ],
+    "name": "JMS",
+    "oauth": false,
+    "personalization": false,
+    "provider": "jms",
+    "secure_tunnel": false
+  },
+  "jobscience": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "JobScience",
+    "oauth": true,
+    "personalization": true,
+    "provider": "jobscience",
+    "secure_tunnel": false
+  },
+  "jobvite": {
+    "input": [
+      {
+        "hint": "Enter the <b>Api Key</b> from jobvite.",
+        "label": "API Key",
+        "name": "api_key",
+        "type": "string"
+      },
+      {
+        "hint": "Enter the <b>Secret</b> from jobvite.",
+        "label": "Secret",
+        "name": "secret",
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "hint": "If selected, staging jobvite instance will be used",
+        "label": "Use Staging",
+        "name": "use_staging",
+        "type": "boolean"
+      },
+      {
+        "default": "false",
+        "hint": "If selected, V2 version will be used",
+        "label": "Use V2 API",
+        "name": "use_v2",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Jobvite",
+    "oauth": false,
+    "personalization": false,
+    "provider": "jobvite",
+    "secure_tunnel": false
+  },
+  "jump_cloud": {
+    "input": [
+      {
+        "hint": "Click <a href='https://docs.jumpcloud.com/2.0/authentication-and-authorization/authentication-and-authorization-overview#access-your-api-key' target='_blank'>here</a> to get API key.",
+        "label": "API key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "<span class='provider'>Organization ID </span> is required for all multi-tenant admins. Click <a href='https://docs.jumpcloud.com/2.0/authentication-and-authorization/multi-tenant-organization-api-headers#to-obtain-an-individual-organization-id-via-the-ui' target='_blank'>here</a> to get Organization ID.",
+        "label": "Organization ID",
+        "name": "org_id",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "JumpCloud",
+    "oauth": false,
+    "personalization": false,
+    "provider": "jump_cloud",
+    "secure_tunnel": false
+  },
+  "jwt": {
+    "input": [
+      {
+        "default": "HS256",
+        "hint": "Select the JWT signing algorithm",
+        "label": "Signing algorithm",
+        "name": "alg",
+        "pick_list": [
+          [
+            "HMAC using SHA-256",
+            "HS256"
+          ],
+          [
+            "HMAC using SHA-384",
+            "HS384"
+          ],
+          [
+            "HMAC using SHA-512",
+            "HS512"
+          ],
+          [
+            "RSA using SHA-256",
+            "RS256"
+          ],
+          [
+            "RSA using SHA-384",
+            "RS384"
+          ],
+          [
+            "RSA using SHA-512",
+            "RS512"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "Enter the shared HMAC secret(min 32 characters)",
+        "label": "HMAC shared secret",
+        "name": "hmac_secret",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "                                Learn how to generate a pair of Public key and Private key\n                                <a href=\"https://docs.workato.com/features/pgp-encryption.html\" target=\"_blank\">here</a>.\n",
+        "label": "Public key",
+        "name": "public_key",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "                                 Learn how to generate a pair of Public key and Private key\n                                 <a href=\"https://docs.workato.com/features/pgp-encryption.html\" target=\"_blank\">here</a>.\n",
+        "label": "Private key",
+        "name": "private_key",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Passphrase for encrypted private key",
+        "label": "Passphrase",
+        "name": "passphrase",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "JSON Web Token (JWT)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "jwt",
+    "secure_tunnel": false
+  },
+  "kafka": {
+    "input": [
+      {
+        "label": "On-prem Kafka connection profile",
+        "name": "profile",
+        "type": "string"
+      }
+    ],
+    "name": "Apache Kafka",
+    "oauth": false,
+    "personalization": false,
+    "provider": "kafka",
+    "secure_tunnel": false
+  },
+  "kenandy": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Kenandy",
+    "oauth": true,
+    "personalization": true,
+    "provider": "kenandy",
+    "secure_tunnel": false
+  },
+  "knack": {
+    "input": [
+      {
+        "hint": "Hover over gear icon, Select API & Code -> get Application ID",
+        "label": "Application ID",
+        "name": "app_id",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Hover over gear icon, Select API & Code -> get API Key",
+        "label": "API Key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Knack",
+    "oauth": false,
+    "personalization": false,
+    "provider": "knack",
+    "secure_tunnel": false
+  },
+  "librato": {
+    "input": [
+      {
+        "hint": "Go to Account Settings->API Token. GET token. eg: abc@efg.com",
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "If its API key, Go to Account Settings->API Token. GET API Key",
+        "label": "Password or personal API key",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Librato",
+    "oauth": false,
+    "personalization": false,
+    "provider": "librato",
+    "secure_tunnel": false
+  },
+  "magento": {
+    "input": [
+      {
+        "hint": "Enter your full URL, for example, <b>http://mymagentostore.com</b>",
+        "label": "Server domain",
+        "name": "server",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "If account type is admin, enter username. Otherwise, enter email address",
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Select if your connected account is an admin or non-admin account",
+        "label": "Account type",
+        "name": "account_type",
+        "optional": false,
+        "pick_list": [
+          [
+            "admin",
+            "admin"
+          ],
+          [
+            "customer",
+            "customer"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Magento 2",
+    "oauth": false,
+    "personalization": false,
+    "provider": "magento",
+    "secure_tunnel": false
+  },
+  "marketo": {
+    "input": [
+      {
+        "hint": "Admin/Web Services/REST API - more <a href=\"http://developers.marketo.com/documentation/rest/endpoint-url/\">here</a>.",
+        "label": "REST Endpoint",
+        "name": "endpoint",
+        "type": "string"
+      },
+      {
+        "hint": "To create a Marketo custom service see <a href=\"http://developers.marketo.com/documentation/rest/custom-service/\">this</a>.",
+        "label": "Custom Service client ID",
+        "name": "client_id",
+        "type": "string"
+      },
+      {
+        "label": "Custom Service client secret",
+        "name": "client_secret",
+        "type": "string"
+      }
+    ],
+    "name": "Marketo",
+    "oauth": false,
+    "personalization": false,
+    "provider": "marketo",
+    "secure_tunnel": false
+  },
+  "marketo_secondary": {
+    "input": [
+      {
+        "hint": "Admin/Web Services/REST API - more <a href=\"http://developers.marketo.com/documentation/rest/endpoint-url/\">here</a>.",
+        "label": "REST Endpoint",
+        "name": "endpoint",
+        "type": "string"
+      },
+      {
+        "hint": "To create a Marketo custom service see <a href=\"http://developers.marketo.com/documentation/rest/custom-service/\">this</a>.",
+        "label": "Custom Service client ID",
+        "name": "client_id",
+        "type": "string"
+      },
+      {
+        "label": "Custom Service client secret",
+        "name": "client_secret",
+        "type": "string"
+      }
+    ],
+    "name": "Marketo (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "marketo_secondary",
+    "secure_tunnel": false
+  },
+  "microsoft_dynamics_crm": {
+    "input": [
+      {
+        "hint": "             If your Microsoft Dynamics 365 URL is <b>https://abc.crm.dynamics.com</b>,\n             subdomain will be <b>abc.crm.dynamics.com</b>\n",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "label": "Account type",
+        "name": "account_type",
+        "pick_list": [
+          [
+            "On premise",
+            "onpremises"
+          ],
+          [
+            "Cloud",
+            "online"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "             Requires, if the account type is 'On premise'.\n             If your AD server is <b>https://abc.adfs.dynamics.com/adfs</b>, AD domain name will be <b>abc.adfs.dynamics.com</b>\n",
+        "label": "AD domain name",
+        "name": "adfs_name",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Click <a target='_blank' href=http://docs.workato.com/connectors/dynamics-crm.html>here</a> to know how to get client ID",
+        "label": "Client ID",
+        "name": "client_id",
+        "type": "string"
+      },
+      {
+        "label": "Client secret",
+        "name": "client_secret",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Microsoft Dynamics 365",
+    "oauth": true,
+    "personalization": true,
+    "provider": "microsoft_dynamics_crm",
+    "secure_tunnel": false
+  },
+  "microsoft_sharepoint": {
+    "input": [
+      {
+        "hint": "Enter your SharePoint subdomain as found in your SharePoint URL. If your SharePoint URL is <b>https://abc.sharepoint.com</b>, then subdomain is <b>abc</b>",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Enter full URL of your SharePoint domain. <b>for example, https://company-name.sharepoint.com</b>.",
+        "label": "Domain",
+        "name": "domain",
+        "type": "string"
+      },
+      {
+        "hint": "<a href='https://docs.workato.com/connectors/sharepoint.html' target='_blank'>Click here</a> to learn how to generate Client ID and Client secret.",
+        "label": "Client ID",
+        "name": "client_id",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "<a href='https://docs.workato.com/connectors/sharepoint.html' target='_blank'>Click here</a> to learn how to generate Client ID and Client secret.",
+        "label": "Client secret",
+        "name": "client_secret",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "                  The name of the SharePoint site you want to connect to. Use this field if you only have access to that specific site, but not the home site.\n                  If left blank, Workato will connect to your default home site.\n                  Use the site name as found in the URL of site page. eg. If the URL is <b>https://company-name.sharepoint.com/sites/product</b>, then use <b>product</b>.\n",
+        "label": "Site name",
+        "name": "connection_siteurl",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Microsoft Sharepoint",
+    "oauth": true,
+    "personalization": true,
+    "provider": "microsoft_sharepoint",
+    "secure_tunnel": false
+  },
+  "miro_board": {
+    "input": [
+      {
+        "label": "Client ID",
+        "name": "client_id",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Client secret",
+        "name": "client_secret",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Miro",
+    "oauth": true,
+    "personalization": true,
+    "provider": "miro_board",
+    "secure_tunnel": false
+  },
+  "mixpanel": {
+    "input": [
+      {
+        "hint": "Can be found in your account menu within the projects tab",
+        "label": "Api key",
+        "name": "api_key",
+        "type": "string"
+      },
+      {
+        "hint": "Can be found in your account menu within the projects tab",
+        "label": "Api secret",
+        "name": "api_secret",
+        "type": "string"
+      }
+    ],
+    "name": "Mixpanel",
+    "oauth": false,
+    "personalization": false,
+    "provider": "mixpanel",
+    "secure_tunnel": false
+  },
+  "mssql": {
+    "input": [
+      {
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "hint": "For Azure SQL use username@server",
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "label": "Host",
+        "name": "host",
+        "type": "string"
+      },
+      {
+        "default": 1433,
+        "hint": "Port number, default is 1433",
+        "label": "Port",
+        "name": "port",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Database",
+        "name": "database",
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "hint": "Choose 'yes' if connecting to Azure SQL",
+        "label": "Azure SQL",
+        "name": "azure",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "SQL Server",
+    "oauth": false,
+    "personalization": false,
+    "provider": "mssql",
+    "secure_tunnel": false
+  },
+  "mssql_secondary": {
+    "input": [
+      {
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "hint": "For Azure SQL use username@server",
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "label": "Host",
+        "name": "host",
+        "type": "string"
+      },
+      {
+        "default": 1433,
+        "hint": "Port number, default is 1433",
+        "label": "Port",
+        "name": "port",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Database",
+        "name": "database",
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "hint": "Choose 'yes' if connecting to Azure SQL",
+        "label": "Azure SQL",
+        "name": "azure",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "SQL Server (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "mssql_secondary",
+    "secure_tunnel": false
+  },
+  "mysql": {
+    "input": [
+      {
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "label": "Host",
+        "name": "host",
+        "type": "string"
+      },
+      {
+        "label": "Port",
+        "name": "port",
+        "type": "string"
+      },
+      {
+        "label": "Database",
+        "name": "database",
+        "type": "string"
+      }
+    ],
+    "name": "MySQL",
+    "oauth": false,
+    "personalization": false,
+    "provider": "mysql",
+    "secure_tunnel": false
+  },
+  "mysql_secondary": {
+    "input": [
+      {
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "label": "Host",
+        "name": "host",
+        "type": "string"
+      },
+      {
+        "label": "Port",
+        "name": "port",
+        "type": "string"
+      },
+      {
+        "label": "Database",
+        "name": "database",
+        "type": "string"
+      }
+    ],
+    "name": "MySQL (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "mysql_secondary",
+    "secure_tunnel": false
+  },
+  "namely": {
+    "input": [
+      {
+        "hint": "If your Namely url is https://acme.namely.com then use <b>acme</b> as value.",
+        "label": "Company",
+        "name": "company",
+        "type": "string"
+      }
+    ],
+    "name": "Namely",
+    "oauth": true,
+    "personalization": true,
+    "provider": "namely",
+    "secure_tunnel": false
+  },
+  "nationbuilder": {
+    "input": [
+      {
+        "hint": "Your NationBuilder \"nation\", for example, <b>voteforpedro</b>.nationbuilder.com",
+        "label": "Nation",
+        "name": "slug",
+        "type": "string"
+      }
+    ],
+    "name": "NationBuilder",
+    "oauth": true,
+    "personalization": true,
+    "provider": "nationbuilder",
+    "secure_tunnel": false
+  },
+  "new_relic": {
+    "input": [
+      {
+        "hint": "Go to Account settings->API Keys and get API key",
+        "label": "API Key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "New Relic",
+    "oauth": false,
+    "personalization": false,
+    "provider": "new_relic",
+    "secure_tunnel": false
+  },
+  "okta": {
+    "input": [
+      {
+        "hint": "Your Okta domain name as found in your Okta URL for example, mycompany.okta.com, mytest.oktapreview.com",
+        "label": "Okta domain",
+        "name": "subdomain",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Logon to the Okta admin console as an administrator and go to Security -> API -> Create Token",
+        "label": "API Key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Okta",
+    "oauth": false,
+    "personalization": false,
+    "provider": "okta",
+    "secure_tunnel": false
+  },
+  "okta_secondary": {
+    "input": [
+      {
+        "hint": "Your Okta domain name as found in your Okta URL for example, mycompany.okta.com, mytest.oktapreview.com",
+        "label": "Okta domain",
+        "name": "subdomain",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Logon to the Okta admin console as an administrator and go to Security -> API -> Create Token",
+        "label": "API Key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Okta (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "okta_secondary",
+    "secure_tunnel": false
+  },
+  "onprem_command_line_scripts": {
+    "input": [
+      {
+        "hint": "Profile name given in the <b>config.yml</b> file",
+        "label": "On-prem command-line scripts profile",
+        "name": "profile",
+        "type": "string"
+      }
+    ],
+    "name": "On-prem command-line scripts",
+    "oauth": false,
+    "personalization": false,
+    "provider": "onprem_command_line_scripts",
+    "secure_tunnel": false
+  },
+  "onprem_files": {
+    "input": [
+      {
+        "hint": "Profile name given in the <b>config.yml</b> file",
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      }
+    ],
+    "name": "On-prem files",
+    "oauth": false,
+    "personalization": false,
+    "provider": "onprem_files",
+    "secure_tunnel": false
+  },
+  "onprem_files_secondary": {
+    "input": [
+      {
+        "hint": "Profile name given in the <b>config.yml</b> file",
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      }
+    ],
+    "name": "On-prem files (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "onprem_files_secondary",
+    "secure_tunnel": false
+  },
+  "oracle": {
+    "input": [
+      {
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "label": "Database host",
+        "name": "host",
+        "type": "string"
+      },
+      {
+        "default": 1521,
+        "hint": "Port number, default is 1521",
+        "label": "Database port",
+        "name": "port",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "User name",
+        "name": "user",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Database name",
+        "name": "dbname",
+        "type": "string"
+      }
+    ],
+    "name": "Oracle",
+    "oauth": false,
+    "personalization": false,
+    "provider": "oracle",
+    "secure_tunnel": false
+  },
+  "oracle_ebs": {
+    "input": [
+      {
+        "hint": "URL of the instance. Eg: 'https://oracleebs.mycompany.com:8000/'. <br>\nDeploy User PL/SQL service (internal name: FND_USER_PKG) with service name as 'user'\n",
+        "label": "Instance URL",
+        "name": "instance_url",
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "hint": "Name of the PL/SQL REST service name used while deployment",
+        "label": "User service name",
+        "name": "user_service_name",
+        "type": "string"
+      }
+    ],
+    "name": "Oracle E-Business Suite",
+    "oauth": false,
+    "personalization": false,
+    "provider": "oracle_ebs",
+    "secure_tunnel": false
+  },
+  "oracle_fusion": {
+    "input": [
+      {
+        "label": "User",
+        "name": "user",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      }
+    ],
+    "name": "Oracle Fusion",
+    "oauth": false,
+    "personalization": false,
+    "provider": "oracle_fusion",
+    "secure_tunnel": false
+  },
+  "oracle_secondary": {
+    "input": [
+      {
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "label": "Database host",
+        "name": "host",
+        "type": "string"
+      },
+      {
+        "default": 1521,
+        "hint": "Port number, default is 1521",
+        "label": "Database port",
+        "name": "port",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "User name",
+        "name": "user",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Database name",
+        "name": "dbname",
+        "type": "string"
+      }
+    ],
+    "name": "Oracle (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "oracle_secondary",
+    "secure_tunnel": false
+  },
+  "out_systems": {
+    "input": [
+      {
+        "hint": "Type in an API key generated using the security configuration page, on the <b>OutSystems Workato Connector</b>. If you don't have the <b>OutSystems Workato Connector</b> installed on your server, please get it from the <a href='https://www.outsystems.com/forge/' target='_blank'>OutSystems Forge</a>.",
+        "label": "API key",
+        "name": "API_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Your OutSystems environment URL (eg: YOUR_PERSONAL.outsystemscloud.com).",
+        "label": "Environment URL",
+        "name": "EnvironmentURL",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "OutSystems",
+    "oauth": false,
+    "personalization": false,
+    "provider": "out_systems",
+    "secure_tunnel": false
+  },
+  "outlook": {
+    "input": [
+      {
+        "label": "Advanced settings",
+        "name": "advanced_settings",
+        "optional": true,
+        "properties": [
+          {
+            "hint": "                     Select <a href=\"https://docs.microsoft.com/en-us/graph/permissions-reference#mail-permissions\" target=\"_blank\">permissions</a>\n                     to request for this connection. Defaults to minimum permissions if left blank.\n                     Minimum permissions required are <b>mail.read</b>, <b>mail.send</b>, <b>calendars.readwrite</b>, <b>offline_access</b>, <b>mail.Read.Shared</b>;\n                     these are always requested in addition to selected permissions.\n",
+            "label": "Requested permissions (Oauth scopes)",
+            "name": "api_scope",
+            "optional": true,
+            "type": "string"
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "name": "Outlook",
+    "oauth": true,
+    "personalization": true,
+    "provider": "outlook",
+    "secure_tunnel": false
+  },
+  "pagerduty": {
+    "input": [
+      {
+        "hint": "Go to Configuration -> API Access and get API Key",
+        "label": "API key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Pagerduty",
+    "oauth": false,
+    "personalization": false,
+    "provider": "pagerduty",
+    "secure_tunnel": false
+  },
+  "parsehub": {
+    "input": [
+      {
+        "hint": "Select your ParseHub account name-> Select Account-> Get your api key",
+        "label": "Api key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "ParseHub",
+    "oauth": false,
+    "personalization": false,
+    "provider": "parsehub",
+    "secure_tunnel": false
+  },
+  "percolate": {
+    "input": [
+      {
+        "hint": "To create client ID, the system admin or manager can click <a href='https://percolate.com/app/settings/developer/apps/new' target='_blank'>here</a> to register a new client application.",
+        "label": "Client ID",
+        "name": "client_id",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "To create client secret, the system admin or manager can click <a href='https://percolate.com/app/settings/developer/apps/new' target='_blank'>here</a> to register a new client application.",
+        "label": "Client secret",
+        "name": "client_secret",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Environment",
+        "name": "environment",
+        "optional": false,
+        "pick_list": [
+          [
+            "Production",
+            "production"
+          ],
+          [
+            "Sandbox",
+            "sandbox"
+          ],
+          [
+            "Internal",
+            "internal"
+          ]
+        ],
+        "type": "string"
+      }
+    ],
+    "name": "Percolate",
+    "oauth": false,
+    "personalization": false,
+    "provider": "percolate",
+    "secure_tunnel": false
+  },
+  "pgp": {
+    "input": [
+      {
+        "hint": "Provide the public key in Encrypt and Verify action input.",
+        "label": "Public key (deprecated)",
+        "name": "public_key",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Private is required for decrypt and sign actions. Learn how to generate a pair of Public key and Private key\n<a href=\"https://docs.workato.com/features/pgp-encryption.html\" target=\"_blank\">here</a>.\n",
+        "label": "Private key",
+        "name": "private_key",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Passphrase of the keys you have generated.",
+        "label": "Passphrase",
+        "name": "passphrase",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "PGP",
+    "oauth": false,
+    "personalization": false,
+    "provider": "pgp",
+    "secure_tunnel": false
+  },
+  "pingdom": {
+    "input": [
+      {
+        "label": "Application key",
+        "name": "app_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Your username",
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Pingdom",
+    "oauth": false,
+    "personalization": false,
+    "provider": "pingdom",
+    "secure_tunnel": false
+  },
+  "pipedrive": {
+    "input": [
+      {
+        "hint": "API token is found in the API tab under Personal settings (Settings > Personal > API)",
+        "label": "Api token",
+        "name": "api_token",
+        "type": "string"
+      }
+    ],
+    "name": "Pipedrive",
+    "oauth": false,
+    "personalization": false,
+    "provider": "pipedrive",
+    "secure_tunnel": false
+  },
+  "pivotal_tracker": {
+    "input": [
+      {
+        "hint": "Select your account name -> Profile. Scroll down to end of the page to get API token",
+        "label": "API key",
+        "name": "api_key",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Pivotal Tracker",
+    "oauth": false,
+    "personalization": false,
+    "provider": "pivotal_tracker",
+    "secure_tunnel": false
+  },
+  "postgresql": {
+    "input": [
+      {
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "label": "Database host",
+        "name": "host",
+        "type": "string"
+      },
+      {
+        "label": "Database port",
+        "name": "port",
+        "type": "string"
+      },
+      {
+        "label": "User name",
+        "name": "user",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Database name",
+        "name": "dbname",
+        "type": "string"
+      },
+      {
+        "hint": "\"public\" schema by default",
+        "label": "Schema",
+        "name": "schema_name",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "PostgreSQL",
+    "oauth": false,
+    "personalization": false,
+    "provider": "postgresql",
+    "secure_tunnel": false
+  },
+  "postgresql_secondary": {
+    "input": [
+      {
+        "label": "On-prem connection profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "label": "Database host",
+        "name": "host",
+        "type": "string"
+      },
+      {
+        "label": "Database port",
+        "name": "port",
+        "type": "string"
+      },
+      {
+        "label": "User name",
+        "name": "user",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Database name",
+        "name": "dbname",
+        "type": "string"
+      },
+      {
+        "hint": "\"public\" schema by default",
+        "label": "Schema",
+        "name": "schema_name",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "PostgreSQL (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "postgresql_secondary",
+    "secure_tunnel": false
+  },
+  "product_hunt": {
+    "input": [
+      {
+        "hint": "Your Product Hunt Username. Remove \"@\" prefix.",
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Product Hunt",
+    "oauth": true,
+    "personalization": true,
+    "provider": "product_hunt",
+    "secure_tunnel": false
+  },
+  "prontoforms": {
+    "input": [
+      {
+        "label": "Api key",
+        "name": "api_key",
+        "type": "string"
+      },
+      {
+        "label": "Api secret",
+        "name": "api_secret",
+        "type": "string"
+      }
+    ],
+    "name": "Prontoforms",
+    "oauth": false,
+    "personalization": false,
+    "provider": "prontoforms",
+    "secure_tunnel": false
+  },
+  "propel": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Propel",
+    "oauth": true,
+    "personalization": true,
+    "provider": "propel",
+    "secure_tunnel": false
+  },
+  "quickbase": {
+    "input": [
+      {
+        "hint": "Your Quick Base subdomain is most often your company name",
+        "label": "Sub-domain",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "hint": "Is authentication based on user tokens? If yes, provide <b>User token</b>. If no, provide <b>Username</b> & <b>Password</b>.",
+        "label": "User-token authentication?",
+        "name": "user_token_auth",
+        "type": "boolean"
+      },
+      {
+        "hint": "Get/create user token by clicking on <b>Your profile > My preferences > Manage User Tokens</b>. <a href='https://help.quickbase.com/api-guide/manage_user_tokens.html' target='_blank' >Learn more</a>",
+        "label": "User token",
+        "name": "usertoken",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Quick Base",
+    "oauth": false,
+    "personalization": false,
+    "provider": "quickbase",
+    "secure_tunnel": false
+  },
+  "quickbase_secondary": {
+    "input": [
+      {
+        "hint": "Your Quick Base subdomain is most often your company name",
+        "label": "Sub-domain",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "hint": "Is authentication based on user tokens? If yes, provide <b>User token</b>. If no, provide <b>Username</b> & <b>Password</b>.",
+        "label": "User-token authentication?",
+        "name": "user_token_auth",
+        "type": "boolean"
+      },
+      {
+        "hint": "Get/create user token by clicking on <b>Your profile > My preferences > Manage User Tokens</b>. <a href='https://help.quickbase.com/api-guide/manage_user_tokens.html' target='_blank' >Learn more</a>",
+        "label": "User token",
+        "name": "usertoken",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Quick Base (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "quickbase_secondary",
+    "secure_tunnel": false
+  },
+  "quip": {
+    "input": [
+      {
+        "hint": "Personal API token. Click <a href=\"https://quip.com/api/personal-token\">here</a> to generate API token",
+        "label": "Personal API token",
+        "name": "api_key",
+        "type": "string"
+      }
+    ],
+    "name": "Quip",
+    "oauth": false,
+    "personalization": false,
+    "provider": "quip",
+    "secure_tunnel": false
+  },
+  "redshift": {
+    "input": [
+      {
+        "hint": "Redshift JDBC URL.",
+        "label": "URL",
+        "name": "url",
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "hint": "\"public\" schema by default",
+        "label": "Schema",
+        "name": "schema_name",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Redshift",
+    "oauth": false,
+    "personalization": false,
+    "provider": "redshift",
+    "secure_tunnel": false
+  },
+  "redshift_secondary": {
+    "input": [
+      {
+        "hint": "Redshift JDBC URL.",
+        "label": "URL",
+        "name": "url",
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "hint": "\"public\" schema by default",
+        "label": "Schema",
+        "name": "schema_name",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Redshift (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "redshift_secondary",
+    "secure_tunnel": false
+  },
+  "relateiq": {
+    "input": [
+      {
+        "hint": "Create in your SalesforceIQ account: Organization > settings > integrations",
+        "label": "API Key",
+        "name": "api_key",
+        "type": "string"
+      },
+      {
+        "label": "API Secret",
+        "name": "api_secret",
+        "type": "string"
+      }
+    ],
+    "name": "SalesforceIQ",
+    "oauth": false,
+    "personalization": false,
+    "provider": "relateiq",
+    "secure_tunnel": false
+  },
+  "replicon": {
+    "input": [
+      {
+        "hint": "The company name associated with your login",
+        "label": "Company",
+        "name": "company",
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "hint": "Is authentication based on user tokens? If <b>Yes</b>, provide <b>User token</b>. Is <b>No</b>, provide <b>Username</b> & <b>Password</b>.",
+        "label": "User-token authentication?",
+        "name": "user_token_auth",
+        "type": "boolean"
+      },
+      {
+        "hint": "Use this API https://<b>region</b>.replicon.com/<b>Company name</b>/services/AuthenticationService1.svc/help/test/CreateAccessToken to get user token",
+        "label": "User token",
+        "name": "usertoken",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Login name",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "default": "global",
+        "hint": "Leave to default (global) for production instances",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Replicon",
+    "oauth": false,
+    "personalization": false,
+    "provider": "replicon",
+    "secure_tunnel": false
+  },
+  "rest": {
+    "input": [
+      {
+        "hint": "Select an authentication method. <a href=\"https://docs.workato.com/developing-connectors/http/connection-setup.html\" target=\"_blank\">Learn how to authenticate</a>",
+        "label": "Authentication type",
+        "name": "auth_type",
+        "pick_list": [
+          [
+            "None",
+            "no_auth"
+          ],
+          [
+            "Basic",
+            "basic"
+          ],
+          [
+            "Header auth",
+            "headers"
+          ],
+          [
+            "Query params",
+            "query"
+          ],
+          [
+            "On-prem NTLM",
+            "ntlm"
+          ],
+          [
+            "OAuth 2 (authorization code grant)",
+            "oauth2_auth_code_grant"
+          ],
+          [
+            "OAuth 2 (client credentials grant)",
+            "oauth2_client_credentials_grant"
+          ],
+          [
+            "Custom",
+            "custom"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "NTLM Profile name given in the on-prem agent's <b>config.yml</b> file.",
+        "label": "On-prem NTLM profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "label": "Basic auth user",
+        "name": "basic_user",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Basic auth password",
+        "name": "basic_password",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Add custom auth headers, one per line, for example, <b>X-API-Token: secret42</b>",
+        "label": "Header authorization",
+        "name": "header_pair",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Add custom GET parameters, one per line, for example, <b>token=secret42</b>",
+        "label": "GET-params authorization",
+        "name": "url_param",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Use <b>https://www.workato.com/oauth/callback</b> as callback url. Use <b>response_type=code</b> as param, if needed. <a href='https://docs.workato.com/developing-connectors/http/connection-setup.html#authentication-type-oauth2-authorization-code-grant'\n                 target='_blank'>Learn how to authenticate</a>",
+        "label": "OAuth2 authorization URL",
+        "name": "oauth2_auth_url",
+        "type": "string"
+      },
+      {
+        "label": "OAuth2 token URL",
+        "name": "oauth2_token_url",
+        "type": "string"
+      },
+      {
+        "label": "OAuth2 client ID",
+        "name": "oauth2_client_id",
+        "type": "string"
+      },
+      {
+        "label": "OAuth2 client secret",
+        "name": "oauth2_client_secret",
+        "type": "string"
+      },
+      {
+        "hint": "Send client ID and secret in token request body or as a base64 encoded string in the header?",
+        "label": "How does the API require credentials to be sent to request a token?",
+        "name": "param_type",
+        "optional": true,
+        "pick_list": [
+          [
+            "Header",
+            "basic"
+          ],
+          [
+            "Body",
+            "payload"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "label": "Use client SSL certificate",
+        "name": "ssl_params",
+        "optional": true,
+        "type": "boolean"
+      },
+      {
+        "label": "SSL client certificate",
+        "name": "ssl_client_cert",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "SSL client key",
+        "name": "ssl_client_key",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Custom CA certificate",
+        "name": "ssl_ca_cert",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "HTTP",
+    "oauth": true,
+    "personalization": true,
+    "provider": "rest",
+    "secure_tunnel": false
+  },
+  "rest_oauth": {
+    "input": [
+      {
+        "hint": "Use <b>https://www.workato.com/oauth/callback</b> as callback url. <a href='https://docs.workato.com/developing-connectors/http/connection-setup.html#authentication-type-oauth2-authorization-code-grant'\n                                    target='_blank'>Learn how to authenticate</a>",
+        "label": "OAuth2 auth URL",
+        "name": "oauth2_auth_url",
+        "type": "string"
+      },
+      {
+        "label": "OAuth2 token URL",
+        "name": "oauth2_token_url",
+        "type": "string"
+      },
+      {
+        "label": "OAuth2 client ID",
+        "name": "oauth2_client_id",
+        "type": "string"
+      },
+      {
+        "label": "OAuth2 client secret",
+        "name": "oauth2_client_secret",
+        "type": "string"
+      }
+    ],
+    "name": "HTTP (OAuth2)",
+    "oauth": true,
+    "personalization": true,
+    "provider": "rest_oauth",
+    "secure_tunnel": false
+  },
+  "rest_secondary": {
+    "input": [
+      {
+        "hint": "Select an authentication method. <a href=\"https://docs.workato.com/developing-connectors/http/connection-setup.html\" target=\"_blank\">Learn how to authenticate</a>",
+        "label": "Authentication type",
+        "name": "auth_type",
+        "pick_list": [
+          [
+            "None",
+            "no_auth"
+          ],
+          [
+            "Basic",
+            "basic"
+          ],
+          [
+            "Header auth",
+            "headers"
+          ],
+          [
+            "Query params",
+            "query"
+          ],
+          [
+            "On-prem NTLM",
+            "ntlm"
+          ],
+          [
+            "OAuth 2 (authorization code grant)",
+            "oauth2_auth_code_grant"
+          ],
+          [
+            "OAuth 2 (client credentials grant)",
+            "oauth2_client_credentials_grant"
+          ],
+          [
+            "Custom",
+            "custom"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "NTLM Profile name given in the on-prem agent's <b>config.yml</b> file.",
+        "label": "On-prem NTLM profile",
+        "name": "profile",
+        "type": "string"
+      },
+      {
+        "label": "Basic auth user",
+        "name": "basic_user",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Basic auth password",
+        "name": "basic_password",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Add custom auth headers, one per line, for example, <b>X-API-Token: secret42</b>",
+        "label": "Header authorization",
+        "name": "header_pair",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Add custom GET parameters, one per line, for example, <b>token=secret42</b>",
+        "label": "GET-params authorization",
+        "name": "url_param",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Use <b>https://www.workato.com/oauth/callback</b> as callback url. Use <b>response_type=code</b> as param, if needed. <a href='https://docs.workato.com/developing-connectors/http/connection-setup.html#authentication-type-oauth2-authorization-code-grant'\n                 target='_blank'>Learn how to authenticate</a>",
+        "label": "OAuth2 authorization URL",
+        "name": "oauth2_auth_url",
+        "type": "string"
+      },
+      {
+        "label": "OAuth2 token URL",
+        "name": "oauth2_token_url",
+        "type": "string"
+      },
+      {
+        "label": "OAuth2 client ID",
+        "name": "oauth2_client_id",
+        "type": "string"
+      },
+      {
+        "label": "OAuth2 client secret",
+        "name": "oauth2_client_secret",
+        "type": "string"
+      },
+      {
+        "hint": "Send client ID and secret in token request body or as a base64 encoded string in the header?",
+        "label": "How does the API require credentials to be sent to request a token?",
+        "name": "param_type",
+        "optional": true,
+        "pick_list": [
+          [
+            "Header",
+            "basic"
+          ],
+          [
+            "Body",
+            "payload"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "default": "false",
+        "label": "Use client SSL certificate",
+        "name": "ssl_params",
+        "optional": true,
+        "type": "boolean"
+      },
+      {
+        "label": "SSL client certificate",
+        "name": "ssl_client_cert",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "SSL client key",
+        "name": "ssl_client_key",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "label": "Custom CA certificate",
+        "name": "ssl_ca_cert",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "HTTP (Secondary)",
+    "oauth": true,
+    "personalization": true,
+    "provider": "rest_secondary",
+    "secure_tunnel": false
+  },
+  "revel_systems": {
+    "input": [
+      {
+        "hint": "Your revel systems subdomain, usually a company name; for example, the <b>api-playground</b> part in https://api-playground.revelup.com",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "label": "Api key",
+        "name": "api_key",
+        "type": "string"
+      },
+      {
+        "label": "Api secret",
+        "name": "api_secret",
+        "type": "string"
+      }
+    ],
+    "name": "Revel Systems",
+    "oauth": false,
+    "personalization": false,
+    "provider": "revel_systems",
+    "secure_tunnel": false
+  },
+  "ringcentral": {
+    "input": [
+      {
+        "hint": "Leave empty to connect production account. Provide <b>true</b> for development account <b>false</b> for production account.",
+        "label": "Development",
+        "name": "development",
+        "optional": true,
+        "type": "number"
+      }
+    ],
+    "name": "RingCentral",
+    "oauth": true,
+    "personalization": true,
+    "provider": "ringcentral",
+    "secure_tunnel": false
+  },
+  "sagelive": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Sage Live",
+    "oauth": true,
+    "personalization": true,
+    "provider": "sagelive",
+    "secure_tunnel": false
+  },
+  "salesforce": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      },
+      {
+        "label": "Advanced settings",
+        "name": "advanced_settings",
+        "optional": true,
+        "properties": [
+          {
+            "hint": "                   Enter your Salesforce community's custom domain URL, eg. <b>acme-domain.force.com</b>.\n                   <a target='_blank' href='https://docs.workato.com/connectors/salesforce.html#connecting-to-custom-domains'>Learn more</a>\n",
+            "label": "Salesforce community custom domain URL",
+            "name": "custom_login_url",
+            "optional": true,
+            "type": "string"
+          },
+          {
+            "hint": "                     Select <a href=\"https://help.salesforce.com/articleView?id=remoteaccess_oauth_scopes.htm&type=5\" target=\"_blank\">permissions</a>\n                      to request for this connection. Defaults to <b>full</b> (all permissions) if left blank.\n                     <br/>Minimum permissions required are <b>basic info</b>, <b>manage data</b> and <b>make\n                      requests at any time</b>;\n                     those are always requested in addition to selected permissions.\n",
+            "label": "Requested permissions (Oauth scopes)",
+            "name": "api_scope",
+            "optional": true,
+            "type": "string"
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "name": "Salesforce",
+    "oauth": true,
+    "personalization": true,
+    "provider": "salesforce",
+    "secure_tunnel": false
+  },
+  "salesforce_marketing_cloud": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Legacy packages (created before 1st August 2019) uses a different set of fields to connect.",
+        "label": "Are you using a new installed package?",
+        "name": "flag",
+        "type": "boolean"
+      },
+      {
+        "hint": "Select the instance of your account. Eg: Select <b>s7</b>, if the instance URL is <b>https://mc.s7.exacttarget.com</b>.",
+        "label": "Instance",
+        "name": "instance",
+        "pick_list": [
+          [
+            "s1",
+            "s1"
+          ],
+          [
+            "s4",
+            "s4"
+          ],
+          [
+            "s6",
+            "s6"
+          ],
+          [
+            "s7",
+            "s7"
+          ],
+          [
+            "s10",
+            "s10"
+          ],
+          [
+            "test",
+            "test"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "Enter the instance of your account. Eg: Enter <b>s7</b>, if the instance URL is <b>https://mc.s7.exacttarget.com</b>.",
+        "label": "Instance name",
+        "name": "instance_name",
+        "type": "string"
+      },
+      {
+        "hint": "Enter the sub-domain of your account.",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "hint": "                   Create client credentials with read and write access for <b>channels</b>, <b>assets</b>, <b>contacts</b>, <b>data</b>. To access shared content, use\n                   credentials of business unit where content belongs.\n                   To create client credentials refer\n                   <a href=\"https://developer.salesforce.com/docs/atlas.en-us.mc-getting-started.meta/mc-getting-started/app-center-types.htm\" target=\"_blank\">here</a>.\n",
+        "label": "Client ID",
+        "name": "client_id",
+        "type": "string"
+      },
+      {
+        "label": "Client secret",
+        "name": "client_secret",
+        "type": "string"
+      }
+    ],
+    "name": "Salesforce Marketing Cloud",
+    "oauth": false,
+    "personalization": false,
+    "provider": "salesforce_marketing_cloud",
+    "secure_tunnel": false
+  },
+  "salesforce_secondary": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      },
+      {
+        "label": "Advanced settings",
+        "name": "advanced_settings",
+        "optional": true,
+        "properties": [
+          {
+            "hint": "                   Enter your Salesforce community's custom domain URL, eg. <b>acme-domain.force.com</b>.\n                   <a target='_blank' href='https://docs.workato.com/connectors/salesforce.html#connecting-to-custom-domains'>Learn more</a>\n",
+            "label": "Salesforce community custom domain URL",
+            "name": "custom_login_url",
+            "optional": true,
+            "type": "string"
+          },
+          {
+            "hint": "                     Select <a href=\"https://help.salesforce.com/articleView?id=remoteaccess_oauth_scopes.htm&type=5\" target=\"_blank\">permissions</a>\n                      to request for this connection. Defaults to <b>full</b> (all permissions) if left blank.\n                     <br/>Minimum permissions required are <b>basic info</b>, <b>manage data</b> and <b>make\n                      requests at any time</b>;\n                     those are always requested in addition to selected permissions.\n",
+            "label": "Requested permissions (Oauth scopes)",
+            "name": "api_scope",
+            "optional": true,
+            "type": "string"
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "name": "Salesforce (Secondary)",
+    "oauth": true,
+    "personalization": true,
+    "provider": "salesforce_secondary",
+    "secure_tunnel": false
+  },
+  "sap": {
+    "input": [
+      {
+        "hint": "<a href='https://docs.workato.com/connectors/sap.html' target='_blank'>Click here</a> to learn how to configure SAP connection.",
+        "label": "On-prem agent connection profile",
+        "name": "profile",
+        "type": "string"
+      }
+    ],
+    "name": "SAP RFC",
+    "oauth": false,
+    "personalization": false,
+    "provider": "sap",
+    "secure_tunnel": false
+  },
+  "sap_d4c": {
+    "input": [
+      {
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "hint": "Eg. 'my123456.vlab.sapbydesign.com'",
+        "label": "Endpoint",
+        "name": "endpoint",
+        "type": "string"
+      }
+    ],
+    "name": "SAP D4C",
+    "oauth": false,
+    "personalization": false,
+    "provider": "sap_d4c",
+    "secure_tunnel": false
+  },
+  "sap_s4_hana_cloud": {
+    "input": [
+      {
+        "hint": "Your SAP Service URL to validate authentication. For example, <b>http://sap.intranet.acme.com:7654/sap/opu/odata/sap/ZEMPLOYEE_SRV</b>.",
+        "label": "Service URL",
+        "name": "domain",
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "hint": "SAP client ID. Leave blank to use the default logon client.",
+        "label": "Client",
+        "name": "client",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "SAP OData",
+    "oauth": false,
+    "personalization": false,
+    "provider": "sap_s4_hana_cloud",
+    "secure_tunnel": false
+  },
+  "sendgrid": {
+    "input": [
+      {
+        "hint": "Go to settings -> API keys -> create API key",
+        "label": "API key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "SendGrid",
+    "oauth": false,
+    "personalization": false,
+    "provider": "sendgrid",
+    "secure_tunnel": false
+  },
+  "service_now": {
+    "input": [
+      {
+        "default": "basic",
+        "hint": "Only Istanbul version or later supports OAuth 2.0. <a href=\"http://docs.workato.com/connectors/servicenow.html\" target=\"_blank\">Learn more</a> about the authentication types.",
+        "label": "Authentication type",
+        "name": "authentication_type",
+        "pick_list": [
+          [
+            "Username/Password",
+            "basic"
+          ],
+          [
+            "OAuth 2.0",
+            "oauth"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "If your ServiceNow url is <b>https://acme.service-now.com</b>, then instance name is <b>'acme'</b>.",
+        "label": "Instance name",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "hint": "Make sure that you have sufficient access control to all the tables you wish to work with. <a href=\"http://docs.workato.com/connectors/servicenow.html#roles-and-permissions-required-to-connect\" target=\"_blank\">Learn more</a>.",
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "hint": "<a href=\"http://docs.workato.com/connectors/servicenow.html#oauth-20\" target=\"_blank\">Learn more</a> about setting up OAuth in your ServiceNow instance.",
+        "label": "Client ID",
+        "name": "client_id",
+        "type": "string"
+      },
+      {
+        "label": "Client secret",
+        "name": "client_secret",
+        "type": "string"
+      }
+    ],
+    "name": "ServiceNow",
+    "oauth": true,
+    "personalization": true,
+    "provider": "service_now",
+    "secure_tunnel": false
+  },
+  "service_now_secondary": {
+    "input": [
+      {
+        "default": "basic",
+        "hint": "Only Istanbul version or later supports OAuth 2.0. <a href=\"http://docs.workato.com/connectors/servicenow.html\" target=\"_blank\">Learn more</a> about the authentication types.",
+        "label": "Authentication type",
+        "name": "authentication_type",
+        "pick_list": [
+          [
+            "Username/Password",
+            "basic"
+          ],
+          [
+            "OAuth 2.0",
+            "oauth"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "If your ServiceNow url is <b>https://acme.service-now.com</b>, then instance name is <b>'acme'</b>.",
+        "label": "Instance name",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "hint": "Make sure that you have sufficient access control to all the tables you wish to work with. <a href=\"http://docs.workato.com/connectors/servicenow.html#roles-and-permissions-required-to-connect\" target=\"_blank\">Learn more</a>.",
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "hint": "<a href=\"http://docs.workato.com/connectors/servicenow.html#oauth-20\" target=\"_blank\">Learn more</a> about setting up OAuth in your ServiceNow instance.",
+        "label": "Client ID",
+        "name": "client_id",
+        "type": "string"
+      },
+      {
+        "label": "Client secret",
+        "name": "client_secret",
+        "type": "string"
+      }
+    ],
+    "name": "ServiceNow (Secondary)",
+    "oauth": true,
+    "personalization": true,
+    "provider": "service_now_secondary",
+    "secure_tunnel": false
+  },
+  "servicem8": {
+    "input": [
+      {
+        "label": "User",
+        "name": "user",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      }
+    ],
+    "name": "ServiceM8",
+    "oauth": false,
+    "personalization": false,
+    "provider": "servicem8",
+    "secure_tunnel": false
+  },
+  "shopify": {
+    "input": [
+      {
+        "hint": "Your shop name Eg. <b>shopname</b>.myshopify.com/admin",
+        "label": "Shop Name",
+        "name": "shop_name",
+        "type": "string"
+      }
+    ],
+    "name": "Shopify",
+    "oauth": true,
+    "personalization": true,
+    "provider": "shopify",
+    "secure_tunnel": false
+  },
+  "showpad": {
+    "input": [
+      {
+        "hint": "Your Showpad subdomain, usually a company name; for example, the <b>acme</b> part in https://acme.showpad.biz",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "type": "string"
+      }
+    ],
+    "name": "Showpad",
+    "oauth": true,
+    "personalization": true,
+    "provider": "showpad",
+    "secure_tunnel": false
+  },
+  "slack_bot": {
+    "input": [
+      {
+        "hint": "Choose a connection for your conversational interface. Supports Google's DialogFlow and Amazon Lex.",
+        "label": "NLU provider",
+        "name": "nlu_provider_shared_account_id",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Additional fields that are not needed for most users",
+        "label": "Advanced",
+        "name": "advanced",
+        "optional": true,
+        "properties": [
+          {
+            "hint": "Used for invoking Custom Integration slash commands. Each slash command has a token. Separate tokens with commas to support multiple slash commands. <a href='https://docs.workato.com/workbot/legacy-slash-commands.html#configuring-the-workbot-connection' target='_blank'>Learn more.</a>",
+            "label": "Slash commands verification tokens",
+            "name": "extra_tokens",
+            "optional": true,
+            "type": "string"
+          },
+          {
+            "hint": "Provide simple text help OR rich help using a JSON document corresponding to Slack message.You can build a rich help message using the <a href='https://api.slack.com/docs/messages/builder' target='_blank'>Slack message builder.</a>",
+            "label": "Custom help",
+            "name": "custom_help",
+            "optional": true,
+            "type": "string"
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "name": "Workbot for Slack",
+    "oauth": true,
+    "personalization": true,
+    "provider": "slack_bot",
+    "secure_tunnel": false
+  },
+  "smartsheet": {
+    "input": [
+      {
+        "label": "Advanced settings",
+        "name": "advanced_settings",
+        "optional": true,
+        "properties": [
+          {
+            "hint": "                      Select <a href=\"https://smartsheet-platform.github.io/api-docs/#access-scopes\" target=\"_blank\">permissions</a>\n                      to request for this connection. Defaults to minimum permissions, if left blank.\n                      <br/>Minimum permissions required are <b>READ_SHEETS</b>, <b>WRITE_SHEETS</b>, <b>ADMIN_WEBHOOKS</b> and <b>CREATE_SHEETS</b>;\n                      those are always requested in addition to selected permissions.\n",
+            "label": "Requested permissions (Oauth scopes)",
+            "name": "api_scope",
+            "optional": true,
+            "type": "string"
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "name": "Smartsheet",
+    "oauth": true,
+    "personalization": true,
+    "provider": "smartsheet",
+    "secure_tunnel": false
+  },
+  "snowflake": {
+    "input": [
+      {
+        "hint": "Account name of your Snowflake instance. This depends on the cloud platform (AWS or Azure)\nand region where your Snowflake instance is hosted.\n<a target=\"_blank\" href=\"https://docs.workato.com/connectors/snowflake.html#how-to-connect-to-snowflake-on-workato\">Learn more</a>.",
+        "label": "Account name",
+        "name": "host",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Full name of warehouse to perform all operations for this connection.\n<a target=\"_blank\" href=\"https://docs.workato.com/connectors/snowflake.html#considerations-for-warehouse\">Learn more</a>",
+        "label": "Warehouse",
+        "name": "warehouse",
+        "type": "string"
+      },
+      {
+        "label": "Database name",
+        "name": "database",
+        "type": "string"
+      },
+      {
+        "label": "User name",
+        "name": "user",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "\"public\" schema by default",
+        "label": "Schema",
+        "name": "schema_name",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Apply this to all timestamps without timezone.\n<a target=\"_blank\" href=\"https://docs.workato.com/connectors/snowflake.html#database-timezone\">Learn more</a>",
+        "label": "Database timezone",
+        "name": "db_timezone",
+        "optional": true,
+        "pick_list": [
+          [
+            "American Samoa",
+            "American Samoa"
+          ],
+          [
+            "International Date Line West",
+            "International Date Line West"
+          ],
+          [
+            "Midway Island",
+            "Midway Island"
+          ],
+          [
+            "Hawaii",
+            "Hawaii"
+          ],
+          [
+            "Alaska",
+            "Alaska"
+          ],
+          [
+            "Pacific Time (US & Canada)",
+            "Pacific Time (US & Canada)"
+          ],
+          [
+            "Tijuana",
+            "Tijuana"
+          ],
+          [
+            "Arizona",
+            "Arizona"
+          ],
+          [
+            "Chihuahua",
+            "Chihuahua"
+          ],
+          [
+            "Mazatlan",
+            "Mazatlan"
+          ],
+          [
+            "Mountain Time (US & Canada)",
+            "Mountain Time (US & Canada)"
+          ],
+          [
+            "Central America",
+            "Central America"
+          ],
+          [
+            "Central Time (US & Canada)",
+            "Central Time (US & Canada)"
+          ],
+          [
+            "Guadalajara",
+            "Guadalajara"
+          ],
+          [
+            "Mexico City",
+            "Mexico City"
+          ],
+          [
+            "Monterrey",
+            "Monterrey"
+          ],
+          [
+            "Saskatchewan",
+            "Saskatchewan"
+          ],
+          [
+            "Bogota",
+            "Bogota"
+          ],
+          [
+            "Eastern Time (US & Canada)",
+            "Eastern Time (US & Canada)"
+          ],
+          [
+            "Indiana (East)",
+            "Indiana (East)"
+          ],
+          [
+            "Lima",
+            "Lima"
+          ],
+          [
+            "Quito",
+            "Quito"
+          ],
+          [
+            "Atlantic Time (Canada)",
+            "Atlantic Time (Canada)"
+          ],
+          [
+            "Caracas",
+            "Caracas"
+          ],
+          [
+            "Georgetown",
+            "Georgetown"
+          ],
+          [
+            "La Paz",
+            "La Paz"
+          ],
+          [
+            "Santiago",
+            "Santiago"
+          ],
+          [
+            "Newfoundland",
+            "Newfoundland"
+          ],
+          [
+            "Brasilia",
+            "Brasilia"
+          ],
+          [
+            "Buenos Aires",
+            "Buenos Aires"
+          ],
+          [
+            "Greenland",
+            "Greenland"
+          ],
+          [
+            "Montevideo",
+            "Montevideo"
+          ],
+          [
+            "Mid-Atlantic",
+            "Mid-Atlantic"
+          ],
+          [
+            "Azores",
+            "Azores"
+          ],
+          [
+            "Cape Verde Is.",
+            "Cape Verde Is."
+          ],
+          [
+            "Casablanca",
+            "Casablanca"
+          ],
+          [
+            "Dublin",
+            "Dublin"
+          ],
+          [
+            "Edinburgh",
+            "Edinburgh"
+          ],
+          [
+            "Lisbon",
+            "Lisbon"
+          ],
+          [
+            "London",
+            "London"
+          ],
+          [
+            "Monrovia",
+            "Monrovia"
+          ],
+          [
+            "UTC",
+            "UTC"
+          ],
+          [
+            "Amsterdam",
+            "Amsterdam"
+          ],
+          [
+            "Belgrade",
+            "Belgrade"
+          ],
+          [
+            "Berlin",
+            "Berlin"
+          ],
+          [
+            "Bern",
+            "Bern"
+          ],
+          [
+            "Bratislava",
+            "Bratislava"
+          ],
+          [
+            "Brussels",
+            "Brussels"
+          ],
+          [
+            "Budapest",
+            "Budapest"
+          ],
+          [
+            "Copenhagen",
+            "Copenhagen"
+          ],
+          [
+            "Ljubljana",
+            "Ljubljana"
+          ],
+          [
+            "Madrid",
+            "Madrid"
+          ],
+          [
+            "Paris",
+            "Paris"
+          ],
+          [
+            "Prague",
+            "Prague"
+          ],
+          [
+            "Rome",
+            "Rome"
+          ],
+          [
+            "Sarajevo",
+            "Sarajevo"
+          ],
+          [
+            "Skopje",
+            "Skopje"
+          ],
+          [
+            "Stockholm",
+            "Stockholm"
+          ],
+          [
+            "Vienna",
+            "Vienna"
+          ],
+          [
+            "Warsaw",
+            "Warsaw"
+          ],
+          [
+            "West Central Africa",
+            "West Central Africa"
+          ],
+          [
+            "Zagreb",
+            "Zagreb"
+          ],
+          [
+            "Athens",
+            "Athens"
+          ],
+          [
+            "Bucharest",
+            "Bucharest"
+          ],
+          [
+            "Cairo",
+            "Cairo"
+          ],
+          [
+            "Harare",
+            "Harare"
+          ],
+          [
+            "Helsinki",
+            "Helsinki"
+          ],
+          [
+            "Jerusalem",
+            "Jerusalem"
+          ],
+          [
+            "Kaliningrad",
+            "Kaliningrad"
+          ],
+          [
+            "Kyiv",
+            "Kyiv"
+          ],
+          [
+            "Pretoria",
+            "Pretoria"
+          ],
+          [
+            "Riga",
+            "Riga"
+          ],
+          [
+            "Sofia",
+            "Sofia"
+          ],
+          [
+            "Tallinn",
+            "Tallinn"
+          ],
+          [
+            "Vilnius",
+            "Vilnius"
+          ],
+          [
+            "Baghdad",
+            "Baghdad"
+          ],
+          [
+            "Istanbul",
+            "Istanbul"
+          ],
+          [
+            "Kuwait",
+            "Kuwait"
+          ],
+          [
+            "Minsk",
+            "Minsk"
+          ],
+          [
+            "Moscow",
+            "Moscow"
+          ],
+          [
+            "Nairobi",
+            "Nairobi"
+          ],
+          [
+            "Riyadh",
+            "Riyadh"
+          ],
+          [
+            "St. Petersburg",
+            "St. Petersburg"
+          ],
+          [
+            "Tehran",
+            "Tehran"
+          ],
+          [
+            "Abu Dhabi",
+            "Abu Dhabi"
+          ],
+          [
+            "Baku",
+            "Baku"
+          ],
+          [
+            "Muscat",
+            "Muscat"
+          ],
+          [
+            "Samara",
+            "Samara"
+          ],
+          [
+            "Tbilisi",
+            "Tbilisi"
+          ],
+          [
+            "Volgograd",
+            "Volgograd"
+          ],
+          [
+            "Yerevan",
+            "Yerevan"
+          ],
+          [
+            "Kabul",
+            "Kabul"
+          ],
+          [
+            "Ekaterinburg",
+            "Ekaterinburg"
+          ],
+          [
+            "Islamabad",
+            "Islamabad"
+          ],
+          [
+            "Karachi",
+            "Karachi"
+          ],
+          [
+            "Tashkent",
+            "Tashkent"
+          ],
+          [
+            "Chennai",
+            "Chennai"
+          ],
+          [
+            "Kolkata",
+            "Kolkata"
+          ],
+          [
+            "Mumbai",
+            "Mumbai"
+          ],
+          [
+            "New Delhi",
+            "New Delhi"
+          ],
+          [
+            "Sri Jayawardenepura",
+            "Sri Jayawardenepura"
+          ],
+          [
+            "Kathmandu",
+            "Kathmandu"
+          ],
+          [
+            "Almaty",
+            "Almaty"
+          ],
+          [
+            "Astana",
+            "Astana"
+          ],
+          [
+            "Dhaka",
+            "Dhaka"
+          ],
+          [
+            "Urumqi",
+            "Urumqi"
+          ],
+          [
+            "Rangoon",
+            "Rangoon"
+          ],
+          [
+            "Bangkok",
+            "Bangkok"
+          ],
+          [
+            "Hanoi",
+            "Hanoi"
+          ],
+          [
+            "Jakarta",
+            "Jakarta"
+          ],
+          [
+            "Krasnoyarsk",
+            "Krasnoyarsk"
+          ],
+          [
+            "Novosibirsk",
+            "Novosibirsk"
+          ],
+          [
+            "Beijing",
+            "Beijing"
+          ],
+          [
+            "Chongqing",
+            "Chongqing"
+          ],
+          [
+            "Hong Kong",
+            "Hong Kong"
+          ],
+          [
+            "Irkutsk",
+            "Irkutsk"
+          ],
+          [
+            "Kuala Lumpur",
+            "Kuala Lumpur"
+          ],
+          [
+            "Perth",
+            "Perth"
+          ],
+          [
+            "Singapore",
+            "Singapore"
+          ],
+          [
+            "Taipei",
+            "Taipei"
+          ],
+          [
+            "Ulaanbaatar",
+            "Ulaanbaatar"
+          ],
+          [
+            "Osaka",
+            "Osaka"
+          ],
+          [
+            "Sapporo",
+            "Sapporo"
+          ],
+          [
+            "Seoul",
+            "Seoul"
+          ],
+          [
+            "Tokyo",
+            "Tokyo"
+          ],
+          [
+            "Yakutsk",
+            "Yakutsk"
+          ],
+          [
+            "Adelaide",
+            "Adelaide"
+          ],
+          [
+            "Darwin",
+            "Darwin"
+          ],
+          [
+            "Brisbane",
+            "Brisbane"
+          ],
+          [
+            "Canberra",
+            "Canberra"
+          ],
+          [
+            "Guam",
+            "Guam"
+          ],
+          [
+            "Hobart",
+            "Hobart"
+          ],
+          [
+            "Melbourne",
+            "Melbourne"
+          ],
+          [
+            "Port Moresby",
+            "Port Moresby"
+          ],
+          [
+            "Sydney",
+            "Sydney"
+          ],
+          [
+            "Vladivostok",
+            "Vladivostok"
+          ],
+          [
+            "Magadan",
+            "Magadan"
+          ],
+          [
+            "New Caledonia",
+            "New Caledonia"
+          ],
+          [
+            "Solomon Is.",
+            "Solomon Is."
+          ],
+          [
+            "Srednekolymsk",
+            "Srednekolymsk"
+          ],
+          [
+            "Auckland",
+            "Auckland"
+          ],
+          [
+            "Fiji",
+            "Fiji"
+          ],
+          [
+            "Kamchatka",
+            "Kamchatka"
+          ],
+          [
+            "Marshall Is.",
+            "Marshall Is."
+          ],
+          [
+            "Wellington",
+            "Wellington"
+          ],
+          [
+            "Chatham Is.",
+            "Chatham Is."
+          ],
+          [
+            "Nuku'alofa",
+            "Nuku'alofa"
+          ],
+          [
+            "Samoa",
+            "Samoa"
+          ],
+          [
+            "Tokelau Is.",
+            "Tokelau Is."
+          ]
+        ],
+        "type": "string"
+      }
+    ],
+    "name": "Snowflake",
+    "oauth": false,
+    "personalization": false,
+    "provider": "snowflake",
+    "secure_tunnel": false
+  },
+  "snowflake_secondary": {
+    "input": [
+      {
+        "hint": "Account name of your Snowflake instance. This depends on the cloud platform (AWS or Azure)\nand region where your Snowflake instance is hosted.\n<a target=\"_blank\" href=\"https://docs.workato.com/connectors/snowflake.html#how-to-connect-to-snowflake-on-workato\">Learn more</a>.",
+        "label": "Account name",
+        "name": "host",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Full name of warehouse to perform all operations for this connection.\n<a target=\"_blank\" href=\"https://docs.workato.com/connectors/snowflake.html#considerations-for-warehouse\">Learn more</a>",
+        "label": "Warehouse",
+        "name": "warehouse",
+        "type": "string"
+      },
+      {
+        "label": "Database name",
+        "name": "database",
+        "type": "string"
+      },
+      {
+        "label": "User name",
+        "name": "user",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "\"public\" schema by default",
+        "label": "Schema",
+        "name": "schema_name",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Apply this to all timestamps without timezone.\n<a target=\"_blank\" href=\"https://docs.workato.com/connectors/snowflake.html#database-timezone\">Learn more</a>",
+        "label": "Database timezone",
+        "name": "db_timezone",
+        "optional": true,
+        "pick_list": [
+          [
+            "American Samoa",
+            "American Samoa"
+          ],
+          [
+            "International Date Line West",
+            "International Date Line West"
+          ],
+          [
+            "Midway Island",
+            "Midway Island"
+          ],
+          [
+            "Hawaii",
+            "Hawaii"
+          ],
+          [
+            "Alaska",
+            "Alaska"
+          ],
+          [
+            "Pacific Time (US & Canada)",
+            "Pacific Time (US & Canada)"
+          ],
+          [
+            "Tijuana",
+            "Tijuana"
+          ],
+          [
+            "Arizona",
+            "Arizona"
+          ],
+          [
+            "Chihuahua",
+            "Chihuahua"
+          ],
+          [
+            "Mazatlan",
+            "Mazatlan"
+          ],
+          [
+            "Mountain Time (US & Canada)",
+            "Mountain Time (US & Canada)"
+          ],
+          [
+            "Central America",
+            "Central America"
+          ],
+          [
+            "Central Time (US & Canada)",
+            "Central Time (US & Canada)"
+          ],
+          [
+            "Guadalajara",
+            "Guadalajara"
+          ],
+          [
+            "Mexico City",
+            "Mexico City"
+          ],
+          [
+            "Monterrey",
+            "Monterrey"
+          ],
+          [
+            "Saskatchewan",
+            "Saskatchewan"
+          ],
+          [
+            "Bogota",
+            "Bogota"
+          ],
+          [
+            "Eastern Time (US & Canada)",
+            "Eastern Time (US & Canada)"
+          ],
+          [
+            "Indiana (East)",
+            "Indiana (East)"
+          ],
+          [
+            "Lima",
+            "Lima"
+          ],
+          [
+            "Quito",
+            "Quito"
+          ],
+          [
+            "Atlantic Time (Canada)",
+            "Atlantic Time (Canada)"
+          ],
+          [
+            "Caracas",
+            "Caracas"
+          ],
+          [
+            "Georgetown",
+            "Georgetown"
+          ],
+          [
+            "La Paz",
+            "La Paz"
+          ],
+          [
+            "Santiago",
+            "Santiago"
+          ],
+          [
+            "Newfoundland",
+            "Newfoundland"
+          ],
+          [
+            "Brasilia",
+            "Brasilia"
+          ],
+          [
+            "Buenos Aires",
+            "Buenos Aires"
+          ],
+          [
+            "Greenland",
+            "Greenland"
+          ],
+          [
+            "Montevideo",
+            "Montevideo"
+          ],
+          [
+            "Mid-Atlantic",
+            "Mid-Atlantic"
+          ],
+          [
+            "Azores",
+            "Azores"
+          ],
+          [
+            "Cape Verde Is.",
+            "Cape Verde Is."
+          ],
+          [
+            "Casablanca",
+            "Casablanca"
+          ],
+          [
+            "Dublin",
+            "Dublin"
+          ],
+          [
+            "Edinburgh",
+            "Edinburgh"
+          ],
+          [
+            "Lisbon",
+            "Lisbon"
+          ],
+          [
+            "London",
+            "London"
+          ],
+          [
+            "Monrovia",
+            "Monrovia"
+          ],
+          [
+            "UTC",
+            "UTC"
+          ],
+          [
+            "Amsterdam",
+            "Amsterdam"
+          ],
+          [
+            "Belgrade",
+            "Belgrade"
+          ],
+          [
+            "Berlin",
+            "Berlin"
+          ],
+          [
+            "Bern",
+            "Bern"
+          ],
+          [
+            "Bratislava",
+            "Bratislava"
+          ],
+          [
+            "Brussels",
+            "Brussels"
+          ],
+          [
+            "Budapest",
+            "Budapest"
+          ],
+          [
+            "Copenhagen",
+            "Copenhagen"
+          ],
+          [
+            "Ljubljana",
+            "Ljubljana"
+          ],
+          [
+            "Madrid",
+            "Madrid"
+          ],
+          [
+            "Paris",
+            "Paris"
+          ],
+          [
+            "Prague",
+            "Prague"
+          ],
+          [
+            "Rome",
+            "Rome"
+          ],
+          [
+            "Sarajevo",
+            "Sarajevo"
+          ],
+          [
+            "Skopje",
+            "Skopje"
+          ],
+          [
+            "Stockholm",
+            "Stockholm"
+          ],
+          [
+            "Vienna",
+            "Vienna"
+          ],
+          [
+            "Warsaw",
+            "Warsaw"
+          ],
+          [
+            "West Central Africa",
+            "West Central Africa"
+          ],
+          [
+            "Zagreb",
+            "Zagreb"
+          ],
+          [
+            "Athens",
+            "Athens"
+          ],
+          [
+            "Bucharest",
+            "Bucharest"
+          ],
+          [
+            "Cairo",
+            "Cairo"
+          ],
+          [
+            "Harare",
+            "Harare"
+          ],
+          [
+            "Helsinki",
+            "Helsinki"
+          ],
+          [
+            "Jerusalem",
+            "Jerusalem"
+          ],
+          [
+            "Kaliningrad",
+            "Kaliningrad"
+          ],
+          [
+            "Kyiv",
+            "Kyiv"
+          ],
+          [
+            "Pretoria",
+            "Pretoria"
+          ],
+          [
+            "Riga",
+            "Riga"
+          ],
+          [
+            "Sofia",
+            "Sofia"
+          ],
+          [
+            "Tallinn",
+            "Tallinn"
+          ],
+          [
+            "Vilnius",
+            "Vilnius"
+          ],
+          [
+            "Baghdad",
+            "Baghdad"
+          ],
+          [
+            "Istanbul",
+            "Istanbul"
+          ],
+          [
+            "Kuwait",
+            "Kuwait"
+          ],
+          [
+            "Minsk",
+            "Minsk"
+          ],
+          [
+            "Moscow",
+            "Moscow"
+          ],
+          [
+            "Nairobi",
+            "Nairobi"
+          ],
+          [
+            "Riyadh",
+            "Riyadh"
+          ],
+          [
+            "St. Petersburg",
+            "St. Petersburg"
+          ],
+          [
+            "Tehran",
+            "Tehran"
+          ],
+          [
+            "Abu Dhabi",
+            "Abu Dhabi"
+          ],
+          [
+            "Baku",
+            "Baku"
+          ],
+          [
+            "Muscat",
+            "Muscat"
+          ],
+          [
+            "Samara",
+            "Samara"
+          ],
+          [
+            "Tbilisi",
+            "Tbilisi"
+          ],
+          [
+            "Volgograd",
+            "Volgograd"
+          ],
+          [
+            "Yerevan",
+            "Yerevan"
+          ],
+          [
+            "Kabul",
+            "Kabul"
+          ],
+          [
+            "Ekaterinburg",
+            "Ekaterinburg"
+          ],
+          [
+            "Islamabad",
+            "Islamabad"
+          ],
+          [
+            "Karachi",
+            "Karachi"
+          ],
+          [
+            "Tashkent",
+            "Tashkent"
+          ],
+          [
+            "Chennai",
+            "Chennai"
+          ],
+          [
+            "Kolkata",
+            "Kolkata"
+          ],
+          [
+            "Mumbai",
+            "Mumbai"
+          ],
+          [
+            "New Delhi",
+            "New Delhi"
+          ],
+          [
+            "Sri Jayawardenepura",
+            "Sri Jayawardenepura"
+          ],
+          [
+            "Kathmandu",
+            "Kathmandu"
+          ],
+          [
+            "Almaty",
+            "Almaty"
+          ],
+          [
+            "Astana",
+            "Astana"
+          ],
+          [
+            "Dhaka",
+            "Dhaka"
+          ],
+          [
+            "Urumqi",
+            "Urumqi"
+          ],
+          [
+            "Rangoon",
+            "Rangoon"
+          ],
+          [
+            "Bangkok",
+            "Bangkok"
+          ],
+          [
+            "Hanoi",
+            "Hanoi"
+          ],
+          [
+            "Jakarta",
+            "Jakarta"
+          ],
+          [
+            "Krasnoyarsk",
+            "Krasnoyarsk"
+          ],
+          [
+            "Novosibirsk",
+            "Novosibirsk"
+          ],
+          [
+            "Beijing",
+            "Beijing"
+          ],
+          [
+            "Chongqing",
+            "Chongqing"
+          ],
+          [
+            "Hong Kong",
+            "Hong Kong"
+          ],
+          [
+            "Irkutsk",
+            "Irkutsk"
+          ],
+          [
+            "Kuala Lumpur",
+            "Kuala Lumpur"
+          ],
+          [
+            "Perth",
+            "Perth"
+          ],
+          [
+            "Singapore",
+            "Singapore"
+          ],
+          [
+            "Taipei",
+            "Taipei"
+          ],
+          [
+            "Ulaanbaatar",
+            "Ulaanbaatar"
+          ],
+          [
+            "Osaka",
+            "Osaka"
+          ],
+          [
+            "Sapporo",
+            "Sapporo"
+          ],
+          [
+            "Seoul",
+            "Seoul"
+          ],
+          [
+            "Tokyo",
+            "Tokyo"
+          ],
+          [
+            "Yakutsk",
+            "Yakutsk"
+          ],
+          [
+            "Adelaide",
+            "Adelaide"
+          ],
+          [
+            "Darwin",
+            "Darwin"
+          ],
+          [
+            "Brisbane",
+            "Brisbane"
+          ],
+          [
+            "Canberra",
+            "Canberra"
+          ],
+          [
+            "Guam",
+            "Guam"
+          ],
+          [
+            "Hobart",
+            "Hobart"
+          ],
+          [
+            "Melbourne",
+            "Melbourne"
+          ],
+          [
+            "Port Moresby",
+            "Port Moresby"
+          ],
+          [
+            "Sydney",
+            "Sydney"
+          ],
+          [
+            "Vladivostok",
+            "Vladivostok"
+          ],
+          [
+            "Magadan",
+            "Magadan"
+          ],
+          [
+            "New Caledonia",
+            "New Caledonia"
+          ],
+          [
+            "Solomon Is.",
+            "Solomon Is."
+          ],
+          [
+            "Srednekolymsk",
+            "Srednekolymsk"
+          ],
+          [
+            "Auckland",
+            "Auckland"
+          ],
+          [
+            "Fiji",
+            "Fiji"
+          ],
+          [
+            "Kamchatka",
+            "Kamchatka"
+          ],
+          [
+            "Marshall Is.",
+            "Marshall Is."
+          ],
+          [
+            "Wellington",
+            "Wellington"
+          ],
+          [
+            "Chatham Is.",
+            "Chatham Is."
+          ],
+          [
+            "Nuku'alofa",
+            "Nuku'alofa"
+          ],
+          [
+            "Samoa",
+            "Samoa"
+          ],
+          [
+            "Tokelau Is.",
+            "Tokelau Is."
+          ]
+        ],
+        "type": "string"
+      }
+    ],
+    "name": "Snowflake (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "snowflake_secondary",
+    "secure_tunnel": false
+  },
+  "splunk": {
+    "input": [
+      {
+        "hint": "                   The URL of the Splunk management port (for example, https://yourdomain:8089).\n                   You MUST install the <a href='https://splunkbase.splunk.com/apps/#/search/workato'>Workato Add-on for Splunk</a> first.\n",
+        "label": "Server URL",
+        "name": "server_url",
+        "type": "string"
+      },
+      {
+        "hint": "The Splunk username (for example, admin)",
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "hint": "The password for the Splunk username",
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      }
+    ],
+    "name": "Splunk",
+    "oauth": false,
+    "personalization": false,
+    "provider": "splunk",
+    "secure_tunnel": false
+  },
+  "steelbrick": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Salesforce CPQ",
+    "oauth": true,
+    "personalization": true,
+    "provider": "steelbrick",
+    "secure_tunnel": false
+  },
+  "stripe": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a demo account?",
+        "label": "Demo",
+        "name": "demo",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Stripe",
+    "oauth": true,
+    "personalization": true,
+    "provider": "stripe",
+    "secure_tunnel": false
+  },
+  "taskray": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "TaskRay",
+    "oauth": true,
+    "personalization": true,
+    "provider": "taskray",
+    "secure_tunnel": false
+  },
+  "trackvia": {
+    "input": [
+      {
+        "hint": "Enter your TrackVia subdomain. For example, customdomain.trackvia.com. By default, <b>go.trackvia.com</b> will be used.",
+        "label": "TrackVia subdomain",
+        "name": "custom_domain",
+        "optional": "true",
+        "type": "string"
+      }
+    ],
+    "name": "TrackVia",
+    "oauth": true,
+    "personalization": true,
+    "provider": "trackvia",
+    "secure_tunnel": false
+  },
+  "tradeshift": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "              If <b>yes</b>, click <a target='_blank' href=https://sandbox.tradeshift.com/#/apps/Tradeshift.AppStore/apps/Workato.tradeshiftAdapterProduction>here</a> to activate your sandbox account else click <a target='_blank' href=https://go.tradeshift.com/#/apps/Tradeshift.AppStore/apps/Workato.tradeshiftAdapterProduction>here</a> to activate your production account.\n",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Tradeshift",
+    "oauth": true,
+    "personalization": true,
+    "provider": "tradeshift",
+    "secure_tunnel": false
+  },
+  "twilio": {
+    "input": [
+      {
+        "hint": "See your Twilio <a href=\"https://www.twilio.com/user/account\">account page</a>",
+        "label": "Account SID",
+        "name": "sid",
+        "type": "string"
+      },
+      {
+        "hint": "See your Twilio <a href=\"https://www.twilio.com/user/account\">account page</a>",
+        "label": "Auth token",
+        "name": "token",
+        "type": "string"
+      }
+    ],
+    "name": "Twilio",
+    "oauth": false,
+    "personalization": false,
+    "provider": "twilio",
+    "secure_tunnel": false
+  },
+  "unbounce": {
+    "input": [
+      {
+        "hint": "Profile (top right) > Manage Account > API Access",
+        "label": "Api key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Unbounce",
+    "oauth": false,
+    "personalization": false,
+    "provider": "unbounce",
+    "secure_tunnel": false
+  },
+  "veeva": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Veeva CRM",
+    "oauth": true,
+    "personalization": true,
+    "provider": "veeva",
+    "secure_tunnel": false
+  },
+  "vlocity": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Vlocity",
+    "oauth": true,
+    "personalization": true,
+    "provider": "vlocity",
+    "secure_tunnel": false
+  },
+  "watson_tone_analyzer": {
+    "input": [
+      {
+        "hint": "Require Cloud Foundry service credentials. <a href='https://cloud.ibm.com/docs/services/watson?topic=watson-creating-credentials#creating-credentials' target='_blank'>Learn more</a>",
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Require Cloud Foundry service credentials. <a href='https://cloud.ibm.com/docs/services/watson?topic=watson-creating-credentials#creating-credentials' target='_blank'>Learn more</a>",
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Watson Tone Analyzer",
+    "oauth": false,
+    "personalization": false,
+    "provider": "watson_tone_analyzer",
+    "secure_tunnel": false
+  },
+  "webmerge": {
+    "input": [
+      {
+        "hint": "Select your profile icon->Api Access to get the API key",
+        "label": "API key",
+        "name": "api_key",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Select your profile icon->Api Access to get the API secret",
+        "label": "API secret",
+        "name": "api_secret",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "WebMerge",
+    "oauth": false,
+    "personalization": false,
+    "provider": "webmerge",
+    "secure_tunnel": false
+  },
+  "woocommerce": {
+    "input": [
+      {
+        "hint": "Consumer key is found at API tab of WooCommerce settings",
+        "label": "Consumer key",
+        "name": "consumer_key",
+        "type": "string"
+      },
+      {
+        "hint": "Consumer secret is found at API tab of WooCommerce settings",
+        "label": "Consumer secret",
+        "name": "consumer_secret",
+        "type": "string"
+      },
+      {
+        "hint": "If your WooCommerce home page url is https://app.Woocommerce.com, then use app.Woocommerce.com",
+        "label": "Host",
+        "name": "host",
+        "type": "string"
+      },
+      {
+        "hint": "Comma separated order IDs to sample custom fields. Takes up to 3 values",
+        "label": "Example order IDs",
+        "name": "order_ids",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "WooCommerce",
+    "oauth": false,
+    "personalization": false,
+    "provider": "woocommerce",
+    "secure_tunnel": false
+  },
+  "workato_app": {
+    "input": [
+      {
+        "default": "nil",
+        "label": "Whose account are you managing?",
+        "name": "connecting_to_account",
+        "pick_list": [
+          [
+            "My account",
+            "current"
+          ],
+          [
+            "Someone else's account",
+            "other"
+          ]
+        ],
+        "type": "boolean"
+      },
+      {
+        "hint": "Managed account\u2019s email",
+        "label": "Email",
+        "name": "email",
+        "type": "string"
+      },
+      {
+        "hint": "Ask the account holder to provide the API key found here: <a href=\"http://localhost:3000/users/current/edit#api_key\" target=\"_blank\">http://localhost:3000/users/current/edit#api_key</a>",
+        "label": "API key",
+        "name": "api_key",
+        "type": "string"
+      }
+    ],
+    "name": "RecipeOps by Workato",
+    "oauth": false,
+    "personalization": false,
+    "provider": "workato_app",
+    "secure_tunnel": false
+  },
+  "workday": {
+    "input": [
+      {
+        "label": "Login name",
+        "name": "login",
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      },
+      {
+        "default": "29.0",
+        "label": "Workday web services version",
+        "name": "soap_api_version",
+        "pick_list": [
+          [
+            "29.0",
+            "29.0"
+          ],
+          [
+            "32.2",
+            "32.2"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "Tenant ID can be found in the URL when you are logged into Workday.<br>\n    For example in https://impl.workday.com/sample_company/d/home.htmld, tenant ID is sample_company",
+        "label": "Tenant ID",
+        "name": "tenant_id",
+        "type": "string"
+      },
+      {
+        "default": "https://wd2-impl-services1.workday.com/ccx/service/",
+        "hint": "You need to provide any wsdl url. <br>\n    The manual how to get it could be found <a href='https://community.workday.com/articles/6120#endpoint' target='_blank'>here</a>",
+        "label": "WSDL URL",
+        "name": "base_uri",
+        "type": "string"
+      },
+      {
+        "hint": "Working with custom objects in Workday requires additional connection settings.",
+        "label": "use custom objects?",
+        "name": "oauth",
+        "type": "boolean"
+      },
+      {
+        "hint": "Found in API Client settings",
+        "label": "Client ID",
+        "name": "client_id",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Found in API Client settings",
+        "label": "Client secret",
+        "name": "client_secret",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "If API client for Integrations is used",
+        "label": "Refresh token",
+        "name": "refresh_token",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Found in API Client settings",
+        "label": "Authorization endpoint",
+        "name": "authorization_endpoint",
+        "optional": true,
+        "type": "string"
+      },
+      {
+        "hint": "Found in API Client settings",
+        "label": "Token endpoint",
+        "name": "token_endpoint",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Workday",
+    "oauth": true,
+    "personalization": false,
+    "provider": "workday",
+    "secure_tunnel": false
+  },
+  "workday_rest": {
+    "input": [
+      {
+        "default": "https://wd2-impl-services1.workday.com/ccx/service/acme",
+        "hint": "                 Found in the API client details page. Learn how to register an API client\n                 <a href='https://docs.workato.com/connectors/workday/connection_setup.html#register-api-client' target=_blank>here</a>.\n",
+        "label": "REST API endpoint",
+        "name": "rest_api_endpoint",
+        "type": "string"
+      },
+      {
+        "hint": "Found in the API client details page.",
+        "label": "Authorization endpoint",
+        "name": "authorization_endpoint",
+        "type": "string"
+      },
+      {
+        "hint": "Found in the API client details page.",
+        "label": "Token endpoint",
+        "name": "token_endpoint",
+        "type": "string"
+      },
+      {
+        "hint": "Found in the API client details page.",
+        "label": "Client ID",
+        "name": "client_id",
+        "type": "string"
+      },
+      {
+        "hint": "Found in the API client details page.",
+        "label": "Client secret",
+        "name": "client_secret",
+        "type": "string"
+      },
+      {
+        "hint": "                 Provide a refresh token if this connection needs to be authorized by an integration user instead of a user account.\n                 Authorization step will be skipped.\n",
+        "label": "Refresh token",
+        "name": "refresh_token",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Workday REST",
+    "oauth": true,
+    "personalization": true,
+    "provider": "workday_rest",
+    "secure_tunnel": false
+  },
+  "workfront": {
+    "input": [
+      {
+        "hint": "Your Workfront username.",
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Your Workfront password.",
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Your Workfront subdomain name as found in your Workfront URL.",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Workfront",
+    "oauth": false,
+    "personalization": false,
+    "provider": "workfront",
+    "secure_tunnel": false
+  },
+  "workfront_secondary": {
+    "input": [
+      {
+        "hint": "Your Workfront username.",
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Your Workfront password.",
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Your Workfront subdomain name as found in your Workfront URL.",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Workfront (Secondary)",
+    "oauth": false,
+    "personalization": false,
+    "provider": "workfront_secondary",
+    "secure_tunnel": false
+  },
+  "workplace_bot": {
+    "input": [
+      {
+        "label": "Custom Access Token",
+        "name": "custom_access_token",
+        "optional": true,
+        "type": "string"
+      }
+    ],
+    "name": "Workbot for Workplace",
+    "oauth": true,
+    "personalization": true,
+    "provider": "workplace_bot",
+    "secure_tunnel": false
+  },
+  "wrike": {
+    "input": [
+      {
+        "label": "Advanced settings",
+        "name": "advanced_settings",
+        "optional": true,
+        "properties": [
+          {
+            "hint": "               Select <a href=\"https://developers.wrike.com/documentation/api/overview\" target=\"_blank\">permissions</a>\n               to request for this connection. Defaults to <b>Default</b> if left blank.\n               <br/>Minimum permissions required is <b>Default</b>, which will be always requested in addition to selected permissions.\n",
+            "label": "Api scope",
+            "name": "api_scope",
+            "optional": true,
+            "type": "string"
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "name": "Wrike",
+    "oauth": true,
+    "personalization": true,
+    "provider": "wrike",
+    "secure_tunnel": false
+  },
+  "wrike_secondary": {
+    "input": [
+      {
+        "label": "Advanced settings",
+        "name": "advanced_settings",
+        "optional": true,
+        "properties": [
+          {
+            "hint": "               Select <a href=\"https://developers.wrike.com/documentation/api/overview\" target=\"_blank\">permissions</a>\n               to request for this connection. Defaults to <b>Default</b> if left blank.\n               <br/>Minimum permissions required is <b>Default</b>, which will be always requested in addition to selected permissions.\n",
+            "label": "Api scope",
+            "name": "api_scope",
+            "optional": true,
+            "type": "string"
+          }
+        ],
+        "type": "object"
+      }
+    ],
+    "name": "Wrike (Secondary)",
+    "oauth": true,
+    "personalization": true,
+    "provider": "wrike_secondary",
+    "secure_tunnel": false
+  },
+  "wufoo": {
+    "input": [
+      {
+        "hint": "<a href=\"http://www.wufoo.com/docs/api/v3/#key\" target=\"_blank\">How do I find the Wufoo API key?</a>",
+        "label": "API key",
+        "name": "api_key",
+        "type": "string"
+      },
+      {
+        "hint": "Enter only the subdomain (located before .wufoo.com)",
+        "label": "Sub-domain",
+        "name": "subdomain",
+        "type": "string"
+      }
+    ],
+    "name": "Wufoo",
+    "oauth": false,
+    "personalization": false,
+    "provider": "wufoo",
+    "secure_tunnel": false
+  },
+  "xactly": {
+    "input": [
+      {
+        "label": "Sub-domain",
+        "name": "subdomain",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Client ID",
+        "name": "client_id",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Consumer",
+        "name": "consumer",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Username",
+        "name": "username",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "label": "Password",
+        "name": "password",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Xactly",
+    "oauth": false,
+    "personalization": false,
+    "provider": "xactly",
+    "secure_tunnel": false
+  },
+  "xero": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Select 'Yes' if Xero account is enabled for payroll, note that payroll connectivity is only available in AU and US editions",
+        "label": "Payroll",
+        "name": "payroll",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Xero",
+    "oauth": true,
+    "personalization": true,
+    "provider": "xero",
+    "secure_tunnel": false
+  },
+  "zendesk": {
+    "input": [
+      {
+        "hint": "If your Zendesk URL is https://acme.zendesk.com then your subdomain is <b>acme</b>",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "default": "oauth",
+        "label": "Authentication type",
+        "name": "authentication_type",
+        "pick_list": [
+          [
+            "Basic",
+            "basic"
+          ],
+          [
+            "OAuth 2.0",
+            "oauth"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "When authenticating with tokens, add <b>/token</b> to the end of your username.",
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "hint": "                   Enter api token if you are using api token authentication. Click <a href='https://support.zendesk.com/hc/en-us/articles/226022787-Generating-a-new-API-token-' target=\"_blank\">here</a> to generate api token.\n",
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      }
+    ],
+    "name": "Zendesk",
+    "oauth": true,
+    "personalization": true,
+    "provider": "zendesk",
+    "secure_tunnel": false
+  },
+  "zendesk_secondary": {
+    "input": [
+      {
+        "hint": "If your Zendesk URL is https://acme.zendesk.com then your subdomain is <b>acme</b>",
+        "label": "Subdomain",
+        "name": "subdomain",
+        "type": "string"
+      },
+      {
+        "default": "oauth",
+        "label": "Authentication type",
+        "name": "authentication_type",
+        "pick_list": [
+          [
+            "Basic",
+            "basic"
+          ],
+          [
+            "OAuth 2.0",
+            "oauth"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "When authenticating with tokens, add <b>/token</b> to the end of your username.",
+        "label": "Username",
+        "name": "username",
+        "type": "string"
+      },
+      {
+        "hint": "                   Enter api token if you are using api token authentication. Click <a href='https://support.zendesk.com/hc/en-us/articles/226022787-Generating-a-new-API-token-' target=\"_blank\">here</a> to generate api token.\n",
+        "label": "Password",
+        "name": "password",
+        "type": "string"
+      }
+    ],
+    "name": "Zendesk (Secondary)",
+    "oauth": true,
+    "personalization": true,
+    "provider": "zendesk_secondary",
+    "secure_tunnel": false
+  },
+  "zenefits": {
+    "input": [],
+    "name": "Zenefits",
+    "oauth": true,
+    "personalization": true,
+    "provider": "zenefits",
+    "secure_tunnel": false
+  },
+  "zoho_invoice": {
+    "input": [
+      {
+        "hint": "Create your Zoho invoice token <a target='_blank' rel='noopener' href=\"https://accounts.zoho.com/apiauthtoken/create?SCOPE=ZohoInvoice/invoiceapi\">here</a>",
+        "label": "Authentication token",
+        "name": "auth_token",
+        "type": "string"
+      },
+      {
+        "hint": "Needed for consistency with Zoho - pick same as your Zoho profile",
+        "label": "Account timezone",
+        "name": "timezone",
+        "optional": true,
+        "pick_list": [
+          [
+            "American Samoa (-11:00)",
+            "American Samoa"
+          ],
+          [
+            "International Date Line West (-11:00)",
+            "International Date Line West"
+          ],
+          [
+            "Midway Island (-11:00)",
+            "Midway Island"
+          ],
+          [
+            "Hawaii (-10:00)",
+            "Hawaii"
+          ],
+          [
+            "Alaska (-9:00)",
+            "Alaska"
+          ],
+          [
+            "Pacific Time (US & Canada) (-8:00)",
+            "Pacific Time (US & Canada)"
+          ],
+          [
+            "Tijuana (-8:00)",
+            "Tijuana"
+          ],
+          [
+            "Arizona (-7:00)",
+            "Arizona"
+          ],
+          [
+            "Chihuahua (-7:00)",
+            "Chihuahua"
+          ],
+          [
+            "Mazatlan (-7:00)",
+            "Mazatlan"
+          ],
+          [
+            "Mountain Time (US & Canada) (-7:00)",
+            "Mountain Time (US & Canada)"
+          ],
+          [
+            "Central America (-6:00)",
+            "Central America"
+          ],
+          [
+            "Central Time (US & Canada) (-6:00)",
+            "Central Time (US & Canada)"
+          ],
+          [
+            "Guadalajara (-6:00)",
+            "Guadalajara"
+          ],
+          [
+            "Mexico City (-6:00)",
+            "Mexico City"
+          ],
+          [
+            "Monterrey (-6:00)",
+            "Monterrey"
+          ],
+          [
+            "Saskatchewan (-6:00)",
+            "Saskatchewan"
+          ],
+          [
+            "Bogota (-5:00)",
+            "Bogota"
+          ],
+          [
+            "Eastern Time (US & Canada) (-5:00)",
+            "Eastern Time (US & Canada)"
+          ],
+          [
+            "Indiana (East) (-5:00)",
+            "Indiana (East)"
+          ],
+          [
+            "Lima (-5:00)",
+            "Lima"
+          ],
+          [
+            "Quito (-5:00)",
+            "Quito"
+          ],
+          [
+            "Atlantic Time (Canada) (-4:00)",
+            "Atlantic Time (Canada)"
+          ],
+          [
+            "Caracas (-4:00)",
+            "Caracas"
+          ],
+          [
+            "Georgetown (-4:00)",
+            "Georgetown"
+          ],
+          [
+            "La Paz (-4:00)",
+            "La Paz"
+          ],
+          [
+            "Santiago (-4:00)",
+            "Santiago"
+          ],
+          [
+            "Newfoundland (-4:30)",
+            "Newfoundland"
+          ],
+          [
+            "Brasilia (-3:00)",
+            "Brasilia"
+          ],
+          [
+            "Buenos Aires (-3:00)",
+            "Buenos Aires"
+          ],
+          [
+            "Greenland (-3:00)",
+            "Greenland"
+          ],
+          [
+            "Montevideo (-3:00)",
+            "Montevideo"
+          ],
+          [
+            "Mid-Atlantic (-2:00)",
+            "Mid-Atlantic"
+          ],
+          [
+            "Azores (-1:00)",
+            "Azores"
+          ],
+          [
+            "Cape Verde Is. (-1:00)",
+            "Cape Verde Is."
+          ],
+          [
+            "Casablanca (+0:00)",
+            "Casablanca"
+          ],
+          [
+            "Dublin (+0:00)",
+            "Dublin"
+          ],
+          [
+            "Edinburgh (+0:00)",
+            "Edinburgh"
+          ],
+          [
+            "Lisbon (+0:00)",
+            "Lisbon"
+          ],
+          [
+            "London (+0:00)",
+            "London"
+          ],
+          [
+            "Monrovia (+0:00)",
+            "Monrovia"
+          ],
+          [
+            "UTC (+0:00)",
+            "UTC"
+          ],
+          [
+            "Amsterdam (+1:00)",
+            "Amsterdam"
+          ],
+          [
+            "Belgrade (+1:00)",
+            "Belgrade"
+          ],
+          [
+            "Berlin (+1:00)",
+            "Berlin"
+          ],
+          [
+            "Bern (+1:00)",
+            "Bern"
+          ],
+          [
+            "Bratislava (+1:00)",
+            "Bratislava"
+          ],
+          [
+            "Brussels (+1:00)",
+            "Brussels"
+          ],
+          [
+            "Budapest (+1:00)",
+            "Budapest"
+          ],
+          [
+            "Copenhagen (+1:00)",
+            "Copenhagen"
+          ],
+          [
+            "Ljubljana (+1:00)",
+            "Ljubljana"
+          ],
+          [
+            "Madrid (+1:00)",
+            "Madrid"
+          ],
+          [
+            "Paris (+1:00)",
+            "Paris"
+          ],
+          [
+            "Prague (+1:00)",
+            "Prague"
+          ],
+          [
+            "Rome (+1:00)",
+            "Rome"
+          ],
+          [
+            "Sarajevo (+1:00)",
+            "Sarajevo"
+          ],
+          [
+            "Skopje (+1:00)",
+            "Skopje"
+          ],
+          [
+            "Stockholm (+1:00)",
+            "Stockholm"
+          ],
+          [
+            "Vienna (+1:00)",
+            "Vienna"
+          ],
+          [
+            "Warsaw (+1:00)",
+            "Warsaw"
+          ],
+          [
+            "West Central Africa (+1:00)",
+            "West Central Africa"
+          ],
+          [
+            "Zagreb (+1:00)",
+            "Zagreb"
+          ],
+          [
+            "Athens (+2:00)",
+            "Athens"
+          ],
+          [
+            "Bucharest (+2:00)",
+            "Bucharest"
+          ],
+          [
+            "Cairo (+2:00)",
+            "Cairo"
+          ],
+          [
+            "Harare (+2:00)",
+            "Harare"
+          ],
+          [
+            "Helsinki (+2:00)",
+            "Helsinki"
+          ],
+          [
+            "Jerusalem (+2:00)",
+            "Jerusalem"
+          ],
+          [
+            "Kaliningrad (+2:00)",
+            "Kaliningrad"
+          ],
+          [
+            "Kyiv (+2:00)",
+            "Kyiv"
+          ],
+          [
+            "Pretoria (+2:00)",
+            "Pretoria"
+          ],
+          [
+            "Riga (+2:00)",
+            "Riga"
+          ],
+          [
+            "Sofia (+2:00)",
+            "Sofia"
+          ],
+          [
+            "Tallinn (+2:00)",
+            "Tallinn"
+          ],
+          [
+            "Vilnius (+2:00)",
+            "Vilnius"
+          ],
+          [
+            "Baghdad (+3:00)",
+            "Baghdad"
+          ],
+          [
+            "Istanbul (+3:00)",
+            "Istanbul"
+          ],
+          [
+            "Kuwait (+3:00)",
+            "Kuwait"
+          ],
+          [
+            "Minsk (+3:00)",
+            "Minsk"
+          ],
+          [
+            "Moscow (+3:00)",
+            "Moscow"
+          ],
+          [
+            "Nairobi (+3:00)",
+            "Nairobi"
+          ],
+          [
+            "Riyadh (+3:00)",
+            "Riyadh"
+          ],
+          [
+            "St. Petersburg (+3:00)",
+            "St. Petersburg"
+          ],
+          [
+            "Tehran (+3:30)",
+            "Tehran"
+          ],
+          [
+            "Abu Dhabi (+4:00)",
+            "Abu Dhabi"
+          ],
+          [
+            "Baku (+4:00)",
+            "Baku"
+          ],
+          [
+            "Muscat (+4:00)",
+            "Muscat"
+          ],
+          [
+            "Samara (+4:00)",
+            "Samara"
+          ],
+          [
+            "Tbilisi (+4:00)",
+            "Tbilisi"
+          ],
+          [
+            "Volgograd (+4:00)",
+            "Volgograd"
+          ],
+          [
+            "Yerevan (+4:00)",
+            "Yerevan"
+          ],
+          [
+            "Kabul (+4:30)",
+            "Kabul"
+          ],
+          [
+            "Ekaterinburg (+5:00)",
+            "Ekaterinburg"
+          ],
+          [
+            "Islamabad (+5:00)",
+            "Islamabad"
+          ],
+          [
+            "Karachi (+5:00)",
+            "Karachi"
+          ],
+          [
+            "Tashkent (+5:00)",
+            "Tashkent"
+          ],
+          [
+            "Chennai (+5:30)",
+            "Chennai"
+          ],
+          [
+            "Kolkata (+5:30)",
+            "Kolkata"
+          ],
+          [
+            "Mumbai (+5:30)",
+            "Mumbai"
+          ],
+          [
+            "New Delhi (+5:30)",
+            "New Delhi"
+          ],
+          [
+            "Sri Jayawardenepura (+5:30)",
+            "Sri Jayawardenepura"
+          ],
+          [
+            "Kathmandu (+5:45)",
+            "Kathmandu"
+          ],
+          [
+            "Almaty (+6:00)",
+            "Almaty"
+          ],
+          [
+            "Astana (+6:00)",
+            "Astana"
+          ],
+          [
+            "Dhaka (+6:00)",
+            "Dhaka"
+          ],
+          [
+            "Urumqi (+6:00)",
+            "Urumqi"
+          ],
+          [
+            "Rangoon (+6:30)",
+            "Rangoon"
+          ],
+          [
+            "Bangkok (+7:00)",
+            "Bangkok"
+          ],
+          [
+            "Hanoi (+7:00)",
+            "Hanoi"
+          ],
+          [
+            "Jakarta (+7:00)",
+            "Jakarta"
+          ],
+          [
+            "Krasnoyarsk (+7:00)",
+            "Krasnoyarsk"
+          ],
+          [
+            "Novosibirsk (+7:00)",
+            "Novosibirsk"
+          ],
+          [
+            "Beijing (+8:00)",
+            "Beijing"
+          ],
+          [
+            "Chongqing (+8:00)",
+            "Chongqing"
+          ],
+          [
+            "Hong Kong (+8:00)",
+            "Hong Kong"
+          ],
+          [
+            "Irkutsk (+8:00)",
+            "Irkutsk"
+          ],
+          [
+            "Kuala Lumpur (+8:00)",
+            "Kuala Lumpur"
+          ],
+          [
+            "Perth (+8:00)",
+            "Perth"
+          ],
+          [
+            "Singapore (+8:00)",
+            "Singapore"
+          ],
+          [
+            "Taipei (+8:00)",
+            "Taipei"
+          ],
+          [
+            "Ulaanbaatar (+8:00)",
+            "Ulaanbaatar"
+          ],
+          [
+            "Osaka (+9:00)",
+            "Osaka"
+          ],
+          [
+            "Sapporo (+9:00)",
+            "Sapporo"
+          ],
+          [
+            "Seoul (+9:00)",
+            "Seoul"
+          ],
+          [
+            "Tokyo (+9:00)",
+            "Tokyo"
+          ],
+          [
+            "Yakutsk (+9:00)",
+            "Yakutsk"
+          ],
+          [
+            "Adelaide (+9:30)",
+            "Adelaide"
+          ],
+          [
+            "Darwin (+9:30)",
+            "Darwin"
+          ],
+          [
+            "Brisbane (+10:00)",
+            "Brisbane"
+          ],
+          [
+            "Canberra (+10:00)",
+            "Canberra"
+          ],
+          [
+            "Guam (+10:00)",
+            "Guam"
+          ],
+          [
+            "Hobart (+10:00)",
+            "Hobart"
+          ],
+          [
+            "Melbourne (+10:00)",
+            "Melbourne"
+          ],
+          [
+            "Port Moresby (+10:00)",
+            "Port Moresby"
+          ],
+          [
+            "Sydney (+10:00)",
+            "Sydney"
+          ],
+          [
+            "Vladivostok (+10:00)",
+            "Vladivostok"
+          ],
+          [
+            "Magadan (+11:00)",
+            "Magadan"
+          ],
+          [
+            "New Caledonia (+11:00)",
+            "New Caledonia"
+          ],
+          [
+            "Solomon Is. (+11:00)",
+            "Solomon Is."
+          ],
+          [
+            "Srednekolymsk (+11:00)",
+            "Srednekolymsk"
+          ],
+          [
+            "Auckland (+12:00)",
+            "Auckland"
+          ],
+          [
+            "Fiji (+12:00)",
+            "Fiji"
+          ],
+          [
+            "Kamchatka (+12:00)",
+            "Kamchatka"
+          ],
+          [
+            "Marshall Is. (+12:00)",
+            "Marshall Is."
+          ],
+          [
+            "Wellington (+12:00)",
+            "Wellington"
+          ],
+          [
+            "Chatham Is. (+12:45)",
+            "Chatham Is."
+          ],
+          [
+            "Nuku'alofa (+13:00)",
+            "Nuku'alofa"
+          ],
+          [
+            "Samoa (+13:00)",
+            "Samoa"
+          ],
+          [
+            "Tokelau Is. (+13:00)",
+            "Tokelau Is."
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "default": "com",
+        "hint": "You can find this at the end of your Zoho URL 'https://accounts.zoho.[Data center]'. Default value: 'Others(com)'",
+        "label": "Data center",
+        "name": "data_center",
+        "optional": true,
+        "pick_list": [
+          [
+            "China(cn)",
+            "cn"
+          ],
+          [
+            "Europe(eu)",
+            "eu"
+          ],
+          [
+            "Others(com)",
+            "com"
+          ]
+        ],
+        "type": "string"
+      }
+    ],
+    "name": "Zoho Invoice",
+    "oauth": false,
+    "personalization": false,
+    "provider": "zoho_invoice",
+    "secure_tunnel": false
+  },
+  "zohocrm": {
+    "input": [
+      {
+        "hint": "Needed for consistency with Zoho - pick same as your Zoho profile",
+        "label": "Account timezone",
+        "name": "timezone",
+        "optional": true,
+        "pick_list": [
+          [
+            "American Samoa (-11:00)",
+            "American Samoa"
+          ],
+          [
+            "International Date Line West (-11:00)",
+            "International Date Line West"
+          ],
+          [
+            "Midway Island (-11:00)",
+            "Midway Island"
+          ],
+          [
+            "Hawaii (-10:00)",
+            "Hawaii"
+          ],
+          [
+            "Alaska (-9:00)",
+            "Alaska"
+          ],
+          [
+            "Pacific Time (US & Canada) (-8:00)",
+            "Pacific Time (US & Canada)"
+          ],
+          [
+            "Tijuana (-8:00)",
+            "Tijuana"
+          ],
+          [
+            "Arizona (-7:00)",
+            "Arizona"
+          ],
+          [
+            "Chihuahua (-7:00)",
+            "Chihuahua"
+          ],
+          [
+            "Mazatlan (-7:00)",
+            "Mazatlan"
+          ],
+          [
+            "Mountain Time (US & Canada) (-7:00)",
+            "Mountain Time (US & Canada)"
+          ],
+          [
+            "Central America (-6:00)",
+            "Central America"
+          ],
+          [
+            "Central Time (US & Canada) (-6:00)",
+            "Central Time (US & Canada)"
+          ],
+          [
+            "Guadalajara (-6:00)",
+            "Guadalajara"
+          ],
+          [
+            "Mexico City (-6:00)",
+            "Mexico City"
+          ],
+          [
+            "Monterrey (-6:00)",
+            "Monterrey"
+          ],
+          [
+            "Saskatchewan (-6:00)",
+            "Saskatchewan"
+          ],
+          [
+            "Bogota (-5:00)",
+            "Bogota"
+          ],
+          [
+            "Eastern Time (US & Canada) (-5:00)",
+            "Eastern Time (US & Canada)"
+          ],
+          [
+            "Indiana (East) (-5:00)",
+            "Indiana (East)"
+          ],
+          [
+            "Lima (-5:00)",
+            "Lima"
+          ],
+          [
+            "Quito (-5:00)",
+            "Quito"
+          ],
+          [
+            "Atlantic Time (Canada) (-4:00)",
+            "Atlantic Time (Canada)"
+          ],
+          [
+            "Caracas (-4:00)",
+            "Caracas"
+          ],
+          [
+            "Georgetown (-4:00)",
+            "Georgetown"
+          ],
+          [
+            "La Paz (-4:00)",
+            "La Paz"
+          ],
+          [
+            "Santiago (-4:00)",
+            "Santiago"
+          ],
+          [
+            "Newfoundland (-4:30)",
+            "Newfoundland"
+          ],
+          [
+            "Brasilia (-3:00)",
+            "Brasilia"
+          ],
+          [
+            "Buenos Aires (-3:00)",
+            "Buenos Aires"
+          ],
+          [
+            "Greenland (-3:00)",
+            "Greenland"
+          ],
+          [
+            "Montevideo (-3:00)",
+            "Montevideo"
+          ],
+          [
+            "Mid-Atlantic (-2:00)",
+            "Mid-Atlantic"
+          ],
+          [
+            "Azores (-1:00)",
+            "Azores"
+          ],
+          [
+            "Cape Verde Is. (-1:00)",
+            "Cape Verde Is."
+          ],
+          [
+            "Casablanca (+0:00)",
+            "Casablanca"
+          ],
+          [
+            "Dublin (+0:00)",
+            "Dublin"
+          ],
+          [
+            "Edinburgh (+0:00)",
+            "Edinburgh"
+          ],
+          [
+            "Lisbon (+0:00)",
+            "Lisbon"
+          ],
+          [
+            "London (+0:00)",
+            "London"
+          ],
+          [
+            "Monrovia (+0:00)",
+            "Monrovia"
+          ],
+          [
+            "UTC (+0:00)",
+            "UTC"
+          ],
+          [
+            "Amsterdam (+1:00)",
+            "Amsterdam"
+          ],
+          [
+            "Belgrade (+1:00)",
+            "Belgrade"
+          ],
+          [
+            "Berlin (+1:00)",
+            "Berlin"
+          ],
+          [
+            "Bern (+1:00)",
+            "Bern"
+          ],
+          [
+            "Bratislava (+1:00)",
+            "Bratislava"
+          ],
+          [
+            "Brussels (+1:00)",
+            "Brussels"
+          ],
+          [
+            "Budapest (+1:00)",
+            "Budapest"
+          ],
+          [
+            "Copenhagen (+1:00)",
+            "Copenhagen"
+          ],
+          [
+            "Ljubljana (+1:00)",
+            "Ljubljana"
+          ],
+          [
+            "Madrid (+1:00)",
+            "Madrid"
+          ],
+          [
+            "Paris (+1:00)",
+            "Paris"
+          ],
+          [
+            "Prague (+1:00)",
+            "Prague"
+          ],
+          [
+            "Rome (+1:00)",
+            "Rome"
+          ],
+          [
+            "Sarajevo (+1:00)",
+            "Sarajevo"
+          ],
+          [
+            "Skopje (+1:00)",
+            "Skopje"
+          ],
+          [
+            "Stockholm (+1:00)",
+            "Stockholm"
+          ],
+          [
+            "Vienna (+1:00)",
+            "Vienna"
+          ],
+          [
+            "Warsaw (+1:00)",
+            "Warsaw"
+          ],
+          [
+            "West Central Africa (+1:00)",
+            "West Central Africa"
+          ],
+          [
+            "Zagreb (+1:00)",
+            "Zagreb"
+          ],
+          [
+            "Athens (+2:00)",
+            "Athens"
+          ],
+          [
+            "Bucharest (+2:00)",
+            "Bucharest"
+          ],
+          [
+            "Cairo (+2:00)",
+            "Cairo"
+          ],
+          [
+            "Harare (+2:00)",
+            "Harare"
+          ],
+          [
+            "Helsinki (+2:00)",
+            "Helsinki"
+          ],
+          [
+            "Jerusalem (+2:00)",
+            "Jerusalem"
+          ],
+          [
+            "Kaliningrad (+2:00)",
+            "Kaliningrad"
+          ],
+          [
+            "Kyiv (+2:00)",
+            "Kyiv"
+          ],
+          [
+            "Pretoria (+2:00)",
+            "Pretoria"
+          ],
+          [
+            "Riga (+2:00)",
+            "Riga"
+          ],
+          [
+            "Sofia (+2:00)",
+            "Sofia"
+          ],
+          [
+            "Tallinn (+2:00)",
+            "Tallinn"
+          ],
+          [
+            "Vilnius (+2:00)",
+            "Vilnius"
+          ],
+          [
+            "Baghdad (+3:00)",
+            "Baghdad"
+          ],
+          [
+            "Istanbul (+3:00)",
+            "Istanbul"
+          ],
+          [
+            "Kuwait (+3:00)",
+            "Kuwait"
+          ],
+          [
+            "Minsk (+3:00)",
+            "Minsk"
+          ],
+          [
+            "Moscow (+3:00)",
+            "Moscow"
+          ],
+          [
+            "Nairobi (+3:00)",
+            "Nairobi"
+          ],
+          [
+            "Riyadh (+3:00)",
+            "Riyadh"
+          ],
+          [
+            "St. Petersburg (+3:00)",
+            "St. Petersburg"
+          ],
+          [
+            "Tehran (+3:30)",
+            "Tehran"
+          ],
+          [
+            "Abu Dhabi (+4:00)",
+            "Abu Dhabi"
+          ],
+          [
+            "Baku (+4:00)",
+            "Baku"
+          ],
+          [
+            "Muscat (+4:00)",
+            "Muscat"
+          ],
+          [
+            "Samara (+4:00)",
+            "Samara"
+          ],
+          [
+            "Tbilisi (+4:00)",
+            "Tbilisi"
+          ],
+          [
+            "Volgograd (+4:00)",
+            "Volgograd"
+          ],
+          [
+            "Yerevan (+4:00)",
+            "Yerevan"
+          ],
+          [
+            "Kabul (+4:30)",
+            "Kabul"
+          ],
+          [
+            "Ekaterinburg (+5:00)",
+            "Ekaterinburg"
+          ],
+          [
+            "Islamabad (+5:00)",
+            "Islamabad"
+          ],
+          [
+            "Karachi (+5:00)",
+            "Karachi"
+          ],
+          [
+            "Tashkent (+5:00)",
+            "Tashkent"
+          ],
+          [
+            "Chennai (+5:30)",
+            "Chennai"
+          ],
+          [
+            "Kolkata (+5:30)",
+            "Kolkata"
+          ],
+          [
+            "Mumbai (+5:30)",
+            "Mumbai"
+          ],
+          [
+            "New Delhi (+5:30)",
+            "New Delhi"
+          ],
+          [
+            "Sri Jayawardenepura (+5:30)",
+            "Sri Jayawardenepura"
+          ],
+          [
+            "Kathmandu (+5:45)",
+            "Kathmandu"
+          ],
+          [
+            "Almaty (+6:00)",
+            "Almaty"
+          ],
+          [
+            "Astana (+6:00)",
+            "Astana"
+          ],
+          [
+            "Dhaka (+6:00)",
+            "Dhaka"
+          ],
+          [
+            "Urumqi (+6:00)",
+            "Urumqi"
+          ],
+          [
+            "Rangoon (+6:30)",
+            "Rangoon"
+          ],
+          [
+            "Bangkok (+7:00)",
+            "Bangkok"
+          ],
+          [
+            "Hanoi (+7:00)",
+            "Hanoi"
+          ],
+          [
+            "Jakarta (+7:00)",
+            "Jakarta"
+          ],
+          [
+            "Krasnoyarsk (+7:00)",
+            "Krasnoyarsk"
+          ],
+          [
+            "Novosibirsk (+7:00)",
+            "Novosibirsk"
+          ],
+          [
+            "Beijing (+8:00)",
+            "Beijing"
+          ],
+          [
+            "Chongqing (+8:00)",
+            "Chongqing"
+          ],
+          [
+            "Hong Kong (+8:00)",
+            "Hong Kong"
+          ],
+          [
+            "Irkutsk (+8:00)",
+            "Irkutsk"
+          ],
+          [
+            "Kuala Lumpur (+8:00)",
+            "Kuala Lumpur"
+          ],
+          [
+            "Perth (+8:00)",
+            "Perth"
+          ],
+          [
+            "Singapore (+8:00)",
+            "Singapore"
+          ],
+          [
+            "Taipei (+8:00)",
+            "Taipei"
+          ],
+          [
+            "Ulaanbaatar (+8:00)",
+            "Ulaanbaatar"
+          ],
+          [
+            "Osaka (+9:00)",
+            "Osaka"
+          ],
+          [
+            "Sapporo (+9:00)",
+            "Sapporo"
+          ],
+          [
+            "Seoul (+9:00)",
+            "Seoul"
+          ],
+          [
+            "Tokyo (+9:00)",
+            "Tokyo"
+          ],
+          [
+            "Yakutsk (+9:00)",
+            "Yakutsk"
+          ],
+          [
+            "Adelaide (+9:30)",
+            "Adelaide"
+          ],
+          [
+            "Darwin (+9:30)",
+            "Darwin"
+          ],
+          [
+            "Brisbane (+10:00)",
+            "Brisbane"
+          ],
+          [
+            "Canberra (+10:00)",
+            "Canberra"
+          ],
+          [
+            "Guam (+10:00)",
+            "Guam"
+          ],
+          [
+            "Hobart (+10:00)",
+            "Hobart"
+          ],
+          [
+            "Melbourne (+10:00)",
+            "Melbourne"
+          ],
+          [
+            "Port Moresby (+10:00)",
+            "Port Moresby"
+          ],
+          [
+            "Sydney (+10:00)",
+            "Sydney"
+          ],
+          [
+            "Vladivostok (+10:00)",
+            "Vladivostok"
+          ],
+          [
+            "Magadan (+11:00)",
+            "Magadan"
+          ],
+          [
+            "New Caledonia (+11:00)",
+            "New Caledonia"
+          ],
+          [
+            "Solomon Is. (+11:00)",
+            "Solomon Is."
+          ],
+          [
+            "Srednekolymsk (+11:00)",
+            "Srednekolymsk"
+          ],
+          [
+            "Auckland (+12:00)",
+            "Auckland"
+          ],
+          [
+            "Fiji (+12:00)",
+            "Fiji"
+          ],
+          [
+            "Kamchatka (+12:00)",
+            "Kamchatka"
+          ],
+          [
+            "Marshall Is. (+12:00)",
+            "Marshall Is."
+          ],
+          [
+            "Wellington (+12:00)",
+            "Wellington"
+          ],
+          [
+            "Chatham Is. (+12:45)",
+            "Chatham Is."
+          ],
+          [
+            "Nuku'alofa (+13:00)",
+            "Nuku'alofa"
+          ],
+          [
+            "Samoa (+13:00)",
+            "Samoa"
+          ],
+          [
+            "Tokelau Is. (+13:00)",
+            "Tokelau Is."
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "default": "com",
+        "hint": "You can find this at the end of your Zoho URL 'https://accounts.zoho.[Data center]'. Default value: 'Others(com)'",
+        "label": "Data center",
+        "name": "data_center",
+        "optional": true,
+        "pick_list": [
+          [
+            "China(cn)",
+            "com.cn"
+          ],
+          [
+            "Europe(eu)",
+            "eu"
+          ],
+          [
+            "India(in)",
+            "in"
+          ],
+          [
+            "Others(com)",
+            "com"
+          ]
+        ],
+        "type": "string"
+      }
+    ],
+    "name": "Zoho CRM",
+    "oauth": true,
+    "personalization": true,
+    "provider": "zohocrm",
+    "secure_tunnel": false
+  },
+  "zuora": {
+    "input": [
+      {
+        "hint": "Click <a href='https://knowledgecenter.zuora.com/CF_Users_and_Administrators/A_Administrator_Settings/Manage_Users#Create_an_OAuth_Client_for_a_User' target='_blank'>here</a> for client ID",
+        "label": "Client ID",
+        "name": "client_id",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Click <a href='https://knowledgecenter.zuora.com/CF_Users_and_Administrators/A_Administrator_Settings/Manage_Users#Create_an_OAuth_Client_for_a_User' target='_blank'>here</a> for client secret",
+        "label": "Client secret",
+        "name": "client_secret",
+        "optional": false,
+        "type": "string"
+      },
+      {
+        "hint": "Click <a href='https://jp.zuora.com/api-reference/#section/Introduction/Endpoints' target='_blank'>here</a> for environment details",
+        "label": "Environment",
+        "name": "environment",
+        "optional": false,
+        "pick_list": [
+          [
+            "US Production",
+            "rest"
+          ],
+          [
+            "US Sandbox",
+            "rest.apisandbox"
+          ],
+          [
+            "US Performance Test",
+            "rest.pt1"
+          ],
+          [
+            "EU Production",
+            "rest.eu"
+          ],
+          [
+            "EU Sandbox",
+            "rest.sandbox.eu"
+          ]
+        ],
+        "type": "string"
+      },
+      {
+        "hint": "WSDL Service Version for example, 91.0, Find the <a href='https://knowledgecenter.zuora.com/DC_Developers/G_SOAP_API/Zuora_SOAP_API_Version_History' target='_blank'>latest version</a>.",
+        "label": "Zuora SOAP API Version",
+        "name": "version",
+        "optional": false,
+        "type": "string"
+      }
+    ],
+    "name": "Zuora",
+    "oauth": false,
+    "personalization": false,
+    "provider": "zuora",
+    "secure_tunnel": false
+  },
+  "zuora_forcecom": {
+    "input": [
+      {
+        "default": "false",
+        "hint": "Is this connecting to a sandbox account?",
+        "label": "Sandbox",
+        "name": "sandbox",
+        "optional": true,
+        "type": "boolean"
+      }
+    ],
+    "name": "Zuora for Salesforce",
+    "oauth": true,
+    "personalization": true,
+    "provider": "zuora_forcecom",
+    "secure_tunnel": false
+  }
+}

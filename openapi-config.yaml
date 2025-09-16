@@ -1,0 +1,7 @@
+library: asyncio
+packageName: workato_platform.client.workato_api
+projectName: workato-platform-cli
+packageVersion: 1.0.0
+packageUrl: https://github.com/workato/workato-platform-cli
+hideGenerationTimestamp: true
+generateSourceCodeOnly: true

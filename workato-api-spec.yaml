@@ -1,0 +1,3285 @@
+openapi: 3.0.3
+info:
+  title: Workato Platform API
+  description: |
+    Official Workato Platform API for managing recipes, connections, projects, and other automation resources.
+
+    ## Authentication
+    All endpoints require a Bearer token in the Authorization header.
+
+    ## Base URL
+    The base URL varies by region:
+    - US: `https://www.workato.com`
+    - EU: `https://app.eu.workato.com`
+    - JP: `https://app.jp.workato.com`
+    - SG: `https://app.sg.workato.com`
+    - AU: `https://app.au.workato.com`
+    - IL: `https://app.il.workato.com`
+    - Trial: `https://app.trial.workato.com`
+  version: 1.0.0
+  contact:
+    name: Workato API Support
+    url: https://docs.workato.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: https://www.workato.com
+    description: US Data Center
+  - url: https://app.eu.workato.com
+    description: EU Data Center
+  - url: https://app.jp.workato.com
+    description: JP Data Center
+  - url: https://app.sg.workato.com
+    description: SG Data Center
+  - url: https://app.au.workato.com
+    description: AU Data Center
+  - url: https://app.il.workato.com
+    description: IL Data Center
+  - url: https://app.trial.workato.com
+    description: Developer Sandbox
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/users/me:
+    get:
+      operationId: get_workspace_details
+      summary: Get current user information
+      description: Returns information about the authenticated user
+      tags:
+        - Users
+      responses:
+        "200":
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/projects:
+    get:
+      operationId: list_projects
+      summary: List projects
+      description: Returns a list of projects belonging to the authenticated user with pagination support
+      tags:
+        - Projects
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          description: Number of projects per page
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: List of projects retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/projects/{project_id}:
+    delete:
+      operationId: delete_project
+      summary: Delete a project
+      description: |
+        Delete a project and all of its contents. This includes all child folders,
+        recipes, connections, and Workflow apps assets inside the project.
+      tags:
+        - Projects
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          description: The ID of the project to delete
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Cannot destroy folder"
+
+  /api/properties:
+    get:
+      operationId: list_project_properties
+      summary: List project properties
+      description: |
+        Returns a list of project-level properties belonging to a specific project in a
+        customer workspace that matches a project_id you specify. You must also include
+        a prefix. For example, if you provide the prefix salesforce_sync., any project
+        property with a name beginning with salesforce_sync., such as
+        salesforce_sync.admin_email, with the project_id you provided is returned.
+      tags:
+        - Properties
+      parameters:
+        - name: prefix
+          in: query
+          required: true
+          description: |
+            Returns properties that contain the prefix you provided. For example, if the
+            prefix is salesforce_sync. the property salesforce_sync.admin_email is returned.
+          schema:
+            type: string
+            example: "salesforce_sync."
+        - name: project_id
+          in: query
+          required: true
+          description: |
+            Returns project-level properties that match the project_id you specify. If this
+            parameter is not present, this call returns environment properties.
+          schema:
+            type: integer
+            example: 523144
+      responses:
+        "200":
+          description: Project properties retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectPropertiesResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      operationId: upsert_project_properties
+      summary: Upsert project properties
+      description: |
+        Upserts project properties belonging to a specific project in a customer workspace
+        that matches a project_id you specify. This endpoint maps to properties based on
+        the names you provide in the request.
+
+        ## Property Limits
+        - Maximum number of project properties per project: 1,000
+        - Maximum length of project property name: 100 characters
+        - Maximum length of project property value: 1,024 characters
+      tags:
+        - Properties
+      parameters:
+        - name: project_id
+          in: query
+          required: true
+          description: |
+            Provide the project ID that contains the project properties you plan to upsert.
+            If this parameter is not present, this call upserts environment properties.
+          schema:
+            type: integer
+            example: 523144
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertProjectPropertiesRequest"
+      responses:
+        "200":
+          description: Project properties upserted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/folders:
+    get:
+      operationId: list_folders
+      summary: List folders
+      description: Lists all folders.
+      tags:
+        - Folders
+      parameters:
+        - name: parent_id
+          in: query
+          description: Parent folder ID. Defaults to Home folder.
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: Page number. Defaults to 1.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          description: Page size. Defaults to 100 (maximum is 100).
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+      responses:
+        "200":
+          description: List of folders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Folder"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      operationId: create_folder
+      summary: Create a folder
+      description: |
+        Creates a new folder in the specified parent folder. If no parent folder ID
+        is specified, creates the folder as a top-level folder in the home folder.
+      tags:
+        - Folders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the folder
+                  example: "Salesforce folder"
+                parent_id:
+                  type: string
+                  description: Parent folder ID. Defaults to Home folder if not specified
+      responses:
+        "200":
+          description: Folder created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FolderCreationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/export_manifests/folder_assets:
+    get:
+      operationId: list_assets_in_folder
+      summary: View assets in a folder
+      description: |
+        View assets in a folder. Useful for creating or updating export manifests.
+      tags:
+        - Export
+      parameters:
+        - name: folder_id
+          in: query
+          description: The ID of the folder containing the assets
+          schema:
+            type: integer
+        - name: include_test_cases
+          in: query
+          description: Include test cases (currently not supported)
+          schema:
+            type: boolean
+            default: false
+        - name: include_data
+          in: query
+          description: Include data from the list of assets
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Folder assets retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FolderAssetsResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/export_manifests:
+    post:
+      operationId: create_export_manifest
+      summary: Create an export manifest
+      description: Create an export manifest for exporting assets
+      tags:
+        - Export
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - export_manifest
+              properties:
+                export_manifest:
+                  $ref: "#/components/schemas/ExportManifestRequest"
+      responses:
+        "201":
+          description: Export manifest created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportManifestResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/packages/export/{id}:
+    post:
+      operationId: export_package
+      summary: Export a package based on a manifest
+      description: |
+        Export a package based on a manifest.
+
+        **ENDPOINT PRIVILEGES ALSO PROVIDE ACCESS TO ASSETS**
+
+        When you provide an API client with privileges to this endpoint, the API client
+        is also granted the ability to view other assets like recipes, lookup tables,
+        Event topics, and message templates by examining the resulting zip file.
+
+        This is an asynchronous request. Use GET package by ID endpoint to get details
+        of the exported package.
+
+        **INCLUDE TAGS WHEN CREATING THE EXPORT MANIFEST**
+
+        To include tags in the exported package, set the include_tags attribute to true
+        when calling the Create an export manifest endpoint.
+      tags:
+        - Packages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Export manifest ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Export package creation triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PackageResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/packages/{package_id}:
+    get:
+      operationId: get_package
+      summary: Get package details
+      description: Get details of an imported or exported package including status
+      tags:
+        - Packages
+      parameters:
+        - name: package_id
+          in: path
+          required: true
+          description: Package ID
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Package details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PackageDetailsResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Package not found
+
+  /api/packages/{package_id}/download:
+    get:
+      operationId: download_package
+      summary: Download package
+      description: |
+        Downloads a package. Returns a redirect to the package content or the binary content directly.
+        Use the -L flag in cURL to follow redirects.
+      tags:
+        - Packages
+      parameters:
+        - name: package_id
+          in: path
+          required: true
+          description: Package ID
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Package binary content
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+                description: Package zip file content
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                description: Package zip file content
+        "302":
+          description: Redirect to package download
+          headers:
+            Location:
+              description: URL to download the package content
+              schema:
+                type: string
+                format: uri
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Package not found or doesn't have content
+
+  /api/packages/import/{id}:
+    post:
+      operationId: import_package
+      summary: Import a package into a folder
+      description: |
+        Import a package in zip file format into a folder. This endpoint allows an API client
+        to create or update assets, such as recipes, lookup tables, event topics, and message
+        templates, through package imports.
+
+        This is an asynchronous request. Use GET package by ID endpoint to get details of
+        the imported package.
+
+        The input (zip file) is an application/octet-stream payload containing package content.
+      tags:
+        - Packages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Folder ID
+          schema:
+            type: integer
+        - name: restart_recipes
+          in: query
+          description: |
+            Value must be true to allow the restarting of running recipes during import.
+            Packages cannot be imported if there are running recipes and this parameter
+            equals false or is not provided.
+          schema:
+            type: boolean
+            default: false
+        - name: include_tags
+          in: query
+          description: |
+            Specifies whether to preserve tags assigned to assets when the package is imported
+            into the folder. Tags are excluded from the import when set to false.
+          schema:
+            type: boolean
+            default: false
+        - name: folder_id_for_home_assets
+          in: query
+          description: |
+            The ID of a folder to store assets in instead of the root folder. The folder
+            specified must be accessible to the API client and cannot be the root folder.
+            This parameter is conditionally required if you are importing a package that
+            contains root folder assets and your workspace Home assets folder has been
+            converted to a Home assets project.
+          schema:
+            type: integer
+            default: ""
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+              description: Package zip file content
+      responses:
+        "200":
+          description: Package import initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PackageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/recipes:
+    get:
+      operationId: list_recipes
+      summary: List recipes
+      description: |
+        Returns a list of recipes belonging to the authenticated user.
+        Recipes are returned in descending ID order.
+      tags:
+        - Recipes
+      parameters:
+        - name: adapter_names_all
+          in: query
+          description: Comma-separated adapter names (recipes must use ALL)
+          schema:
+            type: string
+        - name: adapter_names_any
+          in: query
+          description: Comma-separated adapter names (recipes must use ANY)
+          schema:
+            type: string
+        - name: folder_id
+          in: query
+          description: Return recipes in specified folder
+          schema:
+            type: integer
+        - name: order
+          in: query
+          description: Set ordering method
+          schema:
+            type: string
+            enum: [activity, default]
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          description: Number of recipes per page
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 100
+        - name: running
+          in: query
+          description: If true, returns only running recipes
+          schema:
+            type: boolean
+        - name: since_id
+          in: query
+          description: Return recipes with IDs lower than this value
+          schema:
+            type: integer
+        - name: stopped_after
+          in: query
+          description: Exclude recipes stopped after this date (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+        - name: stop_cause
+          in: query
+          description: Filter by stop reason
+          schema:
+            type: string
+            enum:
+              [
+                trigger_errors_limit,
+                action_quota_limit,
+                trial_expired,
+                txn_quota_limit,
+              ]
+        - name: updated_after
+          in: query
+          description: Include recipes updated after this date (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+        - name: includes[]
+          in: query
+          description: Additional fields to include (e.g., tags)
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [tags]
+        - name: exclude_code
+          in: query
+          description: Exclude recipe code from response for better performance
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of recipes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecipeListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/recipes/{recipe_id}/stop:
+    put:
+      operationId: stop_recipe
+      summary: Stop a recipe
+      description: Stops a recipe specified by recipe ID
+      tags:
+        - Recipes
+      parameters:
+        - name: recipe_id
+          in: path
+          required: true
+          description: Recipe ID
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recipe stopped successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Bad request (state transition error or recipe cannot be stopped)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Recipe not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/recipes/{recipe_id}/start:
+    put:
+      operationId: start_recipe
+      summary: Start a recipe
+      description: Starts a recipe specified by recipe ID
+      tags:
+        - Recipes
+      parameters:
+        - name: recipe_id
+          in: path
+          required: true
+          description: Recipe ID
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recipe start response (success or validation failure)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecipeStartResponse"
+        "400":
+          description: Bad request (OEM adapter usage limit or state transition error)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "422":
+          description: Unprocessable entity (webhook registration error)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/recipes/{recipe_id}/connect:
+    put:
+      operationId: update_recipe_connection
+      summary: Update a connection for a recipe
+      description: |
+        Updates the chosen connection for a specific connector in a stopped recipe.
+      tags:
+        - Recipes
+      parameters:
+        - name: recipe_id
+          in: path
+          required: true
+          description: ID of the recipe
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeConnectionUpdateRequest"
+      responses:
+        "200":
+          description: Connection updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Bad request (recipe is running or invalid parameters)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: Forbidden (no permission to update this recipe)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Recipe not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/integrations/all:
+    get:
+      operationId: list_platform_connectors
+      summary: List platform connectors
+      description: |
+        Returns a paginated list of all connectors and associated metadata including
+        triggers and actions. This includes both standard and platform connectors.
+      tags:
+        - Connectors
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          description: Number of records per page (max 100)
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Platform connectors retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformConnectorListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/custom_connectors:
+    get:
+      operationId: list_custom_connectors
+      summary: List custom connectors
+      description: Returns a list of all custom connectors
+      tags:
+        - Connectors
+      responses:
+        "200":
+          description: Custom connectors retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomConnectorListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/custom_connectors/{id}/code:
+    get:
+      operationId: get_custom_connector_code
+      summary: Get custom connector code
+      description: Fetch the code for a specific custom connector
+      tags:
+        - Connectors
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the custom connector
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Custom connector code retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomConnectorCodeResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Custom connector not found
+
+  /api/data_tables:
+    get:
+      operationId: list_data_tables
+      summary: List data tables
+      description: Returns a list of all data tables in your workspace
+      tags:
+        - Data Tables
+      parameters:
+        - name: page
+          in: query
+          description: Page number of the data tables to fetch
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Page size (max 100)
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+      responses:
+        "200":
+          description: Data tables retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataTableListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      operationId: create_data_table
+      summary: Create data table
+      description: Creates a data table in a folder you specify
+      tags:
+        - Data Tables
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataTableCreateRequest"
+      responses:
+        "200":
+          description: Data table created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataTableCreateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/v2/api_clients:
+    get:
+      operationId: list_api_clients
+      summary: List API clients (v2)
+      description: |
+        List all API clients. This endpoint includes the project_id of the API client
+        in the response.
+      tags:
+        - API Platform
+      parameters:
+        - name: project_id
+          in: query
+          description: The ID of a specific project. Retrieve a list of project IDs with the list projects endpoint
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          description: Page size. The maximum page size is 100
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+        - name: cert_bundle_ids
+          in: query
+          description: Filter clients by certificate bundle IDs. Returns only clients associated with the specified certificate bundles
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        "200":
+          description: List of API clients retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiClientListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      operationId: create_api_client
+      summary: Create API client (v2)
+      description: Create a new API client within a project with various authentication methods
+      tags:
+        - API Platform
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiClientCreateRequest"
+      responses:
+        "200":
+          description: API client created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiClientResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/v2/api_clients/{api_client_id}/api_keys:
+    get:
+      operationId: list_api_keys
+      summary: List API keys
+      description: |
+        Retrieve all API keys for an API client. Provide the api_client_id parameter
+        to filter keys for a specific client.
+      tags:
+        - API Platform
+      parameters:
+        - name: api_client_id
+          in: path
+          required: true
+          description: Filter API keys for a specific API client
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of API keys retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      operationId: create_api_key
+      summary: Create an API key
+      description: Create a new API key for an API client
+      tags:
+        - API Platform
+      parameters:
+        - name: api_client_id
+          in: path
+          required: true
+          description: Specify the ID of the API client to create the API key for
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiKeyCreateRequest"
+      responses:
+        "200":
+          description: API key created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/v2/api_clients/{api_client_id}/api_keys/{api_key_id}/refresh_secret:
+    put:
+      operationId: refresh_api_key_secret
+      summary: Refresh API key secret
+      description: |
+        Refresh the authentication token or OAuth 2.0 client secret for an API key.
+      tags:
+        - API Platform
+      parameters:
+        - name: api_client_id
+          in: path
+          required: true
+          description: ID of the API client that owns the API key
+          schema:
+            type: integer
+        - name: api_key_id
+          in: path
+          required: true
+          description: ID of the API key to refresh
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: API key secret refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/api_collections:
+    get:
+      operationId: list_api_collections
+      summary: List API collections
+      description: |
+        List all API collections. The endpoint returns the project_id of the project
+        to which the collections belong in the response.
+      tags:
+        - API Platform
+      parameters:
+        - name: per_page
+          in: query
+          description: Number of API collections to return in a single page
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+        - name: page
+          in: query
+          description: Page number of the API collections to fetch
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: List of API collections retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApiCollection"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      operationId: create_api_collection
+      summary: Create API collection
+      description: |
+        Create a new API collection from an OpenAPI specification.
+        This generates both recipes and endpoints from the provided spec.
+      tags:
+        - API Platform
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiCollectionCreateRequest"
+      responses:
+        "200":
+          description: API collection created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiCollectionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/api_endpoints:
+    get:
+      operationId: list_api_endpoints
+      summary: List API endpoints
+      description: |
+        Lists all API endpoints. Specify the api_collection_id to obtain the list
+        of endpoints in a specific collection.
+      tags:
+        - API Platform
+      parameters:
+        - name: api_collection_id
+          in: query
+          description: ID of the API collection. If not provided, all API endpoints are returned
+          schema:
+            type: integer
+        - name: per_page
+          in: query
+          description: Number of API endpoints to return in a single page
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+        - name: page
+          in: query
+          description: Page number of the API endpoints to fetch
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: List of API endpoints retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApiEndpoint"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/api_endpoints/{api_endpoint_id}/enable:
+    put:
+      operationId: enable_api_endpoint
+      summary: Enable an API endpoint
+      description: |
+        Enables an API endpoint. You must start the associated recipe to enable
+        the API endpoint successfully.
+      tags:
+        - API Platform
+      parameters:
+        - name: api_endpoint_id
+          in: path
+          required: true
+          description: ID of the API endpoint
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: API endpoint enabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/api_endpoints/{api_endpoint_id}/disable:
+    put:
+      operationId: disable_api_endpoint
+      summary: Disable an API endpoint
+      description: |
+        Disables an active API endpoint. The endpoint can no longer be called by a client.
+      tags:
+        - API Platform
+      parameters:
+        - name: api_endpoint_id
+          in: path
+          required: true
+          description: ID of the API endpoint
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: API endpoint disabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/connections:
+    get:
+      operationId: list_connections
+      summary: List connections
+      description: Returns all connections and associated data for the authenticated user
+      tags:
+        - Connections
+      parameters:
+        - name: folder_id
+          in: query
+          description: Folder ID of the connection
+          schema:
+            type: integer
+        - name: parent_id
+          in: query
+          description: Parent ID of the connection (must be same provider)
+          schema:
+            type: integer
+        - name: external_id
+          in: query
+          description: External identifier for the connection
+          schema:
+            type: string
+        - name: include_runtime_connections
+          in: query
+          description: When "true", include all runtime user connections
+          schema:
+            type: boolean
+        - name: includes[]
+          in: query
+          description: Additional fields to include (e.g., tags)
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [tags]
+      responses:
+        "200":
+          description: List of connections retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Connection"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    post:
+      operationId: create_connection
+      summary: Create a connection
+      description: |
+        Create a new connection. Supports creating shell connections or
+        fully authenticated connections. Does not support OAuth connections
+        for authentication, but can create shell connections for OAuth providers.
+      tags:
+        - Connections
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectionCreateRequest"
+      responses:
+        "200":
+          description: Connection created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /api/connections/{connection_id}:
+    put:
+      operationId: update_connection
+      summary: Update a connection
+      description: |
+        Updates a connection in a non-embedded workspace. Allows updating connection
+        metadata and parameters without requiring full re-creation.
+      tags:
+        - Connections
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          description: The ID of the connection
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectionUpdateRequest"
+      responses:
+        "200":
+          description: Connection updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Connection not found
+
+  /api/connections/{connection_id}/pick_list:
+    post:
+      operationId: get_connection_picklist
+      summary: Get picklist values
+      description: |
+        Obtains a list of picklist values for a specified connection in a workspace.
+        This endpoint allows you to retrieve dynamic lists of values that can be
+        used in forms or dropdowns for the connected application.
+      tags:
+        - Connections
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          description: |
+            ID of the connection. This can be found in the URL of the app connection
+            or is the result of the List connections endpoint.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PicklistRequest"
+      responses:
+        "200":
+          description: Picklist values retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PicklistResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Connection not found
+
+  /api/connections/runtime_user_connections:
+    post:
+      operationId: create_runtime_user_connection
+      summary: Create OAuth runtime user connection
+      description: |
+        Creates an OAuth runtime user connection. The parent connection must be
+        an established OAuth connection. This initiates the OAuth flow and provides
+        a URL for end user authorization.
+      tags:
+        - Connections
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RuntimeUserConnectionCreateRequest"
+      responses:
+        "200":
+          description: Runtime user connection created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuntimeUserConnectionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Parent connection not found
+
+  /api/connections/runtime_user_connections/{connection_id}/get_oauth_url:
+    get:
+      operationId: get_connection_oauth_url
+      summary: Get OAuth URL for connection
+      description: |
+        Get the OAuth URL for a runtime user connection. This endpoint is used
+        to retrieve the OAuth authorization URL for establishing or re-authorizing
+        a connection.
+      tags:
+        - Connections
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          description: Connection ID
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OAuth URL retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthUrlResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Connection not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: API token for authentication
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    BadRequestError:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+    ForbiddenError:
+      description: Forbidden - feature not enabled or insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    UnprocessableEntityError:
+      description: Unprocessable Entity - action execution failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - plan_id
+        - current_billing_period_start
+        - current_billing_period_end
+        - recipes_count
+        - company_name
+        - location
+        - last_seen
+        - email
+        - active_recipes_count
+        - root_folder_id
+      properties:
+        id:
+          type: integer
+          example: 17293
+        name:
+          type: string
+          example: "ACME-API"
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-06-19T19:53:16.886-07:00"
+        plan_id:
+          type: string
+          example: "oem_plan"
+        current_billing_period_start:
+          type: string
+          format: date-time
+          example: "2020-09-22T19:15:11.372-07:00"
+        current_billing_period_end:
+          type: string
+          format: date-time
+          example: "2020-10-22T19:15:11.372-07:00"
+        expert:
+          type: boolean
+          example: false
+        avatar_url:
+          type: string
+          format: uri
+          example: "https://workato-assets.s3.amazonaws.com/profiles/avatars/000/089/005/large/logo.png?1562399288"
+        recipes_count:
+          type: integer
+          example: 49
+        interested_applications:
+          type: array
+          items:
+            type: string
+        company_name:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        last_seen:
+          type: string
+          format: date-time
+          example: "2020-08-23T23:22:24.329-07:00"
+        contact_phone:
+          type: string
+          nullable: true
+        contact_email:
+          type: string
+          nullable: true
+        about_me:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          example: "api-1@workato.com"
+        phone:
+          type: string
+          example: "xxxxxxxxxx"
+        active_recipes_count:
+          type: integer
+          example: 1
+        root_folder_id:
+          type: integer
+          example: 10294
+
+    Project:
+      type: object
+      required:
+        - id
+        - folder_id
+        - name
+      properties:
+        id:
+          type: integer
+          example: 649122
+        description:
+          type: string
+          example: "Coupa to Netsuite automations"
+        folder_id:
+          type: integer
+          example: 1563029
+        name:
+          type: string
+          example: "Procure to Pay"
+
+    ProjectPropertiesResponse:
+      type: object
+      additionalProperties:
+        type: string
+      description: |
+        A key-value map of project properties matching the specified prefix.
+        The keys are the property names (with prefix stripped) and values are strings.
+      example:
+        public_url: "https://www.example.com"
+        admin_email: "jude.feeney@example.com"
+
+    UpsertProjectPropertiesRequest:
+      type: object
+      required:
+        - properties
+      properties:
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 1024
+          description: |
+            Contains the names and values of the properties you plan to upsert.
+            Property names are limited to 100 characters, values to 1,024 characters.
+          example:
+            admin_email: "lucy.carrigan@example.com"
+            public_url: "https://www.example.com"
+
+    Folder:
+      type: object
+      required:
+        - id
+        - name
+        - parent_id
+        - is_project
+        - project_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 7498
+        name:
+          type: string
+          example: "Netsuite production"
+        parent_id:
+          type: integer
+          nullable: true
+          example: 3319
+        is_project:
+          type: boolean
+          example: false
+        project_id:
+          type: integer
+          nullable: true
+          example: 4567
+        created_at:
+          type: string
+          format: date-time
+          example: "2020-07-31T03:08:29.486-07:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2020-07-31T03:08:29.493-07:00"
+
+    FolderCreationResponse:
+      type: object
+      required:
+        - id
+        - name
+        - parent_id
+        - created_at
+        - updated_at
+        - project_id
+        - is_project
+      properties:
+        id:
+          type: integer
+          example: 80
+        name:
+          type: string
+          example: "My Project"
+        parent_id:
+          type: integer
+          nullable: true
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-09-04T06:25:36.102-07:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-09-04T06:25:36.102-07:00"
+        project_id:
+          type: integer
+          nullable: true
+          example: 58
+        is_project:
+          type: boolean
+          example: true
+
+    Asset:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - root_folder
+        - zip_name
+        - checked
+      properties:
+        id:
+          type: integer
+          example: 12
+        name:
+          type: string
+          example: "Copy of Recipeops"
+        type:
+          type: string
+          enum:
+            [
+              recipe,
+              connection,
+              lookup_table,
+              workato_db_table,
+              account_property,
+              project_property,
+              workato_schema,
+              workato_template,
+              lcap_app,
+              lcap_page,
+              custom_adapter,
+              topic,
+              api_group,
+              api_endpoint,
+            ]
+          example: "recipe"
+        version:
+          type: integer
+          example: 1
+        folder:
+          type: string
+          example: ""
+        absolute_path:
+          type: string
+          example: "All projects"
+        root_folder:
+          type: boolean
+          example: false
+        unreachable:
+          type: boolean
+          example: false
+        zip_name:
+          type: string
+          example: "copy_of_recipeops.recipe.json"
+        checked:
+          type: boolean
+          example: true
+        status:
+          type: string
+          enum: [added, updated, "no change"]
+          example: "added"
+
+    FolderAssetsResponse:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: object
+          required:
+            - assets
+          properties:
+            assets:
+              type: array
+              items:
+                $ref: "#/components/schemas/Asset"
+
+    ExportManifestRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the new manifest
+          example: "Test Manifest"
+        assets:
+          type: array
+          description: Dependent assets to include in the manifest
+          items:
+            $ref: "#/components/schemas/AssetReference"
+        folder_id:
+          type: integer
+          description: The ID of the folder containing the assets
+        include_test_cases:
+          type: boolean
+          description: Whether the manifest includes test cases
+          default: false
+        auto_generate_assets:
+          type: boolean
+          description: Auto-generates assets from a folder
+          default: false
+        include_data:
+          type: boolean
+          description: Include data from automatic asset generation
+          default: false
+        include_tags:
+          type: boolean
+          description: Include tags assigned to assets in the export manifest
+          default: false
+
+    AssetReference:
+      type: object
+      required:
+        - id
+        - type
+        - absolute_path
+      properties:
+        id:
+          type: integer
+          description: ID of the dependency
+        type:
+          type: string
+          description: Type of dependent asset
+          enum:
+            [
+              recipe,
+              connection,
+              lookup_table,
+              workato_db_table,
+              account_property,
+              project_property,
+              workato_schema,
+              workato_template,
+              lcap_app,
+              lcap_page,
+              custom_adapter,
+              topic,
+              api_group,
+              api_endpoint,
+            ]
+        checked:
+          type: boolean
+          description: Determines if the asset is included in the manifest
+          default: true
+        version:
+          type: integer
+          description: The version of the asset
+        folder:
+          type: string
+          description: The folder that contains the asset
+          default: ""
+        absolute_path:
+          type: string
+          description: The absolute path of the asset
+        root_folder:
+          type: boolean
+          description: Name root folder
+          default: false
+        unreachable:
+          type: boolean
+          description: Whether the asset is unreachable
+          default: false
+        zip_name:
+          type: string
+          description: Name in the exported zip file
+
+    ExportManifestResponse:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: object
+          required:
+            - id
+            - name
+            - last_exported_at
+            - created_at
+            - updated_at
+            - deleted_at
+            - project_path
+            - status
+          properties:
+            id:
+              type: integer
+              example: 12
+            name:
+              type: string
+              example: "Test Manifest"
+            last_exported_at:
+              type: string
+              format: date-time
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+              example: "2023-02-27T02:44:59.447-08:00"
+            updated_at:
+              type: string
+              format: date-time
+              example: "2023-02-27T02:44:59.447-08:00"
+            deleted_at:
+              type: string
+              format: date-time
+              nullable: true
+            project_path:
+              type: string
+              example: "Folder 1"
+            status:
+              type: string
+              example: "working"
+
+    PackageResponse:
+      type: object
+      required:
+        - id
+        - operation_type
+        - status
+      properties:
+        id:
+          type: integer
+          example: 242
+        operation_type:
+          type: string
+          enum: [export, import]
+          example: "export"
+        status:
+          type: string
+          enum: [completed, failed, processing, in_progress]
+          example: "completed"
+        export_manifest_id:
+          type: integer
+          example: 3
+        download_url:
+          type: string
+          format: uri
+          example: "https://www.workato-staging-assets.com/packages/zip_files/000/000/242/original/exportdemo.zip"
+
+    PackageDetailsResponse:
+      type: object
+      required:
+        - id
+        - operation_type
+        - status
+      properties:
+        id:
+          type: integer
+          example: 242
+        operation_type:
+          type: string
+          enum: [export, import]
+          example: "export"
+        status:
+          type: string
+          enum: [completed, failed, processing, in_progress]
+          example: "completed"
+        export_manifest_id:
+          type: integer
+          example: 3
+        download_url:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://www.workato-staging-assets.com/packages/zip_files/000/000/242/original/exportdemo.zip"
+        error:
+          type: string
+          description: Error message when status is failed
+          example: "error_message"
+        recipe_status:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 12345
+              import_result:
+                type: string
+                enum:
+                  [
+                    no_update_or_updated_without_restart,
+                    restarted,
+                    stopped,
+                    restart_failed,
+                  ]
+                example: "no_update_or_updated_without_restart"
+
+    Recipe:
+      type: object
+      required:
+        - id
+        - user_id
+        - name
+        - created_at
+        - updated_at
+        - copy_count
+        - action_applications
+        - applications
+        - description
+        - parameters_schema
+        - parameters
+        - webhook_url
+        - folder_id
+        - running
+        - job_succeeded_count
+        - job_failed_count
+        - lifetime_task_count
+        - version_no
+        - stop_cause
+        - config
+        - trigger_closure
+        - code
+        - author_name
+        - version_author_name
+        - version_author_email
+        - version_comment
+      properties:
+        id:
+          type: integer
+          example: 1913515
+        user_id:
+          type: integer
+          example: 4848
+        name:
+          type: string
+          example: "Callable service: JIRA ticket sync"
+        created_at:
+          type: string
+          format: date-time
+          example: "2021-11-25T07:07:38.568-08:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2021-11-25T07:14:40.822-08:00"
+        copy_count:
+          type: integer
+          example: 1
+        trigger_application:
+          type: string
+          example: "workato_service"
+        action_applications:
+          type: array
+          items:
+            type: string
+          example: ["jira"]
+        applications:
+          type: array
+          items:
+            type: string
+          example: ["workato_service", "jira"]
+        description:
+          type: string
+          example: "When there is a new call for callable recipe, do action"
+        parameters_schema:
+          type: array
+          items: {}
+        parameters:
+          type: object
+        webhook_url:
+          type: string
+          format: uri
+          nullable: true
+        folder_id:
+          type: integer
+          example: 241557
+        running:
+          type: boolean
+          example: false
+        job_succeeded_count:
+          type: integer
+          example: 1
+        job_failed_count:
+          type: integer
+          example: 0
+        lifetime_task_count:
+          type: integer
+          example: 1
+        last_run_at:
+          type: string
+          format: date-time
+          example: "2021-11-25T07:10:27.424-08:00"
+        stopped_at:
+          type: string
+          format: date-time
+          example: "2021-11-25T07:11:06.346-08:00"
+        version_no:
+          type: integer
+          example: 3
+        stop_cause:
+          type: string
+          nullable: true
+        config:
+          type: array
+          items:
+            type: object
+            properties:
+              keyword:
+                type: string
+                example: "application"
+              name:
+                type: string
+                example: "workato_service"
+              provider:
+                type: string
+                example: "workato_service"
+              skip_validation:
+                type: boolean
+                example: false
+              account_id:
+                type: integer
+                nullable: true
+        trigger_closure:
+          nullable: true
+        code:
+          type: string
+          description: Recipe code (may be truncated if exclude_code is true)
+        author_name:
+          type: string
+          example: "Alex Fisher"
+        version_author_name:
+          type: string
+          example: "Alex Fisher"
+        version_author_email:
+          type: string
+          format: email
+          example: "alex.fisher@example.com"
+        version_comment:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["tag-ANMNxAz9-oYDJRm", "tag-ANgeffPL-3gxQwA"]
+
+    RecipeListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Recipe"
+
+    RecipeStartResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Indicates whether the recipe started successfully
+          example: true
+        code_errors:
+          type: array
+          description: Code validation errors (only present on failure)
+          items:
+            type: array
+            description: Step error array - [step_number, [error_arrays]]
+            items: {}
+          example: []
+        config_errors:
+          type: array
+          description: Configuration errors (only present on failure)
+          items:
+            type: array
+            description: Config error array - [step_number, [error_arrays]] or string
+            items: {}
+          example: []
+
+    RecipeConnectionUpdateRequest:
+      type: object
+      required:
+        - adapter_name
+        - connection_id
+      properties:
+        adapter_name:
+          type: string
+          description: The internal name of the connector
+          example: "salesforce"
+        connection_id:
+          type: integer
+          description: The ID of the connection that replaces the existing one
+          example: 772461
+
+    Connection:
+      type: object
+      required:
+        - id
+        - application
+        - name
+        - description
+        - authorized_at
+        - authorization_status
+        - authorization_error
+        - created_at
+        - updated_at
+        - external_id
+        - folder_id
+        - connection_lost_at
+        - connection_lost_reason
+        - parent_id
+        - tags
+      properties:
+        id:
+          type: integer
+          example: 36
+        application:
+          type: string
+          example: "salesforce"
+        name:
+          type: string
+          example: "ACME Production Salesforce connection"
+        description:
+          type: string
+          nullable: true
+        authorized_at:
+          type: string
+          format: date-time
+          example: "2015-05-26T22:53:52.528Z"
+          nullable: true
+        authorization_status:
+          type: string
+          enum: [success, failed, exception]
+          example: "success"
+          nullable: true
+        authorization_error:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2015-05-26T22:53:52.532Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2015-05-26T22:53:52.532Z"
+        external_id:
+          type: string
+          nullable: true
+        folder_id:
+          type: integer
+          example: 4515
+        connection_lost_at:
+          type: string
+          format: date-time
+          nullable: true
+        connection_lost_reason:
+          type: string
+          nullable: true
+        parent_id:
+          type: integer
+          nullable: true
+        provider:
+          type: string
+          example: "jira"
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: ["tag-ANgeffPL-3gxQwA"]
+
+    ConnectionCreateRequest:
+      type: object
+      required:
+        - name
+        - provider
+      properties:
+        name:
+          type: string
+          description: Name of the connection
+          example: "Prod JIRA connection"
+        provider:
+          type: string
+          description: The application type of the connection
+          example: "jira"
+        parent_id:
+          type: integer
+          description: The ID of the parent connection (must be same provider type)
+        folder_id:
+          type: integer
+          description: The ID of the project or folder containing the connection
+        external_id:
+          type: string
+          description: The external ID assigned to the connection
+        shell_connection:
+          type: boolean
+          description: |
+            Specifies whether the connection is a shell connection or authenticated connection.
+            If false, credentials are passed and connection is tested. If true, credentials
+            are passed but connection isn't tested.
+          default: false
+        input:
+          type: object
+          description: Connection parameters (varies by provider)
+          additionalProperties: true
+          example:
+            host_name: "acme.atlassian.net"
+            auth_type: "api_token"
+            email: "smith@acme.com"
+            apitoken: "XXXXXXXX"
+
+    RuntimeUserConnectionCreateRequest:
+      type: object
+      required:
+        - parent_id
+        - folder_id
+        - external_id
+      properties:
+        parent_id:
+          type: integer
+          description: ID of parent OAuth connector (connection must be established)
+          example: 12345
+        name:
+          type: string
+          description: Optional name for the runtime user connection
+          example: "John's Google Drive"
+        folder_id:
+          type: integer
+          description: Folder to put connection (uses current project if not specified)
+          example: 26204321
+        external_id:
+          type: string
+          description: End user string ID for identifying the connection
+          example: "user@example.com"
+        callback_url:
+          type: string
+          description: Optional URL called back after successful token acquisition
+          example: "https://myapp.com/oauth/callback"
+        redirect_url:
+          type: string
+          description: Optional URL where user is redirected after successful authorization
+          example: "https://myapp.com/success"
+
+    RuntimeUserConnectionResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - url
+          properties:
+            id:
+              type: integer
+              description: The ID of the created runtime user connection
+              example: 18009027
+            url:
+              type: string
+              description: OAuth URL for user authorization
+              example: "https://oauth.workato.com/oauth/authorize?connection_id=18009027"
+
+    ConnectionUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the connection
+          example: "Updated Prod JIRA connection"
+        parent_id:
+          type: integer
+          description: The ID of the parent connection (must be same provider type)
+        folder_id:
+          type: integer
+          description: The ID of the project or folder containing the connection
+        external_id:
+          type: string
+          description: The external ID assigned to the connection
+        shell_connection:
+          type: boolean
+          description: |
+            Specifies whether the connection is a shell connection or authenticated connection.
+            If false, credentials are passed and connection is tested. If true, credentials
+            are passed but connection isn't tested.
+          default: false
+        input:
+          type: object
+          description: Connection parameters (varies by provider)
+          additionalProperties: true
+          example:
+            host_name: "updated.atlassian.net"
+            auth_type: "api_token"
+            email: "updated@acme.com"
+            apitoken: "XXXXXXXX"
+
+    PicklistRequest:
+      type: object
+      required:
+        - pick_list_name
+      properties:
+        pick_list_name:
+          type: string
+          description: Name of the pick list
+          example: "sobject_fields"
+        pick_list_params:
+          type: object
+          description: Picklist parameters, required in some picklists
+          additionalProperties: true
+          example:
+            sobject_name: "Invoice__c"
+
+    PicklistResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          description: Array of picklist value tuples [display_name, value, null, boolean]
+          items:
+            type: array
+            items: {}
+            minItems: 4
+            maxItems: 4
+          example:
+            - ["Record ID", "Id"]
+            - ["Owner ID", "OwnerId"]
+            - ["Invoice Name", "Name"]
+            - ["Created Date", "CreatedDate"]
+            - ["Status", "Status__c"]
+
+    SuccessResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          example: true
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: "Authentication failed"
+
+    # Platform Connector Schemas
+    PlatformConnector:
+      type: object
+      required:
+        - name
+        - title
+        - categories
+        - oauth
+        - deprecated
+        - secondary
+        - triggers
+        - actions
+      properties:
+        name:
+          type: string
+          example: "active_directory"
+        title:
+          type: string
+          example: "Active Directory"
+        categories:
+          type: array
+          items:
+            type: string
+          example: ["Directory Services", "Marketing"]
+        oauth:
+          type: boolean
+          example: false
+        deprecated:
+          type: boolean
+          example: false
+        secondary:
+          type: boolean
+          example: false
+        triggers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConnectorAction"
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConnectorAction"
+
+    ConnectorAction:
+      type: object
+      required:
+        - name
+        - title
+        - deprecated
+        - bulk
+        - batch
+      properties:
+        name:
+          type: string
+          example: "new_entry"
+        title:
+          type: string
+          example: "New entry"
+        deprecated:
+          type: boolean
+          example: false
+        bulk:
+          type: boolean
+          example: false
+        batch:
+          type: boolean
+          example: false
+
+    PlatformConnectorListResponse:
+      type: object
+      required:
+        - items
+        - count
+        - page
+        - per_page
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlatformConnector"
+        count:
+          type: integer
+          example: 304
+        page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 100
+
+    # Custom Connector Schemas
+    CustomConnector:
+      type: object
+      required:
+        - id
+        - name
+        - title
+        - latest_released_version
+        - latest_released_version_note
+        - released_versions
+        - static_webhook_url
+      properties:
+        id:
+          type: integer
+          example: 562523
+        name:
+          type: string
+          example: "apps_by_workato_connector_804586_1719241698"
+        title:
+          type: string
+          example: "Apps by Workato"
+        latest_released_version:
+          type: integer
+          example: 2
+        latest_released_version_note:
+          type: string
+          nullable: true
+          example: "Connector Version"
+        released_versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConnectorVersion"
+        static_webhook_url:
+          type: string
+          format: uri
+          nullable: true
+
+    ConnectorVersion:
+      type: object
+      required:
+        - version
+        - version_note
+        - created_at
+        - released_at
+      properties:
+        version:
+          type: integer
+          example: 2
+        version_note:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-06-24T11:17:52.516-04:00"
+        released_at:
+          type: string
+          format: date-time
+          example: "2024-06-24T11:17:53.999-04:00"
+
+    CustomConnectorListResponse:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomConnector"
+
+    CustomConnectorCodeResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - code
+          properties:
+            code:
+              type: string
+              description: The connector code as a stringified value
+
+    # Data Table Schemas
+    DataTable:
+      type: object
+      required:
+        - id
+        - name
+        - schema
+        - folder_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "f4d2e85d-c7f4-4877-8f16-6643a4b3fb23"
+        name:
+          type: string
+          example: "Resume screening"
+        schema:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataTableColumn"
+        folder_id:
+          type: integer
+          example: 24468824
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-04-04T11:35:04.544-07:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-04-04T11:55:50.473-07:00"
+
+    DataTableColumn:
+      type: object
+      required:
+        - type
+        - name
+        - optional
+        - field_id
+        - hint
+        - default_value
+        - metadata
+        - multivalue
+        - relation
+      properties:
+        type:
+          type: string
+          enum:
+            [boolean, date, date_time, integer, number, string, file, relation]
+          example: "string"
+        name:
+          type: string
+          example: "application_id"
+        optional:
+          type: boolean
+          example: true
+        field_id:
+          type: string
+          format: uuid
+          example: "8f4a57d6-f524-47f2-ae59-be1a80dc2dd5"
+        hint:
+          type: string
+          nullable: true
+          example: "Greenhouse application ID"
+        default_value:
+          nullable: true
+          description: Default value matching the column type
+        metadata:
+          type: object
+          additionalProperties: true
+        multivalue:
+          type: boolean
+          example: false
+        relation:
+          $ref: "#/components/schemas/DataTableRelation"
+          nullable: true
+
+    DataTableRelation:
+      type: object
+      required:
+        - table_id
+        - field_id
+      properties:
+        table_id:
+          type: string
+          format: uuid
+          example: "2507a39a-6847-4857-88ed-c3b9c8302e02"
+        field_id:
+          type: string
+          format: uuid
+          example: "900454f4-5b3d-4670-bc3c-d640915156f2"
+
+    DataTableListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataTable"
+
+    DataTableCreateRequest:
+      type: object
+      required:
+        - name
+        - folder_id
+        - schema
+      properties:
+        name:
+          type: string
+          description: The name of the data table to create
+          example: "Expense reports 4"
+        folder_id:
+          type: integer
+          description: ID of the folder where to create the data table
+          example: 75509
+        schema:
+          type: array
+          description: Array of column definitions
+          items:
+            $ref: "#/components/schemas/DataTableColumnRequest"
+
+    DataTableColumnRequest:
+      type: object
+      required:
+        - type
+        - name
+        - optional
+      properties:
+        type:
+          type: string
+          enum:
+            [boolean, date, date_time, integer, number, string, file, relation]
+          description: The data type of the column
+        name:
+          type: string
+          description: The name of the column
+        optional:
+          type: boolean
+          description: Whether the column is optional
+        field_id:
+          type: string
+          pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          description: Unique UUID of the column
+        hint:
+          type: string
+          description: Tooltip hint for users
+        default_value:
+          description: Default value matching the column type
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional metadata
+        multivalue:
+          type: boolean
+          description: Whether the column accepts multi-value input
+        relation:
+          $ref: "#/components/schemas/DataTableRelation"
+          description: Link to another data table
+
+    DataTableCreateResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/DataTable"
+
+    # API Client Schemas
+    ApiClient:
+      type: object
+      required:
+        - id
+        - name
+        - auth_type
+        - active
+        - active_since
+        - auth_token
+        - created_at
+        - updated_at
+        - logo
+        - logo_2x
+        - is_legacy
+        - api_policies
+        - api_collections
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Test client"
+        description:
+          type: string
+          nullable: true
+          example: ""
+        active_api_keys_count:
+          type: integer
+          example: 2
+        total_api_keys_count:
+          type: integer
+          example: 2
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-05-25T08:08:21.413-07:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-10-25T03:52:07.122-07:00"
+        logo:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the client's logo image
+          example: "https://s3-48296.alexv.awstf.workato.com/paperclip/api_customers/logos/000/000/001/small/psyduck.png?1729853526"
+        logo_2x:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the client's high-resolution logo image
+          example: "https://s3-48296.alexv.awstf.workato.com/paperclip/api_customers/logos/000/000/001/medium/psyduck.png?1729853526"
+        is_legacy:
+          type: boolean
+          example: true
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "alex.das@workato.com"
+        auth_type:
+          type: string
+          enum: [token, jwt, oauth2, oidc]
+          example: "token"
+        api_token:
+          type: string
+          description: API token (only returned for token auth type)
+          nullable: true
+        mtls_enabled:
+          type: boolean
+          nullable: true
+          example: true
+        validation_formula:
+          type: string
+          nullable: true
+          example: "OU=Workato"
+        cert_bundle_ids:
+          type: array
+          items:
+            type: integer
+          nullable: true
+          example: [3]
+        api_policies:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 2
+              name:
+                type: string
+                example: "Internal – Admins"
+          description: List of API policies associated with the client
+        api_collections:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 1
+              name:
+                type: string
+                example: "Echo collection"
+          description: List of API collections associated with the client
+
+    ApiClientCreateRequest:
+      type: object
+      required:
+        - name
+        - api_collection_ids
+        - auth_type
+      properties:
+        name:
+          type: string
+          description: Name of the client
+          example: "Automation Inc."
+        description:
+          type: string
+          description: Description of the client
+          example: "API client for Product Catalog"
+        project_id:
+          type: integer
+          description: ID of the project to create the client in
+        api_portal_id:
+          type: integer
+          description: ID of the API portal to assign the client
+        email:
+          type: string
+          format: email
+          description: Email address for the client (required if api_portal_id provided)
+          example: "alex.das@workato.com"
+        api_collection_ids:
+          type: array
+          items:
+            type: integer
+          description: IDs of API collections to assign to the client
+          example: [6883]
+        api_policy_id:
+          type: integer
+          description: ID of the API policy to apply
+        auth_type:
+          type: string
+          enum: [token, jwt, oauth2, oidc]
+          description: Authentication method
+          example: "token"
+        jwt_method:
+          type: string
+          enum: [hmac, rsa]
+          description: JWT signing method (required when auth_type is jwt)
+        jwt_secret:
+          type: string
+          description: HMAC shared secret or RSA public key (required when auth_type is jwt)
+        oidc_issuer:
+          type: string
+          description: Discovery URL for OIDC identity provider
+        oidc_jwks_uri:
+          type: string
+          description: JWKS URL for OIDC identity provider
+        access_profile_claim:
+          type: string
+          description: JWT claim key for access profile identification
+        required_claims:
+          type: array
+          items:
+            type: string
+          description: List of claims to enforce
+        allowed_issuers:
+          type: array
+          items:
+            type: string
+          description: List of allowed issuers
+        mtls_enabled:
+          type: boolean
+          description: Whether mutual TLS is enabled
+          example: true
+        validation_formula:
+          type: string
+          description: Formula to validate client certificates
+          example: "OU=Workato"
+        cert_bundle_ids:
+          type: array
+          items:
+            type: integer
+          description: Certificate bundle IDs for mTLS
+          example: [3]
+
+    ApiClientResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/ApiClient"
+
+    ApiClientListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - page
+        - per_page
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiClient"
+        count:
+          type: integer
+          description: Total number of API clients
+          example: 1
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        per_page:
+          type: integer
+          description: Number of items per page
+          example: 100
+
+    ApiKey:
+      type: object
+      required:
+        - id
+        - name
+        - auth_type
+        - active
+        - active_since
+        - auth_token
+      properties:
+        id:
+          type: integer
+          example: 37326
+        name:
+          type: string
+          example: "Automation Inc."
+        auth_type:
+          type: string
+          example: "token"
+        ip_allow_list:
+          type: array
+          items:
+            type: string
+          description: List of IP addresses in the allowlist
+          example: ["8.8.8.8/24"]
+        ip_deny_list:
+          type: array
+          items:
+            type: string
+          description: List of IP addresses to deny requests from
+          example: ["192.168.0.0/16"]
+        active:
+          type: boolean
+          example: true
+        active_since:
+          type: string
+          format: date-time
+          example: "2025-02-12T08:41:44+05:30"
+        auth_token:
+          type: string
+          description: The generated API token
+          example: "72b378def0c1d83e6a015e654a744c380655565a68c591cf9f3598d0d14bdb5f"
+
+    ApiKeyCreateRequest:
+      type: object
+      required:
+        - name
+        - active
+      properties:
+        name:
+          type: string
+          description: Name of the API key
+          example: "Automation Inc."
+        active:
+          type: boolean
+          description: Indicates whether the API key is enabled or disabled. Disabled keys cannot call any APIs
+          example: true
+        ip_allow_list:
+          type: array
+          items:
+            type: string
+          description: List of IP addresses to add to the allowlist
+          example: ["8.8.8.8/24"]
+        ip_deny_list:
+          type: array
+          items:
+            type: string
+          description: List of IP addresses to deny requests from
+          example: ["192.168.0.0/16"]
+
+    ApiKeyResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/ApiKey"
+
+    ApiKeyListResponse:
+      type: object
+      required:
+        - data
+        - count
+        - page
+        - per_page
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiKey"
+        count:
+          type: integer
+          description: Total number of API keys
+          example: 1
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        per_page:
+          type: integer
+          description: Number of items per page
+          example: 100
+
+    # API Collection Schemas
+    ApiCollection:
+      type: object
+      required:
+        - id
+        - name
+        - project_id
+        - url
+        - api_spec_url
+        - version
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 1361
+        name:
+          type: string
+          example: "Quote to cash"
+        project_id:
+          type: string
+          example: "523144"
+        url:
+          type: string
+          format: uri
+          example: "https://api.peatql.io/quote-to-cash-v1"
+        api_spec_url:
+          type: string
+          format: uri
+          example: "https://www.workato.com/doc/service/quote-to-cash-v1/swagger?token={token}"
+        version:
+          type: string
+          example: "1.0"
+        created_at:
+          type: string
+          format: date-time
+          example: "2020-06-15T22:20:15.327-07:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2020-06-15T22:20:15.327-07:00"
+        message:
+          type: string
+          description: Only present in creation/import responses
+          example: "Import completed successfully"
+        import_results:
+          $ref: "#/components/schemas/ImportResults"
+          description: Only present in creation/import responses
+
+    ApiEndpoint:
+      type: object
+      required:
+        - id
+        - api_collection_id
+        - flow_id
+        - name
+        - method
+        - url
+        - base_path
+        - path
+        - active
+        - legacy
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 9903
+        api_collection_id:
+          type: integer
+          example: 1391
+        flow_id:
+          type: integer
+          example: 39999
+        name:
+          type: string
+          example: "salesforce search"
+        method:
+          type: string
+          example: "GET"
+        url:
+          type: string
+          format: uri
+          example: "https://api.na.workato.com/abstergoi/netsuite-customers-v1/salesforce/search"
+        legacy_url:
+          type: string
+          format: uri
+          nullable: true
+          example: null
+        base_path:
+          type: string
+          example: "/abstergoi/netsuite-customers-v1/salesforce/search"
+        path:
+          type: string
+          example: "salesforce/search"
+        active:
+          type: boolean
+          example: false
+        legacy:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2020-08-05T05:59:55.991-07:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2020-08-05T05:59:55.991-07:00"
+
+    ImportResults:
+      type: object
+      required:
+        - success
+        - total_endpoints
+        - failed_endpoints
+        - failed_actions
+      properties:
+        success:
+          type: boolean
+          example: true
+        total_endpoints:
+          type: integer
+          example: 1
+        failed_endpoints:
+          type: integer
+          example: 0
+        failed_actions:
+          type: array
+          items:
+            type: string
+          example: []
+
+    ApiCollectionCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the API collection
+          example: "My API Collection"
+        project_id:
+          type: integer
+          description: ID of the project to associate the collection with
+          example: 123
+        proxy_connection_id:
+          type: integer
+          description: ID of a proxy connection for proxy mode
+          example: 456
+        openapi_spec:
+          $ref: "#/components/schemas/OpenApiSpec"
+          description: OpenAPI specification object
+
+    OpenApiSpec:
+      type: object
+      required:
+        - content
+        - format
+      properties:
+        content:
+          type: string
+          description: The OpenAPI spec as a JSON or YAML string
+        format:
+          type: string
+          enum: [json, yaml]
+          description: Format of the OpenAPI spec
+          example: "json"
+
+    ApiCollectionResponse:
+      $ref: "#/components/schemas/ApiCollection"
+
+    OAuthUrlResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - url
+          properties:
+            url:
+              type: string
+              format: uri
+              description: The OAuth authorization URL
+              example: "https://login.microsoftonline.com/oauth2/v2.0/authorize?client_id=..."
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Validation failed"
+        errors:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+          example:
+            name: ["can't be blank"]
+            provider: ["is not included in the list"]
