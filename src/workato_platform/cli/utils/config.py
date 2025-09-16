@@ -541,7 +541,7 @@ class ConfigManager:
 
         # If no .workato found up the hierarchy, create one in current directory
         if config_dir is None:
-            config_dir = Path.cwd() / ".workato"
+            config_dir = Path.cwd() / "workato"
             config_dir.mkdir(exist_ok=True)
 
         return config_dir
@@ -555,7 +555,7 @@ class ConfigManager:
         home_dir = Path.home().resolve()
 
         while current != current.parent and current != home_dir:
-            workato_dir = current / ".workato"
+            workato_dir = current / "workato"
             if workato_dir.exists() and workato_dir.is_dir():
                 return workato_dir
             current = current.parent
@@ -563,7 +563,7 @@ class ConfigManager:
         return None
 
     def get_project_root(self) -> Path | None:
-        """Get the root directory of the current project (containing .workato)"""
+        """Get the root directory of the current project (containing workato)"""
         workato_dir = self._find_nearest_workato_dir()
         return workato_dir.parent if workato_dir else None
 

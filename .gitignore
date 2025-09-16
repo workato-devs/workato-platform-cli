@@ -73,3 +73,5 @@ target/
 .ruff_cache
 
 projects/*/workato/
+projects/
+workato/
