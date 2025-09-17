@@ -1,7 +1,5 @@
 """Initialize Workato CLI for a new project"""
 
-from pathlib import Path
-
 import asyncclick as click
 
 from workato_platform import Workato
