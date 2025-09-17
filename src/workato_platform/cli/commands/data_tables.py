@@ -165,10 +165,10 @@ async def create_table(
 
     try:
         response = await workato_api_client.data_tables_api.create_data_table(
-            DataTableCreateRequest(
+            data_table_create_request=DataTableCreateRequest(
                 name=name,
                 folder_id=folder_id,
-                schema=schema,
+                var_schema=schema,
             )
         )
         table_data = response.data

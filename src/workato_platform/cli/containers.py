@@ -1,3 +1,5 @@
+import certifi
+
 from dependency_injector import containers, providers
 
 from workato_platform import Workato
@@ -10,8 +12,11 @@ from workato_platform.client.workato_api.configuration import Configuration
 
 def create_workato_config(access_token: str, host: str) -> Configuration:
     """Create Workato API configuration with SSL verification disabled"""
-    config_obj = Configuration(access_token=access_token, host=host)
-    config_obj.verify_ssl = False
+    config_obj = Configuration(
+        access_token=access_token,
+        host=host,
+        ssl_ca_cert=certifi.where(),
+    )
     return config_obj
 
 

@@ -1,0 +1,58 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(client/|src/workato_platform/client/)
+      - id: end-of-file-fixer
+        exclude: ^(client/|src/workato_platform/client/)
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: debug-statements
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.13.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+        exclude: ^(client/|tests/|src/workato_platform/client/)
+      - id: ruff-format
+        exclude: ^(client/|tests/|src/workato_platform/client/)
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.1
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          [
+            types-requests,
+            types-click,
+            packaging,
+            asyncclick>=8.0.0,
+            pydantic>=2.11.7,
+            dependency-injector>=4.41.0,
+            inquirer>=3.1.0,
+            aiohttp>=3.8.0,
+            python-dateutil>=2.8.0,
+            typing-extensions>=4.0.0,
+          ]
+        exclude: ^(client/|tests/|src/workato_platform/client/)
+
+  # Bandit for security linting
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        args: [-c, pyproject.toml]
+        additional_dependencies: ["bandit[toml]"]
+        exclude: ^(client/|tests/|src/workato_platform/client/)
+
+  # pip-audit for dependency security auditing
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.9.0
+    hooks:
+      - id: pip-audit
+        args: [--format=json]
