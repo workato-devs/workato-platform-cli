@@ -1,0 +1,602 @@
+{
+  "name": "API-First Integration with Pagination and Rate Limiting",
+  "description": "Comprehensive API integration with pagination handling, rate limiting, retry logic, and circuit breaker patterns",
+  "version": 3,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_trigger",
+    "as": "scheduler",
+    "keyword": "trigger",
+    "input": {
+      "interval": "hourly",
+      "start_time": "00:05"
+    },
+    "block": [
+      {
+        "number": 1,
+        "provider": "workato_utility",
+        "name": "compose",
+        "as": "api_config",
+        "keyword": "action",
+        "uuid": "d5e6f7g8-h9i0-1234-defg-hi5678901234",
+        "input": {
+          "api_config": {
+            "base_url": "https://api.example.com/v2",
+            "rate_limit_per_minute": 100,
+            "max_page_size": 250,
+            "timeout_seconds": 30,
+            "max_retries": 3,
+            "circuit_breaker_threshold": 5
+          },
+          "sync_state": {
+            "last_sync_timestamp": "=now.beginning_of_day.to_i",
+            "total_records_processed": 0,
+            "current_page": 1,
+            "has_more_pages": true,
+            "api_calls_count": 0,
+            "retry_count": 0,
+            "failed_requests": 0
+          },
+          "processing_start_time": "=now.to_i"
+        }
+      },
+      {
+        "number": 2,
+        "provider": "postgresql",
+        "name": "select_rows",
+        "as": "get_sync_state",
+        "keyword": "action",
+        "uuid": "e6f7g8h9-i0j1-2345-efgh-ij6789012345",
+        "input": {
+          "schema": "public",
+          "table": "api_sync_state",
+          "where": "integration_name = 'customer_api'",
+          "limit": 1
+        }
+      },
+      {
+        "number": 3,
+        "provider": "workato_utility",
+        "name": "compose",
+        "as": "prepare_sync",
+        "keyword": "action",
+        "uuid": "f7g8h9i0-j1k2-3456-fghi-jk7890123456",
+        "input": {
+          "last_successful_sync": "=if _('data.postgresql.get_sync_state').size > 0 then _('data.postgresql.get_sync_state')[0]['last_sync_timestamp'] else '2024-01-01T00:00:00Z' end",
+          "circuit_breaker_failures": "=if _('data.postgresql.get_sync_state').size > 0 then _('data.postgresql.get_sync_state')[0]['consecutive_failures'] else 0 end",
+          "can_proceed": "=_('data.postgresql.get_sync_state').size == 0 || _('data.postgresql.get_sync_state')[0]['consecutive_failures'] < _('data.workato_utility.api_config.api_config.circuit_breaker_threshold')",
+          "api_params": {
+            "updated_since": "=if _('data.postgresql.get_sync_state').size > 0 then _('data.postgresql.get_sync_state')[0]['last_sync_timestamp'] else '2024-01-01T00:00:00Z' end",
+            "page_size": "=_('data.workato_utility.api_config.api_config.max_page_size')",
+            "include_deleted": true,
+            "sort": "updated_at",
+            "order": "asc"
+          }
+        }
+      },
+      {
+        "number": 4,
+        "provider": "workato_utility",
+        "name": "condition",
+        "as": "circuit_breaker_check",
+        "keyword": "action",
+        "uuid": "g8h9i0j1-k2l3-4567-ghij-kl8901234567",
+        "input": {
+          "condition": "=_('data.workato_utility.prepare_sync.can_proceed')",
+          "actions_if_true": [
+            {
+              "number": 5,
+              "provider": "workato_utility",
+              "name": "repeat",
+              "as": "pagination_loop",
+              "keyword": "action",
+              "uuid": "h9i0j1k2-l3m4-5678-hijk-lm9012345678",
+              "input": {
+                "foreach": "=1.upto(100)",
+                "actions": [
+                  {
+                    "number": 6,
+                    "provider": "workato_utility",
+                    "name": "condition",
+                    "as": "rate_limit_pause",
+                    "keyword": "action",
+                    "uuid": "i0j1k2l3-m4n5-6789-ijkl-mn0123456789",
+                    "input": {
+                      "condition": "=_('data.workato_utility.api_config.sync_state.api_calls_count') > 0 && (_('data.workato_utility.api_config.sync_state.api_calls_count') % 10) == 0",
+                      "actions_if_true": [
+                        {
+                          "number": 7,
+                          "provider": "workato_utility",
+                          "name": "sleep",
+                          "as": "rate_limit_sleep",
+                          "keyword": "action",
+                          "uuid": "j1k2l3m4-n5o6-7890-jklm-no1234567890",
+                          "input": {
+                            "seconds": 6
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "number": 8,
+                    "provider": "http",
+                    "name": "get",
+                    "as": "api_call",
+                    "keyword": "action",
+                    "uuid": "k2l3m4n5-o6p7-8901-klmn-op2345678901",
+                    "input": {
+                      "url": "=_('data.workato_utility.api_config.api_config.base_url')/customers",
+                      "headers": {
+                        "Authorization": "Bearer =_('connections.customer_api.access_token')",
+                        "Content-Type": "application/json",
+                        "User-Agent": "Workato-Integration/1.0"
+                      },
+                      "params": {
+                        "updated_since": "=_('data.workato_utility.prepare_sync.api_params.updated_since')",
+                        "page": "=_('data.workato_utility.api_config.sync_state.current_page')",
+                        "per_page": "=_('data.workato_utility.prepare_sync.api_params.page_size')",
+                        "include_deleted": "=_('data.workato_utility.prepare_sync.api_params.include_deleted')",
+                        "sort": "=_('data.workato_utility.prepare_sync.api_params.sort')",
+                        "order": "=_('data.workato_utility.prepare_sync.api_params.order')"
+                      },
+                      "timeout": "=_('data.workato_utility.api_config.api_config.timeout_seconds')"
+                    }
+                  },
+                  {
+                    "number": 9,
+                    "provider": "workato_utility",
+                    "name": "compose",
+                    "as": "analyze_response",
+                    "keyword": "action",
+                    "uuid": "l3m4n5o6-p7q8-9012-lmno-pq3456789012",
+                    "input": {
+                      "api_response_successful": "=_('data.http.api_call.status_code').to_i.between?(200, 299)",
+                      "rate_limited": "=_('data.http.api_call.status_code').to_i == 429",
+                      "server_error": "=_('data.http.api_call.status_code').to_i.between?(500, 599)",
+                      "client_error": "=_('data.http.api_call.status_code').to_i.between?(400, 499) && _('data.http.api_call.status_code').to_i != 429",
+                      "response_data": "=_('data.http.api_call.body')",
+                      "current_page_size": "=(_('data.http.api_call.body.data') || []).size",
+                      "has_next_page": "=_('data.http.api_call.body.pagination.has_next_page')",
+                      "rate_limit_remaining": "=_('data.http.api_call.headers.X-RateLimit-Remaining')"
+                    }
+                  },
+                  {
+                    "number": 10,
+                    "provider": "workato_utility",
+                    "name": "condition",
+                    "as": "handle_response",
+                    "keyword": "action",
+                    "uuid": "m4n5o6p7-q8r9-0123-mnop-qr4567890123",
+                    "input": {
+                      "condition": "=_('data.workato_utility.analyze_response.api_response_successful')",
+                      "actions_if_true": [
+                        {
+                          "number": 11,
+                          "provider": "workato_utility",
+                          "name": "repeat",
+                          "as": "process_records",
+                          "keyword": "action",
+                          "uuid": "n5o6p7q8-r9s0-1234-nopq-rs5678901234",
+                          "input": {
+                            "foreach": "=_('data.workato_utility.analyze_response.response_data.data') || []",
+                            "actions": [
+                              {
+                                "number": 12,
+                                "provider": "workato_utility",
+                                "name": "compose",
+                                "as": "transform_customer",
+                                "keyword": "action",
+                                "uuid": "o6p7q8r9-s0t1-2345-opqr-st6789012345",
+                                "input": {
+                                  "customer_data": {
+                                    "external_id": "=_('data.workato_utility.analyze_response.response_data.data.id')",
+                                    "email": "=_('data.workato_utility.analyze_response.response_data.data.email').downcase.strip",
+                                    "first_name": "=_('data.workato_utility.analyze_response.response_data.data.first_name').strip.titleize",
+                                    "last_name": "=_('data.workato_utility.analyze_response.response_data.data.last_name').strip.titleize",
+                                    "company": "=_('data.workato_utility.analyze_response.response_data.data.company').strip",
+                                    "phone": "=_('data.workato_utility.analyze_response.response_data.data.phone').gsub(/[^0-9+]/, '')",
+                                    "subscription_status": "=_('data.workato_utility.analyze_response.response_data.data.subscription.status')",
+                                    "created_at": "=_('data.workato_utility.analyze_response.response_data.data.created_at')",
+                                    "updated_at": "=_('data.workato_utility.analyze_response.response_data.data.updated_at')",
+                                    "deleted_at": "=_('data.workato_utility.analyze_response.response_data.data.deleted_at')",
+                                    "is_deleted": "=_('data.workato_utility.analyze_response.response_data.data.deleted_at').present?",
+                                    "api_source": "customer_api",
+                                    "sync_timestamp": "=_('job.started_at')"
+                                  },
+                                  "should_process": "=_('data.workato_utility.analyze_response.response_data.data.email').present? && _('data.workato_utility.analyze_response.response_data.data.email').match?(/\\A[\\w+\\-.]+@[a-z\\d\\-]+(\\.[a-z\\d\\-]+)*\\.[a-z]+\\z/i)"
+                                }
+                              },
+                              {
+                                "number": 13,
+                                "provider": "workato_utility",
+                                "name": "condition",
+                                "as": "validate_and_save",
+                                "keyword": "action",
+                                "uuid": "p7q8r9s0-t1u2-3456-pqrs-tu7890123456",
+                                "input": {
+                                  "condition": "=_('data.workato_utility.transform_customer.should_process')",
+                                  "actions_if_true": [
+                                    {
+                                      "number": 14,
+                                      "provider": "postgresql",
+                                      "name": "upsert_rows",
+                                      "as": "save_customer",
+                                      "keyword": "action",
+                                      "uuid": "q8r9s0t1-u2v3-4567-qrst-uv8901234567",
+                                      "input": {
+                                        "schema": "public",
+                                        "table": "customers",
+                                        "columns": [
+                                          {
+                                            "name": "external_id",
+                                            "value": "=_('data.workato_utility.transform_customer.customer_data.external_id')"
+                                          },
+                                          {
+                                            "name": "email",
+                                            "value": "=_('data.workato_utility.transform_customer.customer_data.email')"
+                                          },
+                                          {
+                                            "name": "first_name",
+                                            "value": "=_('data.workato_utility.transform_customer.customer_data.first_name')"
+                                          },
+                                          {
+                                            "name": "last_name",
+                                            "value": "=_('data.workato_utility.transform_customer.customer_data.last_name')"
+                                          },
+                                          {
+                                            "name": "company",
+                                            "value": "=_('data.workato_utility.transform_customer.customer_data.company')"
+                                          },
+                                          {
+                                            "name": "phone",
+                                            "value": "=_('data.workato_utility.transform_customer.customer_data.phone')"
+                                          },
+                                          {
+                                            "name": "subscription_status",
+                                            "value": "=_('data.workato_utility.transform_customer.customer_data.subscription_status')"
+                                          },
+                                          {
+                                            "name": "is_deleted",
+                                            "value": "=_('data.workato_utility.transform_customer.customer_data.is_deleted')"
+                                          },
+                                          {
+                                            "name": "api_source",
+                                            "value": "=_('data.workato_utility.transform_customer.customer_data.api_source')"
+                                          },
+                                          {
+                                            "name": "sync_timestamp",
+                                            "value": "=_('data.workato_utility.transform_customer.customer_data.sync_timestamp')"
+                                          }
+                                        ],
+                                        "unique_columns": ["external_id"]
+                                      }
+                                    }
+                                  ],
+                                  "actions_if_false": [
+                                    {
+                                      "number": 15,
+                                      "provider": "postgresql",
+                                      "name": "insert_rows",
+                                      "as": "log_data_quality_issue",
+                                      "keyword": "action",
+                                      "uuid": "r9s0t1u2-v3w4-5678-rstu-vw9012345678",
+                                      "input": {
+                                        "schema": "public",
+                                        "table": "data_quality_issues",
+                                        "columns": [
+                                          {
+                                            "name": "external_id",
+                                            "value": "=_('data.workato_utility.analyze_response.response_data.data.id')"
+                                          },
+                                          {
+                                            "name": "email",
+                                            "value": "=_('data.workato_utility.analyze_response.response_data.data.email')"
+                                          },
+                                          {
+                                            "name": "issue_type",
+                                            "value": "invalid_email"
+                                          },
+                                          {
+                                            "name": "source",
+                                            "value": "customer_api"
+                                          },
+                                          {
+                                            "name": "detected_at",
+                                            "value": "=_('job.started_at')"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "number": 16,
+                          "provider": "workato_utility",
+                          "name": "compose",
+                          "as": "update_sync_state",
+                          "keyword": "action",
+                          "uuid": "s0t1u2v3-w4x5-6789-stuv-wx0123456789",
+                          "input": {
+                            "sync_state_update": {
+                              "total_records_processed": "=_('data.workato_utility.api_config.sync_state.total_records_processed') + _('data.workato_utility.analyze_response.current_page_size')",
+                              "current_page": "=_('data.workato_utility.api_config.sync_state.current_page') + 1",
+                              "has_more_pages": "=_('data.workato_utility.analyze_response.has_next_page')",
+                              "api_calls_count": "=_('data.workato_utility.api_config.sync_state.api_calls_count') + 1",
+                              "retry_count": 0,
+                              "failed_requests": "=_('data.workato_utility.api_config.sync_state.failed_requests')"
+                            }
+                          }
+                        }
+                      ],
+                      "actions_if_false": [
+                        {
+                          "number": 17,
+                          "provider": "workato_utility",
+                          "name": "condition",
+                          "as": "handle_errors",
+                          "keyword": "action",
+                          "uuid": "t1u2v3w4-x5y6-7890-tuvw-xy1234567890",
+                          "input": {
+                            "condition": "=_('data.workato_utility.analyze_response.rate_limited')",
+                            "actions_if_true": [
+                              {
+                                "number": 18,
+                                "provider": "workato_utility",
+                                "name": "compose",
+                                "as": "rate_limit_info",
+                                "keyword": "action",
+                                "uuid": "u2v3w4x5-y6z7-8901-uvwx-yz2345678901",
+                                "input": {
+                                  "rate_limit_error": "Rate limit exceeded",
+                                  "retry_after": "=(_('data.http.api_call.headers.Retry-After').to_i || 60)",
+                                  "will_retry_in": "=(_('data.http.api_call.headers.Retry-After').to_i || 60) + 5"
+                                }
+                              },
+                              {
+                                "number": 19,
+                                "provider": "workato_utility",
+                                "name": "sleep",
+                                "as": "rate_limit_wait",
+                                "keyword": "action",
+                                "uuid": "v3w4x5y6-z7a8-9012-vwxy-za3456789012",
+                                "input": {
+                                  "seconds": "=_('data.workato_utility.rate_limit_info.will_retry_in')"
+                                }
+                              }
+                            ],
+                            "actions_if_false": [
+                              {
+                                "number": 20,
+                                "provider": "postgresql",
+                                "name": "insert_rows",
+                                "as": "log_api_error",
+                                "keyword": "action",
+                                "uuid": "w4x5y6z7-a8b9-0123-wxyz-ab4567890123",
+                                "input": {
+                                  "schema": "public",
+                                  "table": "api_errors",
+                                  "columns": [
+                                    {
+                                      "name": "integration_name",
+                                      "value": "customer_api"
+                                    },
+                                    {
+                                      "name": "endpoint",
+                                      "value": "=_('data.workato_utility.api_config.api_config.base_url')/customers"
+                                    },
+                                    {
+                                      "name": "status_code",
+                                      "value": "=_('data.http.api_call.status_code')"
+                                    },
+                                    {
+                                      "name": "error_message",
+                                      "value": "=_('data.http.api_call.body.error')"
+                                    },
+                                    {
+                                      "name": "page_number",
+                                      "value": "=_('data.workato_utility.api_config.sync_state.current_page')"
+                                    },
+                                    {
+                                      "name": "occurred_at",
+                                      "value": "=_('job.started_at')"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "number": 21,
+                                "provider": "workato_utility",
+                                "name": "stop_job",
+                                "as": "stop_on_error",
+                                "keyword": "action",
+                                "uuid": "x5y6z7a8-b9c0-1234-xyza-bc5678901234",
+                                "input": {
+                                  "message": "API integration failed with status: =_('data.http.api_call.status_code')"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "number": 22,
+              "provider": "postgresql",
+              "name": "upsert_rows",
+              "as": "save_sync_state",
+              "keyword": "action",
+              "uuid": "y6z7a8b9-c0d1-2345-yzab-cd6789012345",
+              "input": {
+                "schema": "public",
+                "table": "api_sync_state",
+                "columns": [
+                  {
+                    "name": "integration_name",
+                    "value": "customer_api"
+                  },
+                  {
+                    "name": "last_sync_timestamp",
+                    "value": "=_('job.started_at')"
+                  },
+                  {
+                    "name": "total_records_processed",
+                    "value": "=_('data.workato_utility.api_config.sync_state.total_records_processed')"
+                  },
+                  {
+                    "name": "last_page_processed",
+                    "value": "=_('data.workato_utility.api_config.sync_state.current_page')"
+                  },
+                  {
+                    "name": "consecutive_failures",
+                    "value": 0
+                  },
+                  {
+                    "name": "last_successful_sync",
+                    "value": "=_('job.started_at')"
+                  },
+                  {
+                    "name": "processing_duration_seconds",
+                    "value": "=now.to_i - _('data.workato_utility.api_config.processing_start_time')"
+                  },
+                  {
+                    "name": "api_calls_made",
+                    "value": "=_('data.workato_utility.api_config.sync_state.api_calls_count')"
+                  },
+                  {
+                    "name": "status",
+                    "value": "completed"
+                  },
+                  {
+                    "name": "updated_at",
+                    "value": "=_('job.started_at')"
+                  }
+                ],
+                "unique_columns": ["integration_name"]
+              }
+            },
+            {
+              "number": 23,
+              "provider": "slack",
+              "name": "post_message",
+              "as": "success_notification",
+              "keyword": "action",
+              "uuid": "z7a8b9c0-d1e2-3456-zabc-de7890123456",
+              "input": {
+                "channel": "#data-pipeline",
+                "text": "✅ Customer API sync completed successfully\nRecords: =_('data.workato_utility.api_config.sync_state.total_records_processed')\nPages: =_('data.workato_utility.api_config.sync_state.current_page') - 1\nDuration: =now.to_i - _('data.workato_utility.api_config.processing_start_time') seconds"
+              }
+            }
+          ],
+          "actions_if_false": [
+            {
+              "number": 24,
+              "provider": "postgresql",
+              "name": "upsert_rows",
+              "as": "update_circuit_breaker",
+              "keyword": "action",
+              "uuid": "a8b9c0d1-e2f3-4567-abcd-ef8901234567",
+              "input": {
+                "schema": "public",
+                "table": "api_sync_state",
+                "columns": [
+                  {
+                    "name": "integration_name",
+                    "value": "customer_api"
+                  },
+                  {
+                    "name": "consecutive_failures",
+                    "value": "=_('data.workato_utility.prepare_sync.circuit_breaker_failures') + 1"
+                  },
+                  {
+                    "name": "status",
+                    "value": "circuit_breaker_open"
+                  },
+                  {
+                    "name": "last_failure_reason",
+                    "value": "Too many consecutive failures (=_('data.workato_utility.prepare_sync.circuit_breaker_failures'))"
+                  },
+                  {
+                    "name": "updated_at",
+                    "value": "=_('job.started_at')"
+                  }
+                ],
+                "unique_columns": ["integration_name"]
+              }
+            },
+            {
+              "number": 25,
+              "provider": "workato_utility",
+              "name": "email",
+              "as": "circuit_breaker_alert",
+              "keyword": "action",
+              "uuid": "b9c0d1e2-f3g4-5678-bcde-fg9012345678",
+              "input": {
+                "to": "integration-team@company.com",
+                "subject": "🚨 Circuit Breaker OPEN - Customer API Integration Suspended",
+                "body": "The Customer API integration has been suspended due to too many consecutive failures.\n\nConsecutive Failures: =_('data.workato_utility.prepare_sync.circuit_breaker_failures')\nThreshold: =_('data.workato_utility.api_config.api_config.circuit_breaker_threshold')\nSuspended at: =_('job.started_at')\n\nTo reset, update api_sync_state table: UPDATE api_sync_state SET consecutive_failures = 0, status = 'ready' WHERE integration_name = 'customer_api';"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "uuid": "78901234-56fg-7890-1234-567890fgh234",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_utility",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "postgresql",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "postgresql.connection.json",
+        "name": "postgresql",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "http",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "http.connection.json",
+        "name": "http",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "slack",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "slack.connection.json",
+        "name": "slack",
+        "folder": ""
+      }
+    }
+  ]
+}

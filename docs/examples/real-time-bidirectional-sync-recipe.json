@@ -1,0 +1,598 @@
+{
+  "name": "Real-time Bidirectional Sync - Salesforce to HubSpot",
+  "description": "Bi-directional real-time synchronization between Salesforce and HubSpot with conflict resolution and retry logic",
+  "version": 3,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "salesforce",
+    "name": "new_updated_object",
+    "as": "sf_trigger",
+    "keyword": "trigger",
+    "input": {
+      "sobject": "Contact",
+      "since": "=_('job.started_at')"
+    },
+    "output_schema": [
+      {
+        "name": "Id",
+        "type": "string"
+      },
+      {
+        "name": "FirstName",
+        "type": "string"
+      },
+      {
+        "name": "LastName",
+        "type": "string"
+      },
+      {
+        "name": "Email",
+        "type": "string"
+      },
+      {
+        "name": "Phone",
+        "type": "string"
+      },
+      {
+        "name": "Title",
+        "type": "string"
+      },
+      {
+        "name": "Account",
+        "type": "object",
+        "properties": [
+          {
+            "name": "Name",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "LastModifiedDate",
+        "type": "date_time"
+      },
+      {
+        "name": "LastModifiedBy",
+        "type": "object",
+        "properties": [
+          {
+            "name": "Email",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "HubSpot_Contact_ID__c",
+        "type": "string"
+      },
+      {
+        "name": "Last_Sync_Date__c",
+        "type": "date_time"
+      },
+      {
+        "name": "Sync_Source__c",
+        "type": "string"
+      }
+    ],
+    "block": [
+      {
+        "number": 1,
+        "provider": "workato_utility",
+        "name": "compose",
+        "as": "sync_checks",
+        "keyword": "action",
+        "uuid": "i4j5k6l7-m8n9-0123-ijkl-mn4567890123",
+        "input": {
+          "sync_prevention_check": "=_('data.salesforce.sf_trigger.Sync_Source__c') == 'HubSpot' && (now - _('data.salesforce.sf_trigger.Last_Sync_Date__c').to_time).to_i < 300",
+          "is_sync_loop": "=_('data.salesforce.sf_trigger.LastModifiedBy.Email') == 'integration@company.com'",
+          "should_sync": "=!(_('data.salesforce.sf_trigger.Sync_Source__c') == 'HubSpot' && (now - _('data.salesforce.sf_trigger.Last_Sync_Date__c').to_time).to_i < 300) && !(_('data.salesforce.sf_trigger.LastModifiedBy.Email') == 'integration@company.com')",
+          "contact_data": {
+            "email": "=_('data.salesforce.sf_trigger.Email').downcase.strip",
+            "firstname": "=_('data.salesforce.sf_trigger.FirstName').strip",
+            "lastname": "=_('data.salesforce.sf_trigger.LastName').strip",
+            "phone": "=_('data.salesforce.sf_trigger.Phone').gsub(/[^0-9+]/, '')",
+            "jobtitle": "=_('data.salesforce.sf_trigger.Title').strip",
+            "company": "=_('data.salesforce.sf_trigger.Account.Name').strip",
+            "salesforce_contact_id": "=_('data.salesforce.sf_trigger.Id')",
+            "last_modified_date": "=_('data.salesforce.sf_trigger.LastModifiedDate')"
+          },
+          "hubspot_contact_id": "=_('data.salesforce.sf_trigger.HubSpot_Contact_ID__c')"
+        }
+      },
+      {
+        "number": 2,
+        "provider": "workato_utility",
+        "name": "condition",
+        "as": "check_should_sync",
+        "keyword": "action",
+        "uuid": "j5k6l7m8-n9o0-1234-jklm-no5678901234",
+        "input": {
+          "condition": "=_('data.workato_utility.sync_checks.should_sync')",
+          "actions_if_true": [
+            {
+              "number": 3,
+              "provider": "workato_utility",
+              "name": "condition",
+              "as": "check_existing_link",
+              "keyword": "action",
+              "uuid": "k6l7m8n9-o0p1-2345-klmn-op6789012345",
+              "input": {
+                "condition": "=_('data.workato_utility.sync_checks.hubspot_contact_id').present?",
+                "actions_if_true": [
+                  {
+                    "number": 4,
+                    "provider": "hubspot",
+                    "name": "get_contact",
+                    "as": "get_hubspot_contact",
+                    "keyword": "action",
+                    "uuid": "l7m8n9o0-p1q2-3456-lmno-pq7890123456",
+                    "input": {
+                      "contact_id": "=_('data.workato_utility.sync_checks.hubspot_contact_id')"
+                    }
+                  },
+                  {
+                    "number": 5,
+                    "provider": "workato_utility",
+                    "name": "compose",
+                    "as": "conflict_analysis",
+                    "keyword": "action",
+                    "uuid": "m8n9o0p1-q2r3-4567-mnop-qr8901234567",
+                    "input": {
+                      "hubspot_last_modified": "=_('data.hubspot.get_hubspot_contact.properties.lastmodifieddate.value').to_time",
+                      "salesforce_last_modified": "=_('data.salesforce.sf_trigger.LastModifiedDate').to_time",
+                      "last_sync_date": "=_('data.salesforce.sf_trigger.Last_Sync_Date__c').to_time || '1970-01-01'.to_time",
+                      "conflict_detected": "=_('data.hubspot.get_hubspot_contact.properties.lastmodifieddate.value').to_time > (_('data.salesforce.sf_trigger.Last_Sync_Date__c').to_time || '1970-01-01'.to_time)",
+                      "salesforce_wins": "=_('data.salesforce.sf_trigger.LastModifiedDate').to_time > _('data.hubspot.get_hubspot_contact.properties.lastmodifieddate.value').to_time"
+                    }
+                  },
+                  {
+                    "number": 6,
+                    "provider": "workato_utility",
+                    "name": "condition",
+                    "as": "handle_conflict",
+                    "keyword": "action",
+                    "uuid": "n9o0p1q2-r3s4-5678-nopq-rs9012345678",
+                    "input": {
+                      "condition": "=_('data.workato_utility.conflict_analysis.conflict_detected') && !_('data.workato_utility.conflict_analysis.salesforce_wins')",
+                      "actions_if_true": [
+                        {
+                          "number": 7,
+                          "provider": "postgresql",
+                          "name": "insert_rows",
+                          "as": "log_conflict_hubspot_wins",
+                          "keyword": "action",
+                          "uuid": "o0p1q2r3-s4t5-6789-opqr-st0123456789",
+                          "input": {
+                            "schema": "public",
+                            "table": "sync_conflicts",
+                            "columns": [
+                              {
+                                "name": "salesforce_id",
+                                "value": "=_('data.salesforce.sf_trigger.Id')"
+                              },
+                              {
+                                "name": "hubspot_id",
+                                "value": "=_('data.workato_utility.sync_checks.hubspot_contact_id')"
+                              },
+                              {
+                                "name": "conflict_type",
+                                "value": "timestamp_conflict"
+                              },
+                              {
+                                "name": "resolution",
+                                "value": "hubspot_wins"
+                              },
+                              {
+                                "name": "created_at",
+                                "value": "=_('job.started_at')"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "number": 8,
+                          "provider": "salesforce",
+                          "name": "update_sobject",
+                          "as": "update_sf_from_hubspot",
+                          "keyword": "action",
+                          "uuid": "p1q2r3s4-t5u6-7890-pqrs-tu1234567890",
+                          "input": {
+                            "sobject": "Contact",
+                            "sobject_id": "=_('data.salesforce.sf_trigger.Id')",
+                            "fields": {
+                              "FirstName": "=_('data.hubspot.get_hubspot_contact.properties.firstname.value')",
+                              "LastName": "=_('data.hubspot.get_hubspot_contact.properties.lastname.value')",
+                              "Email": "=_('data.hubspot.get_hubspot_contact.properties.email.value')",
+                              "Phone": "=_('data.hubspot.get_hubspot_contact.properties.phone.value')",
+                              "Title": "=_('data.hubspot.get_hubspot_contact.properties.jobtitle.value')",
+                              "Last_Sync_Date__c": "=_('job.started_at')",
+                              "Sync_Source__c": "HubSpot"
+                            }
+                          }
+                        }
+                      ],
+                      "actions_if_false": [
+                        {
+                          "number": 9,
+                          "provider": "hubspot",
+                          "name": "update_contact",
+                          "as": "update_hubspot_contact",
+                          "keyword": "action",
+                          "uuid": "q2r3s4t5-u6v7-8901-qrst-uv2345678901",
+                          "input": {
+                            "contact_id": "=_('data.workato_utility.sync_checks.hubspot_contact_id')",
+                            "properties": [
+                              {
+                                "property": "email",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.email')"
+                              },
+                              {
+                                "property": "firstname",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.firstname')"
+                              },
+                              {
+                                "property": "lastname",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.lastname')"
+                              },
+                              {
+                                "property": "phone",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.phone')"
+                              },
+                              {
+                                "property": "jobtitle",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.jobtitle')"
+                              },
+                              {
+                                "property": "company",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.company')"
+                              },
+                              {
+                                "property": "salesforce_contact_id",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.salesforce_contact_id')"
+                              },
+                              {
+                                "property": "last_sync_date",
+                                "value": "=(_('job.started_at').to_time.to_i * 1000)"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "number": 10,
+                          "provider": "salesforce",
+                          "name": "update_sobject",
+                          "as": "update_sf_sync_fields",
+                          "keyword": "action",
+                          "uuid": "r3s4t5u6-v7w8-9012-rstu-vw3456789012",
+                          "input": {
+                            "sobject": "Contact",
+                            "sobject_id": "=_('data.salesforce.sf_trigger.Id')",
+                            "fields": {
+                              "Last_Sync_Date__c": "=_('job.started_at')",
+                              "Sync_Source__c": "Salesforce"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "actions_if_false": [
+                  {
+                    "number": 11,
+                    "provider": "hubspot",
+                    "name": "search_contacts",
+                    "as": "search_hubspot_contacts",
+                    "keyword": "action",
+                    "uuid": "s4t5u6v7-w8x9-0123-stuv-wx4567890123",
+                    "input": {
+                      "query": "=_('data.workato_utility.sync_checks.contact_data.email')",
+                      "properties": [
+                        "email",
+                        "firstname",
+                        "lastname",
+                        "phone",
+                        "jobtitle",
+                        "company",
+                        "salesforce_contact_id",
+                        "lastmodifieddate"
+                      ]
+                    }
+                  },
+                  {
+                    "number": 12,
+                    "provider": "workato_utility",
+                    "name": "condition",
+                    "as": "check_existing_contact",
+                    "keyword": "action",
+                    "uuid": "t5u6v7w8-x9y0-1234-tuvw-xy5678901234",
+                    "input": {
+                      "condition": "=_('data.hubspot.search_hubspot_contacts.results').size > 0",
+                      "actions_if_true": [
+                        {
+                          "number": 13,
+                          "provider": "workato_utility",
+                          "name": "compose",
+                          "as": "analyze_existing",
+                          "keyword": "action",
+                          "uuid": "u6v7w8x9-y0z1-2345-uvwx-yz6789012345",
+                          "input": {
+                            "existing_hubspot_contact": "=_('data.hubspot.search_hubspot_contacts.results')[0]",
+                            "existing_salesforce_id": "=_('data.hubspot.search_hubspot_contacts.results')[0]['properties']['salesforce_contact_id']['value']",
+                            "is_orphaned": "=!_('data.hubspot.search_hubspot_contacts.results')[0]['properties']['salesforce_contact_id']['value'].present?",
+                            "is_different_contact": "=_('data.hubspot.search_hubspot_contacts.results')[0]['properties']['salesforce_contact_id']['value'] != _('data.salesforce.sf_trigger.Id')"
+                          }
+                        },
+                        {
+                          "number": 14,
+                          "provider": "workato_utility",
+                          "name": "condition",
+                          "as": "handle_existing_contact",
+                          "keyword": "action",
+                          "uuid": "v7w8x9y0-z1a2-3456-vwxy-za7890123456",
+                          "input": {
+                            "condition": "=_('data.workato_utility.analyze_existing.is_orphaned')",
+                            "actions_if_true": [
+                              {
+                                "number": 15,
+                                "provider": "hubspot",
+                                "name": "update_contact",
+                                "as": "link_orphaned_contact",
+                                "keyword": "action",
+                                "uuid": "w8x9y0z1-a2b3-4567-wxyz-ab8901234567",
+                                "input": {
+                                  "contact_id": "=_('data.workato_utility.analyze_existing.existing_hubspot_contact.id')",
+                                  "properties": [
+                                    {
+                                      "property": "salesforce_contact_id",
+                                      "value": "=_('data.salesforce.sf_trigger.Id')"
+                                    },
+                                    {
+                                      "property": "firstname",
+                                      "value": "=_('data.workato_utility.sync_checks.contact_data.firstname')"
+                                    },
+                                    {
+                                      "property": "lastname",
+                                      "value": "=_('data.workato_utility.sync_checks.contact_data.lastname')"
+                                    },
+                                    {
+                                      "property": "phone",
+                                      "value": "=_('data.workato_utility.sync_checks.contact_data.phone')"
+                                    },
+                                    {
+                                      "property": "jobtitle",
+                                      "value": "=_('data.workato_utility.sync_checks.contact_data.jobtitle')"
+                                    },
+                                    {
+                                      "property": "company",
+                                      "value": "=_('data.workato_utility.sync_checks.contact_data.company')"
+                                    },
+                                    {
+                                      "property": "last_sync_date",
+                                      "value": "=(_('job.started_at').to_time.to_i * 1000)"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "number": 16,
+                                "provider": "salesforce",
+                                "name": "update_sobject",
+                                "as": "link_sf_to_hubspot",
+                                "keyword": "action",
+                                "uuid": "x9y0z1a2-b3c4-5678-xyza-bc9012345678",
+                                "input": {
+                                  "sobject": "Contact",
+                                  "sobject_id": "=_('data.salesforce.sf_trigger.Id')",
+                                  "fields": {
+                                    "HubSpot_Contact_ID__c": "=_('data.workato_utility.analyze_existing.existing_hubspot_contact.id')",
+                                    "Last_Sync_Date__c": "=_('job.started_at')",
+                                    "Sync_Source__c": "Salesforce"
+                                  }
+                                }
+                              }
+                            ],
+                            "actions_if_false": [
+                              {
+                                "number": 17,
+                                "provider": "postgresql",
+                                "name": "insert_rows",
+                                "as": "log_duplicate_conflict",
+                                "keyword": "action",
+                                "uuid": "y0z1a2b3-c4d5-6789-yzab-cd0123456789",
+                                "input": {
+                                  "schema": "public",
+                                  "table": "sync_conflicts",
+                                  "columns": [
+                                    {
+                                      "name": "salesforce_id",
+                                      "value": "=_('data.salesforce.sf_trigger.Id')"
+                                    },
+                                    {
+                                      "name": "hubspot_id",
+                                      "value": "=_('data.workato_utility.analyze_existing.existing_hubspot_contact.id')"
+                                    },
+                                    {
+                                      "name": "conflict_type",
+                                      "value": "duplicate_email"
+                                    },
+                                    {
+                                      "name": "email",
+                                      "value": "=_('data.workato_utility.sync_checks.contact_data.email')"
+                                    },
+                                    {
+                                      "name": "created_at",
+                                      "value": "=_('job.started_at')"
+                                    },
+                                    {
+                                      "name": "status",
+                                      "value": "needs_review"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "number": 18,
+                                "provider": "workato_utility",
+                                "name": "email",
+                                "as": "alert_duplicate",
+                                "keyword": "action",
+                                "uuid": "z1a2b3c4-d5e6-7890-zabc-de1234567890",
+                                "input": {
+                                  "to": "integration-team@company.com",
+                                  "subject": "⚠️ Duplicate Email Conflict - Manual Review Required",
+                                  "body": "A sync conflict requires manual review:\n\nSalesforce Contact: =_('data.salesforce.sf_trigger.Id') (=_('data.salesforce.sf_trigger.FirstName') =_('data.salesforce.sf_trigger.LastName'))\nHubSpot Contact: =_('data.workato_utility.analyze_existing.existing_hubspot_contact.id')\nEmail: =_('data.workato_utility.sync_checks.contact_data.email')\nExisting SF ID in HubSpot: =_('data.workato_utility.analyze_existing.existing_salesforce_id')\n\nPlease review both contacts and determine if they should be merged or if one is a duplicate."
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "actions_if_false": [
+                        {
+                          "number": 19,
+                          "provider": "hubspot",
+                          "name": "create_contact",
+                          "as": "create_hubspot_contact",
+                          "keyword": "action",
+                          "uuid": "a2b3c4d5-e6f7-8901-abcd-ef2345678901",
+                          "input": {
+                            "properties": [
+                              {
+                                "property": "email",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.email')"
+                              },
+                              {
+                                "property": "firstname",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.firstname')"
+                              },
+                              {
+                                "property": "lastname",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.lastname')"
+                              },
+                              {
+                                "property": "phone",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.phone')"
+                              },
+                              {
+                                "property": "jobtitle",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.jobtitle')"
+                              },
+                              {
+                                "property": "company",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.company')"
+                              },
+                              {
+                                "property": "salesforce_contact_id",
+                                "value": "=_('data.workato_utility.sync_checks.contact_data.salesforce_contact_id')"
+                              },
+                              {
+                                "property": "last_sync_date",
+                                "value": "=(_('job.started_at').to_time.to_i * 1000)"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "number": 20,
+                          "provider": "salesforce",
+                          "name": "update_sobject",
+                          "as": "link_new_hubspot_contact",
+                          "keyword": "action",
+                          "uuid": "b3c4d5e6-f7g8-9012-bcde-fg3456789012",
+                          "input": {
+                            "sobject": "Contact",
+                            "sobject_id": "=_('data.salesforce.sf_trigger.Id')",
+                            "fields": {
+                              "HubSpot_Contact_ID__c": "=_('data.hubspot.create_hubspot_contact.id')",
+                              "Last_Sync_Date__c": "=_('job.started_at')",
+                              "Sync_Source__c": "Salesforce"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "actions_if_false": [
+            {
+              "number": 21,
+              "provider": "postgresql",
+              "name": "insert_rows",
+              "as": "log_sync_skipped",
+              "keyword": "action",
+              "uuid": "c4d5e6f7-g8h9-0123-cdef-gh4567890123",
+              "input": {
+                "schema": "public",
+                "table": "sync_skipped",
+                "columns": [
+                  {
+                    "name": "salesforce_id",
+                    "value": "=_('data.salesforce.sf_trigger.Id')"
+                  },
+                  {
+                    "name": "email",
+                    "value": "=_('data.salesforce.sf_trigger.Email')"
+                  },
+                  {
+                    "name": "reason",
+                    "value": "=if _('data.workato_utility.sync_checks.sync_prevention_check') then 'recent_sync_from_hubspot' else 'integration_user_change' end"
+                  },
+                  {
+                    "name": "skipped_at",
+                    "value": "=_('job.started_at')"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "uuid": "67890123-45ef-6789-0123-456789efg123",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "salesforce",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "salesforce.connection.json",
+        "name": "salesforce",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "hubspot",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "hubspot.connection.json",
+        "name": "hubspot",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_utility",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "postgresql",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "postgresql.connection.json",
+        "name": "postgresql",
+        "folder": ""
+      }
+    }
+  ]
+}

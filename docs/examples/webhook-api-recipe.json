@@ -1,0 +1,100 @@
+{
+  "name": "Webhook to API Integration",
+  "description": "Process incoming webhook data and call external API",
+  "version": 3,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "workato_webhooks",
+    "name": "webhook_input",
+    "as": "webhook_trigger",
+    "keyword": "trigger",
+    "input": {
+      "request_type": "post"
+    },
+    "output_schema": [
+      {
+        "name": "order_id",
+        "type": "string"
+      },
+      {
+        "name": "customer_email",
+        "type": "string"
+      },
+      {
+        "name": "total_amount",
+        "type": "number"
+      },
+      {
+        "name": "status",
+        "type": "string"
+      }
+    ],
+    "block": [
+      {
+        "number": 1,
+        "provider": "http",
+        "name": "post",
+        "as": "api_call",
+        "keyword": "action",
+        "uuid": "b1c2d3e4-f5g6-7890-bcde-fg1234567890",
+        "input": {
+          "url": "https://api.example.com/orders",
+          "headers": {
+            "Authorization": "Bearer =_('connections.http.token')",
+            "Content-Type": "application/json"
+          },
+          "payload": {
+            "order": {
+              "external_id": "=_('data.workato_webhooks.webhook_trigger.order_id')",
+              "customer_email": "=_('data.workato_webhooks.webhook_trigger.customer_email')",
+              "amount": "=_('data.workato_webhooks.webhook_trigger.total_amount')",
+              "status": "=_('data.workato_webhooks.webhook_trigger.status')",
+              "processed_at": "=_('job.started_at')"
+            }
+          }
+        }
+      },
+      {
+        "number": 2,
+        "provider": "workato_utility",
+        "name": "email",
+        "as": "send_notification",
+        "keyword": "action",
+        "uuid": "c2d3e4f5-g6h7-8901-cdef-gh2345678901",
+        "input": {
+          "to": "=_('data.workato_webhooks.webhook_trigger.customer_email')",
+          "subject": "Order =_('data.workato_webhooks.webhook_trigger.order_id') Processed",
+          "body": "Your order #=_('data.workato_webhooks.webhook_trigger.order_id') has been processed successfully."
+        }
+      }
+    ],
+    "uuid": "12345678-90ab-cdef-1234-567890abcdef",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "workato_webhooks",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "http",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "http.connection.json",
+        "name": "http",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_utility",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

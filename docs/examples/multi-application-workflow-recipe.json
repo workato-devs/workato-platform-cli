@@ -1,0 +1,168 @@
+{
+  "name": "Multi-System Support Ticket Workflow",
+  "description": "Support ticket workflow from Salesforce to Slack to Jira with priority routing",
+  "version": 3,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "salesforce",
+    "name": "new_updated_object",
+    "as": "case_trigger",
+    "keyword": "trigger",
+    "input": {
+      "sobject": "Case",
+      "since": "=_('job.started_at')"
+    },
+    "output_schema": [
+      {
+        "name": "Id",
+        "type": "string"
+      },
+      {
+        "name": "CaseNumber",
+        "type": "string"
+      },
+      {
+        "name": "Subject",
+        "type": "string"
+      },
+      {
+        "name": "Priority",
+        "type": "string"
+      },
+      {
+        "name": "Description",
+        "type": "string"
+      }
+    ],
+    "block": [
+      {
+        "number": 1,
+        "provider": "slack",
+        "name": "post_message",
+        "as": "slack_notification",
+        "keyword": "action",
+        "uuid": "l1m2n3o4-p5q6-7890-lmno-pq1234567890",
+        "input": {
+          "channel": "#support",
+          "text": "🚨 New Support Case: =_('data.salesforce.case_trigger.CaseNumber')\nPriority: =_('data.salesforce.case_trigger.Priority')\nSubject: =_('data.salesforce.case_trigger.Subject')"
+        }
+      },
+      {
+        "number": 2,
+        "provider": "workato_utility",
+        "name": "condition",
+        "as": "check_priority",
+        "keyword": "action",
+        "uuid": "m2n3o4p5-q6r7-8901-mnop-qr2345678901",
+        "input": {
+          "condition": "=_('data.salesforce.case_trigger.Priority') == 'High' || =_('data.salesforce.case_trigger.Priority') == 'Critical'",
+          "actions_if_true": [
+            {
+              "number": 3,
+              "provider": "jira",
+              "name": "create_issue",
+              "as": "create_jira_ticket",
+              "keyword": "action",
+              "uuid": "n3o4p5q6-r7s8-9012-nopq-rs3456789012",
+              "input": {
+                "project": "SUP",
+                "issue_type": "Bug",
+                "summary": "=_('data.salesforce.case_trigger.Subject')",
+                "description": "Salesforce Case: =_('data.salesforce.case_trigger.CaseNumber')\n\n=_('data.salesforce.case_trigger.Description')",
+                "priority": "=if =_('data.salesforce.case_trigger.Priority') == 'Critical' then 'Highest' else 'High' end"
+              }
+            },
+            {
+              "number": 4,
+              "provider": "workato_utility",
+              "name": "email",
+              "as": "escalate_email",
+              "keyword": "action",
+              "uuid": "o4p5q6r7-s8t9-0123-opqr-st4567890123",
+              "input": {
+                "to": "support-manager@company.com",
+                "subject": "URGENT: High Priority Case =_('data.salesforce.case_trigger.CaseNumber')",
+                "body": "A high priority support case has been created:\n\nCase: =_('data.salesforce.case_trigger.CaseNumber')\nSubject: =_('data.salesforce.case_trigger.Subject')\nJira Ticket: =_('data.jira.create_jira_ticket.key')\n\nPlease review immediately."
+              }
+            }
+          ],
+          "actions_if_false": [
+            {
+              "number": 5,
+              "provider": "jira",
+              "name": "create_issue",
+              "as": "create_standard_ticket",
+              "keyword": "action",
+              "uuid": "p5q6r7s8-t9u0-1234-pqrs-tu5678901234",
+              "input": {
+                "project": "SUP",
+                "issue_type": "Task",
+                "summary": "=_('data.salesforce.case_trigger.Subject')",
+                "description": "Salesforce Case: =_('data.salesforce.case_trigger.CaseNumber')\n\n=_('data.salesforce.case_trigger.Description')",
+                "priority": "Medium"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "number": 6,
+        "provider": "salesforce",
+        "name": "update_sobject",
+        "as": "update_case",
+        "keyword": "action",
+        "uuid": "q6r7s8t9-u0v1-2345-qrst-uv6789012345",
+        "input": {
+          "sobject": "Case",
+          "sobject_id": "=_('data.salesforce.case_trigger.Id')",
+          "fields": {
+            "External_Ticket_Id__c": "=_('data.jira.create_jira_ticket.key') || =_('data.jira.create_standard_ticket.key')",
+            "Status": "In Progress"
+          }
+        }
+      }
+    ],
+    "uuid": "45678901-23cd-ef45-6789-012345cdef67",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "salesforce",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "salesforce.connection.json",
+        "name": "salesforce",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "slack",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "slack.connection.json",
+        "name": "slack",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "jira",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "jira.connection.json",
+        "name": "jira",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_utility",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

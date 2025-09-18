@@ -1,0 +1,96 @@
+{
+  "name": "Sync Salesforce Contacts to Database",
+  "description": "Basic recipe to sync contact data from Salesforce to a database table",
+  "version": 3,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "salesforce",
+    "name": "new_updated_object",
+    "as": "trigger_1",
+    "keyword": "trigger",
+    "input": {
+      "sobject": "Contact",
+      "since": "=_('job.started_at')"
+    },
+    "output_schema": [
+      {
+        "name": "Id",
+        "type": "string"
+      },
+      {
+        "name": "FirstName",
+        "type": "string"
+      },
+      {
+        "name": "LastName",
+        "type": "string"
+      },
+      {
+        "name": "Email",
+        "type": "string"
+      }
+    ],
+    "block": [
+      {
+        "number": 1,
+        "provider": "postgresql",
+        "name": "upsert_rows",
+        "as": "upsert_contacts",
+        "keyword": "action",
+        "uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "input": {
+          "schema": "public",
+          "table": "contacts",
+          "columns": [
+            {
+              "name": "salesforce_id",
+              "value": "=_('data.salesforce.trigger_1.Id')"
+            },
+            {
+              "name": "first_name",
+              "value": "=_('data.salesforce.trigger_1.FirstName')"
+            },
+            {
+              "name": "last_name",
+              "value": "=_('data.salesforce.trigger_1.LastName')"
+            },
+            {
+              "name": "email",
+              "value": "=_('data.salesforce.trigger_1.Email')"
+            },
+            {
+              "name": "synced_at",
+              "value": "=_('job.started_at')"
+            }
+          ]
+        }
+      }
+    ],
+    "uuid": "01234567-89ab-cdef-0123-456789abcdef",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "salesforce",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "salesforce.connection.json",
+        "name": "salesforce",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "postgresql",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "postgresql.connection.json",
+        "name": "postgresql",
+        "folder": ""
+      }
+    }
+  ]
+}
