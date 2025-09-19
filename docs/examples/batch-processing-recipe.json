@@ -1,0 +1,115 @@
+{
+  "name": "Daily Batch Data Processing",
+  "description": "Scheduled batch processing of customer data with error handling",
+  "version": 3,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_trigger",
+    "as": "scheduler",
+    "keyword": "trigger",
+    "input": {
+      "interval": "daily",
+      "start_time": "02:00"
+    },
+    "block": [
+      {
+        "number": 1,
+        "provider": "postgresql",
+        "name": "select_rows",
+        "as": "get_customers",
+        "keyword": "action",
+        "uuid": "d3e4f5g6-h7i8-9012-defg-hi3456789012",
+        "input": {
+          "schema": "public",
+          "table": "customers",
+          "where": "updated_at > NOW() - INTERVAL '1 day'"
+        }
+      },
+      {
+        "number": 2,
+        "provider": "workato_utility",
+        "name": "repeat",
+        "as": "process_batch",
+        "keyword": "action",
+        "uuid": "e4f5g6h7-i8j9-0123-efgh-ij4567890123",
+        "input": {
+          "foreach": "=_('data.postgresql.get_customers')",
+          "actions": [
+            {
+              "number": 3,
+              "provider": "salesforce",
+              "name": "upsert_sobject",
+              "as": "sync_to_sf",
+              "keyword": "action",
+              "uuid": "f5g6h7i8-j9k0-1234-fghi-jk5678901234",
+              "input": {
+                "sobject": "Contact",
+                "external_id_field": "External_Id__c",
+                "upsert_criteria": {
+                  "External_Id__c": "=_('data.postgresql.get_customers.id')"
+                },
+                "fields": {
+                  "FirstName": "=_('data.postgresql.get_customers.first_name')",
+                  "LastName": "=_('data.postgresql.get_customers.last_name')",
+                  "Email": "=_('data.postgresql.get_customers.email')"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "number": 4,
+        "provider": "workato_utility",
+        "name": "email",
+        "as": "send_summary",
+        "keyword": "action",
+        "uuid": "g6h7i8j9-k0l1-2345-ghij-kl6789012345",
+        "input": {
+          "to": "admin@company.com",
+          "subject": "Daily Customer Sync Complete",
+          "body": "Processed =_('data.postgresql.get_customers.size') customer records at =_('job.started_at')"
+        }
+      }
+    ],
+    "uuid": "23456789-01ab-cdef-2345-6789012abcdef",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "postgresql",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "postgresql.connection.json",
+        "name": "postgresql",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "salesforce",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "salesforce.connection.json",
+        "name": "salesforce",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_utility",
+      "skip_validation": false,
+      "account_id": null
+    }
+  ]
+}

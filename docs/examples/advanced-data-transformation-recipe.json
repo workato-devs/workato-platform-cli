@@ -1,0 +1,163 @@
+{
+  "name": "Advanced Customer Data Transformation",
+  "description": "Transform and cleanse customer data from Salesforce with complex field mappings and validations",
+  "version": 3,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "salesforce",
+    "name": "new_updated_object",
+    "as": "sf_trigger",
+    "keyword": "trigger",
+    "input": {
+      "sobject": "Account",
+      "since": "=_('job.started_at')"
+    },
+    "output_schema": [
+      {
+        "name": "Id",
+        "type": "string"
+      },
+      {
+        "name": "Name",
+        "type": "string"
+      },
+      {
+        "name": "Phone",
+        "type": "string"
+      },
+      {
+        "name": "BillingAddress",
+        "type": "object",
+        "properties": [
+          {
+            "name": "street",
+            "type": "string"
+          },
+          {
+            "name": "city",
+            "type": "string"
+          },
+          {
+            "name": "state",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "AnnualRevenue",
+        "type": "number"
+      }
+    ],
+    "block": [
+      {
+        "number": 1,
+        "provider": "workato_utility",
+        "name": "compose",
+        "as": "transform_data",
+        "keyword": "action",
+        "uuid": "h7i8j9k0-l1m2-3456-hijk-lm7890123456",
+        "input": {
+          "transformed_name": "=_('data.salesforce.sf_trigger.Name').upcase",
+          "cleaned_phone": "=_('data.salesforce.sf_trigger.Phone').gsub(/[^0-9]/, '')",
+          "full_address": "=_('data.salesforce.sf_trigger.BillingAddress.street') + ', ' + =_('data.salesforce.sf_trigger.BillingAddress.city') + ', ' + =_('data.salesforce.sf_trigger.BillingAddress.state')",
+          "revenue_tier": "=if =_('data.salesforce.sf_trigger.AnnualRevenue') > 1000000 then 'Enterprise' elsif =_('data.salesforce.sf_trigger.AnnualRevenue') > 100000 then 'Mid-Market' else 'Small Business' end",
+          "quality_score": "=if =_('data.salesforce.sf_trigger.Phone').present? && =_('data.salesforce.sf_trigger.BillingAddress.street').present? then 100 else 50 end"
+        }
+      },
+      {
+        "number": 2,
+        "provider": "workato_utility",
+        "name": "condition",
+        "as": "check_quality",
+        "keyword": "action",
+        "uuid": "i8j9k0l1-m2n3-4567-ijkl-mn8901234567",
+        "input": {
+          "condition": "=_('data.workato_utility.transform_data.quality_score') >= 80",
+          "actions_if_true": [
+            {
+              "number": 3,
+              "provider": "postgresql",
+              "name": "upsert_rows",
+              "as": "save_high_quality",
+              "keyword": "action",
+              "uuid": "j9k0l1m2-n3o4-5678-jklm-no9012345678",
+              "input": {
+                "schema": "public",
+                "table": "premium_accounts",
+                "columns": [
+                  {
+                    "name": "salesforce_id",
+                    "value": "=_('data.salesforce.sf_trigger.Id')"
+                  },
+                  {
+                    "name": "company_name",
+                    "value": "=_('data.workato_utility.transform_data.transformed_name')"
+                  },
+                  {
+                    "name": "phone",
+                    "value": "=_('data.workato_utility.transform_data.cleaned_phone')"
+                  },
+                  {
+                    "name": "address",
+                    "value": "=_('data.workato_utility.transform_data.full_address')"
+                  },
+                  {
+                    "name": "tier",
+                    "value": "=_('data.workato_utility.transform_data.revenue_tier')"
+                  }
+                ]
+              }
+            }
+          ],
+          "actions_if_false": [
+            {
+              "number": 4,
+              "provider": "workato_utility",
+              "name": "email",
+              "as": "alert_low_quality",
+              "keyword": "action",
+              "uuid": "k0l1m2n3-o4p5-6789-klmn-op0123456789",
+              "input": {
+                "to": "data-quality@company.com",
+                "subject": "Low Quality Account Data",
+                "body": "Account =_('data.salesforce.sf_trigger.Name') needs data quality review. Score: =_('data.workato_utility.transform_data.quality_score')"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "uuid": "34567890-12bc-def3-4567-890123bcdef4",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "salesforce",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "salesforce.connection.json",
+        "name": "salesforce",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_utility",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "postgresql",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "postgresql.connection.json",
+        "name": "postgresql",
+        "folder": ""
+      }
+    }
+  ]
+}
