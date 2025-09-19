@@ -1,8 +1,7 @@
 """Tests for the data-tables command."""
 
 import json
-import os
-import tempfile
+
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -14,15 +13,6 @@ from workato_platform.cli.commands.data_tables import (
     list_data_tables,
     validate_schema,
 )
-from workato_platform.client.workato_api.models.data_table import DataTable
-from workato_platform.client.workato_api.models.data_table_column import DataTableColumn
-from workato_platform.client.workato_api.models.data_table_column_request import (
-    DataTableColumnRequest,
-)
-from workato_platform.client.workato_api.models.data_table_create_request import (
-    DataTableCreateRequest,
-)
-from workato_platform.client.workato_api.models.data_table_relation import DataTableRelation
 
 
 class TestListDataTablesCommand:

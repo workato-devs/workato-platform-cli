@@ -219,7 +219,9 @@ class TestExceptionHandler:
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
     def test_sync_handler_unprocessable_entity(self, mock_echo) -> None:
         """Test sync handler with UnprocessableEntityException"""
-        from workato_platform.client.workato_api.exceptions import UnprocessableEntityException
+        from workato_platform.client.workato_api.exceptions import (
+            UnprocessableEntityException,
+        )
 
         @handle_api_exceptions
         def sync_unprocessable():
@@ -326,7 +328,9 @@ class TestExceptionHandler:
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
     async def test_async_handler_unprocessable_entity(self, mock_echo) -> None:
         """Test async handler with UnprocessableEntityException"""
-        from workato_platform.client.workato_api.exceptions import UnprocessableEntityException
+        from workato_platform.client.workato_api.exceptions import (
+            UnprocessableEntityException,
+        )
 
         @handle_api_exceptions
         async def async_unprocessable():

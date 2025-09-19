@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ssl
+
 from types import SimpleNamespace
+
 import pytest
 
 import workato_platform
@@ -110,7 +112,6 @@ def test_version_type_checking_imports() -> None:
         importlib.reload(version_module)
 
         # Check that the type definitions exist when TYPE_CHECKING is True
-        from typing import get_type_hints
 
         # The module should have the type annotations
         assert hasattr(version_module, 'VERSION_TUPLE')

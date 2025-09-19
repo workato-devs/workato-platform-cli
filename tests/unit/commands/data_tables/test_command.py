@@ -2,15 +2,22 @@
 
 from __future__ import annotations
 
-import json
 from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from workato_platform.cli.commands.data_tables import create_data_table, create_table, display_table_summary, list_data_tables, validate_schema
-from workato_platform.client.workato_api.models.data_table_column_request import DataTableColumnRequest
+from workato_platform.cli.commands.data_tables import (
+    create_data_table,
+    create_table,
+    display_table_summary,
+    list_data_tables,
+    validate_schema,
+)
+from workato_platform.client.workato_api.models.data_table_column_request import (
+    DataTableColumnRequest,
+)
 
 
 class DummySpinner:

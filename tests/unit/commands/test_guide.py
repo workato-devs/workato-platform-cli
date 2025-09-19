@@ -1,9 +1,6 @@
 """Tests for the guide command group."""
 
 import json
-from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import Mock
 
 import pytest
 

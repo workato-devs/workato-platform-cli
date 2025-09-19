@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 import json
+
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
+
 import pytest
 
 import workato_platform.cli.commands.connections as connections_module
+
 from workato_platform.cli.commands.connections import (
     _get_callback_url_from_api_host,
     display_connection_summary,
     group_connections_by_provider,
     parse_connection_input,
-    pick_lists,
     show_connection_statistics,
 )
 

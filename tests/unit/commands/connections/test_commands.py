@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
@@ -10,6 +9,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 import workato_platform.cli.commands.connections as connections_module
+
 from workato_platform.cli.commands.connectors.connector_manager import (
     ConnectionParameter,
     ProviderData,

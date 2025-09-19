@@ -5,7 +5,11 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from workato_platform.cli.commands.properties import list_properties, properties, upsert_properties
+from workato_platform.cli.commands.properties import (
+    list_properties,
+    properties,
+    upsert_properties,
+)
 from workato_platform.cli.utils.config import ConfigData
 
 

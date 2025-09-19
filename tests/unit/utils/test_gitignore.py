@@ -1,6 +1,7 @@
 """Tests for gitignore utilities."""
 
 import tempfile
+
 from pathlib import Path
 
 from workato_platform.cli.utils.gitignore import (

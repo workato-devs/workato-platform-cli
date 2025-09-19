@@ -1,6 +1,6 @@
 """Focused tests for the profiles command module."""
 
-from typing import Callable
+from collections.abc import Callable
 from unittest.mock import Mock
 
 import pytest

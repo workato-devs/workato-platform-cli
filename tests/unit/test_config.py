@@ -1,6 +1,7 @@
 """Tests for configuration management."""
 
 import os
+
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 

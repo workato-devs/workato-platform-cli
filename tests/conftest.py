@@ -6,8 +6,8 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-from asyncclick.testing import CliRunner
 
+from asyncclick.testing import CliRunner
 
 
 @pytest.fixture

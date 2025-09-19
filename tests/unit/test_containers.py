@@ -1,8 +1,12 @@
 """Tests for dependency injection container."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-from workato_platform.cli.containers import Container, create_workato_config, create_profile_aware_workato_config
+from workato_platform.cli.containers import (
+    Container,
+    create_profile_aware_workato_config,
+    create_workato_config,
+)
 
 
 class TestContainer:

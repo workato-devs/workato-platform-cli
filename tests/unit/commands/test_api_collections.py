@@ -1212,8 +1212,8 @@ class TestCommandsWithCallbackApproach:
     @pytest.mark.asyncio
     async def test_create_command_callback_success_json(self) -> None:
         """Test create command with JSON file using callback approach."""
-        import tempfile
         import os
+        import tempfile
 
         mock_collection = ApiCollection(
             id=123,

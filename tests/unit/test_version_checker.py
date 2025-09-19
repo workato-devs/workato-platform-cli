@@ -4,12 +4,12 @@ import json
 import os
 import time
 import urllib.error
+
 from pathlib import Path
 from types import SimpleNamespace
-
-import asyncio
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from workato_platform.cli.utils.version_checker import (
     CHECK_INTERVAL,
