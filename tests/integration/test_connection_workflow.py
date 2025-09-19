@@ -13,7 +13,7 @@ class TestConnectionWorkflow:
     """Test complete connection management workflows."""
 
     @pytest.mark.asyncio
-    async def test_oauth_connection_creation_workflow(self, temp_config_dir) -> None:
+    async def test_oauth_connection_creation_workflow(self) -> None:
         """Test end-to-end OAuth connection creation."""
         runner = CliRunner()
 
@@ -44,7 +44,7 @@ class TestConnectionWorkflow:
             assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_connection_discovery_workflow(self, temp_config_dir) -> None:
+    async def test_connection_discovery_workflow(self) -> None:
         """Test connection discovery and exploration workflow."""
         runner = CliRunner()
 
@@ -72,7 +72,7 @@ class TestConnectionWorkflow:
             assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_connection_management_workflow(self, temp_config_dir) -> None:
+    async def test_connection_management_workflow(self) -> None:
         """Test connection listing and management."""
         runner = CliRunner()
 
@@ -126,7 +126,7 @@ class TestConnectionWorkflow:
             assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_connection_picklist_workflow(self, temp_config_dir) -> None:
+    async def test_connection_picklist_workflow(self) -> None:
         """Test connection pick-list functionality."""
         runner = CliRunner()
 
@@ -178,7 +178,7 @@ class TestConnectionWorkflow:
             assert result.exit_code == 0
 
     @pytest.mark.asyncio
-    async def test_interactive_oauth_workflow(self, temp_config_dir) -> None:
+    async def test_interactive_oauth_workflow(self) -> None:
         """Test interactive OAuth connection workflow."""
         runner = CliRunner()
 
@@ -228,7 +228,7 @@ class TestConnectionWorkflow:
             assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_connection_error_handling_workflow(self, temp_config_dir) -> None:
+    async def test_connection_error_handling_workflow(self) -> None:
         """Test connection workflow error handling."""
         runner = CliRunner()
 

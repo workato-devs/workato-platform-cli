@@ -1,6 +1,5 @@
 """Pytest configuration and shared fixtures."""
 
-import os
 import tempfile
 
 from collections.abc import Generator
@@ -60,27 +59,7 @@ def isolate_tests(monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path) -> Non
     # Ensure we don't make real API calls
     monkeypatch.setenv("WORKATO_TEST_MODE", "1")
 
-    # Only mock keyring in CI environment where it's not available
-    # This preserves local test functionality while fixing CI issues
-    if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
-        # Mock keyring with a fake storage that works for CI
-        class MockKeyring:
-            def __init__(self) -> None:
-                self.storage: dict[tuple[str, str], str] = {}
-                self.errors = Mock()
-                self.errors.NoKeyringError = Exception
-
-            def get_password(self, service: str, username: str) -> str | None:
-                return self.storage.get((service, username))
-
-            def set_password(self, service: str, username: str, password: str) -> None:
-                self.storage[(service, username)] = password
-
-            def delete_password(self, service: str, username: str) -> None:
-                self.storage.pop((service, username), None)
-
-        mock_keyring = MockKeyring()
-        monkeypatch.setattr("workato_platform.cli.utils.config.keyring", mock_keyring)
+    # Note: Keyring mocking is handled by individual test fixtures when needed
 
     # Mock Path.home() to use temp directory for ProfileManager
     monkeypatch.setattr(
@@ -132,3 +111,34 @@ def sample_connection() -> dict[str, Any]:
         "authorized": True,
         "created_at": "2024-01-01T00:00:00Z",
     }
+
+
+@pytest.fixture(autouse=True)
+def mock_keyring_for_ci_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Mock keyring only when it's unavailable (like in CI environments)."""
+
+    # Only mock if keyring is not available - preserves local test functionality
+    try:
+        import keyring
+
+        # Try to access keyring - if this fails, keyring is not available
+        keyring.get_password("test-service", "test-user")
+    except Exception:
+        # Keyring is not available, provide a working mock
+        class MockKeyring:
+            def __init__(self) -> None:
+                self.storage: dict[tuple[str, str], str] = {}
+                self.errors = Mock()
+                self.errors.NoKeyringError = Exception
+
+            def get_password(self, service: str, username: str) -> str | None:
+                return self.storage.get((service, username))
+
+            def set_password(self, service: str, username: str, password: str) -> None:
+                self.storage[(service, username)] = password
+
+            def delete_password(self, service: str, username: str) -> None:
+                self.storage.pop((service, username), None)
+
+        mock_keyring = MockKeyring()
+        monkeypatch.setattr("workato_platform.cli.utils.config.keyring", mock_keyring)
