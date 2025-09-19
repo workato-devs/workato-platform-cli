@@ -790,7 +790,7 @@ async def get_connection_oauth_url(
 
     try:
         response = await workato_api_client.connections_api.get_connection_oauth_url(
-            connection_id=str(connection_id),
+            connection_id=connection_id,
         )
     finally:
         elapsed = spinner.stop()
@@ -906,12 +906,12 @@ async def pick_list(
         )
 
     # Display the pick list results
-    if not response.result:
+    if not response.data:
         click.echo("  No results found")
         return
 
-    click.echo(f"\n📄 Results ({len(response.result)} items):")
-    for i, item in enumerate(response.result, 1):
+    click.echo(f"\n📄 Results ({len(response.data)} items):")
+    for i, item in enumerate(response.data, 1):
         click.echo(f"  {i:3d}. {item}")
 
 

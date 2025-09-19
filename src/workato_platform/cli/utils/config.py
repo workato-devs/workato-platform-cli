@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 import asyncclick as click
 import inquirer
+import keyring
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -92,7 +93,6 @@ class ProjectInfo(BaseModel):
 class ProfileData(BaseModel):
     """Data model for a single profile"""
 
-    api_token: str = Field(..., description="API token for this profile")
     region: str = Field(
         ..., description="Region code (us, eu, jp, sg, au, il, trial, custom)"
     )
@@ -112,9 +112,6 @@ class ProfileData(BaseModel):
         """Get human-readable region name from region code"""
         region_info = AVAILABLE_REGIONS.get(self.region)
         return region_info.name if region_info else f"Unknown ({self.region})"
-
-    class Config:
-        frozen = True
 
 
 class CredentialsConfig(BaseModel):
@@ -142,6 +139,47 @@ class ProfileManager:
         """Initialize profile manager"""
         self.global_config_dir = Path.home() / ".workato"
         self.credentials_file = self.global_config_dir / "credentials"
+        self.keyring_service = "workato-platform-cli"
+
+    def _is_keyring_enabled(self) -> bool:
+        """Check if keyring usage is enabled"""
+        return os.environ.get("WORKATO_DISABLE_KEYRING", "").lower() != "true"
+
+    def _get_token_from_keyring(self, profile_name: str) -> str | None:
+        """Get API token from keyring for the given profile"""
+        if not self._is_keyring_enabled():
+            return None
+
+        try:
+            pw: str | None = keyring.get_password(self.keyring_service, profile_name)
+            return pw
+        except Exception:
+            # Keyring access failed, return None to allow fallback
+            return None
+
+    def _store_token_in_keyring(self, profile_name: str, token: str) -> bool:
+        """Store API token in keyring for the given profile"""
+        if not self._is_keyring_enabled():
+            return False
+
+        try:
+            keyring.set_password(self.keyring_service, profile_name, token)
+            return True
+        except Exception:
+            # Keyring storage failed
+            return False
+
+    def _delete_token_from_keyring(self, profile_name: str) -> bool:
+        """Delete API token from keyring for the given profile"""
+        if not self._is_keyring_enabled():
+            return False
+
+        try:
+            keyring.delete_password(self.keyring_service, profile_name)
+            return True
+        except Exception:
+            # Keyring deletion failed or password doesn't exist
+            return False
 
     def _ensure_global_config_dir(self) -> None:
         """Ensure global config directory exists with proper permissions"""
@@ -155,7 +193,10 @@ class ProfileManager:
         try:
             with open(self.credentials_file) as f:
                 data = json.load(f)
-                return CredentialsConfig.model_validate(data)
+                if not isinstance(data, dict):
+                    raise ValueError("Invalid credentials file")
+                config: CredentialsConfig = CredentialsConfig.model_validate(data)
+                return config
         except (json.JSONDecodeError, ValueError):
             return CredentialsConfig(current_profile=None, profiles={})
 
@@ -179,11 +220,28 @@ class ProfileManager:
         credentials_config = self.load_credentials()
         return credentials_config.profiles.get(profile_name)
 
-    def set_profile(self, profile_name: str, profile_data: ProfileData) -> None:
+    def set_profile(
+        self, profile_name: str, profile_data: ProfileData, token: str | None = None
+    ) -> None:
         """Set or update a profile"""
         credentials_config = self.load_credentials()
         credentials_config.profiles[profile_name] = profile_data
         self.save_credentials(credentials_config)
+
+        # Store token in keyring if provided
+        if not token or self._store_token_in_keyring(profile_name, token):
+            return
+
+        if self._is_keyring_enabled():
+            raise ValueError(
+                "Failed to store token in keyring. "
+                "Please check your system keyring setup."
+            )
+        else:
+            raise ValueError(
+                "Keyring is disabled. "
+                "Please set WORKATO_API_TOKEN environment variable instead."
+            )
 
     def delete_profile(self, profile_name: str) -> bool:
         """Delete a profile by name"""
@@ -196,6 +254,9 @@ class ProfileManager:
         # If this was the current profile, clear it
         if credentials_config.current_profile == profile_name:
             credentials_config.current_profile = None
+
+        # Delete token from keyring
+        self._delete_token_from_keyring(profile_name)
 
         self.save_credentials(credentials_config)
         return True
@@ -246,7 +307,7 @@ class ProfileManager:
 
         Priority order:
         1. Environment variables: WORKATO_API_TOKEN, WORKATO_HOST (highest)
-        2. Profile from credentials file
+        2. Profile from keyring + credentials file
 
         Returns:
             Tuple of (api_token, api_host) or (None, None) if no valid source
@@ -259,12 +320,16 @@ class ProfileManager:
             return env_token, env_host
 
         # Fall back to profile-based credentials
-        profile_data = self.get_current_profile_data(project_profile_override)
+        profile_name = self.get_current_profile_name(project_profile_override)
+        if not profile_name:
+            return None, None
+
+        profile_data = self.get_profile(profile_name)
         if not profile_data:
             return None, None
 
-        # Use profile token if no env override, but still check for host override
-        api_token = env_token or profile_data.api_token
+        # Get token from keyring or env var, use profile data for host
+        api_token = env_token or self._get_token_from_keyring(profile_name)
         api_host = env_host or profile_data.region_url
 
         return api_token, api_host
@@ -391,10 +456,15 @@ class ConfigManager:
             if env_token:
                 current_token = env_token
                 click.echo("Current token: Found in WORKATO_API_TOKEN")
-            elif existing_profile_data.api_token:
-                current_token = existing_profile_data.api_token
-                masked_token = current_token[:8] + "..." + current_token[-4:]
-                click.echo(f"Current token: {masked_token} (from credentials file)")
+            else:
+                # Try to get token from keyring
+                keyring_token = self.profile_manager._get_token_from_keyring(
+                    profile_name
+                )
+                if keyring_token:
+                    current_token = keyring_token
+                    masked_token = current_token[:8] + "..." + current_token[-4:]
+                    click.echo(f"Current token: {masked_token} (from keyring)")
 
             if current_token:
                 if click.confirm("Use existing token?", default=True):
@@ -422,16 +492,15 @@ class ConfigManager:
         async with Workato(configuration=api_config) as workato_api_client:
             user_info = await workato_api_client.users_api.get_workspace_details()
 
-            # Create profile data with token included
+            # Create profile data (without token)
             profile_data = ProfileData(
-                api_token=token,
                 region=region.region,
                 region_url=region.url,
                 workspace_id=user_info.id,
             )
 
-            # Save profile to credentials file (includes token)
-            self.profile_manager.set_profile(profile_name, profile_data)
+            # Save profile to credentials file and store token in keyring
+            self.profile_manager.set_profile(profile_name, profile_data, token)
 
             # Set as current profile
             self.profile_manager.set_current_profile(profile_name)
@@ -681,10 +750,8 @@ class ConfigManager:
         if not current_profile_name:
             current_profile_name = "default"
 
-        # Load credentials and update the profile
+        # Check if profile exists
         credentials = self.profile_manager.load_credentials()
-
-        # Update the token for the current profile
         if current_profile_name not in credentials.profiles:
             # If profile doesn't exist, we need more info to create it
             raise ValueError(
@@ -692,11 +759,21 @@ class ConfigManager:
                 "Please run 'workato init' to create a profile first."
             )
 
-        # Update the existing profile with the new token
-        credentials.profiles[current_profile_name].api_token = api_token
-
-        # Save the updated credentials
-        self.profile_manager.save_credentials(credentials)
+        # Store the token in keyring
+        success = self.profile_manager._store_token_in_keyring(
+            current_profile_name, api_token
+        )
+        if not success:
+            if self.profile_manager._is_keyring_enabled():
+                raise ValueError(
+                    "Failed to store token in keyring. "
+                    "Please check your system keyring setup."
+                )
+            else:
+                raise ValueError(
+                    "Keyring is disabled. "
+                    "Please set WORKATO_API_TOKEN environment variable instead."
+                )
 
         click.echo(f"✅ API token saved to profile '{current_profile_name}'")
 
