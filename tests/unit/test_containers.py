@@ -1,6 +1,8 @@
 """Tests for dependency injection container."""
 
-from workato_platform.cli.containers import Container
+from unittest.mock import Mock, patch
+
+from workato_platform.cli.containers import Container, create_workato_config, create_profile_aware_workato_config
 
 
 class TestContainer:
@@ -63,3 +65,66 @@ class TestContainer:
 
         # This should not raise an exception
         assert True
+
+
+def test_create_workato_config():
+    """Test create_workato_config function."""
+    config = create_workato_config("test_token", "https://test.workato.com")
+
+    assert config.access_token == "test_token"
+    assert config.host == "https://test.workato.com"
+    assert config.ssl_ca_cert is not None  # Should be set to certifi path
+
+
+def test_create_profile_aware_workato_config_success():
+    """Test create_profile_aware_workato_config with valid credentials."""
+    # Mock the config manager
+    mock_config_manager = Mock()
+    mock_config_data = Mock()
+    mock_config_data.profile = None
+    mock_config_manager.load_config.return_value = mock_config_data
+
+    # Mock profile manager resolution
+    mock_config_manager.profile_manager.resolve_environment_variables.return_value = (
+        "test_token", "https://test.workato.com"
+    )
+
+    config = create_profile_aware_workato_config(mock_config_manager)
+
+    assert config.access_token == "test_token"
+    assert config.host == "https://test.workato.com"
+
+
+def test_create_profile_aware_workato_config_with_cli_profile():
+    """Test create_profile_aware_workato_config with CLI profile override."""
+    # Mock the config manager
+    mock_config_manager = Mock()
+    mock_config_data = Mock()
+    mock_config_data.profile = "project_profile"
+    mock_config_manager.load_config.return_value = mock_config_data
+
+    # Mock profile manager resolution - should be called with CLI profile
+    mock_config_manager.profile_manager.resolve_environment_variables.return_value = (
+        "test_token", "https://test.workato.com"
+    )
+
+    config = create_profile_aware_workato_config(mock_config_manager, cli_profile="cli_profile")
+
+    # Verify CLI profile was used over project profile
+    mock_config_manager.profile_manager.resolve_environment_variables.assert_called_with("cli_profile")
+
+
+def test_create_profile_aware_workato_config_no_credentials():
+    """Test create_profile_aware_workato_config raises error when no credentials."""
+    # Mock the config manager
+    mock_config_manager = Mock()
+    mock_config_data = Mock()
+    mock_config_data.profile = None
+    mock_config_manager.load_config.return_value = mock_config_data
+
+    # Mock profile manager resolution to return None (no credentials)
+    mock_config_manager.profile_manager.resolve_environment_variables.return_value = (None, None)
+
+    import pytest
+    with pytest.raises(ValueError, match="Could not resolve API credentials"):
+        create_profile_aware_workato_config(mock_config_manager)

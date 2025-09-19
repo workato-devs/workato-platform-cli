@@ -6,6 +6,8 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+from asyncclick.testing import CliRunner
+
 
 
 @pytest.fixture
@@ -13,6 +15,12 @@ def temp_config_dir():
     """Create a temporary directory for config files."""
     with tempfile.TemporaryDirectory() as temp_dir:
         yield Path(temp_dir)
+
+
+@pytest.fixture
+def cli_runner() -> CliRunner:
+    """Provide an async click testing runner."""
+    return CliRunner()
 
 
 @pytest.fixture

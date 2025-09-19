@@ -15,7 +15,7 @@ from workato_platform.cli.utils.config import ConfigManager
 from workato_platform.cli.utils.exception_handler import handle_api_exceptions
 from workato_platform.client.workato_api.models.asset import Asset
 from workato_platform.client.workato_api.models.recipe import Recipe
-from workato_platform.client.workato_api.models.recipe_connection_update_request import (
+from workato_platform.client.workato_api.models.recipe_connection_update_request import (  # noqa: E501
     RecipeConnectionUpdateRequest,
 )
 from workato_platform.client.workato_api.models.recipe_start_response import (
@@ -231,7 +231,7 @@ async def validate(
         spinner.start()
 
         try:
-            result = recipe_validator.validate_recipe(recipe_data)
+            result = await recipe_validator.validate_recipe(recipe_data)
         finally:
             elapsed = spinner.stop()
 

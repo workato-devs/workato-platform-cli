@@ -14,6 +14,7 @@ import keyring
 from pydantic import BaseModel, Field, field_validator
 
 from workato_platform import Workato
+from workato_platform.cli.commands.projects.project_manager import ProjectManager
 from workato_platform.client.workato_api.configuration import Configuration
 
 
@@ -50,9 +51,6 @@ class RegionInfo(BaseModel):
     name: str = Field(..., description="Human-readable region name")
     url: str | None = Field(None, description="Base URL for the region")
 
-    class Config:
-        frozen = True
-
 
 # Available Workato regions
 AVAILABLE_REGIONS = {
@@ -85,9 +83,6 @@ class ProjectInfo(BaseModel):
     id: int = Field(..., description="Project ID")
     name: str = Field(..., description="Project name")
     folder_id: int | None = Field(None, description="Associated folder ID")
-
-    class Config:
-        frozen = True
 
 
 class ProfileData(BaseModel):
@@ -519,10 +514,6 @@ class ConfigManager:
 
         # Step 4: Setup project
         click.echo("📁 Step 4: Setup your project")
-        from workato_platform.cli.commands.projects.project_manager import (
-            ProjectManager,
-        )
-
         # Check for existing project first
         meta_data = self.load_config()
         if meta_data.project_id:

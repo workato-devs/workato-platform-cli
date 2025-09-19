@@ -119,10 +119,7 @@ select = [
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
-"**/test_*.py" = ["B011", "S101", "S105", "S106"]
-"**/*_test.py" = ["B011", "S101", "S105", "S106"]
-"tests/**/*.py" = ["S101", "S105", "S106"]
+"tests/**/*.py" = ["B011", "S101", "S105", "S106"]
 
 # Ruff isort configuration
 [tool.ruff.lint.isort]
@@ -160,8 +157,8 @@ explicit_package_bases = true
 mypy_path = "src"
 plugins = ["pydantic.mypy"]
 exclude = [
-    "src/workato_platform/client/workato_api/.*",
-    "test/*"
+    "src/workato_platform/client/*",
+    "tests/"
 ]
 
 [[tool.mypy.overrides]]
@@ -191,9 +188,8 @@ pythonpath = ["src"]
 [tool.coverage.run]
 source = ["src/workato_platform"]
 omit = [
-    "*/tests/*",
-    "*/test_*",
-    "client/*",
+    "tests/*",
+    "src/workato_platform/client/*",
 ]
 
 [tool.coverage.report]
@@ -219,8 +215,7 @@ version-file = "src/workato_platform/_version.py"
 # Bandit configuration for security linting
 [tool.bandit]
 exclude_dirs = [
-    "tests",
-    "client",
+    "tests/*",
     "src/workato_platform/client",
 ]
 skips = ["B101"]  # Skip assert_used test
@@ -235,6 +230,7 @@ dev = [
     "pre-commit>=4.3.0",
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-cov>=7.0.0",
     "pytest-mock>=3.10.0",
     "ruff>=0.12.11",
     "types-click>=7.0.0",

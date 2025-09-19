@@ -1,4 +1,3 @@
-import asyncio
 import json
 import time
 
@@ -7,7 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from workato_platform import Workato
 from workato_platform.client.workato_api.models.platform_connector import (
@@ -79,6 +78,8 @@ class ValidationResult:
 class RecipeLine(BaseModel):
     """Base recipe line structure"""
 
+    model_config = ConfigDict(extra="allow")
+
     number: int
     keyword: Keyword
     uuid: str
@@ -115,9 +116,6 @@ class RecipeLine(BaseModel):
     param: dict[str, Any] | None = None
     parameters_schema: list[dict[str, Any]] | None = None
     unfinished: bool | None = None
-
-    class Config:
-        extra = "allow"  # Allow extra fields for flexibility
 
     @field_validator("as_")
     @classmethod
@@ -414,9 +412,15 @@ class RecipeValidator:
         )
         self._cache_ttl_hours = 24  # Cache for 24 hours
         self._last_cache_update = None
+        self._connectors_loaded = False
 
-        # Initialize with some well-known platform connectors
-        asyncio.run(self._load_builtin_connectors())
+        # Connector data will be loaded lazily when first needed
+
+    async def _ensure_connectors_loaded(self) -> None:
+        """Ensure connector metadata is loaded (either from cache or API)"""
+        if not self._connectors_loaded:
+            await self._load_builtin_connectors()
+            self._connectors_loaded = True
 
     def _load_cached_connectors(self) -> bool:
         """Load connector metadata from cache if available and not expired"""
@@ -461,8 +465,11 @@ class RecipeValidator:
         except (OSError, PermissionError):
             return
 
-    def validate_recipe(self, recipe_data: dict[str, Any]) -> ValidationResult:
+    async def validate_recipe(self, recipe_data: dict[str, Any]) -> ValidationResult:
         """Main validation entry point"""
+        # Ensure connectors are loaded before validation
+        await self._ensure_connectors_loaded()
+
         errors: list[ValidationError] = []
         warnings: list[ValidationError] = []
 
@@ -903,12 +910,16 @@ class RecipeValidator:
             input_data, line_number, {}
         )
 
-    def _extract_data_pills(self, text: str) -> list[str]:
+    def _extract_data_pills(self, text: str | None) -> list[str]:
         """Extract data pill references from text"""
         import re
 
-        # Match Workato data pill format: #{_('data.provider.as.field')}
-        pattern = r"#\{_\('([^']+)'\)\}"
+        if not isinstance(text, str):
+            return []
+
+        # Match Workato data pill formats: #{_dp('data.path')}
+        # or legacy #{_('data.path')}
+        pattern = r"#\{_(?:dp)?\(['\"]([^'\"]+)['\"]\)\}"
         return re.findall(pattern, text)
 
     def _is_valid_data_pill(self, pill: str) -> bool:
@@ -988,10 +999,14 @@ class RecipeValidator:
         check_expression(input_data, [])
         return errors
 
-    def _is_expression(self, text: str) -> bool:
+    def _is_expression(self, text: str | None) -> bool:
         """Check if text is an expression"""
-        # Basic expression detection
-        return text.startswith("=") or "{{" in text
+        if not isinstance(text, str):
+            return False
+
+        stripped = text.strip()
+        # Basic expression detection covering formulas, Jinja, and data pills
+        return stripped.startswith("=") or "{{" in stripped or "#{_" in stripped
 
     def _is_valid_expression(self, expression: str) -> bool:
         """Validate expression syntax"""
