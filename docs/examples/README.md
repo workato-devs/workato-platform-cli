@@ -9,24 +9,24 @@ All examples are now **CLI-compatible** and ready for deployment. Each recipe fo
 ### Basic Patterns
 
 ### [basic-sync-recipe.json](basic-sync-recipe.json)
-**Pattern:** Real-time data synchronization
-**Use Case:** Sync Salesforce contacts to database
+**Pattern:** Real-time data synchronization  
+**Use Case:** Sync Salesforce contacts to database  
 **Key Features:**
 - Object trigger (new/updated records)
 - Database upsert operation
 - Field mapping and transformation
 
 ### [webhook-api-recipe.json](webhook-api-recipe.json)
-**Pattern:** Webhook processing with API calls
-**Use Case:** Process incoming orders and notify external systems
+**Pattern:** Webhook processing with API calls  
+**Use Case:** Process incoming orders and notify external systems  
 **Key Features:**
 - Webhook trigger
 - HTTP API calls with authentication
 - Email notifications
 
 ### [batch-processing-recipe.json](batch-processing-recipe.json)
-**Pattern:** Scheduled batch processing
-**Use Case:** Daily customer data sync with error handling
+**Pattern:** Scheduled batch processing  
+**Use Case:** Daily customer data sync with error handling  
 **Key Features:**
 - Scheduled trigger
 - Batch processing with loops
@@ -35,8 +35,8 @@ All examples are now **CLI-compatible** and ready for deployment. Each recipe fo
 ### Advanced Patterns
 
 ### [advanced-data-transformation-recipe.json](advanced-data-transformation-recipe.json)
-**Pattern:** Complex data transformation and cleansing
-**Use Case:** Transform and enrich Salesforce account data with quality scoring
+**Pattern:** Complex data transformation and cleansing  
+**Use Case:** Transform and enrich Salesforce account data with quality scoring  
 **Key Features:**
 - Advanced field transformations (phone formatting, address parsing)
 - Data quality scoring and conditional processing
@@ -44,8 +44,8 @@ All examples are now **CLI-compatible** and ready for deployment. Each recipe fo
 - Dual-path processing (high quality vs issues)
 
 ### [multi-application-workflow-recipe.json](multi-application-workflow-recipe.json)
-**Pattern:** Multi-system workflow orchestration
-**Use Case:** Support ticket workflow from Salesforce to Slack to Jira
+**Pattern:** Multi-system workflow orchestration  
+**Use Case:** Support ticket workflow from Salesforce to Slack to Jira  
 **Key Features:**
 - Cross-platform workflow (Salesforce → Slack → Jira → Email)
 - Priority-based conditional routing
@@ -53,8 +53,8 @@ All examples are now **CLI-compatible** and ready for deployment. Each recipe fo
 - Automatic ticket creation and linking
 
 ### [file-processing-recipe.json](file-processing-recipe.json)
-**Pattern:** File processing with validation pipeline
-**Use Case:** Process CSV files from SFTP with comprehensive validation
+**Pattern:** File processing with validation pipeline  
+**Use Case:** Process CSV files from SFTP with comprehensive validation  
 **Key Features:**
 - SFTP file monitoring and processing
 - Row-by-row data validation and cleansing
@@ -62,8 +62,8 @@ All examples are now **CLI-compatible** and ready for deployment. Each recipe fo
 - Size limits and processing controls
 
 ### [real-time-bidirectional-sync-recipe.json](real-time-bidirectional-sync-recipe.json)
-**Pattern:** Bidirectional synchronization with conflict resolution
-**Use Case:** Real-time sync between Salesforce and HubSpot contacts
+**Pattern:** Bidirectional synchronization with conflict resolution  
+**Use Case:** Real-time sync between Salesforce and HubSpot contacts  
 **Key Features:**
 - Sync loop prevention and timestamp comparison
 - Conflict detection and automatic resolution
@@ -71,8 +71,8 @@ All examples are now **CLI-compatible** and ready for deployment. Each recipe fo
 - Manual intervention workflows for complex conflicts
 
 ### [api-first-integration-recipe.json](api-first-integration-recipe.json)
-**Pattern:** Enterprise API integration with resilience patterns
-**Use Case:** Paginated API consumption with rate limiting and circuit breakers
+**Pattern:** Enterprise API integration with resilience patterns  
+**Use Case:** Paginated API consumption with rate limiting and circuit breakers  
 **Key Features:**
 - Pagination handling with state management
 - Rate limiting compliance and backoff strategies
