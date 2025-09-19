@@ -158,7 +158,6 @@ mypy_path = "src"
 plugins = ["pydantic.mypy"]
 exclude = [
     "src/workato_platform/client/*",
-    "tests/"
 ]
 
 [[tool.mypy.overrides]]

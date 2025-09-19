@@ -311,7 +311,8 @@ class TestCreateCommand:
                 )
 
             mock_echo.assert_called_with(
-                f"❌ Failed to read file {temp_file_path}: [Errno 13] Permission denied: '{temp_file_path}'"
+                f"❌ Failed to read file {temp_file_path}: [Errno 13] "
+                f"Permission denied: '{temp_file_path}'"
             )
             mock_workato_client.api_platform_api.create_api_collection.assert_not_called()
 
@@ -553,15 +554,17 @@ class TestListCollectionsCommand:
             mock_spinner_instance.stop.return_value = 1.0
             mock_spinner.return_value = mock_spinner_instance
 
-            with patch(
-                "workato_platform.cli.commands.api_collections.display_collection_summary"
-            ):
-                with patch(
+            with (
+                patch(
+                    "workato_platform.cli.commands.api_collections.display_collection_summary"
+                ),
+                patch(
                     "workato_platform.cli.commands.api_collections.click.echo"
-                ) as mock_echo:
-                    await list_collections.callback(
-                        page=2, per_page=100, workato_api_client=mock_workato_client
-                    )
+                ) as mock_echo,
+            ):
+                await list_collections.callback(
+                    page=2, per_page=100, workato_api_client=mock_workato_client
+                )
 
         # Should show pagination info
         mock_echo.assert_any_call("💡 Pagination:")
@@ -775,12 +778,14 @@ class TestEnableEndpointCommand:
         with patch(
             "workato_platform.cli.commands.api_collections.enable_all_endpoints_in_collection"
         ) as mock_enable_all:
-            await enable_endpoint.callback(api_endpoint_id=None, api_collection_id=456, all=True)
+            await enable_endpoint.callback(
+                api_endpoint_id=None, api_collection_id=456, all=True
+            )
 
         mock_enable_all.assert_called_once_with(456)
 
     @pytest.mark.asyncio
-    async def test_enable_endpoint_all_without_collection_id(self, mock_workato_client):
+    async def test_enable_endpoint_all_without_collection_id(self) -> None:
         """Test enabling all endpoints without collection ID fails."""
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
@@ -792,19 +797,21 @@ class TestEnableEndpointCommand:
         mock_echo.assert_called_with("❌ --all flag requires --api-collection-id")
 
     @pytest.mark.asyncio
-    async def test_enable_endpoint_all_with_endpoint_id(self, mock_workato_client):
+    async def test_enable_endpoint_all_with_endpoint_id(self) -> None:
         """Test enabling all endpoints with endpoint ID fails."""
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
         ) as mock_echo:
-            await enable_endpoint.callback(api_endpoint_id=123, api_collection_id=456, all=True)
+            await enable_endpoint.callback(
+                api_endpoint_id=123, api_collection_id=456, all=True
+            )
 
         mock_echo.assert_called_with(
             "❌ Cannot specify both --api-endpoint-id and --all"
         )
 
     @pytest.mark.asyncio
-    async def test_enable_endpoint_no_parameters(self, mock_workato_client):
+    async def test_enable_endpoint_no_parameters(self) -> None:
         """Test enabling endpoint with no parameters fails."""
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
@@ -822,7 +829,7 @@ class TestEnableAllEndpointsInCollection:
     """Test the enable_all_endpoints_in_collection function."""
 
     @pytest.fixture
-    def mock_workato_client(self):
+    def mock_workato_client(self) -> AsyncMock:
         """Mock Workato API client."""
         client = AsyncMock()
         client.api_platform_api.list_api_endpoints = AsyncMock()
@@ -830,7 +837,7 @@ class TestEnableAllEndpointsInCollection:
         return client
 
     @pytest.fixture
-    def mock_endpoints_mixed_status(self):
+    def mock_endpoints_mixed_status(self) -> list[ApiEndpoint]:
         """Mock endpoints with mixed active status."""
         return [
             ApiEndpoint(
@@ -879,26 +886,29 @@ class TestEnableAllEndpointsInCollection:
 
     @pytest.mark.asyncio
     async def test_enable_all_endpoints_success(
-        self, mock_workato_client, mock_endpoints_mixed_status
-    ):
+        self,
+        mock_workato_client: AsyncMock,
+        mock_endpoints_mixed_status: list[ApiEndpoint],
+    ) -> None:
         """Test successfully enabling all disabled endpoints."""
         mock_workato_client.api_platform_api.list_api_endpoints.return_value = (
             mock_endpoints_mixed_status
         )
 
-        with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
-        ) as mock_spinner:
+        with (
+            patch(
+                "workato_platform.cli.commands.api_collections.Spinner"
+            ) as mock_spinner,
+            patch(
+                "workato_platform.cli.commands.api_collections.click.echo"
+            ) as mock_echo,
+        ):
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.0
             mock_spinner.return_value = mock_spinner_instance
-
-            with patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
-            ) as mock_echo:
-                await enable_all_endpoints_in_collection(
-                    api_collection_id=123, workato_api_client=mock_workato_client
-                )
+            await enable_all_endpoints_in_collection(
+                api_collection_id=123, workato_api_client=mock_workato_client
+            )
 
         # Should enable 2 disabled endpoints (not the active one)
         assert mock_workato_client.api_platform_api.enable_api_endpoint.call_count == 2
@@ -914,29 +924,35 @@ class TestEnableAllEndpointsInCollection:
         mock_echo.assert_any_call("  ✅ Successfully enabled: 2")
 
     @pytest.mark.asyncio
-    async def test_enable_all_endpoints_no_endpoints(self, mock_workato_client):
+    async def test_enable_all_endpoints_no_endpoints(
+        self, mock_workato_client: AsyncMock
+    ) -> None:
         """Test enabling all endpoints when no endpoints exist."""
         mock_workato_client.api_platform_api.list_api_endpoints.return_value = []
 
-        with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
-        ) as mock_spinner:
+        with (
+            patch(
+                "workato_platform.cli.commands.api_collections.Spinner"
+            ) as mock_spinner,
+            patch(
+                "workato_platform.cli.commands.api_collections.click.echo"
+            ) as mock_echo,
+        ):
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 0.5
             mock_spinner.return_value = mock_spinner_instance
 
-            with patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
-            ) as mock_echo:
-                await enable_all_endpoints_in_collection(
-                    api_collection_id=123, workato_api_client=mock_workato_client
-                )
+            await enable_all_endpoints_in_collection(
+                api_collection_id=123, workato_api_client=mock_workato_client
+            )
 
         mock_echo.assert_called_with("❌ No endpoints found for collection 123")
         mock_workato_client.api_platform_api.enable_api_endpoint.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_enable_all_endpoints_all_already_enabled(self, mock_workato_client):
+    async def test_enable_all_endpoints_all_already_enabled(
+        self, mock_workato_client: AsyncMock
+    ) -> None:
         """Test enabling all endpoints when all are already enabled."""
         all_active_endpoints = [
             ApiEndpoint(
@@ -972,19 +988,21 @@ class TestEnableAllEndpointsInCollection:
             all_active_endpoints
         )
 
-        with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
-        ) as mock_spinner:
+        with (
+            patch(
+                "workato_platform.cli.commands.api_collections.Spinner"
+            ) as mock_spinner,
+            patch(
+                "workato_platform.cli.commands.api_collections.click.echo"
+            ) as mock_echo,
+        ):
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 0.8
             mock_spinner.return_value = mock_spinner_instance
 
-            with patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
-            ) as mock_echo:
-                await enable_all_endpoints_in_collection(
-                    api_collection_id=123, workato_api_client=mock_workato_client
-                )
+            await enable_all_endpoints_in_collection(
+                api_collection_id=123, workato_api_client=mock_workato_client
+            )
 
         mock_echo.assert_called_with(
             "✅ All endpoints in collection 123 are already enabled"
@@ -993,15 +1011,17 @@ class TestEnableAllEndpointsInCollection:
 
     @pytest.mark.asyncio
     async def test_enable_all_endpoints_with_failures(
-        self, mock_workato_client, mock_endpoints_mixed_status
-    ):
+        self,
+        mock_workato_client: AsyncMock,
+        mock_endpoints_mixed_status: list[ApiEndpoint],
+    ) -> None:
         """Test enabling all endpoints with some failures."""
         mock_workato_client.api_platform_api.list_api_endpoints.return_value = (
             mock_endpoints_mixed_status
         )
 
         # Make one endpoint fail to enable
-        async def mock_enable_side_effect(api_endpoint_id):
+        async def mock_enable_side_effect(api_endpoint_id: int) -> None:
             if api_endpoint_id == 2:
                 raise Exception("API Error: Endpoint not found")
             return None
@@ -1010,19 +1030,21 @@ class TestEnableAllEndpointsInCollection:
             mock_enable_side_effect
         )
 
-        with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
-        ) as mock_spinner:
+        with (
+            patch(
+                "workato_platform.cli.commands.api_collections.Spinner"
+            ) as mock_spinner,
+            patch(
+                "workato_platform.cli.commands.api_collections.click.echo"
+            ) as mock_echo,
+        ):
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.0
             mock_spinner.return_value = mock_spinner_instance
 
-            with patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
-            ) as mock_echo:
-                await enable_all_endpoints_in_collection(
-                    api_collection_id=123, workato_api_client=mock_workato_client
-                )
+            await enable_all_endpoints_in_collection(
+                api_collection_id=123, workato_api_client=mock_workato_client
+            )
 
         # Should show mixed results
         mock_echo.assert_any_call("📊 Results:")
@@ -1037,28 +1059,32 @@ class TestEnableApiEndpoint:
     """Test the enable_api_endpoint function."""
 
     @pytest.fixture
-    def mock_workato_client(self):
+    def mock_workato_client(self) -> AsyncMock:
         """Mock Workato API client."""
         client = AsyncMock()
         client.api_platform_api.enable_api_endpoint = AsyncMock()
         return client
 
     @pytest.mark.asyncio
-    async def test_enable_api_endpoint_success(self, mock_workato_client):
+    async def test_enable_api_endpoint_success(
+        self, mock_workato_client: AsyncMock
+    ) -> None:
         """Test successfully enabling a single API endpoint."""
-        with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
-        ) as mock_spinner:
+        with (
+            patch(
+                "workato_platform.cli.commands.api_collections.Spinner"
+            ) as mock_spinner,
+            patch(
+                "workato_platform.cli.commands.api_collections.click.echo"
+            ) as mock_echo,
+        ):
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 0.8
             mock_spinner.return_value = mock_spinner_instance
 
-            with patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
-            ) as mock_echo:
-                await enable_api_endpoint(
-                    api_endpoint_id=123, workato_api_client=mock_workato_client
-                )
+            await enable_api_endpoint(
+                api_endpoint_id=123, workato_api_client=mock_workato_client
+            )
 
         mock_workato_client.api_platform_api.enable_api_endpoint.assert_called_once_with(
             api_endpoint_id=123
@@ -1069,7 +1095,7 @@ class TestEnableApiEndpoint:
 class TestDisplayFunctions:
     """Test display helper functions."""
 
-    def test_display_endpoint_summary_active(self):
+    def test_display_endpoint_summary_active(self) -> None:
         """Test displaying active endpoint summary."""
         endpoint = ApiEndpoint(
             id=123,
@@ -1101,7 +1127,7 @@ class TestDisplayFunctions:
         mock_echo.assert_any_call("    📚 Collection ID: 456")
         # Note: Legacy status not shown when legacy=False
 
-    def test_display_endpoint_summary_disabled_with_legacy(self):
+    def test_display_endpoint_summary_disabled_with_legacy(self) -> None:
         """Test displaying disabled endpoint summary with legacy flag."""
         endpoint = ApiEndpoint(
             id=456,
@@ -1127,7 +1153,7 @@ class TestDisplayFunctions:
         mock_echo.assert_any_call("    📊 Status: Disabled")
         mock_echo.assert_any_call("    📜 Legacy: Yes")
 
-    def test_display_collection_summary(self):
+    def test_display_collection_summary(self) -> None:
         """Test displaying collection summary."""
         collection = ApiCollection(
             id=123,
@@ -1157,7 +1183,7 @@ class TestDisplayFunctions:
         mock_echo.assert_any_call("    🕐 Created: 2024-01-10")
         mock_echo.assert_any_call("    🔄 Updated: 2024-01-20")
 
-    def test_display_collection_summary_no_updated_at(self):
+    def test_display_collection_summary_no_updated_at(self) -> None:
         """Test displaying collection summary when updated_at equals created_at."""
         collection = ApiCollection(
             id=456,
@@ -1183,7 +1209,7 @@ class TestDisplayFunctions:
         ]
         assert len(updated_calls) == 0
 
-    def test_display_collection_summary_short_urls(self):
+    def test_display_collection_summary_short_urls(self) -> None:
         """Test displaying collection summary with short URLs."""
         collection = ApiCollection(
             id=789,
@@ -1227,7 +1253,9 @@ class TestCommandsWithCallbackApproach:
         )
 
         mock_workato_client = AsyncMock()
-        mock_workato_client.api_platform_api.create_api_collection.return_value = mock_collection
+        mock_workato_client.api_platform_api.create_api_collection.return_value = (
+            mock_collection
+        )
 
         mock_config_manager = MagicMock()
         mock_config_manager.load_config.return_value = MagicMock(
@@ -1237,12 +1265,16 @@ class TestCommandsWithCallbackApproach:
         mock_project_manager = AsyncMock()
 
         # Create a temporary JSON file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as temp_file:
             temp_file.write('{"openapi": "3.0.0", "info": {"title": "Test API"}}')
             temp_file_path = temp_file.name
 
         try:
-            with patch("workato_platform.cli.commands.api_collections.click.echo") as mock_echo:
+            with patch(
+                "workato_platform.cli.commands.api_collections.click.echo"
+            ) as mock_echo:
                 await create.callback(
                     name="Test Collection",
                     format="json",
@@ -1254,8 +1286,11 @@ class TestCommandsWithCallbackApproach:
                 )
 
             # Verify API was called
-            mock_workato_client.api_platform_api.create_api_collection.assert_called_once()
-            call_args = mock_workato_client.api_platform_api.create_api_collection.call_args.kwargs
+            create_api_collection = (
+                mock_workato_client.api_platform_api.create_api_collection
+            )
+            create_api_collection.assert_called_once()
+            call_args = create_api_collection.call_args.kwargs
             create_request = call_args["api_collection_create_request"]
             assert create_request.name == "Test Collection"
             assert create_request.project_id == 123
@@ -1276,7 +1311,9 @@ class TestCommandsWithCallbackApproach:
         mock_project_manager = AsyncMock()
         mock_workato_client = AsyncMock()
 
-        with patch("workato_platform.cli.commands.api_collections.click.echo") as mock_echo:
+        with patch(
+            "workato_platform.cli.commands.api_collections.click.echo"
+        ) as mock_echo:
             await create.callback(
                 name="Test Collection",
                 format="json",
@@ -1287,7 +1324,9 @@ class TestCommandsWithCallbackApproach:
                 workato_api_client=mock_workato_client,
             )
 
-        mock_echo.assert_called_with("❌ No project configured. Please run 'workato init' first.")
+        mock_echo.assert_called_with(
+            "❌ No project configured. Please run 'workato init' first."
+        )
         mock_workato_client.api_platform_api.create_api_collection.assert_not_called()
 
     @pytest.mark.asyncio
@@ -1317,18 +1356,28 @@ class TestCommandsWithCallbackApproach:
         ]
 
         mock_workato_client = AsyncMock()
-        mock_workato_client.api_platform_api.list_api_collections.return_value = mock_collections
+        mock_workato_client.api_platform_api.list_api_collections.return_value = (
+            mock_collections
+        )
 
-        with patch("workato_platform.cli.commands.api_collections.display_collection_summary") as mock_display:
-            with patch("workato_platform.cli.commands.api_collections.click.echo") as mock_echo:
-                await list_collections.callback(
-                    page=1,
-                    per_page=50,
-                    workato_api_client=mock_workato_client,
-                )
+        with (
+            patch(
+                "workato_platform.cli.commands.api_collections.display_collection_summary"
+            ) as mock_display,
+            patch(
+                "workato_platform.cli.commands.api_collections.click.echo"
+            ) as mock_echo,
+        ):
+            await list_collections.callback(
+                page=1,
+                per_page=50,
+                workato_api_client=mock_workato_client,
+            )
 
         # Verify API was called
-        mock_workato_client.api_platform_api.list_api_collections.assert_called_once_with(page=1, per_page=50)
+        mock_workato_client.api_platform_api.list_api_collections.assert_called_once_with(
+            page=1, per_page=50
+        )
 
         # Verify display was called for each collection
         assert mock_display.call_count == 2
@@ -1341,7 +1390,9 @@ class TestCommandsWithCallbackApproach:
         """Test list_collections with per_page limit exceeded."""
         mock_workato_client = AsyncMock()
 
-        with patch("workato_platform.cli.commands.api_collections.click.echo") as mock_echo:
+        with patch(
+            "workato_platform.cli.commands.api_collections.click.echo"
+        ) as mock_echo:
             await list_collections.callback(
                 page=1,
                 per_page=150,  # Exceeds limit of 100
@@ -1372,14 +1423,22 @@ class TestCommandsWithCallbackApproach:
         ]
 
         mock_workato_client = AsyncMock()
-        mock_workato_client.api_platform_api.list_api_endpoints.return_value = mock_endpoints
+        mock_workato_client.api_platform_api.list_api_endpoints.return_value = (
+            mock_endpoints
+        )
 
-        with patch("workato_platform.cli.commands.api_collections.display_endpoint_summary") as mock_display:
-            with patch("workato_platform.cli.commands.api_collections.click.echo") as mock_echo:
-                await list_endpoints.callback(
-                    api_collection_id=123,
-                    workato_api_client=mock_workato_client,
-                )
+        with (
+            patch(
+                "workato_platform.cli.commands.api_collections.display_endpoint_summary"
+            ) as mock_display,
+            patch(
+                "workato_platform.cli.commands.api_collections.click.echo"
+            ) as mock_echo,
+        ):
+            await list_endpoints.callback(
+                api_collection_id=123,
+                workato_api_client=mock_workato_client,
+            )
 
         # Verify API was called (should be called twice for pagination check)
         assert mock_workato_client.api_platform_api.list_api_endpoints.call_count >= 1
@@ -1401,7 +1460,9 @@ class TestCommandsWithCallbackApproach:
         mock_project_manager = AsyncMock()
         mock_workato_client = AsyncMock()
 
-        with patch("workato_platform.cli.commands.api_collections.click.echo") as mock_echo:
+        with patch(
+            "workato_platform.cli.commands.api_collections.click.echo"
+        ) as mock_echo:
             await create.callback(
                 name="Test Collection",
                 format="json",

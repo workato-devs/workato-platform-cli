@@ -16,7 +16,7 @@ from workato_platform.cli.utils.config import ConfigData, ProfileData
 
 
 @pytest.fixture
-def profile_data_factory():
+def profile_data_factory() -> Callable[..., ProfileData]:
     """Create ProfileData instances for test scenarios."""
 
     def _factory(
@@ -55,12 +55,14 @@ def make_config_manager() -> Callable[..., Mock]:
 @pytest.mark.asyncio
 async def test_list_profiles_displays_profile_details(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     profiles_dict = {
         "default": profile_data_factory(workspace_id=111),
-        "dev": profile_data_factory(region="eu", region_url="https://app.eu.workato.com", workspace_id=222),
+        "dev": profile_data_factory(
+            region="eu", region_url="https://app.eu.workato.com", workspace_id=222
+        ),
     }
 
     config_manager = make_config_manager(
@@ -80,7 +82,7 @@ async def test_list_profiles_displays_profile_details(
 @pytest.mark.asyncio
 async def test_list_profiles_handles_empty_state(
     capsys: pytest.CaptureFixture[str],
-    make_config_manager,
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     config_manager = make_config_manager(
         list_profiles=Mock(return_value={}),
@@ -97,8 +99,8 @@ async def test_list_profiles_handles_empty_state(
 @pytest.mark.asyncio
 async def test_use_sets_current_profile(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     profile = profile_data_factory()
     config_manager = make_config_manager(
@@ -115,7 +117,7 @@ async def test_use_sets_current_profile(
 @pytest.mark.asyncio
 async def test_use_missing_profile_shows_hint(
     capsys: pytest.CaptureFixture[str],
-    make_config_manager,
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     config_manager = make_config_manager(
         get_profile=Mock(return_value=None),
@@ -132,8 +134,8 @@ async def test_use_missing_profile_shows_hint(
 async def test_show_displays_profile_and_token_source(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     monkeypatch.delenv("WORKATO_API_TOKEN", raising=False)
 
@@ -155,7 +157,7 @@ async def test_show_displays_profile_and_token_source(
 @pytest.mark.asyncio
 async def test_show_handles_missing_profile(
     capsys: pytest.CaptureFixture[str],
-    make_config_manager,
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     config_manager = make_config_manager(
         get_profile=Mock(return_value=None),
@@ -170,8 +172,8 @@ async def test_show_handles_missing_profile(
 @pytest.mark.asyncio
 async def test_status_reports_project_override(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     profile = profile_data_factory(workspace_id=789)
     config_manager = make_config_manager(
@@ -191,7 +193,7 @@ async def test_status_reports_project_override(
 @pytest.mark.asyncio
 async def test_status_handles_missing_profile(
     capsys: pytest.CaptureFixture[str],
-    make_config_manager,
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     config_manager = make_config_manager(
         get_current_profile_name=Mock(return_value=None),
@@ -206,8 +208,8 @@ async def test_status_handles_missing_profile(
 @pytest.mark.asyncio
 async def test_delete_confirms_successful_removal(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     profile = profile_data_factory()
     config_manager = make_config_manager(
@@ -224,7 +226,7 @@ async def test_delete_confirms_successful_removal(
 @pytest.mark.asyncio
 async def test_delete_handles_missing_profile(
     capsys: pytest.CaptureFixture[str],
-    make_config_manager,
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     config_manager = make_config_manager(
         get_profile=Mock(return_value=None),
@@ -240,8 +242,8 @@ async def test_delete_handles_missing_profile(
 async def test_show_displays_env_token_source(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     """Test show command displays WORKATO_API_TOKEN environment variable source."""
     monkeypatch.setenv("WORKATO_API_TOKEN", "env_token")
@@ -250,7 +252,9 @@ async def test_show_displays_env_token_source(
     config_manager = make_config_manager(
         get_profile=Mock(return_value=profile),
         get_current_profile_name=Mock(return_value="default"),
-        resolve_environment_variables=Mock(return_value=("env_token", profile.region_url)),
+        resolve_environment_variables=Mock(
+            return_value=("env_token", profile.region_url)
+        ),
     )
 
     await show.callback(profile_name="default", config_manager=config_manager)
@@ -263,8 +267,8 @@ async def test_show_displays_env_token_source(
 async def test_show_handles_missing_token(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     """Test show command handles missing API token."""
     monkeypatch.delenv("WORKATO_API_TOKEN", raising=False)
@@ -288,8 +292,8 @@ async def test_show_handles_missing_token(
 async def test_status_displays_env_profile_source(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     """Test status command displays WORKATO_PROFILE environment variable source."""
     monkeypatch.setenv("WORKATO_PROFILE", "env_profile")
@@ -323,7 +327,9 @@ async def test_status_displays_env_token_source(
     config_manager = make_config_manager(
         get_current_profile_name=Mock(return_value="default"),
         get_current_profile_data=Mock(return_value=profile),
-        resolve_environment_variables=Mock(return_value=("env_token", profile.region_url)),
+        resolve_environment_variables=Mock(
+            return_value=("env_token", profile.region_url)
+        ),
     )
 
     await status.callback(config_manager=config_manager)
@@ -336,8 +342,8 @@ async def test_status_displays_env_token_source(
 async def test_status_handles_missing_token(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     """Test status command handles missing API token."""
     monkeypatch.delenv("WORKATO_API_TOKEN", raising=False)
@@ -360,8 +366,8 @@ async def test_status_handles_missing_token(
 @pytest.mark.asyncio
 async def test_delete_handles_failure(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     """Test delete command handles deletion failure."""
     profile = profile_data_factory()
@@ -385,4 +391,5 @@ def test_profiles_group_exists() -> None:
 
     # Test that it's a click group
     import asyncclick as click
+
     assert isinstance(profiles, click.Group)

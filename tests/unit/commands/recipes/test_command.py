@@ -54,7 +54,9 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
 
 
 @pytest.mark.asyncio
-async def test_list_recipes_requires_folder_id(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_list_recipes_requires_folder_id(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     """When no folder is configured the command guides the user."""
 
     config_manager = Mock()
@@ -68,7 +70,9 @@ async def test_list_recipes_requires_folder_id(monkeypatch: pytest.MonkeyPatch, 
 
 
 @pytest.mark.asyncio
-async def test_list_recipes_recursive_filters_running(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_list_recipes_recursive_filters_running(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     """Recursive listing warns about ignored filters and respects the running flag."""
 
     running_recipe = SimpleNamespace(running=True, name="Active", id=1)
@@ -108,7 +112,9 @@ async def test_list_recipes_recursive_filters_running(monkeypatch: pytest.Monkey
 
 
 @pytest.mark.asyncio
-async def test_list_recipes_non_recursive_with_filters(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_list_recipes_non_recursive_with_filters(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     """The non-recursive path fetches recipes and surfaces filter details."""
 
     recipe_stub = SimpleNamespace(running=True, name="Demo", id=99)
@@ -154,13 +160,14 @@ async def test_list_recipes_non_recursive_with_filters(monkeypatch: pytest.Monke
 
 
 @pytest.mark.asyncio
-async def test_validate_missing_file(capture_echo: list[str]) -> None:
+async def test_validate_missing_file(tmp_path: Path, capture_echo: list[str]) -> None:
     """Validation rejects non-existent files early."""
 
     validator = Mock()
+    non_existent_file = tmp_path / "unknown.json"
 
     await command.validate.callback(
-        path="/tmp/unknown.json",
+        path=str(non_existent_file),
         recipe_validator=validator,
     )
 
@@ -169,7 +176,9 @@ async def test_validate_missing_file(capture_echo: list[str]) -> None:
 
 
 @pytest.mark.asyncio
-async def test_validate_requires_json_extension(tmp_path: Path, capture_echo: list[str]) -> None:
+async def test_validate_requires_json_extension(
+    tmp_path: Path, capture_echo: list[str]
+) -> None:
     """Validation enforces JSON file extension before reading content."""
 
     text_file = tmp_path / "recipe.txt"
@@ -228,7 +237,9 @@ async def test_validate_success(tmp_path: Path, capture_echo: list[str]) -> None
 
 
 @pytest.mark.asyncio
-async def test_validate_failure_with_warnings(tmp_path: Path, capture_echo: list[str]) -> None:
+async def test_validate_failure_with_warnings(
+    tmp_path: Path, capture_echo: list[str]
+) -> None:
     """Failed validation prints every reported error and warning."""
 
     data_file = tmp_path / "invalid.json"
@@ -273,7 +284,9 @@ async def test_start_requires_single_option(capture_echo: list[str]) -> None:
 
 
 @pytest.mark.asyncio
-async def test_start_dispatches_correct_handler(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_start_dispatches_correct_handler(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Each start variant invokes the matching helper."""
 
     single = AsyncMock()
@@ -401,7 +414,9 @@ async def test_start_project_recipes_requires_configuration(
 
 
 @pytest.mark.asyncio
-async def test_start_project_recipes_delegates_to_folder(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_start_project_recipes_delegates_to_folder(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """When configured the project helper delegates to folder start."""
 
     config_manager = Mock()
@@ -435,9 +450,7 @@ async def test_start_folder_recipes_handles_success_and_failure(
     )
 
     responses = [
-        SimpleNamespace(success=True,
-                        code_errors=[],
-                        config_errors=[]),
+        SimpleNamespace(success=True, code_errors=[], config_errors=[]),
         SimpleNamespace(
             success=False,
             code_errors=[[3, [["Label", 99, "Err", "path"]]]],
@@ -454,7 +467,9 @@ async def test_start_folder_recipes_handles_success_and_failure(
 
     await command.start_folder_recipes(123, workato_api_client=client)
 
-    called_ids = [call.args[0] for call in client.recipes_api.start_recipe.await_args_list]
+    called_ids = [
+        call.args[0] for call in client.recipes_api.start_recipe.await_args_list
+    ]
     assert called_ids == [1, 2]
     output = "\n".join(capture_echo)
     assert "Recipe One" in output and "started" in output
@@ -486,9 +501,7 @@ async def test_start_folder_recipes_handles_empty_folder(
 async def test_stop_single_recipe_outputs_confirmation(capture_echo: list[str]) -> None:
     """Stopping a recipe forwards to the API and reports success."""
 
-    client = SimpleNamespace(
-        recipes_api=SimpleNamespace(stop_recipe=AsyncMock())
-    )
+    client = SimpleNamespace(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
 
     await command.stop_single_recipe(88, workato_api_client=client)
 
@@ -544,13 +557,13 @@ async def test_stop_folder_recipes_iterates_assets(
         AsyncMock(return_value=assets),
     )
 
-    client = SimpleNamespace(
-        recipes_api=SimpleNamespace(stop_recipe=AsyncMock())
-    )
+    client = SimpleNamespace(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
 
     await command.stop_folder_recipes(44, workato_api_client=client)
 
-    called_ids = [call.args[0] for call in client.recipes_api.stop_recipe.await_args_list]
+    called_ids = [
+        call.args[0] for call in client.recipes_api.stop_recipe.await_args_list
+    ]
     assert called_ids == [1, 2]
     assert "Results" in "\n".join(capture_echo)
 
@@ -567,9 +580,7 @@ async def test_stop_folder_recipes_no_assets(
         AsyncMock(return_value=[]),
     )
 
-    client = SimpleNamespace(
-        recipes_api=SimpleNamespace(stop_recipe=AsyncMock())
-    )
+    client = SimpleNamespace(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
 
     await command.stop_folder_recipes(44, workato_api_client=client)
 
@@ -578,7 +589,9 @@ async def test_stop_folder_recipes_no_assets(
 
 
 @pytest.mark.asyncio
-async def test_get_folder_recipe_assets_filters_non_recipes(capture_echo: list[str]) -> None:
+async def test_get_folder_recipe_assets_filters_non_recipes(
+    capture_echo: list[str],
+) -> None:
     """Asset helper filters responses down to recipe entries."""
 
     assets = [
@@ -601,7 +614,9 @@ async def test_get_folder_recipe_assets_filters_non_recipes(capture_echo: list[s
 
 
 @pytest.mark.asyncio
-async def test_get_all_recipes_paginated_handles_multiple_pages(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_get_all_recipes_paginated_handles_multiple_pages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Pagination helper keeps fetching until fewer than 100 results are returned."""
 
     first_page = SimpleNamespace(items=[SimpleNamespace(id=i) for i in range(100)])
@@ -657,7 +672,9 @@ async def test_get_recipes_recursive_traverses_subfolders(
         2: [],
     }
 
-    async def _list_folders(parent_id: int, page: int, per_page: int) -> list[SimpleNamespace]:
+    async def _list_folders(
+        parent_id: int, page: int, per_page: int
+    ) -> list[SimpleNamespace]:
         return list_calls[parent_id]
 
     client = SimpleNamespace(
@@ -680,7 +697,9 @@ async def test_get_recipes_recursive_traverses_subfolders(
 
 
 @pytest.mark.asyncio
-async def test_get_recipes_recursive_skips_visited(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_get_recipes_recursive_skips_visited(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Visited folders are ignored to avoid infinite recursion."""
 
     mock_get_all = AsyncMock()
@@ -689,9 +708,7 @@ async def test_get_recipes_recursive_skips_visited(monkeypatch: pytest.MonkeyPat
         mock_get_all,
     )
 
-    client = SimpleNamespace(
-        folders_api=SimpleNamespace(list_folders=AsyncMock())
-    )
+    client = SimpleNamespace(folders_api=SimpleNamespace(list_folders=AsyncMock()))
 
     raw_recursive = command.get_recipes_recursive.__wrapped__
     monkeypatch.setattr(
@@ -749,9 +766,7 @@ async def test_update_connection_invokes_api(capture_echo: list[str]) -> None:
     """Connection update forwards parameters to Workato client."""
 
     client = SimpleNamespace(
-        recipes_api=SimpleNamespace(
-            update_recipe_connection=AsyncMock()
-        )
+        recipes_api=SimpleNamespace(update_recipe_connection=AsyncMock())
     )
 
     await command.update_connection.callback(
@@ -782,7 +797,9 @@ def test_display_recipe_errors_with_string_config(capture_echo: list[str]) -> No
 
 
 @pytest.mark.asyncio
-async def test_list_recipes_no_results(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_list_recipes_no_results(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     """Listing with filters reports when nothing matches."""
 
     config_manager = Mock()

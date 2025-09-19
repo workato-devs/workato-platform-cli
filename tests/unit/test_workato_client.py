@@ -11,7 +11,7 @@ import pytest
 class TestWorkatoClient:
     """Test the Workato API client wrapper."""
 
-    def test_workato_class_can_be_imported(self):
+    def test_workato_class_can_be_imported(self) -> None:
         """Test that Workato class can be imported."""
         try:
             from workato_platform import Workato
@@ -20,7 +20,7 @@ class TestWorkatoClient:
         except ImportError:
             pytest.skip("Workato class not available due to missing dependencies")
 
-    def test_workato_initialization_mocked(self):
+    def test_workato_initialization_mocked(self) -> None:
         """Test Workato can be initialized with mocked dependencies."""
         try:
             from workato_platform import Workato
@@ -40,7 +40,7 @@ class TestWorkatoClient:
         except ImportError:
             pytest.skip("Workato class not available due to missing dependencies")
 
-    def test_workato_api_endpoints_structure(self):
+    def test_workato_api_endpoints_structure(self) -> None:
         """Test that Workato class structure can be analyzed."""
         try:
             from workato_platform import Workato
@@ -62,7 +62,6 @@ class TestWorkatoClient:
             # Create mock configuration to avoid real initialization
             with (
                 patch("workato_platform.Configuration") as mock_config,
-                patch("workato_platform.ApiClient") as mock_api_client,
             ):
                 mock_configuration = Mock()
                 mock_config.return_value = mock_configuration

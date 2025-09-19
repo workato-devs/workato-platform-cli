@@ -5,8 +5,7 @@ from __future__ import annotations
 import json
 
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -60,11 +59,14 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
 
 @pytest.fixture
 def manager() -> ConnectorManager:
-    client = SimpleNamespace(connectors_api=SimpleNamespace())
+    client = Mock()
+    client.connectors_api = Mock()
     return ConnectorManager(workato_api_client=client)
 
 
-def test_load_connection_data_reads_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, manager: ConnectorManager) -> None:
+def test_load_connection_data_reads_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, manager: ConnectorManager
+) -> None:
     data_path = tmp_path / "connection-data.json"
     payload = {
         "jira": {
@@ -97,7 +99,9 @@ def test_load_connection_data_reads_file(monkeypatch: pytest.MonkeyPatch, tmp_pa
     assert manager._data_cache is data
 
 
-def test_load_connection_data_invalid_json(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, manager: ConnectorManager) -> None:
+def test_load_connection_data_invalid_json(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, manager: ConnectorManager
+) -> None:
     broken_path = tmp_path / "connection-data.json"
     broken_path.write_text("{invalid")
 
@@ -128,7 +132,9 @@ def test_get_oauth_required_parameters_defaults(manager: ConnectorManager) -> No
     assert params == [param]
 
 
-def test_prompt_for_oauth_parameters_prompts(monkeypatch: pytest.MonkeyPatch, manager: ConnectorManager, capture_echo: list[str]) -> None:
+def test_prompt_for_oauth_parameters_prompts(
+    monkeypatch: pytest.MonkeyPatch, manager: ConnectorManager, capture_echo: list[str]
+) -> None:
     manager._data_cache = {
         "jira": ProviderData(
             name="Jira",
@@ -174,13 +180,19 @@ def test_show_provider_details_outputs_info(capture_echo: list[str]) -> None:
                 name="mode",
                 label="Mode",
                 type="select",
-                pick_list=[["prod", "Production"], ["sandbox", "Sandbox"], ["dev", "Development"], ["qa", "QA"]],
+                pick_list=[
+                    ["prod", "Production"],
+                    ["sandbox", "Sandbox"],
+                    ["dev", "Development"],
+                    ["qa", "QA"],
+                ],
             ),
         ],
     )
 
+    mock_manager = Mock()
     connector_manager.ConnectorManager.show_provider_details(
-        SimpleNamespace(), provider_key="sample", provider_data=provider
+        mock_manager, provider_key="sample", provider_data=provider
     )
 
     text = "\n".join(capture_echo)
@@ -191,36 +203,59 @@ def test_show_provider_details_outputs_info(capture_echo: list[str]) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_platform_connectors(monkeypatch: pytest.MonkeyPatch, manager: ConnectorManager, capture_echo: list[str]) -> None:
-    responses = [
-        SimpleNamespace(items=[SimpleNamespace(name="C1"), SimpleNamespace(name="C2")]),
-        SimpleNamespace(items=[]),
-    ]
+async def test_list_platform_connectors(
+    manager: ConnectorManager, capture_echo: list[str]
+) -> None:
+    # Create mock connector objects
+    connector1 = Mock()
+    connector1.name = "C1"
+    connector2 = Mock()
+    connector2.name = "C2"
 
-    manager.workato_api_client.connectors_api = SimpleNamespace(
-        list_platform_connectors=AsyncMock(side_effect=responses)
-    )
+    # Create mock response objects
+    response1 = Mock()
+    response1.items = [connector1, connector2]
+    response2 = Mock()
+    response2.items = []
 
-    connectors = await manager.list_platform_connectors()
+    responses = [response1, response2]
+
+    with patch.object(
+        manager.workato_api_client.connectors_api,
+        "list_platform_connectors",
+        AsyncMock(side_effect=responses),
+    ):
+        connectors = await manager.list_platform_connectors()
 
     assert len(connectors) == 2
     assert "Platform Connectors" in "\n".join(capture_echo)
 
 
 @pytest.mark.asyncio
-async def test_list_custom_connectors(monkeypatch: pytest.MonkeyPatch, manager: ConnectorManager, capture_echo: list[str]) -> None:
-    manager.workato_api_client.connectors_api = SimpleNamespace(
-        list_custom_connectors=AsyncMock(
-            return_value=SimpleNamespace(
-                result=[
-                    SimpleNamespace(name="Alpha", version="1.0", description="Desc"),
-                    SimpleNamespace(name="Beta", version="2.0", description=None),
-                ]
-            )
-        )
-    )
+async def test_list_custom_connectors(
+    manager: ConnectorManager, capture_echo: list[str]
+) -> None:
+    # Create mock custom connector objects
+    connector1 = Mock()
+    connector1.name = "Alpha"
+    connector1.version = "1.0"
+    connector1.description = "Desc"
 
-    await manager.list_custom_connectors()
+    connector2 = Mock()
+    connector2.name = "Beta"
+    connector2.version = "2.0"
+    connector2.description = None
+
+    # Create mock response
+    response = Mock()
+    response.result = [connector1, connector2]
+
+    with patch.object(
+        manager.workato_api_client.connectors_api,
+        "list_custom_connectors",
+        AsyncMock(return_value=response),
+    ):
+        await manager.list_custom_connectors()
 
     output = "\n".join(capture_echo)
     assert "Custom Connectors" in output

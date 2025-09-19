@@ -2,6 +2,8 @@
 
 import json
 
+from pathlib import Path
+
 import pytest
 
 from workato_platform.cli.commands import guide
@@ -19,7 +21,7 @@ def docs_setup(tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_topics_lists_available_docs(docs_setup, monkeypatch):
+async def test_topics_lists_available_docs(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
@@ -32,7 +34,9 @@ async def test_topics_lists_available_docs(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_topics_missing_docs(tmp_path, monkeypatch):
+async def test_topics_missing_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     module_file = tmp_path / "fake" / "guide.py"
     module_file.parent.mkdir(parents=True)
     module_file.write_text("# dummy")
@@ -47,7 +51,9 @@ async def test_topics_missing_docs(tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_content_returns_topic(docs_setup, monkeypatch):
+async def test_content_returns_topic(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     topic_file = docs_setup / "sample.md"
     topic_file.write_text("---\nmetadata\n---\nActual content\nNext line")
 
@@ -62,7 +68,7 @@ async def test_content_returns_topic(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_content_missing_topic(docs_setup, monkeypatch):
+async def test_content_missing_topic(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
@@ -72,7 +78,9 @@ async def test_content_missing_topic(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_search_returns_matches(docs_setup, monkeypatch):
+async def test_search_returns_matches(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     (docs_setup / "guide.md").write_text("This line mentions Trigger\nSecond line")
     (docs_setup / "formulas" / "calc.md").write_text("Formula trigger usage")
 
@@ -87,9 +95,11 @@ async def test_search_returns_matches(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_structure_outputs_relationships(docs_setup, monkeypatch):
+async def test_structure_outputs_relationships(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     (docs_setup / "overview.md").write_text(
-        "# Overview\n## Section One\n### Details\nLink to [docs](other.md)\n````code````"
+        "# Overview\n## Section One\n### Details\nLink to [docs](file.md)\n````code````"
     )
 
     captured: list[str] = []
@@ -105,7 +115,7 @@ async def test_structure_outputs_relationships(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_structure_missing_topic(docs_setup, monkeypatch):
+async def test_structure_missing_topic(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
@@ -115,7 +125,9 @@ async def test_structure_missing_topic(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_index_builds_summary(docs_setup, monkeypatch):
+async def test_index_builds_summary(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     (docs_setup / "core.md").write_text("# Core\n## Section")
     formulas_dir = docs_setup / "formulas"
     (formulas_dir / "calc.md").write_text("# Formula\n```\nSUM(1,2)\n```\n")
@@ -131,7 +143,7 @@ async def test_index_builds_summary(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_guide_group_invocation(monkeypatch):
+async def test_guide_group_invocation(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
@@ -141,7 +153,9 @@ async def test_guide_group_invocation(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_content_missing_docs(tmp_path, monkeypatch):
+async def test_content_missing_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test content command when docs directory doesn't exist."""
     module_file = tmp_path / "fake" / "guide.py"
     module_file.parent.mkdir(parents=True)
@@ -157,7 +171,9 @@ async def test_content_missing_docs(tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_content_finds_numbered_topic(docs_setup, monkeypatch):
+async def test_content_finds_numbered_topic(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test content command finding topic with number prefix."""
     topic_file = docs_setup / "01-recipe-fundamentals.md"
     topic_file.write_text("Recipe fundamentals content")
@@ -172,7 +188,9 @@ async def test_content_finds_numbered_topic(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_content_finds_formula_topic(docs_setup, monkeypatch):
+async def test_content_finds_formula_topic(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test content command finding topic in formulas directory."""
     formula_file = docs_setup / "formulas" / "string-formulas.md"
     formula_file.write_text("String formula content")
@@ -187,7 +205,9 @@ async def test_content_finds_formula_topic(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_content_handles_empty_lines_at_start(docs_setup, monkeypatch):
+async def test_content_handles_empty_lines_at_start(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test content command skipping empty lines at start."""
     topic_file = docs_setup / "sample.md"
     topic_file.write_text("---\nmetadata\n---\n\n\n\nActual content")
@@ -202,7 +222,9 @@ async def test_content_handles_empty_lines_at_start(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_search_missing_docs(tmp_path, monkeypatch):
+async def test_search_missing_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test search command when docs directory doesn't exist."""
     module_file = tmp_path / "fake" / "guide.py"
     module_file.parent.mkdir(parents=True)
@@ -218,7 +240,9 @@ async def test_search_missing_docs(tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_search_specific_topic(docs_setup, monkeypatch):
+async def test_search_specific_topic(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test search command with specific topic."""
     topic_file = docs_setup / "triggers.md"
     topic_file.write_text("This line mentions trigger functionality")
@@ -233,7 +257,9 @@ async def test_search_specific_topic(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_structure_missing_docs(tmp_path, monkeypatch):
+async def test_structure_missing_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test structure command when docs directory doesn't exist."""
     module_file = tmp_path / "fake" / "guide.py"
     module_file.parent.mkdir(parents=True)
@@ -249,10 +275,14 @@ async def test_structure_missing_docs(tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_structure_formula_topic(docs_setup, monkeypatch):
+async def test_structure_formula_topic(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test structure command with formula topic."""
     formula_file = docs_setup / "formulas" / "string-formulas.md"
-    formula_file.write_text("# String Formulas\n## Basic Functions\n### UPPER\n```ruby\nUPPER('test')\n```")
+    formula_file.write_text(
+        "# String Formulas\n## Basic Functions\n### UPPER\n```ruby\nUPPER('test')\n```"
+    )
 
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
@@ -265,7 +295,9 @@ async def test_structure_formula_topic(docs_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_index_missing_docs(tmp_path, monkeypatch):
+async def test_index_missing_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test index command when docs directory doesn't exist."""
     module_file = tmp_path / "fake" / "guide.py"
     module_file.parent.mkdir(parents=True)

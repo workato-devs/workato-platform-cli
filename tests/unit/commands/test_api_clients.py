@@ -22,7 +22,7 @@ from workato_platform.cli.commands.api_clients import (
     validate_ip_address,
 )
 from workato_platform.client.workato_api.models.api_client import ApiClient
-from workato_platform.client.workato_api.models.api_client_api_collections_inner import (
+from workato_platform.client.workato_api.models.api_client_api_collections_inner import (  # noqa: E501
     ApiClientApiCollectionsInner,
 )
 from workato_platform.client.workato_api.models.api_client_list_response import (
@@ -42,7 +42,7 @@ class TestApiClientsGroup:
     """Test the main api-clients command group."""
 
     @pytest.mark.asyncio
-    async def test_api_clients_command_exists(self):
+    async def test_api_clients_command_exists(self) -> None:
         """Test that api-clients command group can be invoked."""
         runner = CliRunner()
         result = await runner.invoke(api_clients, ["--help"])
@@ -541,7 +541,7 @@ class TestErrorHandling:
         assert result == []
 
 
-def test_api_clients_group_exists():
+def test_api_clients_group_exists() -> None:
     """Test that the api-clients group exists."""
     assert callable(api_clients)
 
@@ -551,7 +551,7 @@ def test_api_clients_group_exists():
     assert isinstance(api_clients, click.Group)
 
 
-def test_validate_create_parameters_email_without_portal():
+def test_validate_create_parameters_email_without_portal() -> None:
     """Test validation when email is provided without api-portal-id."""
     errors = validate_create_parameters(
         auth_type="token",
@@ -568,7 +568,7 @@ def test_validate_create_parameters_email_without_portal():
     )
 
 
-def test_parse_ip_list_invalid_ip():
+def test_parse_ip_list_invalid_ip() -> None:
     """Test parse_ip_list with invalid IP addresses."""
     with patch("workato_platform.cli.commands.api_clients.click.echo") as mock_echo:
         result = parse_ip_list("192.168.1.1,invalid_ip", "allow")
@@ -582,7 +582,7 @@ def test_parse_ip_list_invalid_ip():
         assert any("Invalid IP address" in arg for arg in call_args)
 
 
-def test_parse_ip_list_empty_ips():
+def test_parse_ip_list_empty_ips() -> None:
     """Test parse_ip_list with empty IP addresses."""
     result = parse_ip_list("192.168.1.1,,  ,192.168.1.2", "allow")
 
@@ -591,7 +591,7 @@ def test_parse_ip_list_empty_ips():
 
 
 @pytest.mark.asyncio
-async def test_create_key_invalid_allow_list():
+async def test_create_key_invalid_allow_list() -> None:
     """Test create-key command with invalid IP allow list."""
     with patch("workato_platform.cli.commands.api_clients.parse_ip_list") as mock_parse:
         mock_parse.return_value = None  # Simulate parse failure
@@ -610,7 +610,7 @@ async def test_create_key_invalid_allow_list():
 
 
 @pytest.mark.asyncio
-async def test_create_key_invalid_deny_list():
+async def test_create_key_invalid_deny_list() -> None:
     """Test create-key command with invalid IP deny list."""
     with patch("workato_platform.cli.commands.api_clients.parse_ip_list") as mock_parse:
         # Return valid list for allow list, None for deny list
@@ -630,7 +630,7 @@ async def test_create_key_invalid_deny_list():
 
 
 @pytest.mark.asyncio
-async def test_create_key_no_api_key_in_response():
+async def test_create_key_no_api_key_in_response() -> None:
     """Test create-key when API key is not provided in response."""
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -661,7 +661,7 @@ async def test_create_key_no_api_key_in_response():
 
 
 @pytest.mark.asyncio
-async def test_create_key_with_deny_list():
+async def test_create_key_with_deny_list() -> None:
     """Test create-key displaying IP deny list."""
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -697,7 +697,7 @@ async def test_create_key_with_deny_list():
 
 
 @pytest.mark.asyncio
-async def test_list_api_clients_empty():
+async def test_list_api_clients_empty() -> None:
     """Test list-api-clients when no clients found."""
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -720,7 +720,7 @@ async def test_list_api_clients_empty():
 
 
 @pytest.mark.asyncio
-async def test_list_api_keys_empty():
+async def test_list_api_keys_empty() -> None:
     """Test list-api-keys when no keys found."""
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -1075,7 +1075,7 @@ class TestCreateCommandWithContainer:
         )
 
 
-def test_parse_ip_list_invalid_cidr():
+def test_parse_ip_list_invalid_cidr() -> None:
     """Test parse_ip_list with invalid CIDR values."""
     with patch("workato_platform.cli.commands.api_clients.click.echo") as mock_echo:
         # Test CIDR > 32
@@ -1091,7 +1091,7 @@ def test_parse_ip_list_invalid_cidr():
 
 
 @pytest.mark.asyncio
-async def test_refresh_secret_user_cancels():
+async def test_refresh_secret_user_cancels() -> None:
     """Test refresh_secret when user cancels the confirmation."""
     with (
         patch("workato_platform.cli.commands.api_clients.click.echo") as mock_echo,

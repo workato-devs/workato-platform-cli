@@ -7,10 +7,11 @@ import urllib.error
 
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from workato_platform.cli.utils.config import ConfigManager
 from workato_platform.cli.utils.version_checker import (
     CHECK_INTERVAL,
     VersionChecker,
@@ -21,7 +22,7 @@ from workato_platform.cli.utils.version_checker import (
 class TestVersionChecker:
     """Test the VersionChecker class."""
 
-    def test_init(self, mock_config_manager, temp_config_dir):
+    def test_init(self, mock_config_manager: ConfigManager) -> None:
         """Test VersionChecker initialization."""
         checker = VersionChecker(mock_config_manager)
 
@@ -29,14 +30,18 @@ class TestVersionChecker:
         assert checker.cache_dir.name == "workato-platform-cli"
         assert checker.cache_file.name == "last_update_check"
 
-    def test_is_update_check_disabled_env_var(self, mock_config_manager, monkeypatch):
+    def test_is_update_check_disabled_env_var(
+        self, mock_config_manager: ConfigManager, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test update checking can be disabled via environment variable."""
         monkeypatch.setenv("WORKATO_DISABLE_UPDATE_CHECK", "1")
         checker = VersionChecker(mock_config_manager)
 
         assert checker.is_update_check_disabled() is True
 
-    def test_is_update_check_disabled_default(self, mock_config_manager, monkeypatch):
+    def test_is_update_check_disabled_default(
+        self, mock_config_manager: ConfigManager, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test update checking is enabled by default."""
         # Ensure environment variable is not set
         monkeypatch.delenv("WORKATO_DISABLE_UPDATE_CHECK", raising=False)
@@ -46,7 +51,9 @@ class TestVersionChecker:
         assert checker.is_update_check_disabled() is False
 
     @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
-    def test_get_latest_version_success(self, mock_urlopen, mock_config_manager):
+    def test_get_latest_version_success(
+        self, mock_urlopen, mock_config_manager: ConfigManager
+    ) -> None:
         """Test successful version retrieval from PyPI."""
         # Mock response
         mock_response = Mock()
@@ -62,7 +69,9 @@ class TestVersionChecker:
         assert version == "1.2.3"
 
     @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
-    def test_get_latest_version_http_error(self, mock_urlopen, mock_config_manager):
+    def test_get_latest_version_http_error(
+        self, mock_urlopen, mock_config_manager: ConfigManager
+    ) -> None:
         """Test version retrieval handles HTTP errors."""
         mock_urlopen.side_effect = urllib.error.URLError("Network error")
 
@@ -72,7 +81,9 @@ class TestVersionChecker:
         assert version is None
 
     @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
-    def test_get_latest_version_non_https_url(self, mock_urlopen, mock_config_manager):
+    def test_get_latest_version_non_https_url(
+        self, mock_urlopen, mock_config_manager: ConfigManager
+    ) -> None:
         """Test version retrieval only allows HTTPS URLs."""
         # This should be caught by the HTTPS validation
         checker = VersionChecker(mock_config_manager)
@@ -90,9 +101,9 @@ class TestVersionChecker:
     @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_non_200_status(
         self,
-        mock_urlopen,
-        mock_config_manager,
-    ):
+        mock_urlopen: MagicMock,
+        mock_config_manager: ConfigManager,
+    ) -> None:
         response = Mock()
         response.getcode.return_value = 500
         mock_urlopen.return_value.__enter__.return_value = response
@@ -101,7 +112,9 @@ class TestVersionChecker:
 
         assert checker.get_latest_version() is None
 
-    def test_check_for_updates_newer_available(self, mock_config_manager):
+    def test_check_for_updates_newer_available(
+        self, mock_config_manager: ConfigManager
+    ) -> None:
         """Test check_for_updates detects newer version."""
         checker = VersionChecker(mock_config_manager)
 
@@ -109,7 +122,9 @@ class TestVersionChecker:
             result = checker.check_for_updates("1.0.0")
             assert result == "2.0.0"
 
-    def test_check_for_updates_current_latest(self, mock_config_manager):
+    def test_check_for_updates_current_latest(
+        self, mock_config_manager: ConfigManager
+    ) -> None:
         """Test check_for_updates when current version is latest."""
         checker = VersionChecker(mock_config_manager)
 
@@ -117,7 +132,9 @@ class TestVersionChecker:
             result = checker.check_for_updates("1.0.0")
             assert result is None
 
-    def test_check_for_updates_newer_current(self, mock_config_manager):
+    def test_check_for_updates_newer_current(
+        self, mock_config_manager: ConfigManager
+    ) -> None:
         """Test check_for_updates when current version is newer than published."""
         checker = VersionChecker(mock_config_manager)
 
@@ -125,7 +142,9 @@ class TestVersionChecker:
             result = checker.check_for_updates("2.0.0.dev1")
             assert result is None
 
-    def test_should_check_for_updates_disabled(self, mock_config_manager, monkeypatch):
+    def test_should_check_for_updates_disabled(
+        self, mock_config_manager: ConfigManager, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test should_check_for_updates respects disable flag."""
         monkeypatch.setenv("WORKATO_DISABLE_UPDATE_CHECK", "true")
         checker = VersionChecker(mock_config_manager)
@@ -134,8 +153,11 @@ class TestVersionChecker:
 
     @patch("workato_platform.cli.utils.version_checker.HAS_DEPENDENCIES", True)
     def test_should_check_for_updates_no_cache_file(
-        self, mock_config_manager, monkeypatch, tmp_path
-    ):
+        self,
+        mock_config_manager: ConfigManager,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
         """Test should_check_for_updates when no cache file exists."""
         # Ensure environment variable is not set
         monkeypatch.delenv("WORKATO_DISABLE_UPDATE_CHECK", raising=False)
@@ -152,10 +174,10 @@ class TestVersionChecker:
 
     def test_should_check_for_updates_respects_cache_timestamp(
         self,
-        mock_config_manager,
-        monkeypatch,
-        tmp_path,
-    ):
+        mock_config_manager: ConfigManager,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
         monkeypatch.delenv("WORKATO_DISABLE_UPDATE_CHECK", raising=False)
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
@@ -170,10 +192,10 @@ class TestVersionChecker:
 
     def test_should_check_for_updates_handles_stat_error(
         self,
-        mock_config_manager,
-        monkeypatch,
-        tmp_path,
-    ):
+        mock_config_manager: ConfigManager,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
         monkeypatch.delenv("WORKATO_DISABLE_UPDATE_CHECK", raising=False)
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
@@ -181,7 +203,7 @@ class TestVersionChecker:
         checker.cache_dir.mkdir(exist_ok=True)
         checker.cache_file.write_text("cached")
 
-        def raising_stat(_self):
+        def raising_stat(_self: Path) -> None:
             raise OSError
 
         monkeypatch.setattr(Path, "exists", lambda self: True, raising=False)
@@ -191,9 +213,9 @@ class TestVersionChecker:
 
     def test_update_cache_timestamp_creates_file(
         self,
-        mock_config_manager,
-        tmp_path,
-    ):
+        mock_config_manager: ConfigManager,
+        tmp_path: Path,
+    ) -> None:
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
         checker.cache_file = tmp_path / "last_update_check"
@@ -204,9 +226,9 @@ class TestVersionChecker:
 
     def test_background_update_check_notifies_when_new_version(
         self,
-        mock_config_manager,
-        tmp_path,
-    ):
+        mock_config_manager: ConfigManager,
+        tmp_path: Path,
+    ) -> None:
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
         checker.cache_file = tmp_path / "last_update_check"
@@ -222,10 +244,10 @@ class TestVersionChecker:
 
     def test_background_update_check_handles_exceptions(
         self,
-        mock_config_manager,
-        tmp_path,
-        capsys,
-    ):
+        mock_config_manager: ConfigManager,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
         checker.cache_file = tmp_path / "last_update_check"
@@ -240,9 +262,9 @@ class TestVersionChecker:
 
     def test_background_update_check_skips_when_not_needed(
         self,
-        mock_config_manager,
-        tmp_path,
-    ):
+        mock_config_manager: ConfigManager,
+        tmp_path: Path,
+    ) -> None:
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
         checker.cache_file = tmp_path / "last_update_check"
@@ -256,14 +278,14 @@ class TestVersionChecker:
     @patch("workato_platform.cli.utils.version_checker.click.echo")
     def test_check_for_updates_handles_parse_error(
         self,
-        mock_echo,
-        mock_config_manager,
-        monkeypatch,
-    ):
+        mock_echo: MagicMock,
+        mock_config_manager: ConfigManager,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         checker = VersionChecker(mock_config_manager)
         checker.get_latest_version = Mock(return_value="2.0.0")
 
-        def raising_parse(_value):
+        def raising_parse(_value: str) -> None:
             raise ValueError("bad version")
 
         monkeypatch.setattr(
@@ -276,10 +298,12 @@ class TestVersionChecker:
 
     def test_should_check_for_updates_no_dependencies(
         self,
-        mock_config_manager,
-    ):
+        mock_config_manager: ConfigManager,
+    ) -> None:
         checker = VersionChecker(mock_config_manager)
-        with patch("workato_platform.cli.utils.version_checker.HAS_DEPENDENCIES", False):
+        with patch(
+            "workato_platform.cli.utils.version_checker.HAS_DEPENDENCIES", False
+        ):
             assert checker.should_check_for_updates() is False
             assert checker.get_latest_version() is None
             assert checker.check_for_updates("1.0.0") is None
@@ -287,9 +311,9 @@ class TestVersionChecker:
     @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_without_tls_version(
         self,
-        mock_urlopen,
-        mock_config_manager,
-    ):
+        mock_urlopen: MagicMock,
+        mock_config_manager: ConfigManager,
+    ) -> None:
         fake_ctx = Mock()
         fake_ctx.options = 0
         fake_ssl = SimpleNamespace(
@@ -313,7 +337,9 @@ class TestVersionChecker:
             fake_ssl.create_default_context.assert_called_once()
 
     @patch("workato_platform.cli.utils.version_checker.click.echo")
-    def test_show_update_notification_outputs(self, mock_echo, mock_config_manager):
+    def test_show_update_notification_outputs(
+        self, mock_echo: MagicMock, mock_config_manager: ConfigManager
+    ) -> None:
         checker = VersionChecker(mock_config_manager)
         checker.show_update_notification("2.0.0")
 
@@ -321,9 +347,9 @@ class TestVersionChecker:
 
     def test_background_update_check_updates_timestamp_when_no_update(
         self,
-        mock_config_manager,
-        tmp_path,
-    ):
+        mock_config_manager: ConfigManager,
+        tmp_path: Path,
+    ) -> None:
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
         checker.cache_file = tmp_path / "last_update_check"
@@ -337,9 +363,9 @@ class TestVersionChecker:
 
     def test_check_updates_async_sync_wrapper(
         self,
-        mock_config_manager,
-        monkeypatch,
-    ):
+        mock_config_manager: ConfigManager,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         checker_instance = Mock()
         checker_instance.should_check_for_updates.return_value = True
         thread_instance = Mock()
@@ -369,9 +395,9 @@ class TestVersionChecker:
     @pytest.mark.asyncio
     async def test_check_updates_async_async_wrapper(
         self,
-        mock_config_manager,
-        monkeypatch,
-    ):
+        mock_config_manager: ConfigManager,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         checker_instance = Mock()
         checker_instance.should_check_for_updates.return_value = False
 
@@ -400,9 +426,8 @@ class TestVersionChecker:
 
     def test_check_updates_async_sync_wrapper_handles_exception(
         self,
-        mock_config_manager,
-        monkeypatch,
-    ):
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         monkeypatch.setattr(
             "workato_platform.cli.utils.version_checker.Container",
             SimpleNamespace(config_manager=Mock(side_effect=RuntimeError("boom"))),
@@ -419,9 +444,8 @@ class TestVersionChecker:
     @pytest.mark.asyncio
     async def test_check_updates_async_async_wrapper_handles_exception(
         self,
-        mock_config_manager,
-        monkeypatch,
-    ):
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         monkeypatch.setattr(
             "workato_platform.cli.utils.version_checker.Container",
             SimpleNamespace(config_manager=Mock(side_effect=RuntimeError("boom"))),

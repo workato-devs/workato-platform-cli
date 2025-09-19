@@ -1,6 +1,6 @@
 """Tests for exception handling utilities."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -18,13 +18,13 @@ from workato_platform.client.workato_api.exceptions import (
 class TestExceptionHandler:
     """Test the exception handling decorators and utilities."""
 
-    def test_handle_api_exceptions_decorator_exists(self):
+    def test_handle_api_exceptions_decorator_exists(self) -> None:
         """Test that handle_api_exceptions decorator can be imported."""
         # Should not raise ImportError
         assert handle_api_exceptions is not None
         assert callable(handle_api_exceptions)
 
-    def test_handle_api_exceptions_with_successful_function(self):
+    def test_handle_api_exceptions_with_successful_function(self) -> None:
         """Test decorator with function that succeeds."""
 
         @handle_api_exceptions
@@ -34,7 +34,7 @@ class TestExceptionHandler:
         result = successful_function()
         assert result == "success"
 
-    def test_handle_api_exceptions_with_async_function(self):
+    def test_handle_api_exceptions_with_async_function(self) -> None:
         """Test decorator with async function."""
 
         @handle_api_exceptions
@@ -44,11 +44,11 @@ class TestExceptionHandler:
         # Should be callable (actual execution would need event loop)
         assert callable(async_successful_function)
 
-    def test_handle_api_exceptions_preserves_function_metadata(self):
+    def test_handle_api_exceptions_preserves_function_metadata(self) -> None:
         """Test that decorator preserves original function metadata."""
 
         @handle_api_exceptions
-        def documented_function():
+        def documented_function() -> str:
             """This function has documentation."""
             return "result"
 
@@ -56,23 +56,25 @@ class TestExceptionHandler:
         assert documented_function.__name__ == "documented_function"
         assert "documentation" in documented_function.__doc__
 
-    def test_handle_api_exceptions_with_parameters(self):
+    def test_handle_api_exceptions_with_parameters(self) -> None:
         """Test decorator works with functions that have parameters."""
 
         @handle_api_exceptions
-        def function_with_params(param1, param2="default"):
+        def function_with_params(param1: str, param2: str = "default") -> str:
             return f"{param1}-{param2}"
 
         result = function_with_params("test", param2="value")
         assert result == "test-value"
 
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_handle_api_exceptions_handles_generic_exception(self, mock_echo):
+    def test_handle_api_exceptions_handles_generic_exception(
+        self, mock_echo: MagicMock
+    ) -> None:
         """Test that decorator handles API exceptions."""
         from workato_platform.client.workato_api.exceptions import ApiException
 
         @handle_api_exceptions
-        def failing_function():
+        def failing_function() -> None:
             raise ApiException(status=500, reason="Test error")
 
         # Should handle exception gracefully (not raise SystemExit, just return)
@@ -83,12 +85,12 @@ class TestExceptionHandler:
         mock_echo.assert_called()
 
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_handle_api_exceptions_with_http_error(self, mock_echo):
+    def test_handle_api_exceptions_with_http_error(self, mock_echo: MagicMock) -> None:
         """Test handling of HTTP-like errors."""
         from workato_platform.client.workato_api.exceptions import UnauthorizedException
 
         @handle_api_exceptions
-        def http_error_function():
+        def http_error_function() -> None:
             # Simulate an HTTP 401 error
             raise UnauthorizedException(status=401, reason="Unauthorized")
 
@@ -109,9 +111,9 @@ class TestExceptionHandler:
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
     def test_handle_api_exceptions_specific_http_errors(
         self,
-        mock_echo,
-        exc_cls,
-        expected,
+        mock_echo: MagicMock,
+        exc_cls: type[Exception],
+        expected: str,
     ) -> None:
         @handle_api_exceptions
         def failing() -> None:
@@ -121,19 +123,24 @@ class TestExceptionHandler:
         assert result is None
         assert any(expected in call.args[0] for call in mock_echo.call_args_list)
 
-    def test_handle_api_exceptions_with_keyboard_interrupt(self):
+    def test_handle_api_exceptions_with_keyboard_interrupt(self) -> None:
         """Test handling of KeyboardInterrupt."""
 
         # Use unittest.mock to patch KeyboardInterrupt in the exception handler
-        with patch('workato_platform.cli.utils.exception_handler.KeyboardInterrupt', KeyboardInterrupt):
+        with patch(
+            "workato_platform.cli.utils.exception_handler.KeyboardInterrupt",
+            KeyboardInterrupt,
+        ):
+
             @handle_api_exceptions
-            def interrupted_function():
+            def interrupted_function() -> None:
                 # Raise the actual KeyboardInterrupt but within a controlled context
                 try:
                     raise KeyboardInterrupt()
-                except KeyboardInterrupt:
-                    # Re-raise so the decorator can catch it, but suppress pytest's handling
-                    raise SystemExit(130)  # Standard exit code for KeyboardInterrupt
+                except KeyboardInterrupt as e:
+                    # Re-raise so the decorator can catch it, but suppress
+                    # pytest's handling
+                    raise SystemExit(130) from e
 
             with pytest.raises(SystemExit) as exc_info:
                 interrupted_function()
@@ -142,16 +149,17 @@ class TestExceptionHandler:
             assert exc_info.value.code == 130
 
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_handle_api_exceptions_error_formatting(self, mock_echo):
+    def test_handle_api_exceptions_error_formatting(self, mock_echo: MagicMock) -> None:
         """Test that error messages are formatted appropriately."""
         from workato_platform.client.workato_api.exceptions import BadRequestException
 
         @handle_api_exceptions
-        def error_function():
+        def error_function() -> None:
             # Use a proper Workato API exception that the handler actually catches
             raise BadRequestException(status=400, reason="Invalid request parameters")
 
-        # The function should return None (not raise SystemExit) when API exceptions are handled
+        # The function should return None (not raise SystemExit) when API
+        # exceptions are handled
         result = error_function()
         assert result is None
 
@@ -164,7 +172,7 @@ class TestExceptionHandler:
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
     async def test_async_handler_handles_forbidden_error(
         self,
-        mock_echo,
+        mock_echo: MagicMock,
     ) -> None:
         from workato_platform.client.workato_api.exceptions import ForbiddenException
 
@@ -204,12 +212,12 @@ class TestExceptionHandler:
 
     # Additional tests for missing sync exception handler coverage
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_sync_handler_bad_request(self, mock_echo) -> None:
+    def test_sync_handler_bad_request(self, mock_echo: MagicMock) -> None:
         """Test sync handler with BadRequestException"""
         from workato_platform.client.workato_api.exceptions import BadRequestException
 
         @handle_api_exceptions
-        def sync_bad_request():
+        def sync_bad_request() -> None:
             raise BadRequestException(status=400, reason="Bad request")
 
         result = sync_bad_request()
@@ -217,14 +225,14 @@ class TestExceptionHandler:
         mock_echo.assert_called()
 
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_sync_handler_unprocessable_entity(self, mock_echo) -> None:
+    def test_sync_handler_unprocessable_entity(self, mock_echo: MagicMock) -> None:
         """Test sync handler with UnprocessableEntityException"""
         from workato_platform.client.workato_api.exceptions import (
             UnprocessableEntityException,
         )
 
         @handle_api_exceptions
-        def sync_unprocessable():
+        def sync_unprocessable() -> None:
             raise UnprocessableEntityException(status=422, reason="Unprocessable")
 
         result = sync_unprocessable()
@@ -232,12 +240,12 @@ class TestExceptionHandler:
         mock_echo.assert_called()
 
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_sync_handler_unauthorized(self, mock_echo) -> None:
+    def test_sync_handler_unauthorized(self, mock_echo: MagicMock) -> None:
         """Test sync handler with UnauthorizedException"""
         from workato_platform.client.workato_api.exceptions import UnauthorizedException
 
         @handle_api_exceptions
-        def sync_unauthorized():
+        def sync_unauthorized() -> None:
             raise UnauthorizedException(status=401, reason="Unauthorized")
 
         result = sync_unauthorized()
@@ -245,12 +253,12 @@ class TestExceptionHandler:
         mock_echo.assert_called()
 
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_sync_handler_forbidden(self, mock_echo) -> None:
+    def test_sync_handler_forbidden(self, mock_echo: MagicMock) -> None:
         """Test sync handler with ForbiddenException"""
         from workato_platform.client.workato_api.exceptions import ForbiddenException
 
         @handle_api_exceptions
-        def sync_forbidden():
+        def sync_forbidden() -> None:
             raise ForbiddenException(status=403, reason="Forbidden")
 
         result = sync_forbidden()
@@ -258,12 +266,12 @@ class TestExceptionHandler:
         mock_echo.assert_called()
 
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_sync_handler_not_found(self, mock_echo) -> None:
+    def test_sync_handler_not_found(self, mock_echo: MagicMock) -> None:
         """Test sync handler with NotFoundException"""
         from workato_platform.client.workato_api.exceptions import NotFoundException
 
         @handle_api_exceptions
-        def sync_not_found():
+        def sync_not_found() -> None:
             raise NotFoundException(status=404, reason="Not found")
 
         result = sync_not_found()
@@ -271,12 +279,12 @@ class TestExceptionHandler:
         mock_echo.assert_called()
 
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_sync_handler_conflict(self, mock_echo) -> None:
+    def test_sync_handler_conflict(self, mock_echo: MagicMock) -> None:
         """Test sync handler with ConflictException"""
         from workato_platform.client.workato_api.exceptions import ConflictException
 
         @handle_api_exceptions
-        def sync_conflict():
+        def sync_conflict() -> None:
             raise ConflictException(status=409, reason="Conflict")
 
         result = sync_conflict()
@@ -284,12 +292,12 @@ class TestExceptionHandler:
         mock_echo.assert_called()
 
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_sync_handler_service_error(self, mock_echo) -> None:
+    def test_sync_handler_service_error(self, mock_echo: MagicMock) -> None:
         """Test sync handler with ServiceException"""
         from workato_platform.client.workato_api.exceptions import ServiceException
 
         @handle_api_exceptions
-        def sync_service_error():
+        def sync_service_error() -> None:
             raise ServiceException(status=500, reason="Service error")
 
         result = sync_service_error()
@@ -297,12 +305,12 @@ class TestExceptionHandler:
         mock_echo.assert_called()
 
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    def test_sync_handler_generic_api_error(self, mock_echo) -> None:
+    def test_sync_handler_generic_api_error(self, mock_echo: MagicMock) -> None:
         """Test sync handler with generic ApiException"""
         from workato_platform.client.workato_api.exceptions import ApiException
 
         @handle_api_exceptions
-        def sync_generic_error():
+        def sync_generic_error() -> None:
             raise ApiException(status=418, reason="I'm a teapot")
 
         result = sync_generic_error()
@@ -312,12 +320,12 @@ class TestExceptionHandler:
     # Additional async tests for missing coverage
     @pytest.mark.asyncio
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    async def test_async_handler_bad_request(self, mock_echo) -> None:
+    async def test_async_handler_bad_request(self, mock_echo: MagicMock) -> None:
         """Test async handler with BadRequestException"""
         from workato_platform.client.workato_api.exceptions import BadRequestException
 
         @handle_api_exceptions
-        async def async_bad_request():
+        async def async_bad_request() -> None:
             raise BadRequestException(status=400, reason="Bad request")
 
         result = await async_bad_request()
@@ -326,14 +334,16 @@ class TestExceptionHandler:
 
     @pytest.mark.asyncio
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    async def test_async_handler_unprocessable_entity(self, mock_echo) -> None:
+    async def test_async_handler_unprocessable_entity(
+        self, mock_echo: MagicMock
+    ) -> None:
         """Test async handler with UnprocessableEntityException"""
         from workato_platform.client.workato_api.exceptions import (
             UnprocessableEntityException,
         )
 
         @handle_api_exceptions
-        async def async_unprocessable():
+        async def async_unprocessable() -> None:
             raise UnprocessableEntityException(status=422, reason="Unprocessable")
 
         result = await async_unprocessable()
@@ -342,12 +352,12 @@ class TestExceptionHandler:
 
     @pytest.mark.asyncio
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    async def test_async_handler_unauthorized(self, mock_echo) -> None:
+    async def test_async_handler_unauthorized(self, mock_echo: MagicMock) -> None:
         """Test async handler with UnauthorizedException"""
         from workato_platform.client.workato_api.exceptions import UnauthorizedException
 
         @handle_api_exceptions
-        async def async_unauthorized():
+        async def async_unauthorized() -> None:
             raise UnauthorizedException(status=401, reason="Unauthorized")
 
         result = await async_unauthorized()
@@ -356,12 +366,12 @@ class TestExceptionHandler:
 
     @pytest.mark.asyncio
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    async def test_async_handler_not_found(self, mock_echo) -> None:
+    async def test_async_handler_not_found(self, mock_echo: MagicMock) -> None:
         """Test async handler with NotFoundException"""
         from workato_platform.client.workato_api.exceptions import NotFoundException
 
         @handle_api_exceptions
-        async def async_not_found():
+        async def async_not_found() -> None:
             raise NotFoundException(status=404, reason="Not found")
 
         result = await async_not_found()
@@ -370,12 +380,12 @@ class TestExceptionHandler:
 
     @pytest.mark.asyncio
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    async def test_async_handler_conflict(self, mock_echo) -> None:
+    async def test_async_handler_conflict(self, mock_echo: MagicMock) -> None:
         """Test async handler with ConflictException"""
         from workato_platform.client.workato_api.exceptions import ConflictException
 
         @handle_api_exceptions
-        async def async_conflict():
+        async def async_conflict() -> None:
             raise ConflictException(status=409, reason="Conflict")
 
         result = await async_conflict()
@@ -384,12 +394,12 @@ class TestExceptionHandler:
 
     @pytest.mark.asyncio
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    async def test_async_handler_service_error(self, mock_echo) -> None:
+    async def test_async_handler_service_error(self, mock_echo: MagicMock) -> None:
         """Test async handler with ServiceException"""
         from workato_platform.client.workato_api.exceptions import ServiceException
 
         @handle_api_exceptions
-        async def async_service_error():
+        async def async_service_error() -> None:
             raise ServiceException(status=500, reason="Service error")
 
         result = await async_service_error()
@@ -398,12 +408,12 @@ class TestExceptionHandler:
 
     @pytest.mark.asyncio
     @patch("workato_platform.cli.utils.exception_handler.click.echo")
-    async def test_async_handler_generic_api_error(self, mock_echo) -> None:
+    async def test_async_handler_generic_api_error(self, mock_echo: MagicMock) -> None:
         """Test async handler with generic ApiException"""
         from workato_platform.client.workato_api.exceptions import ApiException
 
         @handle_api_exceptions
-        async def async_generic_error():
+        async def async_generic_error() -> None:
             raise ApiException(status=418, reason="I'm a teapot")
 
         result = await async_generic_error()

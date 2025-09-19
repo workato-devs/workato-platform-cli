@@ -10,7 +10,7 @@ from workato_platform.cli.utils.config import ConfigData, ProfileData
 
 
 @pytest.mark.asyncio
-async def test_workspace_command_outputs(monkeypatch):
+async def test_workspace_command_outputs(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_config_manager = Mock()
     profile_data = ProfileData(
         region="us",
@@ -25,8 +25,12 @@ async def test_workspace_command_outputs(monkeypatch):
     )
     # load_config is called twice in the command
     mock_config_manager.load_config.side_effect = [config_data, config_data]
-    mock_config_manager.profile_manager.get_current_profile_data.return_value = profile_data
-    mock_config_manager.profile_manager.get_current_profile_name.return_value = "default"
+    mock_config_manager.profile_manager.get_current_profile_data.return_value = (
+        profile_data
+    )
+    mock_config_manager.profile_manager.get_current_profile_name.return_value = (
+        "default"
+    )
 
     user_info = SimpleNamespace(
         name="Test User",

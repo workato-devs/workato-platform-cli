@@ -59,9 +59,13 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
 
 
 @pytest.mark.asyncio
-async def test_list_data_tables_empty(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_list_data_tables_empty(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     workato_client = SimpleNamespace(
-        data_tables_api=SimpleNamespace(list_data_tables=AsyncMock(return_value=SimpleNamespace(data=[])))
+        data_tables_api=SimpleNamespace(
+            list_data_tables=AsyncMock(return_value=SimpleNamespace(data=[]))
+        )
     )
 
     await list_data_tables.callback(workato_api_client=workato_client)
@@ -71,17 +75,24 @@ async def test_list_data_tables_empty(monkeypatch: pytest.MonkeyPatch, capture_e
 
 
 @pytest.mark.asyncio
-async def test_list_data_tables_with_entries(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_list_data_tables_with_entries(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     table = SimpleNamespace(
         name="Sales",
         id=5,
         folder_id=99,
-        var_schema=[SimpleNamespace(name="col", type="string"), SimpleNamespace(name="amt", type="number")],
+        var_schema=[
+            SimpleNamespace(name="col", type="string"),
+            SimpleNamespace(name="amt", type="number"),
+        ],
         created_at=datetime(2024, 1, 1),
         updated_at=datetime(2024, 1, 2),
     )
     workato_client = SimpleNamespace(
-        data_tables_api=SimpleNamespace(list_data_tables=AsyncMock(return_value=SimpleNamespace(data=[table])))
+        data_tables_api=SimpleNamespace(
+            list_data_tables=AsyncMock(return_value=SimpleNamespace(data=[table]))
+        )
     )
 
     await list_data_tables.callback(workato_api_client=workato_client)
@@ -93,42 +104,58 @@ async def test_list_data_tables_with_entries(monkeypatch: pytest.MonkeyPatch, ca
 
 @pytest.mark.asyncio
 async def test_create_data_table_missing_schema(capture_echo: list[str]) -> None:
-    await create_data_table.callback(name="Table", schema_json=None, config_manager=Mock())
+    await create_data_table.callback(
+        name="Table", schema_json=None, config_manager=Mock()
+    )
     assert any("Schema is required" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
-async def test_create_data_table_no_folder(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_create_data_table_no_folder(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     config_manager = Mock()
     config_manager.load_config.return_value = SimpleNamespace(folder_id=None)
 
-    await create_data_table.callback(name="Table", schema_json="[]", config_manager=config_manager)
+    await create_data_table.callback(
+        name="Table", schema_json="[]", config_manager=config_manager
+    )
 
     assert any("No folder ID" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
-async def test_create_data_table_invalid_json(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_create_data_table_invalid_json(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     config_manager = Mock()
     config_manager.load_config.return_value = SimpleNamespace(folder_id=1)
 
-    await create_data_table.callback(name="Table", schema_json="{invalid}", config_manager=config_manager)
+    await create_data_table.callback(
+        name="Table", schema_json="{invalid}", config_manager=config_manager
+    )
 
     assert any("Invalid JSON" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
-async def test_create_data_table_invalid_schema_type(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_create_data_table_invalid_schema_type(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     config_manager = Mock()
     config_manager.load_config.return_value = SimpleNamespace(folder_id=1)
 
-    await create_data_table.callback(name="Table", schema_json="{}", config_manager=config_manager)
+    await create_data_table.callback(
+        name="Table", schema_json="{}", config_manager=config_manager
+    )
 
     assert any("Schema must be an array" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
-async def test_create_data_table_validation_errors(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_create_data_table_validation_errors(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     config_manager = Mock()
     config_manager.load_config.return_value = SimpleNamespace(folder_id=1)
 
@@ -137,7 +164,9 @@ async def test_create_data_table_validation_errors(monkeypatch: pytest.MonkeyPat
         lambda schema: ["Error"],
     )
 
-    await create_data_table.callback(name="Table", schema_json="[]", config_manager=config_manager)
+    await create_data_table.callback(
+        name="Table", schema_json="[]", config_manager=config_manager
+    )
 
     assert any("Schema validation failed" in line for line in capture_echo)
 
@@ -157,22 +186,35 @@ async def test_create_data_table_success(monkeypatch: pytest.MonkeyPatch) -> Non
         create_table_mock,
     )
 
-    await create_data_table.callback(name="Table", schema_json="[]", config_manager=config_manager)
+    await create_data_table.callback(
+        name="Table", schema_json="[]", config_manager=config_manager
+    )
 
     create_table_mock.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_create_table_calls_api(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_create_table_calls_api(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     connections = SimpleNamespace(
         data_tables_api=SimpleNamespace(
             create_data_table=AsyncMock(
-                return_value=SimpleNamespace(data=SimpleNamespace(
-                    name="Table",
-                    id=3,
-                    folder_id=4,
-                    var_schema=[SimpleNamespace(name="a"), SimpleNamespace(name="b"), SimpleNamespace(name="c"), SimpleNamespace(name="d"), SimpleNamespace(name="e"), SimpleNamespace(name="f")],
-                ))
+                return_value=SimpleNamespace(
+                    data=SimpleNamespace(
+                        name="Table",
+                        id=3,
+                        folder_id=4,
+                        var_schema=[
+                            SimpleNamespace(name="a"),
+                            SimpleNamespace(name="b"),
+                            SimpleNamespace(name="c"),
+                            SimpleNamespace(name="d"),
+                            SimpleNamespace(name="e"),
+                            SimpleNamespace(name="f"),
+                        ],
+                    )
+                )
             )
         )
     )
@@ -193,11 +235,23 @@ async def test_create_table_calls_api(monkeypatch: pytest.MonkeyPatch, capture_e
 
 
 def test_validate_schema_errors() -> None:
-    errors = validate_schema([
-        {"type": "unknown", "optional": "yes"},
-        {"name": "id", "type": "relation", "optional": True, "relation": {"table_id": 123}},
-        {"name": "flag", "type": "boolean", "optional": False, "default_value": "yes"},
-    ])
+    errors = validate_schema(
+        [
+            {"type": "unknown", "optional": "yes"},
+            {
+                "name": "id",
+                "type": "relation",
+                "optional": True,
+                "relation": {"table_id": 123},
+            },
+            {
+                "name": "flag",
+                "type": "boolean",
+                "optional": False,
+                "default_value": "yes",
+            },
+        ]
+    )
 
     assert any("name" in err for err in errors)
     assert any("type" in err for err in errors)

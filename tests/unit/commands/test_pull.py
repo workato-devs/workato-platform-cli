@@ -24,7 +24,7 @@ class TestPullCommand:
     """Test the pull command functionality."""
 
     def test_ensure_gitignore_creates_file(self) -> None:
-        """Test _ensure_workato_in_gitignore creates .gitignore when it doesn't exist."""
+        """Test _ensure_workato_in_gitignore creates .gitignore."""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             gitignore_file = project_root / ".gitignore"
@@ -55,7 +55,7 @@ class TestPullCommand:
             assert "node_modules/" in content  # Original content preserved
 
     def test_ensure_gitignore_adds_newline_to_non_empty_file(self) -> None:
-        """Test _ensure_workato_in_gitignore adds newline when file doesn't end with one."""
+        """Test _ensure_workato_in_gitignore adds newline to non-empty file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             gitignore_file = project_root / ".gitignore"
@@ -66,7 +66,7 @@ class TestPullCommand:
             _ensure_workato_in_gitignore(project_root)
 
             content = gitignore_file.read_text()
-            lines = content.split('\n')
+            lines = content.split("\n")
             # Should have newline added before .workato/ entry
             assert lines[-2] == ".workato/"
             assert lines[-1] == ""  # Final newline
@@ -87,7 +87,7 @@ class TestPullCommand:
             assert gitignore_file.read_text() == original_content
 
     def test_ensure_gitignore_handles_empty_file(self) -> None:
-        """Test _ensure_workato_in_gitignore handles completely empty .gitignore file."""
+        """Test _ensure_workato_in_gitignore handles empty .gitignore file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             gitignore_file = project_root / ".gitignore"
@@ -168,7 +168,7 @@ class TestPullCommand:
             old_file = Path(tmpdir) / "old.txt"  # Use .txt to avoid recursion
             new_file = Path(tmpdir) / "new.txt"
 
-            old_file.write_text('invalid json {')
+            old_file.write_text("invalid json {")
             new_file.write_text('{"key": "value"}')
 
             # Should fall back to regular diff
@@ -177,7 +177,7 @@ class TestPullCommand:
             assert "removed" in stats
 
     def test_merge_directories(self, tmp_path: Path) -> None:
-        """Test merge_directories reports detailed changes and preserves workato files."""
+        """Test merge_directories reports changes and preserves workato files."""
         remote_dir = tmp_path / "remote"
         local_dir = tmp_path / "local"
         remote_dir.mkdir()
@@ -225,7 +225,9 @@ class TestPullCommand:
 
         await _pull_project(mock_config_manager, mock_project_manager)
 
-        mock_echo.assert_called_with("❌ No API token found. Please run 'workato init' first.")
+        mock_echo.assert_called_with(
+            "❌ No API token found. Please run 'workato init' first."
+        )
 
     @pytest.mark.asyncio
     @patch("workato_platform.cli.commands.pull.click.echo")
@@ -240,7 +242,9 @@ class TestPullCommand:
 
         await _pull_project(mock_config_manager, mock_project_manager)
 
-        mock_echo.assert_called_with("❌ No project configured. Please run 'workato init' first.")
+        mock_echo.assert_called_with(
+            "❌ No project configured. Please run 'workato init' first."
+        )
 
     @pytest.mark.asyncio
     async def test_pull_command_calls_pull_project(self) -> None:
@@ -312,7 +316,7 @@ class TestPullCommand:
             def get_project_root(self) -> Path | None:
                 return project_dir
 
-        async def fake_export(folder_id, project_name, target_dir):
+        async def fake_export(_folder_id, _project_name, target_dir):
             target = Path(target_dir)
             target.mkdir(parents=True, exist_ok=True)
             (target / "existing.txt").write_text("remote\n", encoding="utf-8")
@@ -387,13 +391,16 @@ class TestPullCommand:
 
         assert (project_dir / "remote.txt").exists()
         project_manager.export_project.assert_awaited_once()
-        assert any("Pulled latest changes" in msg or "Successfully pulled" in msg for msg in captured)
+        assert any(
+            "Pulled latest changes" in msg or "Successfully pulled" in msg
+            for msg in captured
+        )
 
     @pytest.mark.asyncio
     async def test_pull_project_workspace_structure(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
-        """Pulling from workspace root should create project structure and save metadata."""
+        """Pulling from workspace root should create project and save metadata."""
 
         workspace_root = tmp_path
 

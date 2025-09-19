@@ -9,7 +9,7 @@ from workato_platform.cli.commands import init as init_module
 
 
 @pytest.mark.asyncio
-async def test_init_runs_pull(monkeypatch):
+async def test_init_runs_pull(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_config_manager = Mock()
     mock_config_manager.load_config.return_value = SimpleNamespace(
         profile="default",

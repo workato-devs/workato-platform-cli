@@ -26,12 +26,20 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
 
 
 @pytest.mark.asyncio
-async def test_list_connectors_defaults(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_list_connectors_defaults(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     manager = Mock()
-    manager.list_platform_connectors = AsyncMock(return_value=[SimpleNamespace(name="salesforce", title="Salesforce")])
+    manager.list_platform_connectors = AsyncMock(
+        return_value=[SimpleNamespace(name="salesforce", title="Salesforce")]
+    )
     manager.list_custom_connectors = AsyncMock()
 
-    await command.list_connectors.callback(platform=False, custom=False, connector_manager=manager)
+    assert command.list_connectors.callback
+
+    await command.list_connectors.callback(
+        platform=False, custom=False, connector_manager=manager
+    )
 
     manager.list_platform_connectors.assert_awaited_once()
     manager.list_custom_connectors.assert_awaited_once()
@@ -39,20 +47,30 @@ async def test_list_connectors_defaults(monkeypatch: pytest.MonkeyPatch, capture
 
 
 @pytest.mark.asyncio
-async def test_list_connectors_platform_only(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_list_connectors_platform_only(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     manager = Mock()
     manager.list_platform_connectors = AsyncMock(return_value=[])
     manager.list_custom_connectors = AsyncMock()
 
-    await command.list_connectors.callback(platform=True, custom=False, connector_manager=manager)
+    assert command.list_connectors.callback
+
+    await command.list_connectors.callback(
+        platform=True, custom=False, connector_manager=manager
+    )
 
     manager.list_custom_connectors.assert_not_awaited()
     assert any("No platform connectors" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
-async def test_parameters_no_data(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_parameters_no_data(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     manager = Mock(load_connection_data=Mock(return_value={}))
+
+    assert command.parameters.callback
 
     await command.parameters.callback(
         provider=None,
@@ -65,12 +83,16 @@ async def test_parameters_no_data(monkeypatch: pytest.MonkeyPatch, capture_echo:
 
 
 @pytest.mark.asyncio
-async def test_parameters_specific_provider(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_parameters_specific_provider(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     provider_data = ProviderData(name="Salesforce", provider="salesforce", oauth=True)
     manager = Mock(
         load_connection_data=Mock(return_value={"salesforce": provider_data}),
         show_provider_details=Mock(),
     )
+
+    assert command.parameters.callback
 
     await command.parameters.callback(
         provider="salesforce",
@@ -83,8 +105,18 @@ async def test_parameters_specific_provider(monkeypatch: pytest.MonkeyPatch, cap
 
 
 @pytest.mark.asyncio
-async def test_parameters_provider_not_found(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
-    manager = Mock(load_connection_data=Mock(return_value={"jira": ProviderData(name="Jira", provider="jira", oauth=True)}))
+async def test_parameters_provider_not_found(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
+    manager = Mock(
+        load_connection_data=Mock(
+            return_value={
+                "jira": ProviderData(name="Jira", provider="jira", oauth=True)
+            }
+        )
+    )
+
+    assert command.parameters.callback
 
     await command.parameters.callback(
         provider="unknown",
@@ -97,12 +129,18 @@ async def test_parameters_provider_not_found(monkeypatch: pytest.MonkeyPatch, ca
 
 
 @pytest.mark.asyncio
-async def test_parameters_filtered_list(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_parameters_filtered_list(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     manager = Mock()
     manager.load_connection_data.return_value = {
-        "jira": ProviderData(name="Jira", provider="jira", oauth=True, secure_tunnel=True),
+        "jira": ProviderData(
+            name="Jira", provider="jira", oauth=True, secure_tunnel=True
+        ),
         "mysql": ProviderData(name="MySQL", provider="mysql", oauth=False),
     }
+
+    assert command.parameters.callback
 
     await command.parameters.callback(
         provider=None,
@@ -118,11 +156,15 @@ async def test_parameters_filtered_list(monkeypatch: pytest.MonkeyPatch, capture
 
 
 @pytest.mark.asyncio
-async def test_parameters_filtered_none(monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]) -> None:
+async def test_parameters_filtered_none(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
     manager = Mock()
     manager.load_connection_data.return_value = {
         "jira": ProviderData(name="Jira", provider="jira", oauth=True),
     }
+
+    assert command.parameters.callback
 
     await command.parameters.callback(
         provider=None,

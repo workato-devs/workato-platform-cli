@@ -479,19 +479,19 @@ class TestConnectionListingFunctions:
 
         # Create mock connections with proper attributes
         conn1 = Mock()
-        conn1.provider = "salesforce"
+        conn1.application = "salesforce"
         conn1.name = "SF1"
 
         conn2 = Mock()
-        conn2.provider = "hubspot"
+        conn2.application = "hubspot"
         conn2.name = "HS1"
 
         conn3 = Mock()
-        conn3.provider = "salesforce"
+        conn3.application = "salesforce"
         conn3.name = "SF2"
 
         conn4 = Mock()
-        conn4.provider = None
+        conn4.application = "custom"
         conn4.name = "Unknown"
 
         connections = [conn1, conn2, conn3, conn4]
@@ -500,10 +500,10 @@ class TestConnectionListingFunctions:
 
         assert "Salesforce" in result
         assert "Hubspot" in result
-        assert "Unknown" in result
+        assert "Custom" in result
         assert len(result["Salesforce"]) == 2
         assert len(result["Hubspot"]) == 1
-        assert len(result["Unknown"]) == 1
+        assert len(result["Custom"]) == 1
 
     @patch("workato_platform.cli.commands.connections.click.echo")
     def test_display_connection_summary(self, mock_echo):

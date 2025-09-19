@@ -5,8 +5,10 @@ import json
 import tempfile
 import time
 
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
@@ -33,7 +35,7 @@ def validator() -> RecipeValidator:
 
 
 @pytest.fixture
-def make_line():
+def make_line() -> Callable[[dict[str, Any]], RecipeLine]:
     """Factory for creating RecipeLine instances with sensible defaults."""
 
     def _factory(**overrides) -> RecipeLine:
@@ -102,12 +104,16 @@ def test_extract_data_pills_gracefully_handles_non_string(
     assert validator._extract_data_pills(None) == []
 
 
-def test_recipe_structure_requires_trigger_start(make_line) -> None:
+def test_recipe_structure_requires_trigger_start(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     with pytest.raises(ValueError):
         RecipeStructure(root=make_line(keyword=Keyword.ACTION))
 
 
-def test_recipe_structure_accepts_valid_nested_structure(make_line) -> None:
+def test_recipe_structure_accepts_valid_nested_structure(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     root = make_line(block=[make_line(number=1, keyword=Keyword.ACTION, uuid="step-1")])
 
     structure = RecipeStructure(root=root)
@@ -115,7 +121,9 @@ def test_recipe_structure_accepts_valid_nested_structure(make_line) -> None:
     assert structure.root.block[0].uuid == "step-1"
 
 
-def test_foreach_structure_requires_source(make_line) -> None:
+def test_foreach_structure_requires_source(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     line = make_line(number=1, keyword=Keyword.FOREACH, uuid="loop", source=None)
 
     errors = RecipeStructure._validate_foreach_structure(line, [])
@@ -124,7 +132,9 @@ def test_foreach_structure_requires_source(make_line) -> None:
     assert errors[0].error_type is ErrorType.LINE_ATTR_INVALID
 
 
-def test_repeat_structure_requires_block(make_line) -> None:
+def test_repeat_structure_requires_block(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     line = make_line(number=2, keyword=Keyword.REPEAT, uuid="repeat")
 
     errors = RecipeStructure._validate_repeat_structure(line, [])
@@ -133,7 +143,9 @@ def test_repeat_structure_requires_block(make_line) -> None:
     assert errors[0].error_type is ErrorType.LINE_SYNTAX_INVALID
 
 
-def test_try_structure_requires_block(make_line) -> None:
+def test_try_structure_requires_block(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     line = make_line(number=3, keyword=Keyword.TRY, uuid="try")
 
     errors = RecipeStructure._validate_try_structure(line, [])
@@ -142,7 +154,9 @@ def test_try_structure_requires_block(make_line) -> None:
     assert errors[0].error_type is ErrorType.LINE_SYNTAX_INVALID
 
 
-def test_action_structure_disallows_blocks(make_line) -> None:
+def test_action_structure_disallows_blocks(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     child = make_line(number=4, keyword=Keyword.ACTION, uuid="child-action")
     line = make_line(
         number=3,
@@ -159,7 +173,7 @@ def test_action_structure_disallows_blocks(make_line) -> None:
 
 def test_block_structure_requires_trigger_start(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     line = make_line(keyword=Keyword.ACTION)
 
@@ -171,7 +185,7 @@ def test_block_structure_requires_trigger_start(
 
 def test_validate_references_with_context_detects_unknown_step(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     validator.known_adapters = {"scheduler", "http"}
     action_with_alias = make_line(
@@ -221,7 +235,7 @@ def test_validate_input_modes_flags_mixed_modes(
 
 def test_validate_input_modes_accepts_formula_only(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     line = make_line(
         number=2,
@@ -489,7 +503,7 @@ def test_validate_data_pill_structures_missing_required_fields(
 
 def test_validate_data_pill_structures_path_must_be_array(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     producer = make_line(
         number=1,
@@ -501,7 +515,10 @@ def test_validate_data_pill_structures_path_must_be_array(
     root = make_line(provider="scheduler", block=[producer])
     validator.current_recipe_root = root
 
-    payload = '#{_dp(\'{"pill_type":"refs","provider":"http","line":"alias","path":"not array"}\')}'
+    payload = (
+        '#{_dp(\'{"pill_type":"refs","provider":"http",'
+        '"line":"alias","path":"not array"}\')}'
+    )
     errors = validator._validate_data_pill_structures(
         {"mapping": payload},
         line_number=7,
@@ -513,7 +530,7 @@ def test_validate_data_pill_structures_path_must_be_array(
 
 def test_validate_data_pill_structures_unknown_step(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     validator.current_recipe_root = make_line(provider="scheduler")
     payload = (
@@ -530,7 +547,7 @@ def test_validate_data_pill_structures_unknown_step(
 
 def test_validate_array_consistency_flags_inconsistent_paths(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     loop_step = make_line(
         number=1,
@@ -548,8 +565,12 @@ def test_validate_array_consistency_flags_inconsistent_paths(
         uuid="mapper",
         provider="http",
         input={
-            "____source": '#{_dp(\'{"provider":"http","line":"loop","path":["data","items"]}\')}',
-            "value": '#{_dp(\'{"provider":"http","line":"loop","path":["data","items","value"]}\')}',
+            "____source": (
+                '#{_dp(\'{"provider":"http","line":"loop","path":["data","items"]}\')}'
+            ),
+            "value": (
+                '#{_dp(\'{"provider":"http","line":"loop","path":["data","items","value"]}\')}'
+            ),
         },
     )
 
@@ -568,8 +589,12 @@ def test_validate_array_mappings_enhanced_requires_current_item(
         uuid="mapper",
         provider="http",
         input={
-            "____source": '#{_dp(\'{"provider":"http","line":"loop","path":["data","items"]}\')}',
-            "value": '#{_dp(\'{"provider":"http","line":"loop","path":["data","items","value"]}\')}',
+            "____source": (
+                '#{_dp(\'{"provider":"http","line":"loop","path":["data","items"]}\')}'
+            ),
+            "value": (
+                '#{_dp(\'{"provider":"http","line":"loop","path":["data","items","value"]}\')}'
+            ),
         },
     )
 
@@ -613,12 +638,16 @@ def test_recipe_line_field_validators_raise_on_long_values() -> None:
         )
 
 
-def test_recipe_structure_requires_trigger_start_validation(make_line) -> None:
+def test_recipe_structure_requires_trigger_start_validation(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     with pytest.raises(ValueError):
         RecipeStructure(root=make_line(keyword=Keyword.ACTION))
 
 
-def test_validate_line_structure_branch_coverage(make_line) -> None:
+def test_validate_line_structure_branch_coverage(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     errors_if = RecipeStructure._validate_line_structure(
         make_line(number=1, keyword=Keyword.IF, block=[]),
         [],
@@ -652,7 +681,9 @@ def test_validate_line_structure_branch_coverage(make_line) -> None:
     assert errors_action
 
 
-def test_validate_if_structure_unexpected_keyword(make_line) -> None:
+def test_validate_if_structure_unexpected_keyword(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     else_line = make_line(number=2, keyword=Keyword.ELSE)
     invalid = make_line(number=3, keyword=Keyword.APPLICATION)
     line = make_line(
@@ -665,7 +696,9 @@ def test_validate_if_structure_unexpected_keyword(make_line) -> None:
     assert any("Unexpected line type" in err.message for err in errors)
 
 
-def test_validate_try_structure_unexpected_keyword(make_line) -> None:
+def test_validate_try_structure_unexpected_keyword(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     catch_line = make_line(number=2, keyword=Keyword.CATCH)
     invalid = make_line(number=3, keyword=Keyword.APPLICATION)
     line = make_line(
@@ -680,7 +713,7 @@ def test_validate_try_structure_unexpected_keyword(make_line) -> None:
 
 def test_validate_providers_unknown_and_metadata_errors(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     validator.known_adapters = {"http"}
     line_unknown = make_line(number=1, keyword=Keyword.ACTION, provider="mystery")
@@ -712,7 +745,7 @@ def test_validate_providers_unknown_and_metadata_errors(
 
 def test_validate_providers_skips_non_action_keywords(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     validator.known_adapters = {"http"}
     foreach_line = make_line(number=4, keyword=Keyword.FOREACH, provider="http")
@@ -722,7 +755,7 @@ def test_validate_providers_skips_non_action_keywords(
 
 def test_validate_references_with_repeat_context(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     step_context = {
         "http_step": {
@@ -752,7 +785,7 @@ def test_validate_references_with_repeat_context(
 
 def test_validate_references_if_branch(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     step_context = {
         "http_step": {
@@ -775,7 +808,7 @@ def test_validate_references_if_branch(
 
 def test_validate_config_coverage_missing_provider(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     root = make_line(
         number=0,
@@ -1020,7 +1053,7 @@ def test_is_valid_expression_edge_cases(validator: RecipeValidator) -> None:
 
 
 def test_validate_input_expressions_recursive(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test input expression validation with nested structures"""
     line = make_line(
@@ -1028,7 +1061,6 @@ def test_validate_input_expressions_recursive(
         keyword=Keyword.ACTION,
         input={
             "nested": {
-                # Empty expressions that would be invalid (start with = but are empty/whitespace)
                 "array": ["=", {"key": "=  "}]  # Empty expressions after =
             }
         },
@@ -1047,7 +1079,9 @@ def test_validate_input_expressions_recursive(
     assert all(err.error_type == ErrorType.INPUT_EXPR_INVALID for err in errors)
 
 
-def test_collect_providers_recursive(validator: RecipeValidator, make_line) -> None:
+def test_collect_providers_recursive(
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
+) -> None:
     """Test provider collection from nested recipe structure"""
     child = make_line(number=2, keyword=Keyword.ACTION, provider="http")
     parent = make_line(
@@ -1060,7 +1094,9 @@ def test_collect_providers_recursive(validator: RecipeValidator, make_line) -> N
     assert providers == {"scheduler", "http"}
 
 
-def test_step_is_referenced_without_as(validator: RecipeValidator, make_line) -> None:
+def test_step_is_referenced_without_as(
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
+) -> None:
     """Test step reference detection when step has no 'as' value"""
     line = make_line(number=1, keyword=Keyword.ACTION, provider="http")
     validator.current_recipe_root = make_line()
@@ -1070,7 +1106,7 @@ def test_step_is_referenced_without_as(validator: RecipeValidator, make_line) ->
 
 
 def test_step_is_referenced_no_recipe_root(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test step reference detection when no recipe root is set"""
     line = make_line(number=1, keyword=Keyword.ACTION, provider="http", as_="step")
@@ -1082,7 +1118,7 @@ def test_step_is_referenced_no_recipe_root(
 
 def test_step_exists_with_recipe_context(
     validator: RecipeValidator,
-    make_line,
+    make_line: Callable[[dict[str, Any]], RecipeLine],
 ) -> None:
     target = make_line(
         number=2,
@@ -1098,7 +1134,7 @@ def test_step_exists_with_recipe_context(
 
 
 def test_find_references_to_step_no_provider_or_as(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test finding references when target step has no provider or as"""
     root = make_line()
@@ -1113,7 +1149,7 @@ def test_find_references_to_step_no_provider_or_as(
 
 
 def test_search_for_reference_pattern_in_blocks(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test searching for reference patterns in nested blocks"""
     child = make_line(
@@ -1134,7 +1170,7 @@ def test_step_exists_no_recipe_context(validator: RecipeValidator) -> None:
 
 
 def test_find_step_by_as_recursive_search(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test finding step by provider and as value in nested structure"""
     target = make_line(
@@ -1210,7 +1246,7 @@ def test_validate_formula_syntax_unknown_method(validator: RecipeValidator) -> N
 
 
 def test_validate_array_mappings_enhanced_nested_structures(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test enhanced array mapping validation with nested structures"""
     line = make_line(
@@ -1235,7 +1271,7 @@ def test_validate_array_mappings_enhanced_nested_structures(
 
 
 def test_validate_data_pill_structures_simple_syntax_validation(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test data pill structure validation with simple syntax"""
     # Set up recipe context
@@ -1281,7 +1317,7 @@ def test_validate_data_pill_structures_complex_json_missing_fields(
 
 
 def test_validate_data_pill_structures_path_not_array(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test data pill validation when path is not an array"""
     target = make_line(number=1, keyword=Keyword.ACTION, provider="http", as_="step")
@@ -1340,7 +1376,7 @@ def test_validate_array_consistency_flags_missing_field_mappings_without_others(
 
 # Test control flow and edge cases
 def test_validate_unique_as_values_nested_collection(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test unique as value validation with deeply nested structures"""
     # Use 'as' instead of 'as_' in the make_line calls since it uses Field(alias="as")
@@ -1361,7 +1397,9 @@ def test_validate_unique_as_values_nested_collection(
     assert "Duplicate 'as' value 'dup'" in errors[0].message
 
 
-def test_recipe_structure_validation_recursive_errors(make_line) -> None:
+def test_recipe_structure_validation_recursive_errors(
+    make_line: Callable[[dict[str, Any]], RecipeLine],
+) -> None:
     """Test recursive structure validation propagates errors"""
     # Create a structure with multiple validation errors
     bad_child = make_line(
@@ -1464,7 +1502,9 @@ def test_validate_data_pill_references_legacy_method(
     assert isinstance(errors, list)
 
 
-def test_step_uses_data_pills_detection(validator: RecipeValidator, make_line) -> None:
+def test_step_uses_data_pills_detection(
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
+) -> None:
     """Test detection of data pill usage in step inputs"""
     # Step with data pills
     line_with_pills = make_line(
@@ -1483,7 +1523,9 @@ def test_step_uses_data_pills_detection(validator: RecipeValidator, make_line) -
     assert validator._step_uses_data_pills(line_no_input) is False
 
 
-def test_is_control_block_detection(validator: RecipeValidator, make_line) -> None:
+def test_is_control_block_detection(
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
+) -> None:
     """Test control block detection"""
     # Control blocks
     if_line = make_line(number=1, keyword=Keyword.IF)
@@ -1503,7 +1545,7 @@ def test_is_control_block_detection(validator: RecipeValidator, make_line) -> No
 
 
 def test_validate_generic_schema_usage_referenced_step(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test generic schema validation for referenced steps"""
     # Create a step that will be referenced
@@ -1530,11 +1572,9 @@ def test_validate_generic_schema_usage_referenced_step(
 
 
 def test_validate_config_coverage_builtin_connectors(
-    validator: RecipeValidator, make_line
+    validator: RecipeValidator, make_line: Callable[[dict[str, Any]], RecipeLine]
 ) -> None:
     """Test config coverage with builtin connectors exclusion"""
-    # The logic: builtin_connectors = those NOT workato_app AND NOT containing "Workato" in categories
-    # So if "Workato" is in categories, it's NOT in builtin_connectors set (confusing naming)
     validator.connector_metadata = {
         "workato_app": {"categories": ["App"]},  # Excluded by name
         "scheduler": {

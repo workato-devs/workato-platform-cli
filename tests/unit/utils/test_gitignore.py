@@ -13,7 +13,7 @@ from workato_platform.cli.utils.gitignore import (
 class TestGitignoreUtilities:
     """Test gitignore utility functions."""
 
-    def test_ensure_gitignore_entry_new_file(self):
+    def test_ensure_gitignore_entry_new_file(self) -> None:
         """Test adding entry to non-existent .gitignore file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
@@ -28,7 +28,7 @@ class TestGitignoreUtilities:
             assert entry in content
             assert content.endswith("\n")
 
-    def test_ensure_gitignore_entry_existing_file_without_entry(self):
+    def test_ensure_gitignore_entry_existing_file_without_entry(self) -> None:
         """Test adding entry to existing .gitignore file that doesn't have the entry."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
@@ -47,7 +47,7 @@ class TestGitignoreUtilities:
             assert "__pycache__/" in content
             assert content.endswith(f"{entry}\n")
 
-    def test_ensure_gitignore_entry_existing_file_with_entry(self):
+    def test_ensure_gitignore_entry_existing_file_with_entry(self) -> None:
         """Test adding entry to existing .gitignore file that already has the entry."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
@@ -65,7 +65,7 @@ class TestGitignoreUtilities:
             assert content.count(entry) == 1
             assert content == existing_content
 
-    def test_ensure_gitignore_entry_no_trailing_newline(self):
+    def test_ensure_gitignore_entry_no_trailing_newline(self) -> None:
         """Test adding entry to existing .gitignore file without trailing newline."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
@@ -82,7 +82,7 @@ class TestGitignoreUtilities:
             # Should add newline before the entry
             assert content == f"*.pyc\n{entry}\n"
 
-    def test_ensure_gitignore_entry_empty_file(self):
+    def test_ensure_gitignore_entry_empty_file(self) -> None:
         """Test adding entry to empty .gitignore file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
@@ -97,7 +97,7 @@ class TestGitignoreUtilities:
             content = gitignore_file.read_text()
             assert content == f"{entry}\n"
 
-    def test_ensure_stubs_in_gitignore(self):
+    def test_ensure_stubs_in_gitignore(self) -> None:
         """Test the convenience function for adding stubs to gitignore."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
@@ -110,7 +110,7 @@ class TestGitignoreUtilities:
             content = gitignore_file.read_text()
             assert "projects/*/workato/" in content
 
-    def test_ensure_stubs_in_gitignore_existing_file(self):
+    def test_ensure_stubs_in_gitignore_existing_file(self) -> None:
         """Test adding stubs to existing .gitignore file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
@@ -127,7 +127,7 @@ class TestGitignoreUtilities:
             assert "*.log" in content
             assert ".env" in content
 
-    def test_multiple_entries(self):
+    def test_multiple_entries(self) -> None:
         """Test adding multiple different entries."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)
@@ -152,7 +152,7 @@ class TestGitignoreUtilities:
                 # Each entry should appear only once
                 assert content.count(entry) == 1
 
-    def test_edge_cases(self):
+    def test_edge_cases(self) -> None:
         """Test edge cases like special characters and long paths."""
         with tempfile.TemporaryDirectory() as temp_dir:
             workspace_root = Path(temp_dir)

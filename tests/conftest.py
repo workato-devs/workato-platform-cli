@@ -2,8 +2,10 @@
 
 import tempfile
 
+from collections.abc import Generator
 from pathlib import Path
-from unittest.mock import Mock, patch
+from typing import Any
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -11,7 +13,7 @@ from asyncclick.testing import CliRunner
 
 
 @pytest.fixture
-def temp_config_dir():
+def temp_config_dir() -> Path:
     """Create a temporary directory for config files."""
     with tempfile.TemporaryDirectory() as temp_dir:
         yield Path(temp_dir)
@@ -24,7 +26,7 @@ def cli_runner() -> CliRunner:
 
 
 @pytest.fixture
-def mock_config_manager():
+def mock_config_manager() -> Mock:
     """Mock ConfigManager for testing."""
     config_manager = Mock()
     config_manager.get_api_token.return_value = "test-api-token"
@@ -34,7 +36,7 @@ def mock_config_manager():
 
 
 @pytest.fixture
-def mock_workato_client():
+def mock_workato_client() -> Mock:
     """Mock Workato API client."""
     client = Mock()
 
@@ -48,7 +50,7 @@ def mock_workato_client():
 
 
 @pytest.fixture(autouse=True)
-def isolate_tests(monkeypatch, temp_config_dir):
+def isolate_tests(monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path) -> None:
     """Isolate tests by using temporary directories and env vars."""
     # Prevent tests from accessing real config files
     monkeypatch.setenv("WORKATO_CONFIG_DIR", str(temp_config_dir))
@@ -59,7 +61,7 @@ def isolate_tests(monkeypatch, temp_config_dir):
 
 
 @pytest.fixture(autouse=True)
-def mock_webbrowser():
+def mock_webbrowser() -> Generator[dict[str, MagicMock], None, None]:
     """Automatically mock webbrowser.open for all tests to prevent browser launching."""
     with (
         patch("webbrowser.open", return_value=None) as mock_open_global,
@@ -72,7 +74,7 @@ def mock_webbrowser():
 
 
 @pytest.fixture
-def sample_recipe():
+def sample_recipe() -> dict[str, Any]:
     """Sample recipe JSON for testing."""
     return {
         "name": "Test Recipe",
@@ -93,7 +95,7 @@ def sample_recipe():
 
 
 @pytest.fixture
-def sample_connection():
+def sample_connection() -> dict[str, Any]:
     """Sample connection data for testing."""
     return {
         "id": 12345,

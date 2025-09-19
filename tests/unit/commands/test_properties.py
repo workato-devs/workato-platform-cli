@@ -337,4 +337,5 @@ def test_properties_group_exists():
 
     # Test that it's a click group
     import asyncclick as click
+
     assert isinstance(properties, click.Group)

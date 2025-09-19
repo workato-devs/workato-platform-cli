@@ -89,11 +89,11 @@ class TestListDataTablesCommand:
         """Test successful listing of data tables."""
         mock_response = MagicMock()
         mock_response.data = mock_data_tables_response
-        mock_workato_client.data_tables_api.list_data_tables.return_value = mock_response
+        mock_workato_client.data_tables_api.list_data_tables.return_value = (
+            mock_response
+        )
 
-        with patch(
-            "workato_platform.cli.commands.data_tables.Spinner"
-        ) as mock_spinner:
+        with patch("workato_platform.cli.commands.data_tables.Spinner") as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.2
             mock_spinner.return_value = mock_spinner_instance
@@ -111,11 +111,11 @@ class TestListDataTablesCommand:
         """Test listing when no data tables exist."""
         mock_response = MagicMock()
         mock_response.data = []
-        mock_workato_client.data_tables_api.list_data_tables.return_value = mock_response
+        mock_workato_client.data_tables_api.list_data_tables.return_value = (
+            mock_response
+        )
 
-        with patch(
-            "workato_platform.cli.commands.data_tables.Spinner"
-        ) as mock_spinner:
+        with patch("workato_platform.cli.commands.data_tables.Spinner") as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 0.8
             mock_spinner.return_value = mock_spinner_instance
@@ -264,9 +264,7 @@ class TestCreateDataTableCommand:
         mock_config_manager: MagicMock,
     ) -> None:
         """Test data table creation with invalid JSON."""
-        with patch(
-            "workato_platform.cli.commands.data_tables.click.echo"
-        ) as mock_echo:
+        with patch("workato_platform.cli.commands.data_tables.click.echo") as mock_echo:
             await create_data_table.callback(
                 name="Test Table",
                 schema_json="invalid json",
@@ -284,9 +282,7 @@ class TestCreateDataTableCommand:
         mock_config_manager: MagicMock,
     ) -> None:
         """Test data table creation with non-list schema."""
-        with patch(
-            "workato_platform.cli.commands.data_tables.click.echo"
-        ) as mock_echo:
+        with patch("workato_platform.cli.commands.data_tables.click.echo") as mock_echo:
             await create_data_table.callback(
                 name="Test Table",
                 schema_json='{"name": "id", "type": "integer"}',
@@ -306,9 +302,7 @@ class TestCreateDataTableCommand:
         mock_config.folder_id = None
         mock_config_manager.load_config.return_value = mock_config
 
-        with patch(
-            "workato_platform.cli.commands.data_tables.click.echo"
-        ) as mock_echo:
+        with patch("workato_platform.cli.commands.data_tables.click.echo") as mock_echo:
             await create_data_table.callback(
                 name="Test Table",
                 schema_json='[{"name": "id", "type": "integer", "optional": false}]',
@@ -339,9 +333,7 @@ class TestCreateDataTableCommand:
             }
         ]
 
-        with patch(
-            "workato_platform.cli.commands.data_tables.Spinner"
-        ) as mock_spinner:
+        with patch("workato_platform.cli.commands.data_tables.Spinner") as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.5
             mock_spinner.return_value = mock_spinner_instance
@@ -363,7 +355,7 @@ class TestCreateDataTableCommand:
         assert len(create_request.var_schema) == 1
         assert create_request.var_schema[0].name == "id"
         assert create_request.var_schema[0].type == "integer"
-        assert create_request.var_schema[0].optional == False
+        assert not create_request.var_schema[0].optional
 
         # Verify post-creation sync was called
         mock_project_manager.handle_post_api_sync.assert_called_once()
@@ -457,7 +449,9 @@ class TestSchemaValidation:
         ]
 
         errors = validate_schema(schema)
-        assert any("'optional' must be true, false, 0, or 1" in error for error in errors)
+        assert any(
+            "'optional' must be true, false, 0, or 1" in error for error in errors
+        )
 
     def test_validate_schema_relation_type(self) -> None:
         """Test validation with relation type columns."""
@@ -480,7 +474,9 @@ class TestSchemaValidation:
         ]
 
         errors = validate_schema(schema)
-        assert any("'relation' object required for relation type" in error for error in errors)
+        assert any(
+            "'relation' object required for relation type" in error for error in errors
+        )
 
     def test_validate_schema_default_value_type_mismatch(self) -> None:
         """Test validation with default value type mismatch."""
@@ -500,8 +496,14 @@ class TestSchemaValidation:
         ]
 
         errors = validate_schema(schema)
-        assert any("'default_value' type doesn't match column type 'integer'" in error for error in errors)
-        assert any("'default_value' type doesn't match column type 'boolean'" in error for error in errors)
+        assert any(
+            "'default_value' type doesn't match column type 'integer'" in error
+            for error in errors
+        )
+        assert any(
+            "'default_value' type doesn't match column type 'boolean'" in error
+            for error in errors
+        )
 
     def test_validate_schema_invalid_field_id(self) -> None:
         """Test validation with invalid field_id format."""
@@ -515,7 +517,9 @@ class TestSchemaValidation:
         ]
 
         errors = validate_schema(schema)
-        assert any("'field_id' must be a valid UUID format" in error for error in errors)
+        assert any(
+            "'field_id' must be a valid UUID format" in error for error in errors
+        )
 
     def test_validate_schema_valid_field_id(self) -> None:
         """Test validation with valid field_id format."""

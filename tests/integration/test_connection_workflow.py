@@ -19,10 +19,16 @@ class TestConnectionWorkflow:
 
         with patch("workato_platform.cli.containers.Container") as mock_container:
             mock_workato_client = Mock()
-            mock_workato_client.connections_api.get_connection_oauth_url.return_value = Mock(
+            get_connection_oauth_url = (
+                mock_workato_client.connections_api.get_connection_oauth_url
+            )
+            get_connection_oauth_url.return_value = Mock(
                 oauth_url="https://login.salesforce.com/oauth2/authorize?client_id=123"
             )
-            mock_workato_client.connections_api.create_runtime_user_connection.return_value = Mock(
+            create_runtime_user_connection = (
+                mock_workato_client.connections_api.create_runtime_user_connection
+            )
+            create_runtime_user_connection.return_value = Mock(
                 data=Mock(id=12345, name="Test OAuth Connection", authorized=True)
             )
 
@@ -126,7 +132,10 @@ class TestConnectionWorkflow:
 
         with patch("workato_platform.cli.containers.Container") as mock_container:
             mock_workato_client = Mock()
-            mock_workato_client.connections_api.get_connection_pick_list.return_value = [
+            get_connection_pick_list = (
+                mock_workato_client.connections_api.get_connection_pick_list
+            )
+            get_connection_pick_list.return_value = [
                 {"label": "Account", "value": "Account"},
                 {"label": "Contact", "value": "Contact"},
                 {"label": "Opportunity", "value": "Opportunity"},
@@ -182,10 +191,16 @@ class TestConnectionWorkflow:
             mock_prompt.return_value = "authorization_code_12345"
 
             mock_workato_client = Mock()
-            mock_workato_client.connections_api.get_connection_oauth_url.return_value = Mock(
+            get_connection_oauth_url = (
+                mock_workato_client.connections_api.get_connection_oauth_url
+            )
+            get_connection_oauth_url.return_value = Mock(
                 oauth_url="https://login.salesforce.com/oauth2/authorize?client_id=123"
             )
-            mock_workato_client.connections_api.create_runtime_user_connection.return_value = Mock(
+            create_runtime_user_connection = (
+                mock_workato_client.connections_api.create_runtime_user_connection
+            )
+            create_runtime_user_connection.return_value = Mock(
                 data=Mock(
                     id=67890, name="Interactive OAuth Connection", authorized=True
                 )
@@ -224,7 +239,10 @@ class TestConnectionWorkflow:
             mock_workato_client.connections_api.list_connections.side_effect = (
                 Exception("API Timeout")
             )
-            mock_workato_client.connections_api.create_runtime_user_connection.side_effect = Exception(
+            create_runtime_user_connection = (
+                mock_workato_client.connections_api.create_runtime_user_connection
+            )
+            create_runtime_user_connection.side_effect = Exception(
                 "Invalid credentials"
             )
 
@@ -254,9 +272,8 @@ class TestConnectionWorkflow:
             assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_connection_polling_workflow(self, temp_config_dir) -> None:
+    async def test_connection_polling_workflow(self) -> None:
         """Test OAuth connection polling workflow."""
-        runner = CliRunner()
 
         with (
             patch("workato_platform.cli.containers.Container") as mock_container,

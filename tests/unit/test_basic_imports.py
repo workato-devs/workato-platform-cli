@@ -16,7 +16,7 @@ if str(src_path) not in sys.path:
 class TestBasicImports:
     """Test basic module imports and structure."""
 
-    def test_workato_cli_package_exists(self):
+    def test_workato_cli_package_exists(self) -> None:
         """Test that the main package exists."""
         try:
             import workato_platform.cli
@@ -25,7 +25,7 @@ class TestBasicImports:
         except ImportError:
             pytest.fail("workato_platform.cli package could not be imported")
 
-    def test_version_is_available(self):
+    def test_version_is_available(self) -> None:
         """Test that version is available."""
         try:
             import workato_platform
@@ -36,7 +36,7 @@ class TestBasicImports:
         except ImportError:
             pytest.skip("Version not available due to import issues")
 
-    def test_utils_package_structure(self):
+    def test_utils_package_structure(self) -> None:
         """Test that utils package has expected structure."""
         try:
             from workato_platform.cli.utils import version_checker
@@ -45,7 +45,7 @@ class TestBasicImports:
         except ImportError:
             pytest.skip("Utils package not available due to dependencies")
 
-    def test_version_checker_class_structure(self):
+    def test_version_checker_class_structure(self) -> None:
         """Test version checker class structure."""
         try:
             from workato_platform.cli.utils.version_checker import VersionChecker
@@ -58,7 +58,7 @@ class TestBasicImports:
         except ImportError:
             pytest.skip("VersionChecker not available due to dependencies")
 
-    def test_commands_package_exists(self):
+    def test_commands_package_exists(self) -> None:
         """Test that commands package structure exists."""
         commands_path = src_path / "workato_platform" / "cli" / "commands"
         assert commands_path.exists()
@@ -76,7 +76,7 @@ class TestBasicImports:
             cmd_path = commands_path / cmd
             assert cmd_path.exists(), f"Missing command: {cmd}"
 
-    def test_basic_configuration_can_be_created(self):
+    def test_basic_configuration_can_be_created(self) -> None:
         """Test basic configuration without heavy dependencies."""
         try:
             from workato_platform.cli.utils.config import ConfigManager
@@ -87,7 +87,7 @@ class TestBasicImports:
         except ImportError:
             pytest.skip("ConfigManager not available due to dependencies")
 
-    def test_container_module_exists(self):
+    def test_container_module_exists(self) -> None:
         """Test container module exists."""
         try:
             from workato_platform.cli import containers
@@ -101,7 +101,7 @@ class TestBasicImports:
 class TestProjectStructure:
     """Test project file structure."""
 
-    def test_required_files_exist(self):
+    def test_required_files_exist(self) -> None:
         """Test that required project files exist."""
         project_root = Path(__file__).parent.parent.parent
 
@@ -116,7 +116,7 @@ class TestProjectStructure:
             full_path = project_root / file_path
             assert full_path.exists(), f"Missing required file: {file_path}"
 
-    def test_test_structure_exists(self):
+    def test_test_structure_exists(self) -> None:
         """Test that test structure is properly organized."""
         tests_path = Path(__file__).parent.parent
 
@@ -125,7 +125,7 @@ class TestProjectStructure:
         assert (tests_path / "integration").exists()
         assert (tests_path / "conftest.py").exists()
 
-    def test_source_code_structure(self):
+    def test_source_code_structure(self) -> None:
         """Test source code directory structure."""
         src_path = (
             Path(__file__).parent.parent.parent / "src" / "workato_platform" / "cli"

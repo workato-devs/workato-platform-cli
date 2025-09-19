@@ -12,14 +12,18 @@ import workato_platform
 
 
 @pytest.mark.asyncio
-async def test_workato_wrapper_sets_user_agent_and_tls(monkeypatch) -> None:
+async def test_workato_wrapper_sets_user_agent_and_tls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     configuration = SimpleNamespace()
-    rest_context = SimpleNamespace(ssl_context=SimpleNamespace(minimum_version=None, options=0))
+    rest_context = SimpleNamespace(
+        ssl_context=SimpleNamespace(minimum_version=None, options=0)
+    )
 
     created_clients: list[SimpleNamespace] = []
 
     class DummyApiClient:
-        def __init__(self, config) -> None:
+        def __init__(self, config: SimpleNamespace) -> None:
             self.configuration = config
             self.user_agent = None
             self.rest_client = rest_context
@@ -44,7 +48,11 @@ async def test_workato_wrapper_sets_user_agent_and_tls(monkeypatch) -> None:
         "ConnectorsApi",
         "APIPlatformApi",
     ]:
-        monkeypatch.setattr(workato_platform, api_name, lambda client, name=api_name: SimpleNamespace(api=name, client=client))
+        monkeypatch.setattr(
+            workato_platform,
+            api_name,
+            lambda client, name=api_name: SimpleNamespace(api=name, client=client),
+        )
 
     wrapper = workato_platform.Workato(configuration)
 
@@ -59,10 +67,12 @@ async def test_workato_wrapper_sets_user_agent_and_tls(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_workato_async_context_manager(monkeypatch) -> None:
+async def test_workato_async_context_manager(monkeypatch: pytest.MonkeyPatch) -> None:
     class DummyApiClient:
-        def __init__(self, config) -> None:
-            self.rest_client = SimpleNamespace(ssl_context=SimpleNamespace(minimum_version=None, options=0))
+        def __init__(self, config: SimpleNamespace) -> None:
+            self.rest_client = SimpleNamespace(
+                ssl_context=SimpleNamespace(minimum_version=None, options=0)
+            )
 
         async def close(self) -> None:
             self.closed = True
@@ -81,7 +91,9 @@ async def test_workato_async_context_manager(monkeypatch) -> None:
         "ConnectorsApi",
         "APIPlatformApi",
     ]:
-        monkeypatch.setattr(workato_platform, api_name, lambda client: SimpleNamespace(client=client))
+        monkeypatch.setattr(
+            workato_platform, api_name, lambda client: SimpleNamespace(client=client)
+        )
 
     async with workato_platform.Workato(SimpleNamespace()) as wrapper:
         assert isinstance(wrapper, workato_platform.Workato)
@@ -109,13 +121,14 @@ def test_version_type_checking_imports() -> None:
 
         # Re-import the module to trigger the TYPE_CHECKING branch
         import importlib
+
         importlib.reload(version_module)
 
         # Check that the type definitions exist when TYPE_CHECKING is True
 
         # The module should have the type annotations
-        assert hasattr(version_module, 'VERSION_TUPLE')
-        assert hasattr(version_module, 'COMMIT_ID')
+        assert hasattr(version_module, "VERSION_TUPLE")
+        assert hasattr(version_module, "COMMIT_ID")
 
     finally:
         # Restore original state

@@ -21,7 +21,7 @@ class DummySpinner:
 
 
 @pytest.mark.asyncio
-async def test_assets_lists_grouped_results(monkeypatch):
+async def test_assets_lists_grouped_results(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "workato_platform.cli.commands.assets.Spinner",
         DummySpinner,
@@ -58,7 +58,7 @@ async def test_assets_lists_grouped_results(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_assets_missing_folder(monkeypatch):
+async def test_assets_missing_folder(monkeypatch: pytest.MonkeyPatch) -> None:
     config_manager = Mock()
     config_manager.load_config.return_value = ConfigData()
 
