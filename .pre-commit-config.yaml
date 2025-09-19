@@ -26,6 +26,7 @@ repos:
     rev: v1.18.1
     hooks:
       - id: mypy
+        args: [--explicit-package-bases]
         additional_dependencies:
           [
             types-requests,
@@ -38,6 +39,9 @@ repos:
             aiohttp>=3.8.0,
             python-dateutil>=2.8.0,
             typing-extensions>=4.0.0,
+            pytest>=7.0.0,
+            pytest-asyncio>=0.21.0,
+            pytest-mock>=3.10.0,
           ]
         exclude: ^(client/|src/workato_platform/client/)
 

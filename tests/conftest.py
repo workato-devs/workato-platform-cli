@@ -114,31 +114,29 @@ def sample_connection() -> dict[str, Any]:
 
 
 @pytest.fixture(autouse=True)
-def mock_keyring_for_ci_only(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Mock keyring only when it's unavailable (like in CI environments)."""
+def prevent_keyring_errors() -> None:
+    """
+    Prevent NoKeyringError in CI environments while preserving test functionality.
+    This only adds missing keyring.errors if keyring import fails.
+    """
+    import sys
 
-    # Only mock if keyring is not available - preserves local test functionality
     try:
         import keyring
 
-        # Try to access keyring - if this fails, keyring is not available
-        keyring.get_password("test-service", "test-user")
-    except Exception:
-        # Keyring is not available, provide a working mock
-        class MockKeyring:
-            def __init__(self) -> None:
-                self.storage: dict[tuple[str, str], str] = {}
-                self.errors = Mock()
-                self.errors.NoKeyringError = Exception
+        # If keyring imports successfully, ensure it has the errors attribute
+        if not hasattr(keyring, "errors"):
+            errors_mock = Mock()
+            errors_mock.NoKeyringError = Exception
+            keyring.errors = errors_mock
+    except ImportError:
+        # Keyring is not available, provide minimal keyring module
+        minimal_keyring = Mock()
+        minimal_errors = Mock()
+        minimal_errors.NoKeyringError = Exception
+        minimal_keyring.errors = minimal_errors
+        minimal_keyring.get_password.return_value = None
+        minimal_keyring.set_password.return_value = None
+        minimal_keyring.delete_password.return_value = None
 
-            def get_password(self, service: str, username: str) -> str | None:
-                return self.storage.get((service, username))
-
-            def set_password(self, service: str, username: str, password: str) -> None:
-                self.storage[(service, username)] = password
-
-            def delete_password(self, service: str, username: str) -> None:
-                self.storage.pop((service, username), None)
-
-        mock_keyring = MockKeyring()
-        monkeypatch.setattr("workato_platform.cli.utils.config.keyring", mock_keyring)
+        sys.modules["keyring"] = minimal_keyring

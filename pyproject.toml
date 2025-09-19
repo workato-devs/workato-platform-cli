@@ -157,6 +157,10 @@ strict_equality = true
 namespace_packages = true
 explicit_package_bases = true
 mypy_path = "src"
+files = [
+    "src/workato_platform",
+    "tests",
+]
 plugins = ["pydantic.mypy"]
 exclude = [
     "src/workato_platform/client/*",
@@ -172,6 +176,12 @@ module = [
     "dependency_injector.*",
     "asyncclick.*",
     "keyring.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "certifi",
 ]
 ignore_missing_imports = true
 

@@ -2,14 +2,33 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 from workato_platform.cli.commands.recipes import command
+
+
+if TYPE_CHECKING:
+    from workato_platform import Workato
+    from workato_platform.client.workato_api.models.recipe_start_response import (
+        RecipeStartResponse,
+    )
+
+
+def _get_callback(cmd: Any) -> Callable[..., Any]:
+    callback = cmd.callback
+    assert callback is not None
+    return cast(Callable[..., Any], callback)
+
+
+def _workato_stub(**kwargs: Any) -> Workato:
+    return cast("Workato", SimpleNamespace(**kwargs))
 
 
 class DummySpinner:
@@ -62,7 +81,8 @@ async def test_list_recipes_requires_folder_id(
     config_manager = Mock()
     config_manager.load_config.return_value = SimpleNamespace(folder_id=None)
 
-    await command.list_recipes.callback(config_manager=config_manager)
+    list_recipes_cb = _get_callback(command.list_recipes)
+    await list_recipes_cb(config_manager=config_manager)
 
     output = "\n".join(capture_echo)
     assert "No folder ID provided" in output
@@ -97,7 +117,8 @@ async def test_list_recipes_recursive_filters_running(
     config_manager = Mock()
     config_manager.load_config.return_value = SimpleNamespace(folder_id=999)
 
-    await command.list_recipes.callback(
+    list_recipes_cb = _get_callback(command.list_recipes)
+    await list_recipes_cb(
         folder_id=123,
         recursive=True,
         running=True,
@@ -138,7 +159,8 @@ async def test_list_recipes_non_recursive_with_filters(
     config_manager = Mock()
     config_manager.load_config.return_value = SimpleNamespace(folder_id=None)
 
-    await command.list_recipes.callback(
+    list_recipes_cb = _get_callback(command.list_recipes)
+    await list_recipes_cb(
         folder_id=555,
         adapter_names_all="http",
         adapter_names_any="slack",
@@ -149,6 +171,7 @@ async def test_list_recipes_non_recursive_with_filters(
     )
 
     mock_paginated.assert_awaited_once()
+    assert mock_paginated.await_args is not None
     kwargs = mock_paginated.await_args.kwargs
     assert kwargs["folder_id"] == 555
     assert kwargs["adapter_names_all"] == "http"
@@ -166,7 +189,8 @@ async def test_validate_missing_file(tmp_path: Path, capture_echo: list[str]) ->
     validator = Mock()
     non_existent_file = tmp_path / "unknown.json"
 
-    await command.validate.callback(
+    validate_cb = _get_callback(command.validate)
+    await validate_cb(
         path=str(non_existent_file),
         recipe_validator=validator,
     )
@@ -186,7 +210,8 @@ async def test_validate_requires_json_extension(
 
     validator = Mock()
 
-    await command.validate.callback(
+    validate_cb = _get_callback(command.validate)
+    await validate_cb(
         path=str(text_file),
         recipe_validator=validator,
     )
@@ -204,7 +229,8 @@ async def test_validate_json_errors(tmp_path: Path, capture_echo: list[str]) -> 
 
     validator = Mock()
 
-    await command.validate.callback(
+    validate_cb = _get_callback(command.validate)
+    await validate_cb(
         path=str(bad_file),
         recipe_validator=validator,
     )
@@ -225,7 +251,8 @@ async def test_validate_success(tmp_path: Path, capture_echo: list[str]) -> None
     validator = Mock()
     validator.validate_recipe = AsyncMock(return_value=result)
 
-    await command.validate.callback(
+    validate_cb = _get_callback(command.validate)
+    await validate_cb(
         path=str(ok_file),
         recipe_validator=validator,
     )
@@ -258,7 +285,8 @@ async def test_validate_failure_with_warnings(
     validator = Mock()
     validator.validate_recipe = AsyncMock(return_value=result)
 
-    await command.validate.callback(
+    validate_cb = _get_callback(command.validate)
+    await validate_cb(
         path=str(data_file),
         recipe_validator=validator,
     )
@@ -274,12 +302,13 @@ async def test_validate_failure_with_warnings(
 async def test_start_requires_single_option(capture_echo: list[str]) -> None:
     """The start command enforces exclusive option selection."""
 
-    await command.start.callback(recipe_id=None, start_all=False, folder_id=None)
+    start_cb = _get_callback(command.start)
+    await start_cb(recipe_id=None, start_all=False, folder_id=None)
     assert any("Please specify one" in line for line in capture_echo)
 
     capture_echo.clear()
 
-    await command.start.callback(recipe_id=1, start_all=True, folder_id=None)
+    await start_cb(recipe_id=1, start_all=True, folder_id=None)
     assert any("only one option" in line for line in capture_echo)
 
 
@@ -306,13 +335,14 @@ async def test_start_dispatches_correct_handler(
         folder,
     )
 
-    await command.start.callback(recipe_id=10, start_all=False, folder_id=None)
+    start_cb = _get_callback(command.start)
+    await start_cb(recipe_id=10, start_all=False, folder_id=None)
     single.assert_awaited_once_with(10)
 
-    await command.start.callback(recipe_id=None, start_all=True, folder_id=None)
+    await start_cb(recipe_id=None, start_all=True, folder_id=None)
     project.assert_awaited_once()
 
-    await command.start.callback(recipe_id=None, start_all=False, folder_id=22)
+    await start_cb(recipe_id=None, start_all=False, folder_id=22)
     folder.assert_awaited_once_with(22)
 
 
@@ -320,12 +350,13 @@ async def test_start_dispatches_correct_handler(
 async def test_stop_requires_single_option(capture_echo: list[str]) -> None:
     """The stop command mirrors the exclusivity checks."""
 
-    await command.stop.callback(recipe_id=None, stop_all=False, folder_id=None)
+    stop_cb = _get_callback(command.stop)
+    await stop_cb(recipe_id=None, stop_all=False, folder_id=None)
     assert any("Please specify one" in line for line in capture_echo)
 
     capture_echo.clear()
 
-    await command.stop.callback(recipe_id=1, stop_all=True, folder_id=None)
+    await stop_cb(recipe_id=1, stop_all=True, folder_id=None)
     assert any("only one option" in line for line in capture_echo)
 
 
@@ -350,13 +381,14 @@ async def test_stop_dispatches_correct_handler(monkeypatch: pytest.MonkeyPatch) 
         folder,
     )
 
-    await command.stop.callback(recipe_id=10, stop_all=False, folder_id=None)
+    stop_cb = _get_callback(command.stop)
+    await stop_cb(recipe_id=10, stop_all=False, folder_id=None)
     single.assert_awaited_once_with(10)
 
-    await command.stop.callback(recipe_id=None, stop_all=True, folder_id=None)
+    await stop_cb(recipe_id=None, stop_all=True, folder_id=None)
     project.assert_awaited_once()
 
-    await command.stop.callback(recipe_id=None, stop_all=False, folder_id=22)
+    await stop_cb(recipe_id=None, stop_all=False, folder_id=22)
     folder.assert_awaited_once_with(22)
 
 
@@ -365,13 +397,16 @@ async def test_start_single_recipe_success(capture_echo: list[str]) -> None:
     """Successful start prints a confirmation message."""
 
     response = SimpleNamespace(success=True)
-    client = SimpleNamespace(
+    client = _workato_stub(
         recipes_api=SimpleNamespace(start_recipe=AsyncMock(return_value=response))
     )
 
     await command.start_single_recipe(42, workato_api_client=client)
 
-    assert client.recipes_api.start_recipe.await_args.args == (42,)
+    start_recipe_mock = cast(AsyncMock, client.recipes_api.start_recipe)
+    await_args = start_recipe_mock.await_args
+    assert await_args is not None
+    assert await_args.args == (42,)
     assert any("started successfully" in line for line in capture_echo)
 
 
@@ -386,7 +421,7 @@ async def test_start_single_recipe_failure_shows_detailed_errors(
         code_errors=[[1, [["Label", 12, "Message", "field.path"]]]],
         config_errors=[[2, [["ConfigField", None, "Missing"]]], "Other issue"],
     )
-    client = SimpleNamespace(
+    client = _workato_stub(
         recipes_api=SimpleNamespace(start_recipe=AsyncMock(return_value=response))
     )
 
@@ -461,15 +496,14 @@ async def test_start_folder_recipes_handles_success_and_failure(
     async def _start_recipe(recipe_id: int) -> SimpleNamespace:
         return responses[recipe_id - 1]
 
-    client = SimpleNamespace(
+    client = _workato_stub(
         recipes_api=SimpleNamespace(start_recipe=AsyncMock(side_effect=_start_recipe))
     )
 
     await command.start_folder_recipes(123, workato_api_client=client)
 
-    called_ids = [
-        call.args[0] for call in client.recipes_api.start_recipe.await_args_list
-    ]
+    start_recipe_mock = cast(AsyncMock, client.recipes_api.start_recipe)
+    called_ids = [call.args[0] for call in start_recipe_mock.await_args_list]
     assert called_ids == [1, 2]
     output = "\n".join(capture_echo)
     assert "Recipe One" in output and "started" in output
@@ -489,23 +523,25 @@ async def test_start_folder_recipes_handles_empty_folder(
         AsyncMock(return_value=[]),
     )
 
-    client = SimpleNamespace(recipes_api=SimpleNamespace(start_recipe=AsyncMock()))
+    client = _workato_stub(recipes_api=SimpleNamespace(start_recipe=AsyncMock()))
 
     await command.start_folder_recipes(789, workato_api_client=client)
 
     assert any("No recipes found" in line for line in capture_echo)
-    client.recipes_api.start_recipe.assert_not_called()
+    start_recipe_mock = cast(AsyncMock, client.recipes_api.start_recipe)
+    start_recipe_mock.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_stop_single_recipe_outputs_confirmation(capture_echo: list[str]) -> None:
     """Stopping a recipe forwards to the API and reports success."""
 
-    client = SimpleNamespace(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
+    client = _workato_stub(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
 
     await command.stop_single_recipe(88, workato_api_client=client)
 
-    client.recipes_api.stop_recipe.assert_awaited_once_with(88)
+    stop_recipe_mock = cast(AsyncMock, client.recipes_api.stop_recipe)
+    stop_recipe_mock.assert_awaited_once_with(88)
     assert any("stopped successfully" in line for line in capture_echo)
 
 
@@ -557,13 +593,12 @@ async def test_stop_folder_recipes_iterates_assets(
         AsyncMock(return_value=assets),
     )
 
-    client = SimpleNamespace(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
+    client = _workato_stub(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
 
     await command.stop_folder_recipes(44, workato_api_client=client)
 
-    called_ids = [
-        call.args[0] for call in client.recipes_api.stop_recipe.await_args_list
-    ]
+    stop_recipe_mock = cast(AsyncMock, client.recipes_api.stop_recipe)
+    called_ids = [call.args[0] for call in stop_recipe_mock.await_args_list]
     assert called_ids == [1, 2]
     assert "Results" in "\n".join(capture_echo)
 
@@ -580,12 +615,13 @@ async def test_stop_folder_recipes_no_assets(
         AsyncMock(return_value=[]),
     )
 
-    client = SimpleNamespace(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
+    client = _workato_stub(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
 
     await command.stop_folder_recipes(44, workato_api_client=client)
 
     assert any("No recipes found" in line for line in capture_echo)
-    client.recipes_api.stop_recipe.assert_not_called()
+    stop_recipe_mock = cast(AsyncMock, client.recipes_api.stop_recipe)
+    stop_recipe_mock.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -600,7 +636,7 @@ async def test_get_folder_recipe_assets_filters_non_recipes(
     ]
     response = SimpleNamespace(result=SimpleNamespace(assets=assets))
 
-    client = SimpleNamespace(
+    client = _workato_stub(
         export_api=SimpleNamespace(
             list_assets_in_folder=AsyncMock(return_value=response)
         )
@@ -608,7 +644,8 @@ async def test_get_folder_recipe_assets_filters_non_recipes(
 
     recipes = await command.get_folder_recipe_assets(5, workato_api_client=client)
 
-    client.export_api.list_assets_in_folder.assert_awaited_once_with(folder_id=5)
+    list_assets_mock = cast(AsyncMock, client.export_api.list_assets_in_folder)
+    list_assets_mock.assert_awaited_once_with(folder_id=5)
     assert recipes == [assets[0]]
     assert any("Found 1 recipe" in line for line in capture_echo)
 
@@ -624,9 +661,7 @@ async def test_get_all_recipes_paginated_handles_multiple_pages(
 
     list_recipes_mock = AsyncMock(side_effect=[first_page, second_page])
 
-    client = SimpleNamespace(
-        recipes_api=SimpleNamespace(list_recipes=list_recipes_mock)
-    )
+    client = _workato_stub(recipes_api=SimpleNamespace(list_recipes=list_recipes_mock))
 
     recipes = await command.get_all_recipes_paginated(
         folder_id=9,
@@ -645,6 +680,7 @@ async def test_get_all_recipes_paginated_handles_multiple_pages(
     assert len(recipes) == 101
     assert list_recipes_mock.await_count == 2
 
+    assert list_recipes_mock.await_args is not None
     kwargs = list_recipes_mock.await_args.kwargs
     assert isinstance(kwargs["stopped_after"], datetime)
     assert kwargs["includes"] == ["foo", "bar"]
@@ -658,7 +694,7 @@ async def test_get_recipes_recursive_traverses_subfolders(
 ) -> None:
     """Recursive helper visits child folders exactly once."""
 
-    async def _get_all_recipes_paginated(**kwargs):
+    async def _get_all_recipes_paginated(**kwargs: Any) -> list[Any]:
         return [SimpleNamespace(id=kwargs["folder_id"])]
 
     mock_get_all = AsyncMock(side_effect=_get_all_recipes_paginated)
@@ -677,11 +713,11 @@ async def test_get_recipes_recursive_traverses_subfolders(
     ) -> list[SimpleNamespace]:
         return list_calls[parent_id]
 
-    client = SimpleNamespace(
+    client = _workato_stub(
         folders_api=SimpleNamespace(list_folders=AsyncMock(side_effect=_list_folders))
     )
 
-    raw_recursive = command.get_recipes_recursive.__wrapped__
+    raw_recursive = cast(Any, command.get_recipes_recursive).__wrapped__
     monkeypatch.setattr(
         "workato_platform.cli.commands.recipes.command.get_recipes_recursive",
         raw_recursive,
@@ -708,16 +744,18 @@ async def test_get_recipes_recursive_skips_visited(
         mock_get_all,
     )
 
-    client = SimpleNamespace(folders_api=SimpleNamespace(list_folders=AsyncMock()))
+    client = _workato_stub(folders_api=SimpleNamespace(list_folders=AsyncMock()))
 
-    raw_recursive = command.get_recipes_recursive.__wrapped__
+    raw_recursive = cast(Any, command.get_recipes_recursive).__wrapped__
     monkeypatch.setattr(
         "workato_platform.cli.commands.recipes.command.get_recipes_recursive",
         raw_recursive,
     )
 
     recipes = await command.get_recipes_recursive(
-        5, visited_folders={5}, workato_api_client=client
+        5,
+        visited_folders={5},
+        workato_api_client=client,
     )
 
     assert recipes == []
@@ -749,7 +787,7 @@ def test_display_recipe_summary_outputs_all_sections(
         description="This is a long description " * 5,
     )
 
-    command.display_recipe_summary(recipe)
+    command.display_recipe_summary(cast(Any, recipe))
 
     output = "\n".join(capture_echo)
     assert "Complex Recipe" in output
@@ -765,18 +803,25 @@ def test_display_recipe_summary_outputs_all_sections(
 async def test_update_connection_invokes_api(capture_echo: list[str]) -> None:
     """Connection update forwards parameters to Workato client."""
 
-    client = SimpleNamespace(
-        recipes_api=SimpleNamespace(update_recipe_connection=AsyncMock())
+    client = cast(
+        "Workato",
+        SimpleNamespace(
+            recipes_api=SimpleNamespace(update_recipe_connection=AsyncMock())
+        ),
     )
 
-    await command.update_connection.callback(
+    update_connection_cb = _get_callback(command.update_connection)
+    await update_connection_cb(
         recipe_id=10,
         adapter_name="box",
         connection_id=222,
         workato_api_client=client,
     )
 
-    args = client.recipes_api.update_recipe_connection.await_args.kwargs
+    update_recipe_mock = cast(AsyncMock, client.recipes_api.update_recipe_connection)
+    await_args = update_recipe_mock.await_args
+    assert await_args is not None
+    args = await_args.kwargs
     update_body = args["recipe_connection_update_request"]
     assert update_body.adapter_name == "box"
     assert update_body.connection_id == 222
@@ -791,7 +836,7 @@ def test_display_recipe_errors_with_string_config(capture_echo: list[str]) -> No
         config_errors=["Generic problem"],
     )
 
-    command._display_recipe_errors(response)
+    command._display_recipe_errors(cast("RecipeStartResponse", response))
 
     assert any("Generic problem" in line for line in capture_echo)
 
@@ -810,7 +855,8 @@ async def test_list_recipes_no_results(
         AsyncMock(return_value=[]),
     )
 
-    await command.list_recipes.callback(
+    list_recipes_cb = _get_callback(command.list_recipes)
+    await list_recipes_cb(
         running=True,
         config_manager=config_manager,
     )

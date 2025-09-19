@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
 from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -18,6 +20,21 @@ from workato_platform.cli.commands.data_tables import (
 from workato_platform.client.workato_api.models.data_table_column_request import (
     DataTableColumnRequest,
 )
+
+
+if TYPE_CHECKING:
+    from workato_platform import Workato
+    from workato_platform.client.workato_api.models.data_table import DataTable
+
+
+def _get_callback(cmd: Any) -> Callable[..., Any]:
+    callback = cmd.callback
+    assert callback is not None
+    return cast(Callable[..., Any], callback)
+
+
+def _workato_stub(**kwargs: Any) -> Workato:
+    return cast("Workato", SimpleNamespace(**kwargs))
 
 
 class DummySpinner:
@@ -62,13 +79,14 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
 async def test_list_data_tables_empty(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
-    workato_client = SimpleNamespace(
+    workato_client = _workato_stub(
         data_tables_api=SimpleNamespace(
             list_data_tables=AsyncMock(return_value=SimpleNamespace(data=[]))
         )
     )
 
-    await list_data_tables.callback(workato_api_client=workato_client)
+    list_cb = _get_callback(list_data_tables)
+    await list_cb(workato_api_client=workato_client)
 
     output = "\n".join(capture_echo)
     assert "No data tables found" in output
@@ -89,13 +107,14 @@ async def test_list_data_tables_with_entries(
         created_at=datetime(2024, 1, 1),
         updated_at=datetime(2024, 1, 2),
     )
-    workato_client = SimpleNamespace(
+    workato_client = _workato_stub(
         data_tables_api=SimpleNamespace(
             list_data_tables=AsyncMock(return_value=SimpleNamespace(data=[table]))
         )
     )
 
-    await list_data_tables.callback(workato_api_client=workato_client)
+    list_cb = _get_callback(list_data_tables)
+    await list_cb(workato_api_client=workato_client)
 
     output = "\n".join(capture_echo)
     assert "Sales" in output
@@ -104,34 +123,29 @@ async def test_list_data_tables_with_entries(
 
 @pytest.mark.asyncio
 async def test_create_data_table_missing_schema(capture_echo: list[str]) -> None:
-    await create_data_table.callback(
-        name="Table", schema_json=None, config_manager=Mock()
-    )
+    create_cb = _get_callback(create_data_table)
+    await create_cb(name="Table", schema_json=None, config_manager=Mock())
     assert any("Schema is required" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
-async def test_create_data_table_no_folder(
-    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
-) -> None:
+async def test_create_data_table_no_folder(capture_echo: list[str]) -> None:
     config_manager = Mock()
     config_manager.load_config.return_value = SimpleNamespace(folder_id=None)
 
-    await create_data_table.callback(
-        name="Table", schema_json="[]", config_manager=config_manager
-    )
+    create_cb = _get_callback(create_data_table)
+    await create_cb(name="Table", schema_json="[]", config_manager=config_manager)
 
     assert any("No folder ID" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
-async def test_create_data_table_invalid_json(
-    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
-) -> None:
+async def test_create_data_table_invalid_json(capture_echo: list[str]) -> None:
     config_manager = Mock()
     config_manager.load_config.return_value = SimpleNamespace(folder_id=1)
 
-    await create_data_table.callback(
+    create_cb = _get_callback(create_data_table)
+    await create_cb(
         name="Table", schema_json="{invalid}", config_manager=config_manager
     )
 
@@ -139,15 +153,12 @@ async def test_create_data_table_invalid_json(
 
 
 @pytest.mark.asyncio
-async def test_create_data_table_invalid_schema_type(
-    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
-) -> None:
+async def test_create_data_table_invalid_schema_type(capture_echo: list[str]) -> None:
     config_manager = Mock()
     config_manager.load_config.return_value = SimpleNamespace(folder_id=1)
 
-    await create_data_table.callback(
-        name="Table", schema_json="{}", config_manager=config_manager
-    )
+    create_cb = _get_callback(create_data_table)
+    await create_cb(name="Table", schema_json="{}", config_manager=config_manager)
 
     assert any("Schema must be an array" in line for line in capture_echo)
 
@@ -164,9 +175,8 @@ async def test_create_data_table_validation_errors(
         lambda schema: ["Error"],
     )
 
-    await create_data_table.callback(
-        name="Table", schema_json="[]", config_manager=config_manager
-    )
+    create_cb = _get_callback(create_data_table)
+    await create_cb(name="Table", schema_json="[]", config_manager=config_manager)
 
     assert any("Schema validation failed" in line for line in capture_echo)
 
@@ -186,18 +196,15 @@ async def test_create_data_table_success(monkeypatch: pytest.MonkeyPatch) -> Non
         create_table_mock,
     )
 
-    await create_data_table.callback(
-        name="Table", schema_json="[]", config_manager=config_manager
-    )
+    create_cb = _get_callback(create_data_table)
+    await create_cb(name="Table", schema_json="[]", config_manager=config_manager)
 
     create_table_mock.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_create_table_calls_api(
-    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
-) -> None:
-    connections = SimpleNamespace(
+async def test_create_table_calls_api(capture_echo: list[str]) -> None:
+    connections = _workato_stub(
         data_tables_api=SimpleNamespace(
             create_data_table=AsyncMock(
                 return_value=SimpleNamespace(
@@ -221,7 +228,8 @@ async def test_create_table_calls_api(
     project_manager = SimpleNamespace(handle_post_api_sync=AsyncMock())
 
     schema = [DataTableColumnRequest(name="col", type="string", optional=False)]
-    await create_table.__wrapped__(
+    create_table_fn = cast(Any, create_table).__wrapped__
+    await create_table_fn(
         name="Table",
         folder_id=4,
         schema=schema,
@@ -288,7 +296,7 @@ def test_display_table_summary(capture_echo: list[str]) -> None:
         updated_at=datetime(2024, 1, 2),
     )
 
-    display_table_summary(table)
+    display_table_summary(cast("DataTable", table))
 
     output = "\n".join(capture_echo)
     assert "Table" in output
