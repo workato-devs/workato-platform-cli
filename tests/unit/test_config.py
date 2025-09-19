@@ -296,6 +296,7 @@ class TestProfileManager:
         readonly_dir.chmod(0o444)  # Read-only
 
         profile_manager.global_config_dir = readonly_dir
+        profile_manager.credentials_file = readonly_dir / "credentials"
 
         credentials = CredentialsConfig(current_profile=None, profiles={})
 
@@ -321,6 +322,7 @@ class TestProfileManager:
         """Test deleting current profile resets current_profile to None"""
         profile_manager = ProfileManager()
         profile_manager.global_config_dir = temp_config_dir
+        profile_manager.credentials_file = temp_config_dir / "credentials"
 
         # Set up existing credentials with current profile
         credentials = CredentialsConfig(
