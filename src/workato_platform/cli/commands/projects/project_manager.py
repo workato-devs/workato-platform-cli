@@ -1,7 +1,8 @@
 """ProjectManager for handling Workato project operations"""
 
 import os
-import subprocess
+import shutil
+import subprocess  # noqa: S404
 import time
 import zipfile
 
@@ -256,8 +257,15 @@ class ProjectManager:
         click.echo()
         click.echo("🔄 Auto-syncing project files...")
         try:
-            result = subprocess.run(
-                ["workato", "pull"],  # noqa: S607, S603
+            # Find the workato executable to use full path for security
+            workato_exe = shutil.which("workato")
+            if workato_exe is None:
+                click.echo("⚠️  Could not find workato executable for auto-sync")
+                return
+
+            # Secure subprocess call: hardcoded command, validated executable path
+            result = subprocess.run(  # noqa: S603
+                [workato_exe, "pull"],
                 capture_output=True,
                 text=True,
                 timeout=30,

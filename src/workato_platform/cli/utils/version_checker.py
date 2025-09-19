@@ -107,6 +107,7 @@ class VersionChecker:
                 )
 
             request = urllib.request.Request(PYPI_API_URL)  # noqa: S310
+            # Secure: URL scheme validated above, HTTPS only, proper SSL context
             with urllib.request.urlopen(  # noqa: S310
                 request, timeout=REQUEST_TIMEOUT, context=ssl_context
             ) as response:
