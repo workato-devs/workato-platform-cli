@@ -7,6 +7,8 @@ import pytest
 
 from asyncclick.testing import CliRunner
 
+from workato_platform import Workato
+from workato_platform.cli.cli import cli
 from workato_platform.cli.commands.connections import (
     OAUTH_TIMEOUT,
     _get_callback_url_from_api_host,
@@ -28,13 +30,19 @@ from workato_platform.cli.commands.connections import (
     update,
     update_connection,
 )
+from workato_platform.cli.commands.projects.project_manager import ProjectManager
+from workato_platform.cli.utils.config import ConfigManager
+from workato_platform.client.workato_api.models.connection import Connection
+from workato_platform.client.workato_api.models.connection_update_request import (
+    ConnectionUpdateRequest,
+)
 
 
 class TestConnectionsCommand:
     """Test the connections command and subcommands."""
 
     @pytest.mark.asyncio
-    async def test_connections_command_group_exists(self):
+    async def test_connections_command_group_exists(self) -> None:
         """Test that connections command group can be invoked."""
         runner = CliRunner()
         result = await runner.invoke(connections, ["--help"])
@@ -44,10 +52,13 @@ class TestConnectionsCommand:
 
     @patch("workato_platform.cli.commands.connections.Container")
     @pytest.mark.asyncio
-    async def test_connections_create_oauth_command(self, mock_container):
+    async def test_connections_create_oauth_command(self, mock_container: Mock) -> None:
         """Test the create-oauth subcommand."""
         mock_workato_client = Mock()
-        mock_workato_client.connections_api.create_runtime_user_connection.return_value = Mock(
+        create_runtime_user_connection = (
+            mock_workato_client.connections_api.create_runtime_user_connection
+        )
+        create_runtime_user_connection.return_value = Mock(
             data=Mock(id=12345, name="Test Connection")
         )
 
@@ -75,10 +86,8 @@ class TestConnectionsCommand:
 
     @patch("workato_platform.cli.containers.Container")
     @pytest.mark.asyncio
-    async def test_connections_list_command(self, mock_container):
+    async def test_connections_list_command(self, mock_container: Mock) -> None:
         """Test the list command through CLI."""
-        from workato_platform.cli.cli import cli
-
         mock_workato_client = Mock()
         mock_workato_client.connections_api.list_connections.return_value = Mock(
             items=[
@@ -99,10 +108,8 @@ class TestConnectionsCommand:
 
     @patch("workato_platform.cli.containers.Container")
     @pytest.mark.asyncio
-    async def test_connections_list_with_filters(self, mock_container):
+    async def test_connections_list_with_filters(self, mock_container: Mock) -> None:
         """Test the list subcommand with filters."""
-        from workato_platform.cli.cli import cli
-
         mock_workato_client = Mock()
         mock_workato_client.connections_api.list_connections.return_value = Mock(
             items=[]
@@ -122,10 +129,10 @@ class TestConnectionsCommand:
 
     @patch("workato_platform.cli.containers.Container")
     @pytest.mark.asyncio
-    async def test_connections_get_oauth_url_command(self, mock_container):
+    async def test_connections_get_oauth_url_command(
+        self, mock_container: Mock
+    ) -> None:
         """Test the get-oauth-url subcommand."""
-        from workato_platform.cli.cli import cli
-
         mock_workato_client = Mock()
         mock_workato_client.connections_api.get_connection_oauth_url.return_value = (
             Mock(oauth_url="https://login.salesforce.com/oauth2/authorize?...")
@@ -145,10 +152,8 @@ class TestConnectionsCommand:
 
     @patch("workato_platform.cli.containers.Container")
     @pytest.mark.asyncio
-    async def test_connections_pick_list_command(self, mock_container):
+    async def test_connections_pick_list_command(self, mock_container: Mock) -> None:
         """Test the pick-list subcommand."""
-        from workato_platform.cli.cli import cli
-
         mock_workato_client = Mock()
         mock_workato_client.connections_api.get_connection_pick_list.return_value = [
             {"label": "Option 1", "value": "opt1"},
@@ -177,10 +182,8 @@ class TestConnectionsCommand:
 
     @patch("workato_platform.cli.containers.Container")
     @pytest.mark.asyncio
-    async def test_connections_pick_lists_command(self, mock_container):
+    async def test_connections_pick_lists_command(self, mock_container: Mock) -> None:
         """Test the pick-lists subcommand."""
-        from workato_platform.cli.cli import cli
-
         mock_container_instance = Mock()
         mock_connector_manager = Mock()
         mock_connector_manager.get_connector_pick_lists.return_value = {
@@ -198,7 +201,7 @@ class TestConnectionsCommand:
         assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_connections_create_oauth_command_help(self):
+    async def test_connections_create_oauth_command_help(self) -> None:
         """Test create-oauth command shows help without error."""
         runner = CliRunner()
         result = await runner.invoke(create_oauth, ["--help"])
@@ -208,9 +211,8 @@ class TestConnectionsCommand:
 
     @patch("workato_platform.cli.containers.Container")
     @pytest.mark.asyncio
-    async def test_connections_update_command(self, mock_container):
+    async def test_connections_update_command(self, mock_container: Mock) -> None:
         """Test the update subcommand."""
-        from workato_platform.cli.cli import cli
 
         mock_workato_client = Mock()
         mock_workato_client.connections_api.update_connection.return_value = Mock(
@@ -239,7 +241,7 @@ class TestConnectionsCommand:
 
     @patch("workato_platform.cli.commands.connections.Container")
     @pytest.mark.asyncio
-    async def test_connections_error_handling(self, mock_container):
+    async def test_connections_error_handling(self, mock_container: Mock) -> None:
         """Test error handling in connections commands."""
         mock_workato_client = Mock()
         mock_workato_client.connections_api.list_connections.side_effect = Exception(
@@ -259,7 +261,7 @@ class TestConnectionsCommand:
         assert result.exit_code in [0, 1]
 
     @pytest.mark.asyncio
-    async def test_connections_helper_functions(self):
+    async def test_connections_helper_functions(self) -> None:
         """Test helper functions in connections module."""
         # Test helper functions that might exist
         from workato_platform.cli.commands.connections import (
@@ -273,10 +275,8 @@ class TestConnectionsCommand:
 
     @patch("workato_platform.cli.commands.connections.Container")
     @pytest.mark.asyncio
-    async def test_connections_oauth_polling(self, mock_container):
+    async def test_connections_oauth_polling(self, mock_container: Mock) -> None:
         """Test OAuth connection status polling."""
-        mock_workato_client = Mock()
-
         # Mock polling function if it exists
         try:
             from workato_platform.cli.commands.connections import (
@@ -295,37 +295,37 @@ class TestConnectionsCommand:
 class TestUtilityFunctions:
     """Test utility functions in connections module."""
 
-    def test_get_callback_url_from_api_host_empty(self):
+    def test_get_callback_url_from_api_host_empty(self) -> None:
         """Test _get_callback_url_from_api_host with empty string."""
         result = _get_callback_url_from_api_host("")
         assert result == "https://app.workato.com/"
 
-    def test_get_callback_url_from_api_host_none(self):
+    def test_get_callback_url_from_api_host_none(self) -> None:
         """Test _get_callback_url_from_api_host with None."""
         result = _get_callback_url_from_api_host("")
         assert result == "https://app.workato.com/"
 
-    def test_get_callback_url_from_api_host_workato_com(self):
+    def test_get_callback_url_from_api_host_workato_com(self) -> None:
         """Test _get_callback_url_from_api_host with workato.com."""
         result = _get_callback_url_from_api_host("https://workato.com")
         assert result == "https://app.workato.com/"
 
-    def test_get_callback_url_from_api_host_ends_with_workato_com(self):
+    def test_get_callback_url_from_api_host_ends_with_workato_com(self) -> None:
         """Test _get_callback_url_from_api_host with hostname ending in .workato.com."""
         result = _get_callback_url_from_api_host("https://custom.workato.com")
         assert result == "https://app.workato.com/"
 
-    def test_get_callback_url_from_api_host_exception(self):
-        """Test _get_callback_url_from_api_host with invalid URL that causes exception."""
+    def test_get_callback_url_from_api_host_exception(self) -> None:
+        """Test _get_callback_url_from_api_host with invalid URL."""
         result = _get_callback_url_from_api_host("invalid-url")
         assert result == "https://app.workato.com/"
 
-    def test_get_callback_url_from_api_host_other_domain(self):
+    def test_get_callback_url_from_api_host_other_domain(self) -> None:
         """Test _get_callback_url_from_api_host with non-workato domain."""
         result = _get_callback_url_from_api_host("https://example.com")
         assert result == "https://app.workato.com/"
 
-    def test_get_callback_url_from_api_host_parse_failure(self):
+    def test_get_callback_url_from_api_host_parse_failure(self) -> None:
         """Test _get_callback_url_from_api_host when urlparse raises."""
         with patch(
             "workato_platform.cli.commands.connections.urlparse",
@@ -335,27 +335,27 @@ class TestUtilityFunctions:
 
         assert result == "https://app.workato.com/"
 
-    def test_parse_connection_input_none(self):
+    def test_parse_connection_input_none(self) -> None:
         """Test parse_connection_input with None input."""
         result = parse_connection_input(None)
         assert result is None
 
-    def test_parse_connection_input_empty(self):
+    def test_parse_connection_input_empty(self) -> None:
         """Test parse_connection_input with empty string."""
         result = parse_connection_input("")
         assert result is None
 
-    def test_parse_connection_input_valid_json(self):
+    def test_parse_connection_input_valid_json(self) -> None:
         """Test parse_connection_input with valid JSON."""
         result = parse_connection_input('{"key": "value"}')
         assert result == {"key": "value"}
 
-    def test_parse_connection_input_invalid_json(self):
+    def test_parse_connection_input_invalid_json(self) -> None:
         """Test parse_connection_input with invalid JSON."""
         result = parse_connection_input('{"key": "value"')
         assert result is None
 
-    def test_parse_connection_input_non_dict(self):
+    def test_parse_connection_input_non_dict(self) -> None:
         """Test parse_connection_input with JSON that's not a dict."""
         result = parse_connection_input('["list", "not", "dict"]')
         assert result is None
@@ -365,13 +365,13 @@ class TestOAuthFlowFunctions:
     """Test OAuth flow related functions."""
 
     @pytest.mark.asyncio
-    async def test_requires_oauth_flow_empty_provider(self):
+    async def test_requires_oauth_flow_empty_provider(self) -> None:
         """Test requires_oauth_flow with empty provider."""
         result = await requires_oauth_flow("")
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_requires_oauth_flow_none_provider(self):
+    async def test_requires_oauth_flow_none_provider(self) -> None:
         """Test requires_oauth_flow with None provider."""
         result = await requires_oauth_flow("")
         assert result is False
@@ -379,7 +379,9 @@ class TestOAuthFlowFunctions:
     @patch("workato_platform.cli.commands.connections.is_platform_oauth_provider")
     @patch("workato_platform.cli.commands.connections.is_custom_connector_oauth")
     @pytest.mark.asyncio
-    async def test_requires_oauth_flow_platform_oauth(self, mock_custom, mock_platform):
+    async def test_requires_oauth_flow_platform_oauth(
+        self, mock_custom: Mock, mock_platform: Mock
+    ) -> None:
         """Test requires_oauth_flow with platform OAuth provider."""
         mock_platform.return_value = True
         mock_custom.return_value = False
@@ -390,7 +392,9 @@ class TestOAuthFlowFunctions:
     @patch("workato_platform.cli.commands.connections.is_platform_oauth_provider")
     @patch("workato_platform.cli.commands.connections.is_custom_connector_oauth")
     @pytest.mark.asyncio
-    async def test_requires_oauth_flow_custom_oauth(self, mock_custom, mock_platform):
+    async def test_requires_oauth_flow_custom_oauth(
+        self, mock_custom: Mock, mock_platform: Mock
+    ) -> None:
         """Test requires_oauth_flow with custom OAuth provider."""
         mock_platform.return_value = False
         mock_custom.return_value = True
@@ -399,7 +403,7 @@ class TestOAuthFlowFunctions:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_is_platform_oauth_provider(self):
+    async def test_is_platform_oauth_provider(self) -> None:
         """Test is_platform_oauth_provider function."""
         connector_manager = AsyncMock()
         connector_manager.list_platform_connectors.return_value = [
@@ -413,21 +417,21 @@ class TestOAuthFlowFunctions:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_is_custom_connector_oauth(self):
+    async def test_is_custom_connector_oauth(self) -> None:
         """Test is_custom_connector_oauth function."""
-        connections_api = SimpleNamespace(
-            list_custom_connectors=AsyncMock(
-                return_value=SimpleNamespace(
-                    result=[SimpleNamespace(name="custom_connector", id=123)]
-                )
-            ),
-            get_custom_connector_code=AsyncMock(
-                return_value=SimpleNamespace(
-                    data=SimpleNamespace(code="oauth authorization_url client_id")
-                )
-            ),
+        connections_api = Mock()
+        connections_api.list_custom_connectors = AsyncMock(
+            return_value=SimpleNamespace(
+                result=[SimpleNamespace(name="custom_connector", id=123)]
+            )
         )
-        workato_client = SimpleNamespace(connectors_api=connections_api)
+        connections_api.get_custom_connector_code = AsyncMock(
+            return_value=SimpleNamespace(
+                data=SimpleNamespace(code="oauth authorization_url client_id")
+            )
+        )
+        workato_client = Mock()
+        workato_client.connectors_api = connections_api
 
         result = await is_custom_connector_oauth(
             "custom_connector", workato_api_client=workato_client
@@ -435,17 +439,17 @@ class TestOAuthFlowFunctions:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_is_custom_connector_oauth_not_found(self):
+    async def test_is_custom_connector_oauth_not_found(self) -> None:
         """Test is_custom_connector_oauth with connector not found."""
-        connections_api = SimpleNamespace(
-            list_custom_connectors=AsyncMock(
-                return_value=SimpleNamespace(
-                    result=[SimpleNamespace(name="other_connector", id=123)]
-                )
-            ),
-            get_custom_connector_code=AsyncMock(),
+        connections_api = Mock()
+        connections_api.list_custom_connectors = AsyncMock(
+            return_value=SimpleNamespace(
+                result=[SimpleNamespace(name="other_connector", id=123)]
+            )
         )
-        workato_client = SimpleNamespace(connectors_api=connections_api)
+        connections_api.get_custom_connector_code = AsyncMock()
+        workato_client = Mock()
+        workato_client.connectors_api = connections_api
 
         result = await is_custom_connector_oauth(
             "custom_connector", workato_api_client=workato_client
@@ -453,17 +457,17 @@ class TestOAuthFlowFunctions:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_is_custom_connector_oauth_no_id(self):
+    async def test_is_custom_connector_oauth_no_id(self) -> None:
         """Test is_custom_connector_oauth with connector having no ID."""
-        connections_api = SimpleNamespace(
-            list_custom_connectors=AsyncMock(
-                return_value=SimpleNamespace(
-                    result=[SimpleNamespace(name="custom_connector", id=None)]
-                )
-            ),
-            get_custom_connector_code=AsyncMock(),
+        connections_api = Mock()
+        connections_api.list_custom_connectors = AsyncMock(
+            return_value=SimpleNamespace(
+                result=[SimpleNamespace(name="custom_connector", id=None)]
+            )
         )
-        workato_client = SimpleNamespace(connectors_api=connections_api)
+        connections_api.get_custom_connector_code = AsyncMock()
+        workato_client = Mock()
+        workato_client.connectors_api = connections_api
 
         result = await is_custom_connector_oauth(
             "custom_connector", workato_api_client=workato_client
@@ -474,27 +478,27 @@ class TestOAuthFlowFunctions:
 class TestConnectionListingFunctions:
     """Test connection listing helper functions."""
 
-    def test_group_connections_by_provider(self):
+    def test_group_connections_by_provider(self) -> None:
         """Test group_connections_by_provider function."""
 
         # Create mock connections with proper attributes
-        conn1 = Mock()
+        conn1 = Mock(spec=Connection)
         conn1.application = "salesforce"
         conn1.name = "SF1"
 
-        conn2 = Mock()
+        conn2 = Mock(spec=Connection)
         conn2.application = "hubspot"
         conn2.name = "HS1"
 
-        conn3 = Mock()
+        conn3 = Mock(spec=Connection)
         conn3.application = "salesforce"
         conn3.name = "SF2"
 
-        conn4 = Mock()
+        conn4 = Mock(spec=Connection)
         conn4.application = "custom"
         conn4.name = "Unknown"
 
-        connections = [conn1, conn2, conn3, conn4]
+        connections: list[Connection] = [conn1, conn2, conn3, conn4]
 
         result = group_connections_by_provider(connections)
 
@@ -506,7 +510,7 @@ class TestConnectionListingFunctions:
         assert len(result["Custom"]) == 1
 
     @patch("workato_platform.cli.commands.connections.click.echo")
-    def test_display_connection_summary(self, mock_echo):
+    def test_display_connection_summary(self, mock_echo: Mock) -> None:
         """Test display_connection_summary function."""
         from workato_platform.client.workato_api.models.connection import Connection
 
@@ -526,22 +530,22 @@ class TestConnectionListingFunctions:
         assert mock_echo.call_count > 0
 
     @patch("workato_platform.cli.commands.connections.click.echo")
-    def test_show_connection_statistics(self, mock_echo):
+    def test_show_connection_statistics(self, mock_echo: Mock) -> None:
         """Test show_connection_statistics function."""
         # Create mock connections with proper attributes
-        conn1 = Mock()
+        conn1 = Mock(spec=Connection)
         conn1.authorization_status = "success"
         conn1.provider = "salesforce"
 
-        conn2 = Mock()
+        conn2 = Mock(spec=Connection)
         conn2.authorization_status = "failed"
         conn2.provider = "hubspot"
 
-        conn3 = Mock()
+        conn3 = Mock(spec=Connection)
         conn3.authorization_status = "success"
         conn3.provider = "salesforce"
 
-        connections = [conn1, conn2, conn3]
+        connections: list[Connection] = [conn1, conn2, conn3]
 
         show_connection_statistics(connections)
 
@@ -553,32 +557,37 @@ class TestConnectionCreationEdgeCases:
     """Test edge cases in connection creation."""
 
     @pytest.mark.asyncio
-    async def test_create_missing_provider_and_name(self):
+    async def test_create_missing_provider_and_name(self) -> None:
         """Test create command with missing provider and name."""
         with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
+            assert create.callback
             await create.callback(
                 name="",
                 provider="",
-                workato_api_client=Mock(),
+                workato_api_client=Mock(spec=Workato),
                 config_manager=Mock(),
                 connector_manager=Mock(),
             )
 
-        assert any("Provider and name are required" in call.args[0] for call in mock_echo.call_args_list)
+        assert any(
+            "Provider and name are required" in call.args[0]
+            for call in mock_echo.call_args_list
+        )
 
     @pytest.mark.asyncio
-    async def test_create_invalid_json_input(self):
+    async def test_create_invalid_json_input(self) -> None:
         """Test create command with invalid JSON input."""
         config_manager = SimpleNamespace(
             load_config=Mock(return_value=SimpleNamespace(folder_id=123))
         )
 
         with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
+            assert create.callback
             await create.callback(
                 name="Test",
                 provider="salesforce",
                 input_params='{"invalid": json}',
-                workato_api_client=Mock(),
+                workato_api_client=Mock(spec=Workato),
                 config_manager=config_manager,
                 connector_manager=Mock(),
             )
@@ -586,11 +595,13 @@ class TestConnectionCreationEdgeCases:
         assert any("Invalid JSON" in call.args[0] for call in mock_echo.call_args_list)
 
     @pytest.mark.asyncio
-    async def test_create_oauth_browser_error(self):
+    async def test_create_oauth_browser_error(self) -> None:
         """Test create OAuth command with browser opening error."""
         connections_api = SimpleNamespace(
             create_runtime_user_connection=AsyncMock(
-                return_value=SimpleNamespace(data=SimpleNamespace(id=123, url="https://oauth.example.com"))
+                return_value=SimpleNamespace(
+                    data=SimpleNamespace(id=123, url="https://oauth.example.com")
+                )
             )
         )
         workato_client = SimpleNamespace(connections_api=connections_api)
@@ -599,15 +610,18 @@ class TestConnectionCreationEdgeCases:
             api_host="https://www.workato.com",
         )
 
-        with patch(
-            "workato_platform.cli.commands.connections.webbrowser.open",
-            side_effect=OSError("Browser error"),
-        ), patch(
-            "workato_platform.cli.commands.connections.poll_oauth_connection_status",
-            new=AsyncMock(),
-        ), patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with (
+            patch(
+                "workato_platform.cli.commands.connections.webbrowser.open",
+                side_effect=OSError("Browser error"),
+            ),
+            patch(
+                "workato_platform.cli.commands.connections.poll_oauth_connection_status",
+                new=AsyncMock(),
+            ),
+            patch("workato_platform.cli.commands.connections.click.echo") as mock_echo,
+        ):
+            assert create_oauth.callback
             await create_oauth.callback(
                 parent_id=123,
                 external_id="test@example.com",
@@ -623,16 +637,15 @@ class TestConnectionCreationEdgeCases:
         assert any("Could not open browser" in message for message in messages)
 
     @pytest.mark.asyncio
-    async def test_create_oauth_missing_folder_id(self):
+    async def test_create_oauth_missing_folder_id(self) -> None:
         """Test create-oauth when folder cannot be resolved."""
         config_manager = SimpleNamespace(
             load_config=Mock(return_value=SimpleNamespace(folder_id=None)),
             api_host="https://www.workato.com",
         )
 
-        with patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
+            assert create_oauth.callback
             await create_oauth.callback(
                 parent_id=1,
                 external_id="user@example.com",
@@ -652,7 +665,7 @@ class TestConnectionCreationEdgeCases:
         assert any("No folder ID" in message for message in messages)
 
     @pytest.mark.asyncio
-    async def test_create_oauth_opens_browser_success(self):
+    async def test_create_oauth_opens_browser_success(self) -> None:
         """Test create-oauth when browser opens successfully."""
         connections_api = SimpleNamespace(
             create_runtime_user_connection=AsyncMock(
@@ -667,15 +680,18 @@ class TestConnectionCreationEdgeCases:
             api_host="https://www.workato.com",
         )
 
-        with patch(
-            "workato_platform.cli.commands.connections.webbrowser.open",
-            return_value=True,
-        ), patch(
-            "workato_platform.cli.commands.connections.poll_oauth_connection_status",
-            new=AsyncMock(),
-        ), patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with (
+            patch(
+                "workato_platform.cli.commands.connections.webbrowser.open",
+                return_value=True,
+            ),
+            patch(
+                "workato_platform.cli.commands.connections.poll_oauth_connection_status",
+                new=AsyncMock(),
+            ),
+            patch("workato_platform.cli.commands.connections.click.echo") as mock_echo,
+        ):
+            assert create_oauth.callback
             await create_oauth.callback(
                 parent_id=2,
                 external_id="user@example.com",
@@ -691,14 +707,16 @@ class TestConnectionCreationEdgeCases:
         assert any("Opening OAuth URL in browser" in message for message in messages)
 
     @pytest.mark.asyncio
-    async def test_get_oauth_url_browser_error(self):
+    async def test_get_oauth_url_browser_error(self) -> None:
         """Test get OAuth URL with browser opening error."""
-        connections_api = SimpleNamespace(
-            get_connection_oauth_url=AsyncMock(
-                return_value=SimpleNamespace(data=SimpleNamespace(url="https://oauth.example.com"))
+        connections_api = Mock()
+        connections_api.get_connection_oauth_url = AsyncMock(
+            return_value=SimpleNamespace(
+                data=SimpleNamespace(url="https://oauth.example.com")
             )
         )
-        workato_client = SimpleNamespace(connections_api=connections_api)
+        workato_client = Mock(spec=Workato)
+        workato_client.connections_api = connections_api
 
         spinner_stub = SimpleNamespace(
             start=lambda: None,
@@ -706,15 +724,17 @@ class TestConnectionCreationEdgeCases:
             update_message=lambda *_: None,
         )
 
-        with patch(
-            "workato_platform.cli.commands.connections.Spinner",
-            return_value=spinner_stub,
-        ), patch(
-            "workato_platform.cli.commands.connections.webbrowser.open",
-            side_effect=OSError("Browser error"),
-        ), patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with (
+            patch(
+                "workato_platform.cli.commands.connections.Spinner",
+                return_value=spinner_stub,
+            ),
+            patch(
+                "workato_platform.cli.commands.connections.webbrowser.open",
+                side_effect=OSError("Browser error"),
+            ),
+            patch("workato_platform.cli.commands.connections.click.echo") as mock_echo,
+        ):
             await get_connection_oauth_url(
                 connection_id=123,
                 open_browser=True,
@@ -729,7 +749,7 @@ class TestConnectionCreationEdgeCases:
         assert any("Could not open browser" in message for message in messages)
 
     @pytest.mark.asyncio
-    async def test_update_connection_unauthorized_status(self):
+    async def test_update_connection_unauthorized_status(self) -> None:
         """Test update connection with unauthorized status."""
         connections_api = SimpleNamespace(
             update_connection=AsyncMock(
@@ -744,12 +764,9 @@ class TestConnectionCreationEdgeCases:
                 )
             )
         )
-        workato_client = SimpleNamespace(connections_api=connections_api)
-        project_manager = SimpleNamespace(handle_post_api_sync=AsyncMock())
-
-        from workato_platform.client.workato_api.models.connection_update_request import (
-            ConnectionUpdateRequest,
-        )
+        workato_client = Mock(spec=Workato)
+        workato_client.connections_api = connections_api
+        project_manager = Mock(spec=ProjectManager)
 
         update_request = ConnectionUpdateRequest(name="Updated Connection")
 
@@ -758,12 +775,13 @@ class TestConnectionCreationEdgeCases:
             stop=lambda: 0.3,
         )
 
-        with patch(
-            "workato_platform.cli.commands.connections.Spinner",
-            return_value=spinner_stub,
-        ), patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with (
+            patch(
+                "workato_platform.cli.commands.connections.Spinner",
+                return_value=spinner_stub,
+            ),
+            patch("workato_platform.cli.commands.connections.click.echo") as mock_echo,
+        ):
             await update_connection(
                 123,
                 update_request,
@@ -780,7 +798,7 @@ class TestConnectionCreationEdgeCases:
         assert any("Not authorized" in message for message in messages)
 
     @pytest.mark.asyncio
-    async def test_update_connection_authorized_status(self):
+    async def test_update_connection_authorized_status(self) -> None:
         """Test update_connection displays authorized details and updated fields."""
         connections_api = SimpleNamespace(
             update_connection=AsyncMock(
@@ -795,12 +813,9 @@ class TestConnectionCreationEdgeCases:
                 )
             )
         )
-        workato_client = SimpleNamespace(connections_api=connections_api)
-        project_manager = SimpleNamespace(handle_post_api_sync=AsyncMock())
-
-        from workato_platform.client.workato_api.models.connection_update_request import (
-            ConnectionUpdateRequest,
-        )
+        workato_client = Mock(spec=Workato)
+        workato_client.connections_api = connections_api
+        project_manager = Mock(spec=ProjectManager)
 
         update_request = ConnectionUpdateRequest(
             name="Ready",
@@ -816,12 +831,13 @@ class TestConnectionCreationEdgeCases:
             stop=lambda: 1.2,
         )
 
-        with patch(
-            "workato_platform.cli.commands.connections.Spinner",
-            return_value=spinner_stub,
-        ), patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with (
+            patch(
+                "workato_platform.cli.commands.connections.Spinner",
+                return_value=spinner_stub,
+            ),
+            patch("workato_platform.cli.commands.connections.click.echo") as mock_echo,
+        ):
             await update_connection(
                 77,
                 update_request,
@@ -840,9 +856,10 @@ class TestConnectionCreationEdgeCases:
         assert any("Updated" in message for message in messages)
 
     @pytest.mark.asyncio
-    async def test_update_command_invalid_json(self):
+    async def test_update_command_invalid_json(self) -> None:
         """Test update command handles invalid JSON input."""
         with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
+            assert update.callback
             await update.callback(
                 connection_id=5,
                 input_params='{"oops": json}',
@@ -856,12 +873,13 @@ class TestConnectionCreationEdgeCases:
         assert any("Invalid JSON" in message for message in messages)
 
     @pytest.mark.asyncio
-    async def test_update_command_invokes_update_connection(self):
+    async def test_update_command_invokes_update_connection(self) -> None:
         """Test update command builds request and invokes update_connection."""
         with patch(
             "workato_platform.cli.commands.connections.update_connection",
             new=AsyncMock(),
         ) as mock_update:
+            assert update.callback
             await update.callback(
                 connection_id=7,
                 name="Renamed",
@@ -873,7 +891,8 @@ class TestConnectionCreationEdgeCases:
             )
 
         assert mock_update.await_count == 1
-        args, kwargs = mock_update.await_args
+        assert mock_update.await_args is not None
+        args, _ = mock_update.await_args
         request = args[1]
         assert request.name == "Renamed"
         assert request.folder_id == 50
@@ -883,13 +902,14 @@ class TestConnectionCreationEdgeCases:
         assert request.input == {"user": "a"}
 
     @pytest.mark.asyncio
-    async def test_create_missing_folder_id(self):
+    async def test_create_missing_folder_id(self) -> None:
         """Test create command when folder ID cannot be resolved."""
         config_manager = SimpleNamespace(
             load_config=Mock(return_value=SimpleNamespace(folder_id=None))
         )
 
         with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
+            assert create.callback
             await create.callback(
                 name="Test",
                 provider="salesforce",
@@ -906,7 +926,7 @@ class TestConnectionCreationEdgeCases:
         assert any("No folder ID" in message for message in messages)
 
     @pytest.mark.asyncio
-    async def test_create_oauth_success_flow(self):
+    async def test_create_oauth_success_flow(self) -> None:
         """Test create command OAuth path when automatic flow succeeds."""
         config_manager = SimpleNamespace(
             load_config=Mock(return_value=SimpleNamespace(folder_id=101)),
@@ -929,18 +949,22 @@ class TestConnectionCreationEdgeCases:
             )
         )
 
-        with patch(
-            "workato_platform.cli.commands.connections.requires_oauth_flow",
-            new=AsyncMock(return_value=True),
-        ), patch(
-            "workato_platform.cli.commands.connections.get_connection_oauth_url",
-            new=AsyncMock(),
-        ) as mock_oauth_url, patch(
-            "workato_platform.cli.commands.connections.poll_oauth_connection_status",
-            new=AsyncMock(),
-        ), patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with (
+            patch(
+                "workato_platform.cli.commands.connections.requires_oauth_flow",
+                new=AsyncMock(return_value=True),
+            ),
+            patch(
+                "workato_platform.cli.commands.connections.get_connection_oauth_url",
+                new=AsyncMock(),
+            ) as mock_oauth_url,
+            patch(
+                "workato_platform.cli.commands.connections.poll_oauth_connection_status",
+                new=AsyncMock(),
+            ),
+            patch("workato_platform.cli.commands.connections.click.echo") as mock_echo,
+        ):
+            assert create.callback
             await create.callback(
                 name="OAuth Conn",
                 provider="salesforce",
@@ -959,7 +983,7 @@ class TestConnectionCreationEdgeCases:
         assert any("OAuth provider detected" in message for message in messages)
 
     @pytest.mark.asyncio
-    async def test_create_oauth_manual_fallback(self):
+    async def test_create_oauth_manual_fallback(self) -> None:
         """Test create command OAuth path when automatic retrieval fails."""
         config_manager = SimpleNamespace(
             load_config=Mock(return_value=SimpleNamespace(folder_id=202)),
@@ -981,21 +1005,26 @@ class TestConnectionCreationEdgeCases:
             )
         )
 
-        with patch(
-            "workato_platform.cli.commands.connections.requires_oauth_flow",
-            new=AsyncMock(return_value=True),
-        ), patch(
-            "workato_platform.cli.commands.connections.get_connection_oauth_url",
-            new=AsyncMock(side_effect=RuntimeError("no url")),
-        ), patch(
-            "workato_platform.cli.commands.connections.poll_oauth_connection_status",
-            new=AsyncMock(),
-        ), patch(
-            "workato_platform.cli.commands.connections.webbrowser.open",
-            side_effect=OSError("browser blocked"),
-        ), patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with (
+            patch(
+                "workato_platform.cli.commands.connections.requires_oauth_flow",
+                new=AsyncMock(return_value=True),
+            ),
+            patch(
+                "workato_platform.cli.commands.connections.get_connection_oauth_url",
+                new=AsyncMock(side_effect=RuntimeError("no url")),
+            ),
+            patch(
+                "workato_platform.cli.commands.connections.poll_oauth_connection_status",
+                new=AsyncMock(),
+            ),
+            patch(
+                "workato_platform.cli.commands.connections.webbrowser.open",
+                side_effect=OSError("browser blocked"),
+            ),
+            patch("workato_platform.cli.commands.connections.click.echo") as mock_echo,
+        ):
+            assert create.callback
             await create.callback(
                 name="Fallback Conn",
                 provider="jira",
@@ -1016,14 +1045,15 @@ class TestPicklistFunctions:
     """Test picklist related functions."""
 
     @pytest.mark.asyncio
-    async def test_pick_list_invalid_json_params(self):
+    async def test_pick_list_invalid_json_params(self) -> None:
         """Test pick_list command with invalid JSON params."""
         with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
+            assert pick_list.callback
             await pick_list.callback(
                 id=123,
                 pick_list_name="objects",
                 params='{"invalid": json}',
-                workato_api_client=SimpleNamespace(connections_api=SimpleNamespace()),
+                workato_api_client=Mock(spec=Workato),
             )
 
         messages = [
@@ -1035,11 +1065,14 @@ class TestPicklistFunctions:
 
     @patch("workato_platform.cli.commands.connections.Path.exists")
     @patch("workato_platform.cli.commands.connections.open")
-    def test_pick_lists_data_file_not_found(self, mock_open, mock_exists):
+    def test_pick_lists_data_file_not_found(
+        self, mock_open: Mock, mock_exists: Mock
+    ) -> None:
         """Test pick_lists command when data file doesn't exist."""
         mock_exists.return_value = False
 
         with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
+            assert pick_lists.callback
             pick_lists.callback()
 
         messages = [
@@ -1051,12 +1084,15 @@ class TestPicklistFunctions:
 
     @patch("workato_platform.cli.commands.connections.Path.exists")
     @patch("workato_platform.cli.commands.connections.open")
-    def test_pick_lists_data_file_load_error(self, mock_open, mock_exists):
+    def test_pick_lists_data_file_load_error(
+        self, mock_open: Mock, mock_exists: Mock
+    ) -> None:
         """Test pick_lists command when data file fails to load."""
         mock_exists.return_value = True
         mock_open.side_effect = PermissionError("Permission denied")
 
         with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
+            assert pick_lists.callback
             pick_lists.callback()
 
         messages = [
@@ -1068,7 +1104,9 @@ class TestPicklistFunctions:
 
     @patch("workato_platform.cli.commands.connections.Path.exists")
     @patch("workato_platform.cli.commands.connections.open")
-    def test_pick_lists_adapter_not_found(self, mock_open, mock_exists):
+    def test_pick_lists_adapter_not_found(
+        self, mock_open: Mock, mock_exists: Mock
+    ) -> None:
         """Test pick_lists command with adapter not found."""
         mock_exists.return_value = True
         mock_open.return_value.__enter__.return_value.read.return_value = (
@@ -1076,6 +1114,7 @@ class TestPicklistFunctions:
         )
 
         with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
+            assert pick_lists.callback
             pick_lists.callback(adapter="nonexistent")
 
         messages = [
@@ -1092,17 +1131,17 @@ class TestOAuthPolling:
     @patch("workato_platform.cli.commands.connections.time.sleep")
     @pytest.mark.asyncio
     async def test_poll_oauth_connection_status_connection_not_found(
-        self, mock_sleep
-    ):
+        self, mock_sleep: Mock
+    ) -> None:
         """Test OAuth polling when connection is not found."""
         mock_sleep.return_value = None
 
-        connections_api = SimpleNamespace(
-            list_connections=AsyncMock(return_value=[])
-        )
-        workato_client = SimpleNamespace(connections_api=connections_api)
-        project_manager = SimpleNamespace(handle_post_api_sync=AsyncMock())
-        config_manager = SimpleNamespace(api_host="https://app.workato.com")
+        connections_api = Mock()
+        connections_api.list_connections = AsyncMock(return_value=[])
+        workato_client = Mock(spec=Workato)
+        workato_client.connections_api = connections_api
+        project_manager = Mock(spec=ProjectManager)
+        config_manager = Mock(spec=ConfigManager)
 
         spinner_stub = SimpleNamespace(
             start=lambda: None,
@@ -1110,12 +1149,13 @@ class TestOAuthPolling:
             stop=lambda: 0.1,
         )
 
-        with patch(
-            "workato_platform.cli.commands.connections.Spinner",
-            return_value=spinner_stub,
-        ), patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with (
+            patch(
+                "workato_platform.cli.commands.connections.Spinner",
+                return_value=spinner_stub,
+            ),
+            patch("workato_platform.cli.commands.connections.click.echo") as mock_echo,
+        ):
             await poll_oauth_connection_status(
                 123,
                 workato_api_client=workato_client,
@@ -1127,9 +1167,7 @@ class TestOAuthPolling:
 
     @patch("workato_platform.cli.commands.connections.time.sleep")
     @pytest.mark.asyncio
-    async def test_poll_oauth_connection_status_timeout(
-        self, mock_sleep
-    ):
+    async def test_poll_oauth_connection_status_timeout(self, mock_sleep: Mock) -> None:
         """Test OAuth polling timeout scenario."""
         mock_sleep.return_value = None
 
@@ -1141,12 +1179,12 @@ class TestOAuthPolling:
             folder_id=456,
         )
 
-        connections_api = SimpleNamespace(
-            list_connections=AsyncMock(return_value=[pending_connection])
-        )
-        workato_client = SimpleNamespace(connections_api=connections_api)
-        project_manager = SimpleNamespace(handle_post_api_sync=AsyncMock())
-        config_manager = SimpleNamespace(api_host="https://app.workato.com")
+        connections_api = Mock(spec=Workato)
+        connections_api.list_connections = AsyncMock(return_value=[pending_connection])
+        workato_client = Mock(spec=Workato)
+        workato_client.connections_api = connections_api
+        project_manager = Mock(spec=ProjectManager)
+        config_manager = Mock(spec=ConfigManager)
 
         spinner_stub = SimpleNamespace(
             start=lambda: None,
@@ -1156,15 +1194,17 @@ class TestOAuthPolling:
 
         time_values = iter([0, 1, 1, OAUTH_TIMEOUT + 1])
 
-        with patch(
-            "workato_platform.cli.commands.connections.Spinner",
-            return_value=spinner_stub,
-        ), patch(
-            "workato_platform.cli.commands.connections.time.time",
-            side_effect=lambda: next(time_values),
-        ), patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with (
+            patch(
+                "workato_platform.cli.commands.connections.Spinner",
+                return_value=spinner_stub,
+            ),
+            patch(
+                "workato_platform.cli.commands.connections.time.time",
+                side_effect=lambda: next(time_values),
+            ),
+            patch("workato_platform.cli.commands.connections.click.echo") as mock_echo,
+        ):
             await poll_oauth_connection_status(
                 123,
                 workato_api_client=workato_client,
@@ -1177,8 +1217,8 @@ class TestOAuthPolling:
     @patch("workato_platform.cli.commands.connections.time.sleep")
     @pytest.mark.asyncio
     async def test_poll_oauth_connection_status_keyboard_interrupt(
-        self, mock_sleep
-    ):
+        self, mock_sleep: Mock
+    ) -> None:
         """Test OAuth polling with keyboard interrupt."""
         pending_connection = SimpleNamespace(
             id=123,
@@ -1188,12 +1228,12 @@ class TestOAuthPolling:
             folder_id=456,
         )
 
-        connections_api = SimpleNamespace(
-            list_connections=AsyncMock(return_value=[pending_connection])
-        )
-        workato_client = SimpleNamespace(connections_api=connections_api)
-        project_manager = SimpleNamespace(handle_post_api_sync=AsyncMock())
-        config_manager = SimpleNamespace(api_host="https://app.workato.com")
+        connections_api = Mock()
+        connections_api.list_connections = AsyncMock(return_value=[pending_connection])
+        workato_client = Mock(spec=Workato)
+        workato_client.connections_api = connections_api
+        project_manager = Mock(spec=ProjectManager)
+        config_manager = Mock(spec=ConfigManager)
 
         mock_sleep.side_effect = KeyboardInterrupt()
 
@@ -1203,12 +1243,13 @@ class TestOAuthPolling:
             stop=lambda: 0.2,
         )
 
-        with patch(
-            "workato_platform.cli.commands.connections.Spinner",
-            return_value=spinner_stub,
-        ), patch(
-            "workato_platform.cli.commands.connections.click.echo"
-        ) as mock_echo:
+        with (
+            patch(
+                "workato_platform.cli.commands.connections.Spinner",
+                return_value=spinner_stub,
+            ),
+            patch("workato_platform.cli.commands.connections.click.echo") as mock_echo,
+        ):
             await poll_oauth_connection_status(
                 123,
                 workato_api_client=workato_client,
@@ -1229,7 +1270,7 @@ class TestConnectionListFilters:
 
     @patch("workato_platform.cli.commands.connections.Container")
     @pytest.mark.asyncio
-    async def test_list_connections_with_filters(self, mock_container):
+    async def test_list_connections_with_filters(self, mock_container: Mock) -> None:
         """Test list_connections with various filter combinations."""
         mock_workato_client = Mock()
         mock_workato_client.connections_api.list_connections.return_value = []

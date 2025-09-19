@@ -3,11 +3,11 @@
 import tempfile
 
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 
+from workato_platform.cli.commands.projects.project_manager import ProjectManager
 from workato_platform.cli.commands.pull import (
     _ensure_workato_in_gitignore,
     _pull_project,
@@ -17,7 +17,7 @@ from workato_platform.cli.commands.pull import (
     merge_directories,
     pull,
 )
-from workato_platform.cli.utils.config import ConfigData
+from workato_platform.cli.utils.config import ConfigData, ConfigManager
 
 
 class TestPullCommand:
@@ -253,6 +253,7 @@ class TestPullCommand:
         mock_project_manager = MagicMock()
 
         with patch("workato_platform.cli.commands.pull._pull_project") as mock_pull:
+            assert pull.callback
             await pull.callback(
                 config_manager=mock_config_manager,
                 project_manager=mock_project_manager,
@@ -266,31 +267,34 @@ class TestPullCommand:
     ) -> None:
         """Test _pull_project when current project root cannot be determined."""
 
-        class DummyConfig:
-            @property
-            def api_token(self) -> str | None:
-                return "token"
+        config_manager = ConfigManager(skip_validation=True)
 
-            def load_config(self) -> ConfigData:
-                return ConfigData(folder_id=1)
+        with (
+            patch.object(
+                type(config_manager),
+                "api_token",
+                new_callable=PropertyMock,
+                return_value="token",
+            ),
+            patch.object(
+                config_manager, "load_config", return_value=ConfigData(folder_id=1)
+            ),
+            patch.object(
+                config_manager, "get_current_project_name", return_value="demo"
+            ),
+            patch.object(config_manager, "get_project_root", return_value=None),
+        ):
+            project_manager = AsyncMock()
+            captured: list[str] = []
+            monkeypatch.setattr(
+                "workato_platform.cli.commands.pull.click.echo",
+                lambda msg="": captured.append(msg),
+            )
 
-            def get_current_project_name(self) -> str:
-                return "demo"
+            await _pull_project(config_manager, project_manager)
 
-            def get_project_root(self) -> Path | None:
-                return None
-
-        project_manager = SimpleNamespace(export_project=AsyncMock())
-        captured: list[str] = []
-        monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.echo",
-            lambda msg="": captured.append(msg),
-        )
-
-        await _pull_project(DummyConfig(), project_manager)
-
-        assert any("project root" in msg for msg in captured)
-        project_manager.export_project.assert_not_awaited()
+            assert any("project root" in msg for msg in captured)
+            project_manager.export_project.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_pull_project_merges_existing_project(
@@ -302,30 +306,19 @@ class TestPullCommand:
         project_dir.mkdir()
         (project_dir / "existing.txt").write_text("local\n", encoding="utf-8")
 
-        class DummyConfig:
-            @property
-            def api_token(self) -> str | None:
-                return "token"
+        config_manager = ConfigManager(skip_validation=True)
 
-            def load_config(self) -> ConfigData:
-                return ConfigData(project_id=1, project_name="Demo", folder_id=11)
-
-            def get_current_project_name(self) -> str:
-                return "demo"
-
-            def get_project_root(self) -> Path | None:
-                return project_dir
-
-        async def fake_export(_folder_id, _project_name, target_dir):
+        async def fake_export(
+            _folder_id: int, _project_name: str, target_dir: str
+        ) -> bool:
             target = Path(target_dir)
             target.mkdir(parents=True, exist_ok=True)
             (target / "existing.txt").write_text("remote\n", encoding="utf-8")
             (target / "new.txt").write_text("new\n", encoding="utf-8")
             return True
 
-        project_manager = SimpleNamespace(
-            export_project=AsyncMock(side_effect=fake_export)
-        )
+        project_manager = MagicMock(spec=ProjectManager)
+        project_manager.export_project = AsyncMock(side_effect=fake_export)
 
         fake_changes = {
             "added": [("new.txt", {"lines": 1})],
@@ -344,7 +337,26 @@ class TestPullCommand:
             lambda msg="": captured.append(msg),
         )
 
-        await _pull_project(DummyConfig(), project_manager)
+        with (
+            patch.object(
+                type(config_manager),
+                "api_token",
+                new_callable=PropertyMock,
+                return_value="token",
+            ),
+            patch.object(
+                config_manager,
+                "load_config",
+                return_value=ConfigData(
+                    project_id=1, project_name="Demo", folder_id=11
+                ),
+            ),
+            patch.object(
+                config_manager, "get_current_project_name", return_value="demo"
+            ),
+            patch.object(config_manager, "get_project_root", return_value=project_dir),
+        ):
+            await _pull_project(config_manager, project_manager)
 
         assert any("Successfully pulled project changes" in msg for msg in captured)
         project_manager.export_project.assert_awaited_once()
@@ -357,29 +369,18 @@ class TestPullCommand:
 
         project_dir = tmp_path / "missing_project"
 
-        class DummyConfig:
-            @property
-            def api_token(self) -> str | None:
-                return "token"
+        config_manager = ConfigManager(skip_validation=True)
 
-            def load_config(self) -> ConfigData:
-                return ConfigData(project_id=1, project_name="Demo", folder_id=9)
-
-            def get_current_project_name(self) -> str:
-                return "demo"
-
-            def get_project_root(self) -> Path | None:
-                return project_dir
-
-        async def fake_export(folder_id, project_name, target_dir):
+        async def fake_export(
+            _folder_id: int, _project_name: str, target_dir: str
+        ) -> bool:
             target = Path(target_dir)
             target.mkdir(parents=True, exist_ok=True)
             (target / "remote.txt").write_text("content", encoding="utf-8")
             return True
 
-        project_manager = SimpleNamespace(
-            export_project=AsyncMock(side_effect=fake_export)
-        )
+        project_manager = MagicMock(spec=ProjectManager)
+        project_manager.export_project = AsyncMock(side_effect=fake_export)
 
         captured: list[str] = []
         monkeypatch.setattr(
@@ -387,7 +388,24 @@ class TestPullCommand:
             lambda msg="": captured.append(msg),
         )
 
-        await _pull_project(DummyConfig(), project_manager)
+        with (
+            patch.object(
+                type(config_manager),
+                "api_token",
+                new_callable=PropertyMock,
+                return_value="token",
+            ),
+            patch.object(
+                config_manager,
+                "load_config",
+                return_value=ConfigData(project_id=1, project_name="Demo", folder_id=9),
+            ),
+            patch.object(
+                config_manager, "get_current_project_name", return_value="demo"
+            ),
+            patch.object(config_manager, "get_project_root", return_value=project_dir),
+        ):
+            await _pull_project(config_manager, project_manager)
 
         assert (project_dir / "remote.txt").exists()
         project_manager.export_project.assert_awaited_once()
@@ -404,29 +422,18 @@ class TestPullCommand:
 
         workspace_root = tmp_path
 
-        class DummyConfig:
-            @property
-            def api_token(self) -> str | None:
-                return "token"
+        config_manager = ConfigManager(skip_validation=True)
 
-            def load_config(self) -> ConfigData:
-                return ConfigData(project_id=1, project_name="Demo", folder_id=9)
-
-            def get_current_project_name(self) -> str | None:
-                return None
-
-            def get_project_root(self) -> Path | None:
-                return None
-
-        async def fake_export(folder_id, project_name, target_dir):
+        async def fake_export(
+            _folder_id: int, _project_name: str, target_dir: str
+        ) -> bool:
             target = Path(target_dir)
             target.mkdir(parents=True, exist_ok=True)
             (target / "remote.txt").write_text("content", encoding="utf-8")
             return True
 
-        project_manager = SimpleNamespace(
-            export_project=AsyncMock(side_effect=fake_export)
-        )
+        project_manager = MagicMock(spec=ProjectManager)
+        project_manager.export_project = AsyncMock(side_effect=fake_export)
 
         class StubConfig:
             def __init__(self, config_dir: Path):
@@ -448,7 +455,22 @@ class TestPullCommand:
             lambda msg="": captured.append(msg),
         )
 
-        await _pull_project(DummyConfig(), project_manager)
+        with (
+            patch.object(
+                type(config_manager),
+                "api_token",
+                new_callable=PropertyMock,
+                return_value="token",
+            ),
+            patch.object(
+                config_manager,
+                "load_config",
+                return_value=ConfigData(project_id=1, project_name="Demo", folder_id=9),
+            ),
+            patch.object(config_manager, "get_current_project_name", return_value=None),
+            patch.object(config_manager, "get_project_root", return_value=None),
+        ):
+            await _pull_project(config_manager, project_manager)
 
         project_config_dir = workspace_root / "projects" / "Demo" / "workato"
         assert project_config_dir.exists()

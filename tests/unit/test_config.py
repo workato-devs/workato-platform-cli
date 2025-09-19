@@ -5,6 +5,7 @@ import os
 
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -721,8 +722,9 @@ class TestConfigManagerWorkspace:
 
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
 
-        assert config_manager.get_project_root()
-        assert config_manager.get_project_root().resolve() == project_root.resolve()
+        project_root_result = config_manager.get_project_root()
+        assert project_root_result is not None
+        assert project_root_result.resolve() == project_root.resolve()
 
     def test_is_in_project_workspace_checks_for_workato_folder(
         self,
@@ -744,11 +746,15 @@ class TestConfigManagerWorkspace:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
-        config_manager.validate_environment_config = Mock(
-            return_value=(False, ["API token"])
-        )
 
-        with pytest.raises(SystemExit) as exc:
+        with (
+            patch.object(
+                config_manager,
+                "validate_environment_config",
+                return_value=(False, ["API token"]),
+            ),
+            pytest.raises(SystemExit) as exc,
+        ):
             config_manager._validate_env_vars_or_exit()
 
         assert exc.value.code == 1
@@ -761,10 +767,12 @@ class TestConfigManagerWorkspace:
         temp_config_dir: Path,
     ) -> None:
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
-        config_manager.validate_environment_config = Mock(return_value=(True, []))
 
-        # Should not raise
-        config_manager._validate_env_vars_or_exit()
+        with patch.object(
+            config_manager, "validate_environment_config", return_value=(True, [])
+        ):
+            # Should not raise
+            config_manager._validate_env_vars_or_exit()
 
     def test_get_default_config_dir_creates_when_missing(
         self,
@@ -821,7 +829,7 @@ class TestConfigManagerWorkspace:
 
     def test_load_config_handles_invalid_json(
         self,
-        temp_config_dir,
+        temp_config_dir: Path,
     ) -> None:
         config_file = temp_config_dir / "config.json"
         config_file.write_text("{ invalid json")
@@ -1047,7 +1055,7 @@ class TestConfigManagerInteractive:
     ) -> None:
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
 
-        class StubProfileManager:
+        class StubProfileManager(ProfileManager):
             def __init__(self) -> None:
                 self.profiles: dict[str, ProfileData] = {}
                 self.saved_profile: tuple[str, ProfileData, str] | None = None
@@ -1107,7 +1115,7 @@ class TestConfigManagerInteractive:
 
         prompt_values = iter(["new-profile", "api-token"])
 
-        def fake_prompt(*_args, **_kwargs) -> str:
+        def fake_prompt(*_args: Any, **_kwargs: Any) -> str:
             try:
                 return next(prompt_values)
             except StopIteration:
@@ -1124,12 +1132,12 @@ class TestConfigManagerInteractive:
         )
 
         class StubConfiguration(SimpleNamespace):
-            def __init__(self, **kwargs) -> None:
+            def __init__(self, **kwargs: Any) -> None:
                 super().__init__(**kwargs)
                 self.verify_ssl = False
 
         class StubWorkato:
-            def __init__(self, **_kwargs) -> None:
+            def __init__(self, **_kwargs: Any) -> None:
                 pass
 
             async def __aenter__(self) -> SimpleNamespace:
@@ -1146,7 +1154,7 @@ class TestConfigManagerInteractive:
                 )
                 return SimpleNamespace(users_api=users_api)
 
-            async def __aexit__(self, *args, **kwargs) -> None:
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 return None
 
         monkeypatch.setattr(
@@ -1154,11 +1162,12 @@ class TestConfigManagerInteractive:
         )
         monkeypatch.setattr("workato_platform.cli.utils.config.Workato", StubWorkato)
 
-        config_manager.load_config = Mock(
-            return_value=ConfigData(project_id=1, project_name="Demo")
-        )
-
-        await config_manager._run_setup_flow()
+        with patch.object(
+            config_manager,
+            "load_config",
+            return_value=ConfigData(project_id=1, project_name="Demo"),
+        ):
+            await config_manager._run_setup_flow()
 
         assert stub_profile_manager.saved_profile is not None
         assert stub_profile_manager.current_profile == "new-profile"
@@ -1167,10 +1176,10 @@ class TestConfigManagerInteractive:
         self, monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path
     ) -> None:
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
-        config_manager.profile_manager = SimpleNamespace(
-            get_profile=lambda name: None,
-            get_current_profile_data=lambda override=None: None,
-        )
+        profile_manager = Mock(spec=ProfileManager)
+        profile_manager.get_profile = lambda name: None
+        profile_manager.get_current_profile_data = lambda override=None: None
+        config_manager.profile_manager = profile_manager
 
         monkeypatch.setattr(
             "workato_platform.cli.utils.config.click.echo", lambda *a, **k: None
@@ -1191,14 +1200,14 @@ class TestConfigManagerInteractive:
         self, monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path
     ) -> None:
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
-        config_manager.profile_manager = SimpleNamespace(
-            get_profile=lambda name: ProfileData(
-                region="custom",
-                region_url="https://custom.workato.com",
-                workspace_id=1,
-            ),
-            get_current_profile_data=lambda override=None: None,
+        profile_manager = Mock(spec=ProfileManager)
+        profile_manager.get_profile = lambda name: ProfileData(
+            region="custom",
+            region_url="https://custom.workato.com",
+            workspace_id=1,
         )
+        profile_manager.get_current_profile_data = lambda override=None: None
+        config_manager.profile_manager = profile_manager
 
         monkeypatch.setattr(
             "workato_platform.cli.utils.config.click.echo", lambda *a, **k: None
@@ -1234,7 +1243,7 @@ class TestConfigManagerInteractive:
             workspace_id=999,
         )
 
-        class StubProfileManager:
+        class StubProfileManager(ProfileManager):
             def __init__(self) -> None:
                 self.profiles = {"default": existing_profile}
                 self.updated_profile: tuple[str, ProfileData, str] | None = None
@@ -1295,8 +1304,6 @@ class TestConfigManagerInteractive:
             config_manager, "select_region_interactive", lambda _: region
         )
 
-        config_manager.select_region_interactive = lambda _: region
-
         monkeypatch.setattr(
             "workato_platform.cli.utils.config.inquirer.prompt",
             lambda questions: {"profile_choice": "default"}
@@ -1304,7 +1311,7 @@ class TestConfigManagerInteractive:
             else {"project": "Create new project"},
         )
 
-        def fake_prompt(message: str, **_kwargs) -> str:
+        def fake_prompt(message: str, **_kwargs: Any) -> str:
             if "project name" in message:
                 return "New Project"
             raise AssertionError(f"Unexpected prompt: {message}")
@@ -1323,12 +1330,12 @@ class TestConfigManagerInteractive:
         )
 
         class StubConfiguration(SimpleNamespace):
-            def __init__(self, **kwargs) -> None:
+            def __init__(self, **kwargs: Any) -> None:
                 super().__init__(**kwargs)
                 self.verify_ssl = False
 
         class StubWorkato:
-            def __init__(self, **_kwargs) -> None:
+            def __init__(self, **_kwargs: Any) -> None:
                 pass
 
             async def __aenter__(self) -> SimpleNamespace:
@@ -1345,7 +1352,7 @@ class TestConfigManagerInteractive:
                 )
                 return SimpleNamespace(users_api=users_api)
 
-            async def __aexit__(self, *args, **kwargs) -> None:
+            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                 return None
 
         class StubProject(SimpleNamespace):
@@ -1354,13 +1361,13 @@ class TestConfigManagerInteractive:
             folder_id: int
 
         class StubProjectManager:
-            def __init__(self, *_, **__):
+            def __init__(self, *_: Any, **__: Any) -> None:
                 pass
 
-            async def get_all_projects(self):
+            async def get_all_projects(self) -> list[StubProject]:
                 return []
 
-            async def create_project(self, name: str):
+            async def create_project(self, name: str) -> StubProject:
                 return StubProject(id=101, name=name, folder_id=55)
 
         monkeypatch.setattr(
@@ -1371,14 +1378,17 @@ class TestConfigManagerInteractive:
             "workato_platform.cli.utils.config.ProjectManager", StubProjectManager
         )
 
-        config_manager.load_config = Mock(return_value=ConfigData())
+        load_config_mock = Mock(return_value=ConfigData())
+        save_config_mock = Mock()
 
-        config_manager.save_config = Mock()
-
-        await config_manager._run_setup_flow()
+        with (
+            patch.object(config_manager, "load_config", load_config_mock),
+            patch.object(config_manager, "save_config", save_config_mock),
+        ):
+            await config_manager._run_setup_flow()
 
         assert stub_profile_manager.updated_profile is not None
-        config_manager.save_config.assert_called_once()
+        save_config_mock.assert_called_once()
 
 
 class TestRegionInfo:
@@ -1491,7 +1501,7 @@ class TestConfigManagerEdgeCases:
             retrieved = profile_manager._get_token_from_keyring("test_profile")
 
             # Test masking logic (first 8 chars + ... + last 4 chars)
-            masked = retrieved[:8] + "..." + retrieved[-4:]
+            masked = retrieved[:8] + "..." + retrieved[-4:] if retrieved else ""
             expected = "test_tok...6789"
             assert masked == expected
 

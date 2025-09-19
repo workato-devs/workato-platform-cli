@@ -28,7 +28,7 @@ class DummySpinner:
 
 
 @pytest.mark.asyncio
-async def test_list_properties_success(monkeypatch):
+async def test_list_properties_success(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "workato_platform.cli.commands.properties.Spinner",
         DummySpinner,
@@ -50,6 +50,7 @@ async def test_list_properties_success(monkeypatch):
         lambda msg="": captured.append(msg),
     )
 
+    assert list_properties.callback
     await list_properties.callback(
         prefix="admin",
         project_id=None,
@@ -64,7 +65,7 @@ async def test_list_properties_success(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_list_properties_missing_project(monkeypatch):
+async def test_list_properties_missing_project(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "workato_platform.cli.commands.properties.Spinner",
         DummySpinner,
@@ -79,6 +80,7 @@ async def test_list_properties_missing_project(monkeypatch):
         lambda msg="": captured.append(msg),
     )
 
+    assert list_properties.callback
     result = await list_properties.callback(
         prefix="admin",
         project_id=None,
@@ -91,7 +93,9 @@ async def test_list_properties_missing_project(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_upsert_properties_invalid_format(monkeypatch):
+async def test_upsert_properties_invalid_format(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(
         "workato_platform.cli.commands.properties.Spinner",
         DummySpinner,
@@ -105,6 +109,7 @@ async def test_upsert_properties_invalid_format(monkeypatch):
         lambda msg="": captured.append(msg),
     )
 
+    assert upsert_properties.callback
     await upsert_properties.callback(
         project_id=None,
         property_pairs=("invalid",),
@@ -116,7 +121,7 @@ async def test_upsert_properties_invalid_format(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_upsert_properties_success(monkeypatch):
+async def test_upsert_properties_success(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "workato_platform.cli.commands.properties.Spinner",
         DummySpinner,
@@ -136,6 +141,7 @@ async def test_upsert_properties_success(monkeypatch):
         lambda msg="": captured.append(msg),
     )
 
+    assert upsert_properties.callback
     await upsert_properties.callback(
         project_id=None,
         property_pairs=("admin_email=user@example.com",),
@@ -150,7 +156,7 @@ async def test_upsert_properties_success(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_upsert_properties_failure(monkeypatch):
+async def test_upsert_properties_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "workato_platform.cli.commands.properties.Spinner",
         DummySpinner,
@@ -170,6 +176,7 @@ async def test_upsert_properties_failure(monkeypatch):
         lambda msg="": captured.append(msg),
     )
 
+    assert upsert_properties.callback
     await upsert_properties.callback(
         project_id=None,
         property_pairs=("admin_email=user@example.com",),
@@ -181,7 +188,7 @@ async def test_upsert_properties_failure(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_list_properties_empty_result(monkeypatch):
+async def test_list_properties_empty_result(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test list properties when no properties are found."""
     monkeypatch.setattr(
         "workato_platform.cli.commands.properties.Spinner",
@@ -192,7 +199,7 @@ async def test_list_properties_empty_result(monkeypatch):
     config_manager.load_config.return_value = ConfigData(project_id=101)
 
     # Empty properties dict
-    props = {}
+    props: dict[str, str] = {}
     client = Mock()
     client.properties_api.list_project_properties = AsyncMock(return_value=props)
 
@@ -202,6 +209,7 @@ async def test_list_properties_empty_result(monkeypatch):
         lambda msg="": captured.append(msg),
     )
 
+    assert list_properties.callback
     await list_properties.callback(
         prefix="admin",
         project_id=None,
@@ -214,7 +222,9 @@ async def test_list_properties_empty_result(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_upsert_properties_missing_project(monkeypatch):
+async def test_upsert_properties_missing_project(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Test upsert properties when no project ID is provided."""
     monkeypatch.setattr(
         "workato_platform.cli.commands.properties.Spinner",
@@ -230,6 +240,7 @@ async def test_upsert_properties_missing_project(monkeypatch):
         lambda msg="": captured.append(msg),
     )
 
+    assert upsert_properties.callback
     await upsert_properties.callback(
         project_id=None,
         property_pairs=("key=value",),
@@ -242,7 +253,7 @@ async def test_upsert_properties_missing_project(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_upsert_properties_no_properties(monkeypatch):
+async def test_upsert_properties_no_properties(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test upsert properties when no properties are provided."""
     monkeypatch.setattr(
         "workato_platform.cli.commands.properties.Spinner",
@@ -258,6 +269,7 @@ async def test_upsert_properties_no_properties(monkeypatch):
         lambda msg="": captured.append(msg),
     )
 
+    assert upsert_properties.callback
     await upsert_properties.callback(
         project_id=None,
         property_pairs=(),  # Empty tuple - no properties
@@ -270,7 +282,7 @@ async def test_upsert_properties_no_properties(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_upsert_properties_name_too_long(monkeypatch):
+async def test_upsert_properties_name_too_long(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test upsert properties with property name that's too long."""
     monkeypatch.setattr(
         "workato_platform.cli.commands.properties.Spinner",
@@ -289,6 +301,7 @@ async def test_upsert_properties_name_too_long(monkeypatch):
     # Create a property name longer than 100 characters
     long_name = "x" * 101
 
+    assert upsert_properties.callback
     await upsert_properties.callback(
         project_id=None,
         property_pairs=(f"{long_name}=value",),
@@ -301,7 +314,9 @@ async def test_upsert_properties_name_too_long(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_upsert_properties_value_too_long(monkeypatch):
+async def test_upsert_properties_value_too_long(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Test upsert properties with property value that's too long."""
     monkeypatch.setattr(
         "workato_platform.cli.commands.properties.Spinner",
@@ -320,6 +335,7 @@ async def test_upsert_properties_value_too_long(monkeypatch):
     # Create a property value longer than 1024 characters
     long_value = "x" * 1025
 
+    assert upsert_properties.callback
     await upsert_properties.callback(
         project_id=None,
         property_pairs=(f"key={long_value}",),
@@ -331,7 +347,7 @@ async def test_upsert_properties_value_too_long(monkeypatch):
     assert "Property value too long" in output
 
 
-def test_properties_group_exists():
+def test_properties_group_exists() -> None:
     """Test that the properties group command exists."""
     assert callable(properties)
 

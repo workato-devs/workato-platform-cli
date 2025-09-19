@@ -101,6 +101,7 @@ class TestCreateCommand:
                 mock_spinner_instance.stop.return_value = 1.5
                 mock_spinner.return_value = mock_spinner_instance
 
+                assert create.callback
                 await create.callback(
                     name="Test Collection",
                     format="json",
@@ -156,6 +157,7 @@ class TestCreateCommand:
                 mock_spinner_instance.stop.return_value = 1.2
                 mock_spinner.return_value = mock_spinner_instance
 
+                assert create.callback
                 await create.callback(
                     name="Test Collection",
                     format="yaml",
@@ -209,6 +211,7 @@ class TestCreateCommand:
                 mock_spinner_instance.stop.return_value = 2.0
                 mock_spinner.return_value = mock_spinner_instance
 
+                assert create.callback
                 await create.callback(
                     name="Test Collection",
                     format="url",
@@ -240,6 +243,7 @@ class TestCreateCommand:
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
         ) as mock_echo:
+            assert create.callback
             await create.callback(
                 name="Test Collection",
                 format="json",
@@ -266,6 +270,7 @@ class TestCreateCommand:
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
         ) as mock_echo:
+            assert create.callback
             await create.callback(
                 name="Test Collection",
                 format="json",
@@ -300,6 +305,7 @@ class TestCreateCommand:
             with patch(
                 "workato_platform.cli.commands.api_collections.click.echo"
             ) as mock_echo:
+                assert create.callback
                 await create.callback(
                     name="Test Collection",
                     format="json",
@@ -347,6 +353,7 @@ class TestCreateCommand:
                 mock_spinner_instance.stop.return_value = 1.0
                 mock_spinner.return_value = mock_spinner_instance
 
+                assert create.callback
                 await create.callback(
                     name=None,  # No name provided
                     format="json",
@@ -397,6 +404,7 @@ class TestCreateCommand:
                 mock_spinner_instance.stop.return_value = 1.0
                 mock_spinner.return_value = mock_spinner_instance
 
+                assert create.callback
                 await create.callback(
                     name=None,  # No name provided
                     format="json",
@@ -476,6 +484,7 @@ class TestListCollectionsCommand:
             with patch(
                 "workato_platform.cli.commands.api_collections.display_collection_summary"
             ) as mock_display:
+                assert list_collections.callback
                 await list_collections.callback(
                     page=1, per_page=50, workato_api_client=mock_workato_client
                 )
@@ -500,6 +509,7 @@ class TestListCollectionsCommand:
             with patch(
                 "workato_platform.cli.commands.api_collections.click.echo"
             ) as mock_echo:
+                assert list_collections.callback
                 await list_collections.callback(
                     page=1, per_page=50, workato_api_client=mock_workato_client
                 )
@@ -514,6 +524,7 @@ class TestListCollectionsCommand:
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
         ) as mock_echo:
+            assert list_collections.callback
             await list_collections.callback(
                 page=1,
                 per_page=150,  # Exceeds limit of 100
@@ -525,7 +536,8 @@ class TestListCollectionsCommand:
 
     @pytest.mark.asyncio
     async def test_list_collections_pagination_info(
-        self, mock_workato_client: AsyncMock
+        self,
+        mock_workato_client: AsyncMock,
     ) -> None:
         """Test pagination info display."""
         # Mock response with exactly per_page items to trigger pagination info
@@ -562,6 +574,7 @@ class TestListCollectionsCommand:
                     "workato_platform.cli.commands.api_collections.click.echo"
                 ) as mock_echo,
             ):
+                assert list_collections.callback
                 await list_collections.callback(
                     page=2, per_page=100, workato_api_client=mock_workato_client
                 )
@@ -640,6 +653,7 @@ class TestListEndpointsCommand:
             with patch(
                 "workato_platform.cli.commands.api_collections.display_endpoint_summary"
             ) as mock_display:
+                assert list_endpoints.callback
                 await list_endpoints.callback(
                     api_collection_id=123, workato_api_client=mock_workato_client
                 )
@@ -663,6 +677,7 @@ class TestListEndpointsCommand:
             with patch(
                 "workato_platform.cli.commands.api_collections.click.echo"
             ) as mock_echo:
+                assert list_endpoints.callback
                 await list_endpoints.callback(
                     api_collection_id=123, workato_api_client=mock_workato_client
                 )
@@ -727,6 +742,7 @@ class TestListEndpointsCommand:
             with patch(
                 "workato_platform.cli.commands.api_collections.display_endpoint_summary"
             ):
+                assert list_endpoints.callback
                 await list_endpoints.callback(
                     api_collection_id=123, workato_api_client=mock_workato_client
                 )
@@ -764,6 +780,7 @@ class TestEnableEndpointCommand:
         with patch(
             "workato_platform.cli.commands.api_collections.enable_api_endpoint"
         ) as mock_enable:
+            assert enable_endpoint.callback
             await enable_endpoint.callback(
                 api_endpoint_id=123, api_collection_id=None, all=False
             )
@@ -778,6 +795,7 @@ class TestEnableEndpointCommand:
         with patch(
             "workato_platform.cli.commands.api_collections.enable_all_endpoints_in_collection"
         ) as mock_enable_all:
+            assert enable_endpoint.callback
             await enable_endpoint.callback(
                 api_endpoint_id=None, api_collection_id=456, all=True
             )
@@ -790,6 +808,7 @@ class TestEnableEndpointCommand:
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
         ) as mock_echo:
+            assert enable_endpoint.callback
             await enable_endpoint.callback(
                 api_endpoint_id=None, api_collection_id=None, all=True
             )
@@ -802,6 +821,7 @@ class TestEnableEndpointCommand:
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
         ) as mock_echo:
+            assert enable_endpoint.callback
             await enable_endpoint.callback(
                 api_endpoint_id=123, api_collection_id=456, all=True
             )
@@ -816,6 +836,7 @@ class TestEnableEndpointCommand:
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
         ) as mock_echo:
+            assert enable_endpoint.callback
             await enable_endpoint.callback(
                 api_endpoint_id=None, api_collection_id=None, all=False
             )
@@ -1275,6 +1296,7 @@ class TestCommandsWithCallbackApproach:
             with patch(
                 "workato_platform.cli.commands.api_collections.click.echo"
             ) as mock_echo:
+                assert create.callback
                 await create.callback(
                     name="Test Collection",
                     format="json",
@@ -1314,6 +1336,7 @@ class TestCommandsWithCallbackApproach:
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
         ) as mock_echo:
+            assert create.callback
             await create.callback(
                 name="Test Collection",
                 format="json",
@@ -1368,6 +1391,7 @@ class TestCommandsWithCallbackApproach:
                 "workato_platform.cli.commands.api_collections.click.echo"
             ) as mock_echo,
         ):
+            assert list_collections.callback
             await list_collections.callback(
                 page=1,
                 per_page=50,
@@ -1393,6 +1417,7 @@ class TestCommandsWithCallbackApproach:
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
         ) as mock_echo:
+            assert list_collections.callback
             await list_collections.callback(
                 page=1,
                 per_page=150,  # Exceeds limit of 100
@@ -1435,6 +1460,7 @@ class TestCommandsWithCallbackApproach:
                 "workato_platform.cli.commands.api_collections.click.echo"
             ) as mock_echo,
         ):
+            assert list_endpoints.callback
             await list_endpoints.callback(
                 api_collection_id=123,
                 workato_api_client=mock_workato_client,
@@ -1463,6 +1489,7 @@ class TestCommandsWithCallbackApproach:
         with patch(
             "workato_platform.cli.commands.api_collections.click.echo"
         ) as mock_echo:
+            assert create.callback
             await create.callback(
                 name="Test Collection",
                 format="json",

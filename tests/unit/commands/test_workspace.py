@@ -55,6 +55,7 @@ async def test_workspace_command_outputs(monkeypatch: pytest.MonkeyPatch) -> Non
         fake_echo,
     )
 
+    assert workspace.callback
     await workspace.callback(
         config_manager=mock_config_manager,
         workato_api_client=mock_client,

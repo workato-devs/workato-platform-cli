@@ -18,9 +18,9 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
-        exclude: ^(client/|tests/|src/workato_platform/client/)
+        exclude: ^(client/|src/workato_platform/client/)
       - id: ruff-format
-        exclude: ^(client/|tests/|src/workato_platform/client/)
+        exclude: ^(client/|src/workato_platform/client/)
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.18.1
@@ -39,7 +39,7 @@ repos:
             python-dateutil>=2.8.0,
             typing-extensions>=4.0.0,
           ]
-        exclude: ^(client/|tests/|src/workato_platform/client/)
+        exclude: ^(client/|src/workato_platform/client/)
 
   # Bandit for security linting
   - repo: https://github.com/PyCQA/bandit
@@ -48,7 +48,7 @@ repos:
       - id: bandit
         args: [-c, pyproject.toml]
         additional_dependencies: ["bandit[toml]"]
-        exclude: ^(client/|tests/|src/workato_platform/client/)
+        exclude: ^(client/|src/workato_platform/client/)
 
   # pip-audit for dependency security auditing
   - repo: https://github.com/pypa/pip-audit

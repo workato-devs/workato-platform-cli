@@ -7,7 +7,7 @@ from workato_platform.cli.containers import Container
 from workato_platform.cli.utils import Spinner
 from workato_platform.cli.utils.config import ConfigManager
 from workato_platform.cli.utils.exception_handler import handle_api_exceptions
-from workato_platform.client.workato_api.models.upsert_project_properties_request import (
+from workato_platform.client.workato_api.models.upsert_project_properties_request import (  # noqa: E501
     UpsertProjectPropertiesRequest,
 )
 

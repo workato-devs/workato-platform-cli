@@ -595,7 +595,7 @@ async def test_create_key_invalid_allow_list() -> None:
     """Test create-key command with invalid IP allow list."""
     with patch("workato_platform.cli.commands.api_clients.parse_ip_list") as mock_parse:
         mock_parse.return_value = None  # Simulate parse failure
-
+        assert create_key.callback
         result = await create_key.callback(
             api_client_id=1,
             name="test-key",
@@ -616,6 +616,7 @@ async def test_create_key_invalid_deny_list() -> None:
         # Return valid list for allow list, None for deny list
         mock_parse.side_effect = [["192.168.1.1"], None]
 
+        assert create_key.callback
         result = await create_key.callback(
             api_client_id=1,
             name="test-key",
@@ -646,6 +647,7 @@ async def test_create_key_no_api_key_in_response() -> None:
     ):
         mock_spinner.return_value.stop.return_value = 1.0
 
+        assert create_key.callback
         await create_key.callback(
             api_client_id=1,
             name="test-key",
@@ -677,6 +679,7 @@ async def test_create_key_with_deny_list() -> None:
     ):
         mock_spinner.return_value.stop.return_value = 1.0
 
+        assert create_key.callback
         await create_key.callback(
             api_client_id=1,
             name="test-key",
@@ -712,6 +715,7 @@ async def test_list_api_clients_empty() -> None:
     ):
         mock_spinner.return_value.stop.return_value = 1.0
 
+        assert list_api_clients.callback
         await list_api_clients.callback(workato_api_client=mock_client)
 
     # Should display no clients message
@@ -733,6 +737,7 @@ async def test_list_api_keys_empty() -> None:
     ):
         mock_spinner.return_value.stop.return_value = 1.0
 
+        assert list_api_keys.callback
         await list_api_keys.callback(api_client_id=1, workato_api_client=mock_client)
 
     # Should display no keys message
@@ -785,6 +790,7 @@ class TestCreateCommand:
             mock_spinner_instance.stop.return_value = 1.5
             mock_spinner.return_value = mock_spinner_instance
 
+            assert create.callback
             await create.callback(
                 name="Test Client",
                 auth_type="token",
@@ -848,6 +854,7 @@ class TestCreateCommandWithContainer:
 
         with patch("workato_platform.cli.commands.api_clients.click.echo") as mock_echo:
             # Call the callback directly, passing workato_api_client as parameter
+            assert create.callback
             await create.callback(
                 name="Test Client",
                 auth_type="token",
@@ -903,6 +910,7 @@ class TestCreateCommandWithContainer:
         mock_workato_client.api_platform_api.create_api_key.return_value = mock_response
 
         with patch("workato_platform.cli.commands.api_clients.click.echo") as mock_echo:
+            assert create_key.callback
             await create_key.callback(
                 api_client_id=123,
                 name="Test Key",
@@ -947,6 +955,7 @@ class TestCreateCommandWithContainer:
         )
 
         with patch("workato_platform.cli.commands.api_clients.click.echo") as mock_echo:
+            assert list_api_clients.callback
             await list_api_clients.callback(
                 project_id=None,
                 workato_api_client=mock_workato_client,
@@ -978,6 +987,7 @@ class TestCreateCommandWithContainer:
         mock_workato_client.api_platform_api.list_api_keys.return_value = mock_response
 
         with patch("workato_platform.cli.commands.api_clients.click.echo") as mock_echo:
+            assert list_api_keys.callback
             await list_api_keys.callback(
                 api_client_id=123,
                 workato_api_client=mock_workato_client,
@@ -1016,6 +1026,7 @@ class TestCreateCommandWithContainer:
 
         with patch("workato_platform.cli.commands.api_clients.click.echo") as mock_echo:
             # Call with invalid parameters that trigger validation errors
+            assert create.callback
             await create.callback(
                 name="Test Client",
                 auth_type="jwt",  # JWT requires jwt_method and jwt_secret
@@ -1047,6 +1058,7 @@ class TestCreateCommandWithContainer:
         mock_workato_client = AsyncMock()
 
         with patch("workato_platform.cli.commands.api_clients.click.echo") as mock_echo:
+            assert create.callback
             await create.callback(
                 name="Test Client",
                 auth_type="token",
@@ -1100,6 +1112,7 @@ async def test_refresh_secret_user_cancels() -> None:
             return_value=False,
         ) as mock_confirm,
     ):
+        assert refresh_secret.callback
         await refresh_secret.callback(
             api_client_id=1,
             api_key_id=123,

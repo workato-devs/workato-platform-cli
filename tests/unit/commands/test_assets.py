@@ -44,6 +44,7 @@ async def test_assets_lists_grouped_results(monkeypatch: pytest.MonkeyPatch) -> 
         lambda msg="": captured.append(msg),
     )
 
+    assert assets.callback
     await assets.callback(
         folder_id=None,
         config_manager=config_manager,
@@ -68,6 +69,7 @@ async def test_assets_missing_folder(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda msg="": captured.append(msg),
     )
 
+    assert assets.callback
     await assets.callback(
         folder_id=None,
         config_manager=config_manager,

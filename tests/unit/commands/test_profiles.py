@@ -70,6 +70,7 @@ async def test_list_profiles_displays_profile_details(
         get_current_profile_name=Mock(return_value="default"),
     )
 
+    assert list_profiles.callback
     await list_profiles.callback(config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -89,6 +90,7 @@ async def test_list_profiles_handles_empty_state(
         get_current_profile_name=Mock(return_value=None),
     )
 
+    assert list_profiles.callback
     await list_profiles.callback(config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -108,6 +110,7 @@ async def test_use_sets_current_profile(
         set_current_profile=Mock(),
     )
 
+    assert use.callback
     await use.callback(profile_name="dev", config_manager=config_manager)
 
     config_manager.profile_manager.set_current_profile.assert_called_once_with("dev")
@@ -123,6 +126,7 @@ async def test_use_missing_profile_shows_hint(
         get_profile=Mock(return_value=None),
     )
 
+    assert use.callback
     await use.callback(profile_name="ghost", config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -146,6 +150,7 @@ async def test_show_displays_profile_and_token_source(
         resolve_environment_variables=Mock(return_value=("token", profile.region_url)),
     )
 
+    assert show.callback
     await show.callback(profile_name="default", config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -163,6 +168,7 @@ async def test_show_handles_missing_profile(
         get_profile=Mock(return_value=None),
     )
 
+    assert show.callback
     await show.callback(profile_name="missing", config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -183,6 +189,7 @@ async def test_status_reports_project_override(
     )
     config_manager.load_config.return_value = ConfigData(profile="override")
 
+    assert status.callback
     await status.callback(config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -199,6 +206,7 @@ async def test_status_handles_missing_profile(
         get_current_profile_name=Mock(return_value=None),
     )
 
+    assert status.callback
     await status.callback(config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -217,6 +225,7 @@ async def test_delete_confirms_successful_removal(
         delete_profile=Mock(return_value=True),
     )
 
+    assert delete.callback
     await delete.callback(profile_name="old", config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -232,6 +241,7 @@ async def test_delete_handles_missing_profile(
         get_profile=Mock(return_value=None),
     )
 
+    assert delete.callback
     await delete.callback(profile_name="missing", config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -257,6 +267,7 @@ async def test_show_displays_env_token_source(
         ),
     )
 
+    assert show.callback
     await show.callback(profile_name="default", config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -280,6 +291,7 @@ async def test_show_handles_missing_token(
         resolve_environment_variables=Mock(return_value=(None, profile.region_url)),
     )
 
+    assert show.callback
     await show.callback(profile_name="default", config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -307,6 +319,7 @@ async def test_status_displays_env_profile_source(
     # No project profile override
     config_manager.load_config.return_value = ConfigData(profile=None)
 
+    assert status.callback
     await status.callback(config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -317,8 +330,8 @@ async def test_status_displays_env_profile_source(
 async def test_status_displays_env_token_source(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
-    profile_data_factory,
-    make_config_manager,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
 ) -> None:
     """Test status command displays WORKATO_API_TOKEN environment variable source."""
     monkeypatch.setenv("WORKATO_API_TOKEN", "env_token")
@@ -332,6 +345,7 @@ async def test_status_displays_env_token_source(
         ),
     )
 
+    assert status.callback
     await status.callback(config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -355,6 +369,7 @@ async def test_status_handles_missing_token(
         resolve_environment_variables=Mock(return_value=(None, profile.region_url)),
     )
 
+    assert status.callback
     await status.callback(config_manager=config_manager)
 
     output = capsys.readouterr().out
@@ -376,6 +391,7 @@ async def test_delete_handles_failure(
         delete_profile=Mock(return_value=False),  # Simulate failure
     )
 
+    assert delete.callback
     await delete.callback(profile_name="old", config_manager=config_manager)
 
     output = capsys.readouterr().out

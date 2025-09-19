@@ -13,6 +13,9 @@ from workato_platform.cli.commands.data_tables import (
     list_data_tables,
     validate_schema,
 )
+from workato_platform.client.workato_api.models.data_table_column_request import (
+    DataTableColumnRequest,
+)
 
 
 class TestListDataTablesCommand:
@@ -101,6 +104,7 @@ class TestListDataTablesCommand:
             with patch(
                 "workato_platform.cli.commands.data_tables.display_table_summary"
             ) as mock_display:
+                assert list_data_tables.callback
                 await list_data_tables.callback(workato_api_client=mock_workato_client)
 
         mock_workato_client.data_tables_api.list_data_tables.assert_called_once()
@@ -123,6 +127,7 @@ class TestListDataTablesCommand:
             with patch(
                 "workato_platform.cli.commands.data_tables.click.echo"
             ) as mock_echo:
+                assert list_data_tables.callback
                 await list_data_tables.callback(workato_api_client=mock_workato_client)
 
         mock_echo.assert_any_call("  ℹ️  No data tables found")
@@ -216,6 +221,7 @@ class TestCreateDataTableCommand:
         with patch(
             "workato_platform.cli.commands.data_tables.create_table"
         ) as mock_create:
+            assert create_data_table.callback
             await create_data_table.callback(
                 name="Test Table",
                 schema_json=valid_schema_json,
@@ -243,6 +249,7 @@ class TestCreateDataTableCommand:
         with patch(
             "workato_platform.cli.commands.data_tables.create_table"
         ) as mock_create:
+            assert create_data_table.callback
             await create_data_table.callback(
                 name="Test Table",
                 schema_json=valid_schema_json,
@@ -265,6 +272,7 @@ class TestCreateDataTableCommand:
     ) -> None:
         """Test data table creation with invalid JSON."""
         with patch("workato_platform.cli.commands.data_tables.click.echo") as mock_echo:
+            assert create_data_table.callback
             await create_data_table.callback(
                 name="Test Table",
                 schema_json="invalid json",
@@ -283,6 +291,7 @@ class TestCreateDataTableCommand:
     ) -> None:
         """Test data table creation with non-list schema."""
         with patch("workato_platform.cli.commands.data_tables.click.echo") as mock_echo:
+            assert create_data_table.callback
             await create_data_table.callback(
                 name="Test Table",
                 schema_json='{"name": "id", "type": "integer"}',
@@ -303,6 +312,7 @@ class TestCreateDataTableCommand:
         mock_config_manager.load_config.return_value = mock_config
 
         with patch("workato_platform.cli.commands.data_tables.click.echo") as mock_echo:
+            assert create_data_table.callback
             await create_data_table.callback(
                 name="Test Table",
                 schema_json='[{"name": "id", "type": "integer", "optional": false}]',
@@ -325,12 +335,14 @@ class TestCreateDataTableCommand:
         )
 
         schema = [
-            {
-                "name": "id",
-                "type": "integer",
-                "optional": False,
-                "hint": "Primary key",
-            }
+            DataTableColumnRequest.model_validate(
+                {
+                    "name": "id",
+                    "type": "integer",
+                    "optional": False,
+                    "hint": "Primary key",
+                }
+            )
         ]
 
         with patch("workato_platform.cli.commands.data_tables.Spinner") as mock_spinner:

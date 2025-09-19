@@ -33,8 +33,8 @@ class TestSpinner:
             assert spinner.running is True
 
             elapsed_time = spinner.stop()
-            assert spinner.running is False
             assert isinstance(elapsed_time, float)
+            assert spinner.running is False
 
     def test_spinner_with_different_messages(self) -> None:
         """Test spinner with various messages."""

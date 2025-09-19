@@ -19,10 +19,11 @@ async def test_init_runs_pull(monkeypatch: pytest.MonkeyPatch) -> None:
         "https://api.workato.com",
     )
 
+    mock_initialize = AsyncMock(return_value=mock_config_manager)
     monkeypatch.setattr(
         init_module.ConfigManager,
         "initialize",
-        AsyncMock(return_value=mock_config_manager),
+        mock_initialize,
     )
 
     mock_pull = AsyncMock()
@@ -37,7 +38,8 @@ async def test_init_runs_pull(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(init_module.click, "echo", lambda _="": None)
 
+    assert init_module.init.callback
     await init_module.init.callback()
 
-    init_module.ConfigManager.initialize.assert_awaited_once()
+    mock_initialize.assert_awaited_once()
     mock_pull.assert_awaited_once()

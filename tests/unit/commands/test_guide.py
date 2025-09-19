@@ -10,7 +10,7 @@ from workato_platform.cli.commands import guide
 
 
 @pytest.fixture
-def docs_setup(tmp_path, monkeypatch):
+def docs_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     module_file = tmp_path / "fake" / "guide.py"
     module_file.parent.mkdir(parents=True)
     module_file.write_text("# dummy")
@@ -25,6 +25,7 @@ async def test_topics_lists_available_docs(monkeypatch: pytest.MonkeyPatch) -> N
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.topics.callback
     await guide.topics.callback()
 
     payload = json.loads("".join(captured))
@@ -45,6 +46,7 @@ async def test_topics_missing_docs(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.topics.callback
     await guide.topics.callback()
 
     assert "Documentation not found" in "".join(captured)
@@ -60,6 +62,7 @@ async def test_content_returns_topic(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.content.callback
     await guide.content.callback("sample")
 
     output = "".join(captured)
@@ -72,6 +75,7 @@ async def test_content_missing_topic(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.content.callback
     await guide.content.callback("missing")
 
     assert "Topic 'missing' not found" in "".join(captured)
@@ -87,6 +91,7 @@ async def test_search_returns_matches(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.search.callback
     await guide.search.callback("trigger", topic=None, max_results=5)
 
     payload = json.loads("".join(captured))
@@ -105,6 +110,7 @@ async def test_structure_outputs_relationships(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.structure.callback
     await guide.structure.callback("overview")
 
     payload = json.loads("".join(captured))
@@ -119,6 +125,7 @@ async def test_structure_missing_topic(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.structure.callback
     await guide.structure.callback("missing")
 
     assert "Topic 'missing' not found" in "".join(captured)
@@ -135,6 +142,7 @@ async def test_index_builds_summary(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.index.callback
     await guide.index.callback()
 
     payload = json.loads("".join(captured))
@@ -147,6 +155,7 @@ async def test_guide_group_invocation(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.guide.callback
     await guide.guide.callback()
 
     assert captured == []
@@ -165,6 +174,7 @@ async def test_content_missing_docs(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.content.callback
     await guide.content.callback("sample")
 
     assert "Documentation not found" in "".join(captured)
@@ -181,6 +191,7 @@ async def test_content_finds_numbered_topic(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.content.callback
     await guide.content.callback("recipe-fundamentals")
 
     output = "".join(captured)
@@ -198,6 +209,7 @@ async def test_content_finds_formula_topic(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.content.callback
     await guide.content.callback("string-formulas")
 
     output = "".join(captured)
@@ -215,6 +227,7 @@ async def test_content_handles_empty_lines_at_start(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.content.callback
     await guide.content.callback("sample")
 
     output = "".join(captured)
@@ -234,6 +247,7 @@ async def test_search_missing_docs(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.search.callback
     await guide.search.callback("query", topic=None, max_results=10)
 
     assert "Documentation not found" in "".join(captured)
@@ -250,6 +264,7 @@ async def test_search_specific_topic(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.search.callback
     await guide.search.callback("trigger", topic="triggers", max_results=10)
 
     payload = json.loads("".join(captured))
@@ -269,6 +284,7 @@ async def test_structure_missing_docs(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.structure.callback
     await guide.structure.callback("sample")
 
     assert "Documentation not found" in "".join(captured)
@@ -287,6 +303,7 @@ async def test_structure_formula_topic(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.structure.callback
     await guide.structure.callback("string-formulas")
 
     payload = json.loads("".join(captured))
@@ -307,6 +324,7 @@ async def test_index_missing_docs(
     captured: list[str] = []
     monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
+    assert guide.index.callback
     await guide.index.callback()
 
     assert "Documentation not found" in "".join(captured)

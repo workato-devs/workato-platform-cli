@@ -6,10 +6,11 @@ import zipfile
 
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 
+from workato_platform import Workato
 from workato_platform.cli.commands import push
 
 
@@ -63,6 +64,7 @@ async def test_push_requires_api_token(capture_echo: list[str]) -> None:
     config_manager = Mock()
     config_manager.api_token = None
 
+    assert push.push.callback
     await push.push.callback(config_manager=config_manager)
 
     assert any("No API token" in line for line in capture_echo)
@@ -77,6 +79,7 @@ async def test_push_requires_project_configuration(capture_echo: list[str]) -> N
         project_name="demo",
     )
 
+    assert push.push.callback
     await push.push.callback(config_manager=config_manager)
 
     assert any("No project configured" in line for line in capture_echo)
@@ -95,6 +98,7 @@ async def test_push_requires_project_root_when_inside_project(
     config_manager.get_current_project_name.return_value = "demo"
     config_manager.get_project_root.return_value = None
 
+    assert push.push.callback
     await push.push.callback(config_manager=config_manager)
 
     assert any("Could not determine project root" in line for line in capture_echo)
@@ -116,6 +120,7 @@ async def test_push_requires_project_directory_when_missing(
 
     monkeypatch.chdir(tmp_path)
 
+    assert push.push.callback
     await push.push.callback(config_manager=config_manager)
 
     assert any("No project directory found" in line for line in capture_echo)
@@ -147,7 +152,7 @@ async def test_push_creates_zip_and_invokes_upload(
 
     async def fake_upload(**kwargs: object) -> None:
         upload_calls.append(kwargs)
-        zip_path = Path(kwargs["zip_path"])
+        zip_path = Path(str(kwargs["zip_path"]))
         assert zip_path.exists()
         with zipfile.ZipFile(zip_path) as archive:
             assert "nested/file.txt" in archive.namelist()
@@ -159,6 +164,7 @@ async def test_push_creates_zip_and_invokes_upload(
         upload_mock,
     )
 
+    assert push.push.callback
     await push.push.callback(config_manager=config_manager)
 
     assert upload_mock.await_count == 1
@@ -183,7 +189,8 @@ async def test_upload_package_handles_completed_status(
     packages_api = SimpleNamespace(
         import_package=AsyncMock(return_value=import_response),
     )
-    client = SimpleNamespace(packages_api=packages_api)
+    client = MagicMock(spec=Workato)
+    client.packages_api = packages_api
 
     poll_mock = AsyncMock()
     monkeypatch.setattr(
@@ -216,7 +223,8 @@ async def test_upload_package_triggers_poll_when_pending(
     packages_api = SimpleNamespace(
         import_package=AsyncMock(return_value=import_response),
     )
-    client = SimpleNamespace(packages_api=packages_api)
+    client = MagicMock(spec=Workato)
+    client.packages_api = packages_api
 
     poll_mock = AsyncMock()
     monkeypatch.setattr(
@@ -255,13 +263,16 @@ async def test_poll_import_status_reports_success(
         return responses.pop(0)
 
     packages_api = SimpleNamespace(get_package=AsyncMock(side_effect=fake_get_package))
-    client = SimpleNamespace(packages_api=packages_api)
+    client = MagicMock(spec=Workato)
+    client.packages_api = packages_api
+
+    fake_time_mock = Mock()
+    fake_time_mock.current = -50.0
 
     def fake_time() -> float:
-        fake_time.current += 50
-        return fake_time.current
+        fake_time_mock.current += 50
+        return float(fake_time_mock.current)
 
-    fake_time.current = -50.0
     monkeypatch.setattr("time.time", fake_time)
     monkeypatch.setattr("time.sleep", lambda *_args, **_kwargs: None)
 
@@ -291,13 +302,16 @@ async def test_poll_import_status_reports_failure(
         return responses.pop(0)
 
     packages_api = SimpleNamespace(get_package=AsyncMock(side_effect=fake_get_package))
-    client = SimpleNamespace(packages_api=packages_api)
+    client = MagicMock(spec=Workato)
+    client.packages_api = packages_api
+
+    fake_time_mock = Mock()
+    fake_time_mock.current = -100.0
 
     def fake_time() -> float:
-        fake_time.current += 100
-        return fake_time.current
+        fake_time_mock.current += 100
+        return float(fake_time_mock.current)
 
-    fake_time.current = -100.0
     monkeypatch.setattr("time.time", fake_time)
     monkeypatch.setattr("time.sleep", lambda *_args, **_kwargs: None)
 
@@ -316,13 +330,16 @@ async def test_poll_import_status_timeout(
     packages_api = SimpleNamespace(
         get_package=AsyncMock(return_value=SimpleNamespace(status="processing"))
     )
-    client = SimpleNamespace(packages_api=packages_api)
+    client = MagicMock(spec=Workato)
+    client.packages_api = packages_api
+
+    fake_time_mock = Mock()
+    fake_time_mock.current = -120.0
 
     def fake_time() -> float:
-        fake_time.current += 120
-        return fake_time.current
+        fake_time_mock.current += 120
+        return float(fake_time_mock.current)
 
-    fake_time.current = -120.0
     monkeypatch.setattr("time.time", fake_time)
     monkeypatch.setattr("time.sleep", lambda *_args, **_kwargs: None)
 

@@ -114,10 +114,17 @@ def test_create_profile_aware_workato_config_with_cli_profile() -> None:
         "https://test.workato.com",
     )
 
+    # Call the function with CLI profile override
+    config = create_profile_aware_workato_config(mock_config_manager, "cli_profile")
+
     # Verify CLI profile was used over project profile
     mock_config_manager.profile_manager.resolve_environment_variables.assert_called_with(
         "cli_profile"
     )
+
+    # Verify configuration was created correctly
+    assert config.access_token == "test_token"
+    assert config.host == "https://test.workato.com"
 
 
 def test_create_profile_aware_workato_config_no_credentials() -> None:

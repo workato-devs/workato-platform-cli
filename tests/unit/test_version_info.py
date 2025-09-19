@@ -15,22 +15,24 @@ import workato_platform
 async def test_workato_wrapper_sets_user_agent_and_tls(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    configuration = SimpleNamespace()
+    from workato_platform.client.workato_api.configuration import Configuration
+
+    configuration = Configuration()
     rest_context = SimpleNamespace(
         ssl_context=SimpleNamespace(minimum_version=None, options=0)
     )
 
-    created_clients: list[SimpleNamespace] = []
-
     class DummyApiClient:
-        def __init__(self, config: SimpleNamespace) -> None:
+        def __init__(self, config: Configuration) -> None:
             self.configuration = config
-            self.user_agent = None
+            self.user_agent = "workato-platform-cli/test"  # Mock user agent
             self.rest_client = rest_context
             created_clients.append(self)
 
         async def close(self) -> None:
             self.closed = True
+
+    created_clients: list[DummyApiClient] = []
 
     monkeypatch.setattr(workato_platform, "ApiClient", DummyApiClient)
 
@@ -68,8 +70,10 @@ async def test_workato_wrapper_sets_user_agent_and_tls(
 
 @pytest.mark.asyncio
 async def test_workato_async_context_manager(monkeypatch: pytest.MonkeyPatch) -> None:
+    from workato_platform.client.workato_api.configuration import Configuration
+
     class DummyApiClient:
-        def __init__(self, config: SimpleNamespace) -> None:
+        def __init__(self, config: Configuration) -> None:
             self.rest_client = SimpleNamespace(
                 ssl_context=SimpleNamespace(minimum_version=None, options=0)
             )
@@ -95,7 +99,7 @@ async def test_workato_async_context_manager(monkeypatch: pytest.MonkeyPatch) ->
             workato_platform, api_name, lambda client: SimpleNamespace(client=client)
         )
 
-    async with workato_platform.Workato(SimpleNamespace()) as wrapper:
+    async with workato_platform.Workato(Configuration()) as wrapper:
         assert isinstance(wrapper, workato_platform.Workato)
 
 

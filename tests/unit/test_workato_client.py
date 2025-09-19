@@ -59,11 +59,15 @@ class TestWorkatoClient:
                 "packages_api",
             ]
 
-            # Create mock configuration to avoid real initialization
+            # Create mock configuration with proper SSL attributes
             with (
                 patch("workato_platform.Configuration") as mock_config,
             ):
                 mock_configuration = Mock()
+                mock_configuration.connection_pool_maxsize = 10
+                mock_configuration.ssl_ca_cert = None
+                mock_configuration.ca_cert_data = None
+                mock_configuration.cert_file = None
                 mock_config.return_value = mock_configuration
 
                 client = Workato(mock_configuration)

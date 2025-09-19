@@ -13,7 +13,7 @@ from asyncclick.testing import CliRunner
 
 
 @pytest.fixture
-def temp_config_dir() -> Path:
+def temp_config_dir() -> Generator[Path, None, None]:
     """Create a temporary directory for config files."""
     with tempfile.TemporaryDirectory() as temp_dir:
         yield Path(temp_dir)

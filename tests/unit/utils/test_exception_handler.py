@@ -9,6 +9,7 @@ from workato_platform.cli.utils.exception_handler import (
     handle_api_exceptions,
 )
 from workato_platform.client.workato_api.exceptions import (
+    ApiException,
     ConflictException,
     NotFoundException,
     ServiceException,
@@ -28,7 +29,7 @@ class TestExceptionHandler:
         """Test decorator with function that succeeds."""
 
         @handle_api_exceptions
-        def successful_function():
+        def successful_function() -> str:
             return "success"
 
         result = successful_function()
@@ -38,7 +39,7 @@ class TestExceptionHandler:
         """Test decorator with async function."""
 
         @handle_api_exceptions
-        async def async_successful_function():
+        async def async_successful_function() -> str:
             return "async_success"
 
         # Should be callable (actual execution would need event loop)
@@ -54,6 +55,7 @@ class TestExceptionHandler:
 
         # Should preserve function name and docstring
         assert documented_function.__name__ == "documented_function"
+        assert documented_function.__doc__ is not None
         assert "documentation" in documented_function.__doc__
 
     def test_handle_api_exceptions_with_parameters(self) -> None:
@@ -112,7 +114,7 @@ class TestExceptionHandler:
     def test_handle_api_exceptions_specific_http_errors(
         self,
         mock_echo: MagicMock,
-        exc_cls: type[Exception],
+        exc_cls: type[ApiException],
         expected: str,
     ) -> None:
         @handle_api_exceptions
@@ -180,8 +182,7 @@ class TestExceptionHandler:
         async def failing_async() -> None:
             raise ForbiddenException(status=403, reason="Forbidden")
 
-        result = await failing_async()
-        assert result is None
+        await failing_async()
         mock_echo.assert_any_call("❌ Access forbidden")
 
     def test_extract_error_details_from_message(self) -> None:
@@ -328,8 +329,7 @@ class TestExceptionHandler:
         async def async_bad_request() -> None:
             raise BadRequestException(status=400, reason="Bad request")
 
-        result = await async_bad_request()
-        assert result is None
+        await async_bad_request()
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -346,8 +346,7 @@ class TestExceptionHandler:
         async def async_unprocessable() -> None:
             raise UnprocessableEntityException(status=422, reason="Unprocessable")
 
-        result = await async_unprocessable()
-        assert result is None
+        await async_unprocessable()
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -360,8 +359,7 @@ class TestExceptionHandler:
         async def async_unauthorized() -> None:
             raise UnauthorizedException(status=401, reason="Unauthorized")
 
-        result = await async_unauthorized()
-        assert result is None
+        await async_unauthorized()
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -374,8 +372,7 @@ class TestExceptionHandler:
         async def async_not_found() -> None:
             raise NotFoundException(status=404, reason="Not found")
 
-        result = await async_not_found()
-        assert result is None
+        await async_not_found()
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -388,8 +385,7 @@ class TestExceptionHandler:
         async def async_conflict() -> None:
             raise ConflictException(status=409, reason="Conflict")
 
-        result = await async_conflict()
-        assert result is None
+        await async_conflict()
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -402,8 +398,7 @@ class TestExceptionHandler:
         async def async_service_error() -> None:
             raise ServiceException(status=500, reason="Service error")
 
-        result = await async_service_error()
-        assert result is None
+        await async_service_error()
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -416,8 +411,7 @@ class TestExceptionHandler:
         async def async_generic_error() -> None:
             raise ApiException(status=418, reason="I'm a teapot")
 
-        result = await async_generic_error()
-        assert result is None
+        await async_generic_error()
         mock_echo.assert_called()
 
     def test_extract_error_details_invalid_json(self) -> None:

@@ -52,7 +52,7 @@ class TestVersionChecker:
 
     @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_success(
-        self, mock_urlopen, mock_config_manager: ConfigManager
+        self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
         """Test successful version retrieval from PyPI."""
         # Mock response
@@ -70,7 +70,7 @@ class TestVersionChecker:
 
     @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_http_error(
-        self, mock_urlopen, mock_config_manager: ConfigManager
+        self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
         """Test version retrieval handles HTTP errors."""
         mock_urlopen.side_effect = urllib.error.URLError("Network error")
@@ -82,7 +82,7 @@ class TestVersionChecker:
 
     @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_non_https_url(
-        self, mock_urlopen, mock_config_manager: ConfigManager
+        self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
         """Test version retrieval only allows HTTPS URLs."""
         # This should be caught by the HTTPS validation
@@ -232,15 +232,22 @@ class TestVersionChecker:
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
         checker.cache_file = tmp_path / "last_update_check"
-        checker.should_check_for_updates = Mock(return_value=True)
-        checker.check_for_updates = Mock(return_value="2.0.0")
-        checker.show_update_notification = Mock()
-        checker.update_cache_timestamp = Mock()
 
-        checker.background_update_check("1.0.0")
+        should_check_mock = Mock(return_value=True)
+        check_for_updates_mock = Mock(return_value="2.0.0")
+        show_notification_mock = Mock()
+        update_cache_mock = Mock()
 
-        checker.show_update_notification.assert_called_once_with("2.0.0")
-        checker.update_cache_timestamp.assert_called_once()
+        with (
+            patch.object(checker, "should_check_for_updates", should_check_mock),
+            patch.object(checker, "check_for_updates", check_for_updates_mock),
+            patch.object(checker, "show_update_notification", show_notification_mock),
+            patch.object(checker, "update_cache_timestamp", update_cache_mock),
+        ):
+            checker.background_update_check("1.0.0")
+
+        show_notification_mock.assert_called_once_with("2.0.0")
+        update_cache_mock.assert_called_once()
 
     def test_background_update_check_handles_exceptions(
         self,
@@ -251,11 +258,17 @@ class TestVersionChecker:
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
         checker.cache_file = tmp_path / "last_update_check"
-        checker.should_check_for_updates = Mock(return_value=True)
-        checker.check_for_updates = Mock(side_effect=RuntimeError("boom"))
-        checker.update_cache_timestamp = Mock()
 
-        checker.background_update_check("1.0.0")
+        should_check_mock = Mock(return_value=True)
+        check_for_updates_mock = Mock(side_effect=RuntimeError("boom"))
+        update_cache_mock = Mock()
+
+        with (
+            patch.object(checker, "should_check_for_updates", should_check_mock),
+            patch.object(checker, "check_for_updates", check_for_updates_mock),
+            patch.object(checker, "update_cache_timestamp", update_cache_mock),
+        ):
+            checker.background_update_check("1.0.0")
 
         output = capsys.readouterr().out
         assert "Failed to check for updates" in output
@@ -268,12 +281,17 @@ class TestVersionChecker:
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
         checker.cache_file = tmp_path / "last_update_check"
-        checker.should_check_for_updates = Mock(return_value=False)
-        checker.check_for_updates = Mock()
 
-        checker.background_update_check("1.0.0")
+        should_check_mock = Mock(return_value=False)
+        check_for_updates_mock = Mock()
 
-        checker.check_for_updates.assert_not_called()
+        with (
+            patch.object(checker, "should_check_for_updates", should_check_mock),
+            patch.object(checker, "check_for_updates", check_for_updates_mock),
+        ):
+            checker.background_update_check("1.0.0")
+
+        check_for_updates_mock.assert_not_called()
 
     @patch("workato_platform.cli.utils.version_checker.click.echo")
     def test_check_for_updates_handles_parse_error(
@@ -283,7 +301,6 @@ class TestVersionChecker:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         checker = VersionChecker(mock_config_manager)
-        checker.get_latest_version = Mock(return_value="2.0.0")
 
         def raising_parse(_value: str) -> None:
             raise ValueError("bad version")
@@ -293,7 +310,9 @@ class TestVersionChecker:
             raising_parse,
         )
 
-        assert checker.check_for_updates("1.0.0") is None
+        get_latest_version_mock = Mock(return_value="2.0.0")
+        with patch.object(checker, "get_latest_version", get_latest_version_mock):
+            assert checker.check_for_updates("1.0.0") is None
         mock_echo.assert_called_with("Failed to check for updates")
 
     def test_should_check_for_updates_no_dependencies(
@@ -353,13 +372,19 @@ class TestVersionChecker:
         checker = VersionChecker(mock_config_manager)
         checker.cache_dir = tmp_path
         checker.cache_file = tmp_path / "last_update_check"
-        checker.should_check_for_updates = Mock(return_value=True)
-        checker.check_for_updates = Mock(return_value=None)
-        checker.update_cache_timestamp = Mock()
 
-        checker.background_update_check("1.0.0")
+        should_check_mock = Mock(return_value=True)
+        check_for_updates_mock = Mock(return_value=None)
+        update_cache_mock = Mock()
 
-        checker.update_cache_timestamp.assert_called_once()
+        with (
+            patch.object(checker, "should_check_for_updates", should_check_mock),
+            patch.object(checker, "check_for_updates", check_for_updates_mock),
+            patch.object(checker, "update_cache_timestamp", update_cache_mock),
+        ):
+            checker.background_update_check("1.0.0")
+
+        update_cache_mock.assert_called_once()
 
     def test_check_updates_async_sync_wrapper(
         self,
