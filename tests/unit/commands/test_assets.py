@@ -1,7 +1,6 @@
 """Tests for the assets command."""
 
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -28,15 +27,13 @@ async def test_assets_lists_grouped_results(monkeypatch: pytest.MonkeyPatch) -> 
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData(folder_id=55)
 
-    asset1 = SimpleNamespace(type="data_table", name="Table A", id=1)
-    asset2 = SimpleNamespace(type="data_table", name="Table B", id=2)
-    asset3 = SimpleNamespace(type="custom_connector", name="Connector", id=3)
+    asset1 = Mock(type="data_table", name="Table A", id=1)
+    asset2 = Mock(type="data_table", name="Table B", id=2)
+    asset3 = Mock(type="custom_connector", name="Connector", id=3)
 
-    response = SimpleNamespace(result=SimpleNamespace(assets=[asset1, asset2, asset3]))
+    response = Mock(result=Mock(assets=[asset1, asset2, asset3]))
     workato_client = Mock()
-    workato_client.export_api.list_assets_in_folder = AsyncMock(return_value=response)
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -44,24 +41,34 @@ async def test_assets_lists_grouped_results(monkeypatch: pytest.MonkeyPatch) -> 
         lambda msg="": captured.append(msg),
     )
 
-    assert assets.callback
-    await assets.callback(
-        folder_id=None,
-        config_manager=config_manager,
-        workato_api_client=workato_client,
-    )
+    with (
+        patch.object(
+            config_manager, "load_config", return_value=ConfigData(folder_id=55)
+        ),
+        patch.object(
+            workato_client.export_api,
+            "list_assets_in_folder",
+            AsyncMock(return_value=response),
+        ) as mock_list_assets,
+    ):
+        assert assets.callback
+        await assets.callback(
+            folder_id=None,
+            config_manager=config_manager,
+            workato_api_client=workato_client,
+        )
 
-    output = "\n".join(captured)
-    assert "Table A" in output and "Connector" in output
-    workato_client.export_api.list_assets_in_folder.assert_awaited_once_with(
-        folder_id=55,
-    )
+        mock_list_assets.assert_awaited_once_with(
+            folder_id=55,
+        )
+
+        output = "\n".join(captured)
+        assert "Table A" in output and "Connector" in output
 
 
 @pytest.mark.asyncio
 async def test_assets_missing_folder(monkeypatch: pytest.MonkeyPatch) -> None:
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData()
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -69,11 +76,12 @@ async def test_assets_missing_folder(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda msg="": captured.append(msg),
     )
 
-    assert assets.callback
-    await assets.callback(
-        folder_id=None,
-        config_manager=config_manager,
-        workato_api_client=Mock(),
-    )
+    with patch.object(config_manager, "load_config", return_value=ConfigData()):
+        assert assets.callback
+        await assets.callback(
+            folder_id=None,
+            config_manager=config_manager,
+            workato_api_client=Mock(),
+        )
 
-    assert "No folder ID provided" in "".join(captured)
+        assert "No folder ID provided" in "".join(captured)

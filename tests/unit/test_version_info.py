@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ssl
 
-from types import SimpleNamespace
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
@@ -18,9 +18,11 @@ async def test_workato_wrapper_sets_user_agent_and_tls(
     from workato_platform.client.workato_api.configuration import Configuration
 
     configuration = Configuration()
-    rest_context = SimpleNamespace(
-        ssl_context=SimpleNamespace(minimum_version=None, options=0)
-    )
+    rest_context = Mock()
+    ssl_context = Mock()
+    ssl_context.minimum_version = None
+    ssl_context.options = 0
+    rest_context.ssl_context = ssl_context
 
     class DummyApiClient:
         def __init__(self, config: Configuration) -> None:
@@ -37,6 +39,15 @@ async def test_workato_wrapper_sets_user_agent_and_tls(
     monkeypatch.setattr(workato_platform, "ApiClient", DummyApiClient)
 
     # Patch all API classes to simple namespaces
+    def _register_api(api_name: str) -> None:
+        def _factory(client: DummyApiClient, *, name: str = api_name) -> MagicMock:
+            api_mock = MagicMock()
+            api_mock.api = name
+            api_mock.client = client
+            return api_mock
+
+        monkeypatch.setattr(workato_platform, api_name, _factory)
+
     for api_name in [
         "ProjectsApi",
         "PropertiesApi",
@@ -50,11 +61,7 @@ async def test_workato_wrapper_sets_user_agent_and_tls(
         "ConnectorsApi",
         "APIPlatformApi",
     ]:
-        monkeypatch.setattr(
-            workato_platform,
-            api_name,
-            lambda client, name=api_name: SimpleNamespace(api=name, client=client),
-        )
+        _register_api(api_name)
 
     wrapper = workato_platform.Workato(configuration)
 
@@ -74,14 +81,25 @@ async def test_workato_async_context_manager(monkeypatch: pytest.MonkeyPatch) ->
 
     class DummyApiClient:
         def __init__(self, config: Configuration) -> None:
-            self.rest_client = SimpleNamespace(
-                ssl_context=SimpleNamespace(minimum_version=None, options=0)
-            )
+            ssl_context = Mock()
+            ssl_context.minimum_version = None
+            ssl_context.options = 0
+            self.rest_client = Mock()
+            self.rest_client.ssl_context = ssl_context
 
         async def close(self) -> None:
             self.closed = True
 
     monkeypatch.setattr(workato_platform, "ApiClient", DummyApiClient)
+
+    def _register_simple_api(api_name: str) -> None:
+        def _factory(client: DummyApiClient) -> MagicMock:
+            api_mock = MagicMock()
+            api_mock.client = client
+            return api_mock
+
+        monkeypatch.setattr(workato_platform, api_name, _factory)
+
     for api_name in [
         "ProjectsApi",
         "PropertiesApi",
@@ -95,9 +113,7 @@ async def test_workato_async_context_manager(monkeypatch: pytest.MonkeyPatch) ->
         "ConnectorsApi",
         "APIPlatformApi",
     ]:
-        monkeypatch.setattr(
-            workato_platform, api_name, lambda client: SimpleNamespace(client=client)
-        )
+        _register_simple_api(api_name)
 
     async with workato_platform.Workato(Configuration()) as wrapper:
         assert isinstance(wrapper, workato_platform.Workato)

@@ -4,7 +4,6 @@ import contextlib
 import os
 
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -961,28 +960,47 @@ class TestConfigManagerWorkspace:
         )
         credentials = CredentialsConfig(profiles={"default": profile})
 
-        config_manager.profile_manager = Mock()
-        config_manager.profile_manager.get_current_profile_name.return_value = "default"
-        config_manager.profile_manager.load_credentials.return_value = credentials
-        config_manager.profile_manager._store_token_in_keyring.return_value = True
+        with (
+            patch.object(
+                config_manager.profile_manager,
+                "get_current_profile_name",
+                return_value="default",
+            ),
+            patch.object(
+                config_manager.profile_manager,
+                "load_credentials",
+                return_value=credentials,
+            ),
+            patch.object(
+                config_manager.profile_manager,
+                "_store_token_in_keyring",
+                return_value=True,
+            ),
+        ):
+            with patch("workato_platform.cli.utils.config.click.echo") as mock_echo:
+                config_manager._set_api_token("token")
 
-        with patch("workato_platform.cli.utils.config.click.echo") as mock_echo:
-            config_manager._set_api_token("token")
-
-        mock_echo.assert_called_with("✅ API token saved to profile 'default'")
+            mock_echo.assert_called_with("✅ API token saved to profile 'default'")
 
     def test_config_manager_set_api_token_missing_profile(
         self,
         temp_config_dir: Path,
     ) -> None:
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
-        config_manager.profile_manager = Mock()
-        config_manager.profile_manager.get_current_profile_name.return_value = "ghost"
-        config_manager.profile_manager.load_credentials.return_value = (
-            CredentialsConfig(profiles={})
-        )
 
-        with pytest.raises(ValueError):
+        with (
+            patch.object(
+                config_manager.profile_manager,
+                "get_current_profile_name",
+                return_value="ghost",
+            ),
+            patch.object(
+                config_manager.profile_manager,
+                "load_credentials",
+                return_value=CredentialsConfig(profiles={}),
+            ),
+            pytest.raises(ValueError),
+        ):
             config_manager._set_api_token("token")
 
     def test_config_manager_set_api_token_keyring_failure(
@@ -997,17 +1015,30 @@ class TestConfigManagerWorkspace:
         )
         credentials = CredentialsConfig(profiles={"default": profile})
 
-        profile_manager = Mock()
-        profile_manager.get_current_profile_name.return_value = "default"
-        profile_manager.load_credentials.return_value = credentials
-        profile_manager._store_token_in_keyring.return_value = False
-        profile_manager._is_keyring_enabled.return_value = True
-        config_manager.profile_manager = profile_manager
+        with (
+            patch.object(
+                config_manager.profile_manager,
+                "get_current_profile_name",
+                return_value="default",
+            ),
+            patch.object(
+                config_manager.profile_manager,
+                "load_credentials",
+                return_value=credentials,
+            ),
+            patch.object(
+                config_manager.profile_manager,
+                "_store_token_in_keyring",
+                return_value=False,
+            ),
+            patch.object(
+                config_manager.profile_manager, "_is_keyring_enabled", return_value=True
+            ),
+        ):
+            with pytest.raises(ValueError) as exc:
+                config_manager._set_api_token("token")
 
-        with pytest.raises(ValueError) as exc:
-            config_manager._set_api_token("token")
-
-        assert "Failed to store token" in str(exc.value)
+            assert "Failed to store token" in str(exc.value)
 
     def test_config_manager_set_api_token_keyring_disabled_failure(
         self,
@@ -1021,17 +1052,32 @@ class TestConfigManagerWorkspace:
         )
         credentials = CredentialsConfig(profiles={"default": profile})
 
-        profile_manager = Mock()
-        profile_manager.get_current_profile_name.return_value = "default"
-        profile_manager.load_credentials.return_value = credentials
-        profile_manager._store_token_in_keyring.return_value = False
-        profile_manager._is_keyring_enabled.return_value = False
-        config_manager.profile_manager = profile_manager
+        with (
+            patch.object(
+                config_manager.profile_manager,
+                "get_current_profile_name",
+                return_value="default",
+            ),
+            patch.object(
+                config_manager.profile_manager,
+                "load_credentials",
+                return_value=credentials,
+            ),
+            patch.object(
+                config_manager.profile_manager,
+                "_store_token_in_keyring",
+                return_value=False,
+            ),
+            patch.object(
+                config_manager.profile_manager,
+                "_is_keyring_enabled",
+                return_value=False,
+            ),
+        ):
+            with pytest.raises(ValueError) as exc:
+                config_manager._set_api_token("token")
 
-        with pytest.raises(ValueError) as exc:
-            config_manager._set_api_token("token")
-
-        assert "Keyring is disabled" in str(exc.value)
+            assert "Keyring is disabled" in str(exc.value)
 
 
 class TestConfigManagerInteractive:
@@ -1106,73 +1152,75 @@ class TestConfigManagerInteractive:
                 self.profiles = credentials.profiles
 
         stub_profile_manager = StubProfileManager()
-        config_manager.profile_manager = stub_profile_manager
 
-        region = RegionInfo(
-            region="us", name="US Data Center", url="https://www.workato.com"
-        )
-        monkeypatch.setattr(
-            config_manager, "select_region_interactive", lambda _: region
-        )
+        with patch.object(config_manager, "profile_manager", stub_profile_manager):
+            region = RegionInfo(
+                region="us", name="US Data Center", url="https://www.workato.com"
+            )
+            monkeypatch.setattr(
+                config_manager, "select_region_interactive", lambda _: region
+            )
 
-        prompt_values = iter(["new-profile", "api-token"])
+            prompt_values = iter(["new-profile", "api-token"])
 
-        def fake_prompt(*_args: Any, **_kwargs: Any) -> str:
-            try:
-                return next(prompt_values)
-            except StopIteration:
-                return "api-token"
+            def fake_prompt(*_args: Any, **_kwargs: Any) -> str:
+                try:
+                    return next(prompt_values)
+                except StopIteration:
+                    return "api-token"
 
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.config.click.prompt", fake_prompt
-        )
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.config.click.confirm", lambda *a, **k: True
-        )
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.config.click.echo", lambda *a, **k: None
-        )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.click.prompt", fake_prompt
+            )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.click.confirm", lambda *a, **k: True
+            )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.click.echo", lambda *a, **k: None
+            )
 
-        class StubConfiguration(SimpleNamespace):
-            def __init__(self, **kwargs: Any) -> None:
-                super().__init__(**kwargs)
-                self.verify_ssl = False
+            class StubConfiguration(Mock):
+                def __init__(self, **kwargs: Any) -> None:
+                    super().__init__()
+                    self.verify_ssl = False
 
-        class StubWorkato:
-            def __init__(self, **_kwargs: Any) -> None:
-                pass
+            class StubWorkato:
+                def __init__(self, **_kwargs: Any) -> None:
+                    pass
 
-            async def __aenter__(self) -> SimpleNamespace:
-                user_info = SimpleNamespace(
-                    id=123,
-                    name="Tester",
-                    plan_id="enterprise",
-                    recipes_count=1,
-                    active_recipes_count=1,
-                    last_seen="2024-01-01",
-                )
-                users_api = SimpleNamespace(
-                    get_workspace_details=AsyncMock(return_value=user_info)
-                )
-                return SimpleNamespace(users_api=users_api)
+                async def __aenter__(self) -> Mock:
+                    user_info = Mock(
+                        id=123,
+                        name="Tester",
+                        plan_id="enterprise",
+                        recipes_count=1,
+                        active_recipes_count=1,
+                        last_seen="2024-01-01",
+                    )
+                    users_api = Mock(
+                        get_workspace_details=AsyncMock(return_value=user_info)
+                    )
+                    return Mock(users_api=users_api)
 
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                return None
+                async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
+                    return None
 
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.config.Configuration", StubConfiguration
-        )
-        monkeypatch.setattr("workato_platform.cli.utils.config.Workato", StubWorkato)
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.Configuration", StubConfiguration
+            )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.Workato", StubWorkato
+            )
 
-        with patch.object(
-            config_manager,
-            "load_config",
-            return_value=ConfigData(project_id=1, project_name="Demo"),
-        ):
-            await config_manager._run_setup_flow()
+            with patch.object(
+                config_manager,
+                "load_config",
+                return_value=ConfigData(project_id=1, project_name="Demo"),
+            ):
+                await config_manager._run_setup_flow()
 
-        assert stub_profile_manager.saved_profile is not None
-        assert stub_profile_manager.current_profile == "new-profile"
+            assert stub_profile_manager.saved_profile is not None
+            assert stub_profile_manager.current_profile == "new-profile"
 
     def test_select_region_interactive_standard(
         self, monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path
@@ -1296,101 +1344,102 @@ class TestConfigManagerInteractive:
                 self.profiles = credentials.profiles
 
         stub_profile_manager = StubProfileManager()
-        config_manager.profile_manager = stub_profile_manager
 
-        monkeypatch.setenv("WORKATO_API_TOKEN", "env-token")
-        region = RegionInfo(
-            region="us", name="US Data Center", url="https://www.workato.com"
-        )
-        monkeypatch.setattr(
-            config_manager, "select_region_interactive", lambda _: region
-        )
+        with patch.object(config_manager, "profile_manager", stub_profile_manager):
+            monkeypatch.setenv("WORKATO_API_TOKEN", "env-token")
+            region = RegionInfo(
+                region="us", name="US Data Center", url="https://www.workato.com"
+            )
+            monkeypatch.setattr(
+                config_manager, "select_region_interactive", lambda _: region
+            )
 
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.config.inquirer.prompt",
-            lambda questions: {"profile_choice": "default"}
-            if questions and questions[0].message.startswith("Select a profile")
-            else {"project": "Create new project"},
-        )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.inquirer.prompt",
+                lambda questions: {"profile_choice": "default"}
+                if questions and questions[0].message.startswith("Select a profile")
+                else {"project": "Create new project"},
+            )
 
-        def fake_prompt(message: str, **_kwargs: Any) -> str:
-            if "project name" in message:
-                return "New Project"
-            raise AssertionError(f"Unexpected prompt: {message}")
+            def fake_prompt(message: str, **_kwargs: Any) -> str:
+                if "project name" in message:
+                    return "New Project"
+                raise AssertionError(f"Unexpected prompt: {message}")
 
-        confirms = iter([True])
+            confirms = iter([True])
 
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.config.click.prompt", fake_prompt
-        )
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.config.click.confirm",
-            lambda *a, **k: next(confirms, False),
-        )
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.config.click.echo", lambda *a, **k: None
-        )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.click.prompt", fake_prompt
+            )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.click.confirm",
+                lambda *a, **k: next(confirms, False),
+            )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.click.echo", lambda *a, **k: None
+            )
 
-        class StubConfiguration(SimpleNamespace):
-            def __init__(self, **kwargs: Any) -> None:
-                super().__init__(**kwargs)
-                self.verify_ssl = False
+            class StubConfiguration(Mock):
+                def __init__(self, **kwargs: Any) -> None:
+                    super().__init__()
+                    self.verify_ssl = False
 
-        class StubWorkato:
-            def __init__(self, **_kwargs: Any) -> None:
-                pass
+            class StubWorkato:
+                def __init__(self, **_kwargs: Any) -> None:
+                    pass
 
-            async def __aenter__(self) -> SimpleNamespace:
-                user = SimpleNamespace(
-                    id=123,
-                    name="Tester",
-                    plan_id="enterprise",
-                    recipes_count=1,
-                    active_recipes_count=1,
-                    last_seen="2024-01-01",
-                )
-                users_api = SimpleNamespace(
-                    get_workspace_details=AsyncMock(return_value=user)
-                )
-                return SimpleNamespace(users_api=users_api)
+                async def __aenter__(self) -> Mock:
+                    user = Mock(
+                        id=123,
+                        name="Tester",
+                        plan_id="enterprise",
+                        recipes_count=1,
+                        active_recipes_count=1,
+                        last_seen="2024-01-01",
+                    )
+                    users_api = Mock(get_workspace_details=AsyncMock(return_value=user))
+                    return Mock(users_api=users_api)
 
-            async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
-                return None
+                async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
+                    return None
 
-        class StubProject(SimpleNamespace):
-            id: int
-            name: str
-            folder_id: int
+            class StubProject(Mock):
+                def __init__(self, **kwargs: Any) -> None:
+                    super().__init__()
+                    for key, value in kwargs.items():
+                        setattr(self, key, value)
 
-        class StubProjectManager:
-            def __init__(self, *_: Any, **__: Any) -> None:
-                pass
+            class StubProjectManager:
+                def __init__(self, *_: Any, **__: Any) -> None:
+                    pass
 
-            async def get_all_projects(self) -> list[StubProject]:
-                return []
+                async def get_all_projects(self) -> list[StubProject]:
+                    return []
 
-            async def create_project(self, name: str) -> StubProject:
-                return StubProject(id=101, name=name, folder_id=55)
+                async def create_project(self, name: str) -> StubProject:
+                    return StubProject(id=101, name=name, folder_id=55)
 
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.config.Configuration", StubConfiguration
-        )
-        monkeypatch.setattr("workato_platform.cli.utils.config.Workato", StubWorkato)
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.config.ProjectManager", StubProjectManager
-        )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.Configuration", StubConfiguration
+            )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.Workato", StubWorkato
+            )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.ProjectManager", StubProjectManager
+            )
 
-        load_config_mock = Mock(return_value=ConfigData())
-        save_config_mock = Mock()
+            load_config_mock = Mock(return_value=ConfigData())
+            save_config_mock = Mock()
 
-        with (
-            patch.object(config_manager, "load_config", load_config_mock),
-            patch.object(config_manager, "save_config", save_config_mock),
-        ):
-            await config_manager._run_setup_flow()
+            with (
+                patch.object(config_manager, "load_config", load_config_mock),
+                patch.object(config_manager, "save_config", save_config_mock),
+            ):
+                await config_manager._run_setup_flow()
 
-        assert stub_profile_manager.updated_profile is not None
-        save_config_mock.assert_called_once()
+            assert stub_profile_manager.updated_profile is not None
+            save_config_mock.assert_called_once()
 
 
 class TestRegionInfo:

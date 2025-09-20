@@ -9,7 +9,6 @@ import time
 
 from collections.abc import Callable
 from pathlib import Path
-from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
@@ -988,23 +987,25 @@ async def test_load_builtin_connectors_from_api(validator: RecipeValidator) -> N
     """Test loading connectors from API when cache fails"""
     # Mock API responses
     mock_platform_response = MagicMock()
-    platform_connector = SimpleNamespace(
-        name="HTTP",
+    platform_connector = Mock(
         deprecated=False,
         categories=["Data"],
         triggers={"webhook": {}},
         actions={"get": {}},
     )
+    platform_connector.name = "HTTP"
     mock_platform_response.items = [platform_connector]
 
     mock_custom_response = MagicMock()
-    mock_custom_response.result = [SimpleNamespace(id=1, name="Custom")]
+    custom_connector = Mock(id=1)
+    custom_connector.name = "Custom"
+    mock_custom_response.result = [custom_connector]
 
     mock_code_response = MagicMock()
     mock_code_response.data.code = "connector code"
 
     workato_client = cast(Any, validator.workato_api_client)
-    workato_client.connectors_api = SimpleNamespace()
+    workato_client.connectors_api = Mock()
     connectors_api = cast(Any, workato_client.connectors_api)
     connectors_api.list_platform_connectors = AsyncMock(
         return_value=mock_platform_response,
@@ -1032,7 +1033,8 @@ async def test_load_builtin_connectors_uses_cache_shortcut(
     validator: RecipeValidator,
 ) -> None:
     with patch.object(validator, "_load_cached_connectors", return_value=True):
-        cast(Any, validator.workato_api_client).connectors_api = SimpleNamespace()
+        # Use a spec to control what attributes exist
+        cast(Any, validator.workato_api_client).connectors_api = Mock(spec=[])
         await validator._load_builtin_connectors()
 
     # Should short-circuit without hitting the API
@@ -1464,7 +1466,7 @@ async def test_load_builtin_connectors_pagination(validator: RecipeValidator) ->
     mock_list_platform = AsyncMock(
         side_effect=[mock_first_response, mock_second_response]
     )
-    cast(Any, validator.workato_api_client).connectors_api = SimpleNamespace(
+    cast(Any, validator.workato_api_client).connectors_api = Mock(
         list_platform_connectors=mock_list_platform,
         list_custom_connectors=AsyncMock(return_value=mock_custom_response),
     )
@@ -1490,7 +1492,7 @@ async def test_load_builtin_connectors_empty_pages(validator: RecipeValidator) -
     mock_custom_response = MagicMock()
     mock_custom_response.result = []
 
-    cast(Any, validator.workato_api_client).connectors_api = SimpleNamespace(
+    cast(Any, validator.workato_api_client).connectors_api = Mock(
         list_platform_connectors=AsyncMock(return_value=mock_empty_response),
         list_custom_connectors=AsyncMock(return_value=mock_custom_response),
     )

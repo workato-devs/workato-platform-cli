@@ -1,7 +1,6 @@
 """Tests for the workspace command."""
 
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -24,15 +23,8 @@ async def test_workspace_command_outputs(monkeypatch: pytest.MonkeyPatch) -> Non
         profile="default",
     )
     # load_config is called twice in the command
-    mock_config_manager.load_config.side_effect = [config_data, config_data]
-    mock_config_manager.profile_manager.get_current_profile_data.return_value = (
-        profile_data
-    )
-    mock_config_manager.profile_manager.get_current_profile_name.return_value = (
-        "default"
-    )
 
-    user_info = SimpleNamespace(
+    user_info = Mock(
         name="Test User",
         email="user@example.com",
         id=321,
@@ -43,7 +35,6 @@ async def test_workspace_command_outputs(monkeypatch: pytest.MonkeyPatch) -> Non
     )
 
     mock_client = Mock()
-    mock_client.users_api.get_workspace_details = AsyncMock(return_value=user_info)
 
     captured: list[str] = []
 
@@ -55,13 +46,33 @@ async def test_workspace_command_outputs(monkeypatch: pytest.MonkeyPatch) -> Non
         fake_echo,
     )
 
-    assert workspace.callback
-    await workspace.callback(
-        config_manager=mock_config_manager,
-        workato_api_client=mock_client,
-    )
+    with (
+        patch.object(
+            mock_config_manager, "load_config", side_effect=[config_data, config_data]
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "get_current_profile_data",
+            return_value=profile_data,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "get_current_profile_name",
+            return_value="default",
+        ),
+        patch.object(
+            mock_client.users_api,
+            "get_workspace_details",
+            AsyncMock(return_value=user_info),
+        ),
+    ):
+        assert workspace.callback
+        await workspace.callback(
+            config_manager=mock_config_manager,
+            workato_api_client=mock_client,
+        )
 
-    joined_output = "\n".join(captured)
-    assert "Test User" in joined_output
-    assert "Demo Project" in joined_output
-    assert "Region" in joined_output
+        joined_output = "\n".join(captured)
+        assert "Test User" in joined_output
+        assert "Demo Project" in joined_output
+        assert "Region" in joined_output

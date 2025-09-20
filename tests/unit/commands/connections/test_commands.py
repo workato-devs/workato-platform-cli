@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, Mock
 
@@ -51,6 +50,12 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     return captured
 
 
+def make_stub(**attrs: Any) -> Mock:
+    stub = Mock()
+    stub.configure_mock(**attrs)
+    return stub
+
+
 @pytest.mark.asyncio
 async def test_create_requires_folder(capture_echo: list[str]) -> None:
     config_manager = Mock()
@@ -80,12 +85,12 @@ async def test_create_basic_success(
     provider_data = ProviderData(name="Jira", provider="jira", oauth=False)
     connector_manager = Mock(get_provider_data=Mock(return_value=provider_data))
 
-    api = SimpleNamespace(
+    api = make_stub(
         create_connection=AsyncMock(
-            return_value=SimpleNamespace(id=5, name="Conn", provider="jira")
+            return_value=make_stub(id=5, name="Conn", provider="jira")
         )
     )
-    workato_client = SimpleNamespace(connections_api=api)
+    workato_client = make_stub(connections_api=api)
 
     monkeypatch.setattr(
         connections_module, "requires_oauth_flow", AsyncMock(return_value=False)
@@ -134,12 +139,12 @@ async def test_create_oauth_flow(
         ),
     )
 
-    api = SimpleNamespace(
+    api = make_stub(
         create_connection=AsyncMock(
-            return_value=SimpleNamespace(id=7, name="Jira", provider="jira")
+            return_value=make_stub(id=7, name="Jira", provider="jira")
         )
     )
-    workato_client = SimpleNamespace(connections_api=api)
+    workato_client = make_stub(connections_api=api)
 
     monkeypatch.setattr(
         connections_module, "requires_oauth_flow", AsyncMock(return_value=True)
@@ -184,12 +189,12 @@ async def test_create_oauth_manual_fallback(
         prompt_for_oauth_parameters=Mock(return_value={"host_url": "https://jira"}),
     )
 
-    api = SimpleNamespace(
+    api = make_stub(
         create_connection=AsyncMock(
-            return_value=SimpleNamespace(id=10, name="Conn", provider="jira")
+            return_value=make_stub(id=10, name="Conn", provider="jira")
         )
     )
-    workato_client = SimpleNamespace(connections_api=api)
+    workato_client = make_stub(connections_api=api)
 
     monkeypatch.setattr(
         connections_module, "requires_oauth_flow", AsyncMock(return_value=True)
@@ -224,7 +229,7 @@ async def test_create_oauth_missing_folder(
 ) -> None:
     config_manager = Mock()
     config_manager.load_config.return_value = ConfigData(folder_id=None)
-    workato_client = SimpleNamespace(connections_api=SimpleNamespace())
+    workato_client = make_stub(connections_api=make_stub())
 
     callback = connections_module.create_oauth.callback
     assert callback is not None
@@ -249,14 +254,12 @@ async def test_create_oauth_command(
     config_manager.load_config.return_value = ConfigData(folder_id=None)
     config_manager.api_host = "https://www.workato.com"
 
-    api = SimpleNamespace(
+    api = make_stub(
         create_runtime_user_connection=AsyncMock(
-            return_value=SimpleNamespace(
-                data=SimpleNamespace(id=321, url="https://oauth")
-            )
+            return_value=make_stub(data=make_stub(id=321, url="https://oauth"))
         )
     )
-    workato_client = SimpleNamespace(connections_api=api)
+    workato_client = make_stub(connections_api=api)
 
     monkeypatch.setattr(connections_module, "poll_oauth_connection_status", AsyncMock())
     monkeypatch.setattr(connections_module.webbrowser, "open", Mock())
@@ -318,9 +321,9 @@ async def test_update_calls_update_connection(monkeypatch: pytest.MonkeyPatch) -
 async def test_update_connection_outputs(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
-    connections_api = SimpleNamespace(
+    connections_api = make_stub(
         update_connection=AsyncMock(
-            return_value=SimpleNamespace(
+            return_value=make_stub(
                 name="Conn",
                 id=10,
                 provider="jira",
@@ -331,15 +334,15 @@ async def test_update_connection_outputs(
             )
         )
     )
-    workato_client = SimpleNamespace(connections_api=connections_api)
-    project_manager = SimpleNamespace(handle_post_api_sync=AsyncMock())
+    workato_client = make_stub(connections_api=connections_api)
+    project_manager = make_stub(handle_post_api_sync=AsyncMock())
 
     assert connections_module.update_connection is not None
     assert hasattr(connections_module.update_connection, "__wrapped__")
 
     await connections_module.update_connection.__wrapped__(
         connection_id=10,
-        connection_update_request=SimpleNamespace(
+        connection_update_request=make_stub(
             name="Conn",
             folder_id=3,
             parent_id=1,
@@ -361,12 +364,12 @@ async def test_update_connection_outputs(
 async def test_get_connection_oauth_url(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
-    connections_api = SimpleNamespace(
+    connections_api = make_stub(
         get_connection_oauth_url=AsyncMock(
-            return_value=SimpleNamespace(data=SimpleNamespace(url="https://oauth"))
+            return_value=make_stub(data=make_stub(url="https://oauth"))
         )
     )
-    workato_client = SimpleNamespace(connections_api=connections_api)
+    workato_client = make_stub(connections_api=connections_api)
 
     open_mock = Mock()
     monkeypatch.setattr(connections_module.webbrowser, "open", open_mock)
@@ -386,12 +389,12 @@ async def test_get_connection_oauth_url(
 
 @pytest.mark.asyncio
 async def test_get_connection_oauth_url_no_browser(capture_echo: list[str]) -> None:
-    connections_api = SimpleNamespace(
+    connections_api = make_stub(
         get_connection_oauth_url=AsyncMock(
-            return_value=SimpleNamespace(data=SimpleNamespace(url="https://oauth"))
+            return_value=make_stub(data=make_stub(url="https://oauth"))
         )
     )
-    workato_client = SimpleNamespace(connections_api=connections_api)
+    workato_client = make_stub(connections_api=connections_api)
 
     assert connections_module.get_connection_oauth_url is not None
     assert hasattr(connections_module.get_connection_oauth_url, "__wrapped__")
@@ -407,8 +410,8 @@ async def test_get_connection_oauth_url_no_browser(capture_echo: list[str]) -> N
 
 @pytest.mark.asyncio
 async def test_list_connections_no_results(capture_echo: list[str]) -> None:
-    workato_client = SimpleNamespace(
-        connections_api=SimpleNamespace(list_connections=AsyncMock(return_value=[]))
+    workato_client = make_stub(
+        connections_api=make_stub(list_connections=AsyncMock(return_value=[]))
     )
 
     assert connections_module.list_connections.callback
@@ -433,7 +436,7 @@ async def test_list_connections_filters(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
     connection_items = [
-        SimpleNamespace(
+        make_stub(
             name="ConnA",
             id=1,
             provider="jira",
@@ -445,7 +448,7 @@ async def test_list_connections_filters(
             tags=["one"],
             created_at=datetime(2024, 1, 1),
         ),
-        SimpleNamespace(
+        make_stub(
             name="ConnB",
             id=2,
             provider="jira",
@@ -457,7 +460,7 @@ async def test_list_connections_filters(
             tags=[],
             created_at=None,
         ),
-        SimpleNamespace(
+        make_stub(
             name="ConnC",
             id=3,
             provider="salesforce",
@@ -471,8 +474,8 @@ async def test_list_connections_filters(
         ),
     ]
 
-    workato_client = SimpleNamespace(
-        connections_api=SimpleNamespace(
+    workato_client = make_stub(
+        connections_api=make_stub(
             list_connections=AsyncMock(return_value=connection_items)
         )
     )
@@ -498,11 +501,9 @@ async def test_list_connections_filters(
 async def test_pick_list_command(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
-    workato_client = SimpleNamespace(
-        connections_api=SimpleNamespace(
-            get_connection_picklist=AsyncMock(
-                return_value=SimpleNamespace(data=["A", "B"])
-            )
+    workato_client = make_stub(
+        connections_api=make_stub(
+            get_connection_picklist=AsyncMock(return_value=make_stub(data=["A", "B"]))
         )
     )
 
@@ -522,7 +523,7 @@ async def test_pick_list_command(
 
 @pytest.mark.asyncio
 async def test_pick_list_invalid_json(capture_echo: list[str]) -> None:
-    workato_client = SimpleNamespace(connections_api=SimpleNamespace())
+    workato_client = make_stub(connections_api=make_stub())
 
     assert connections_module.pick_list.callback
 
@@ -538,9 +539,9 @@ async def test_pick_list_invalid_json(capture_echo: list[str]) -> None:
 
 @pytest.mark.asyncio
 async def test_pick_list_no_results(capture_echo: list[str]) -> None:
-    workato_client = SimpleNamespace(
-        connections_api=SimpleNamespace(
-            get_connection_picklist=AsyncMock(return_value=SimpleNamespace(data=[]))
+    workato_client = make_stub(
+        connections_api=make_stub(
+            get_connection_picklist=AsyncMock(return_value=make_stub(data=[]))
         )
     )
 
@@ -561,10 +562,10 @@ async def test_poll_oauth_connection_status_timeout(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
     monkeypatch.setattr(connections_module, "OAUTH_TIMEOUT", 1)
-    api = SimpleNamespace(
+    api = make_stub(
         list_connections=AsyncMock(
             return_value=[
-                SimpleNamespace(
+                make_stub(
                     id=1,
                     name="Conn",
                     provider="jira",
@@ -578,9 +579,9 @@ async def test_poll_oauth_connection_status_timeout(
             ]
         )
     )
-    workato_client = SimpleNamespace(connections_api=api)
-    project_manager = SimpleNamespace(handle_post_api_sync=AsyncMock())
-    config_manager = SimpleNamespace(api_host="https://app.workato.com")
+    workato_client = make_stub(connections_api=api)
+    project_manager = make_stub(handle_post_api_sync=AsyncMock())
+    config_manager = make_stub(api_host="https://app.workato.com")
 
     times = [0, 0.6, 1.2]
 
@@ -609,10 +610,10 @@ async def test_poll_oauth_connection_status_timeout(
 async def test_poll_oauth_connection_status_keyboard_interrupt(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
-    api = SimpleNamespace(
+    api = make_stub(
         list_connections=AsyncMock(
             return_value=[
-                SimpleNamespace(
+                make_stub(
                     id=1,
                     name="Conn",
                     provider="jira",
@@ -626,9 +627,9 @@ async def test_poll_oauth_connection_status_keyboard_interrupt(
             ]
         )
     )
-    workato_client = SimpleNamespace(connections_api=api)
-    project_manager = SimpleNamespace(handle_post_api_sync=AsyncMock())
-    config_manager = SimpleNamespace(api_host="https://app.workato.com")
+    workato_client = make_stub(connections_api=api)
+    project_manager = make_stub(handle_post_api_sync=AsyncMock())
+    config_manager = make_stub(api_host="https://app.workato.com")
 
     monkeypatch.setattr("time.time", lambda: 0)
 
@@ -675,7 +676,7 @@ async def test_requires_oauth_flow(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_is_platform_oauth_provider(monkeypatch: pytest.MonkeyPatch) -> None:
     connector_manager = Mock(
         list_platform_connectors=AsyncMock(
-            return_value=[SimpleNamespace(name="jira", oauth=True)]
+            return_value=[make_stub(name="jira", oauth=True)]
         )
     )
 
@@ -692,13 +693,13 @@ async def test_is_platform_oauth_provider(monkeypatch: pytest.MonkeyPatch) -> No
 
 @pytest.mark.asyncio
 async def test_is_custom_connector_oauth_not_found() -> None:
-    connectors_api = SimpleNamespace(
+    connectors_api = make_stub(
         list_custom_connectors=AsyncMock(
-            return_value=SimpleNamespace(result=[SimpleNamespace(name="other", id=1)])
+            return_value=make_stub(result=[make_stub(name="other", id=1)])
         ),
         get_custom_connector_code=AsyncMock(),
     )
-    workato_client = SimpleNamespace(connectors_api=connectors_api)
+    workato_client = make_stub(connectors_api=connectors_api)
 
     assert connections_module.is_custom_connector_oauth is not None
     assert hasattr(connections_module.is_custom_connector_oauth, "__wrapped__")
@@ -714,15 +715,15 @@ async def test_is_custom_connector_oauth_not_found() -> None:
 
 @pytest.mark.asyncio
 async def test_is_custom_connector_oauth(monkeypatch: pytest.MonkeyPatch) -> None:
-    connectors_api = SimpleNamespace(
+    connectors_api = make_stub(
         list_custom_connectors=AsyncMock(
-            return_value=SimpleNamespace(result=[SimpleNamespace(name="jira", id=5)])
+            return_value=make_stub(result=[make_stub(name="jira", id=5)])
         ),
         get_custom_connector_code=AsyncMock(
-            return_value=SimpleNamespace(data=SimpleNamespace(code="client_id"))
+            return_value=make_stub(data=make_stub(code="client_id"))
         ),
     )
-    workato_client = SimpleNamespace(connectors_api=connectors_api)
+    workato_client = make_stub(connectors_api=connectors_api)
 
     assert connections_module.is_custom_connector_oauth is not None
     assert hasattr(connections_module.is_custom_connector_oauth, "__wrapped__")
@@ -742,7 +743,7 @@ async def test_poll_oauth_connection_status(
 ) -> None:
     responses = [
         [
-            SimpleNamespace(
+            make_stub(
                 id=1,
                 name="Conn",
                 provider="jira",
@@ -755,7 +756,7 @@ async def test_poll_oauth_connection_status(
             )
         ],
         [
-            SimpleNamespace(
+            make_stub(
                 id=1,
                 name="Conn",
                 provider="jira",
@@ -769,11 +770,11 @@ async def test_poll_oauth_connection_status(
         ],
     ]
 
-    api = SimpleNamespace(list_connections=AsyncMock(side_effect=responses))
+    api = make_stub(list_connections=AsyncMock(side_effect=responses))
 
-    workato_client = SimpleNamespace(connections_api=api)
-    project_manager = SimpleNamespace(handle_post_api_sync=AsyncMock())
-    config_manager = SimpleNamespace(api_host="https://app.workato.com")
+    workato_client = make_stub(connections_api=api)
+    project_manager = make_stub(handle_post_api_sync=AsyncMock())
+    config_manager = make_stub(api_host="https://app.workato.com")
 
     times = [0, 1, 2, 10]
 

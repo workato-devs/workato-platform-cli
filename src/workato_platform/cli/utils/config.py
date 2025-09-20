@@ -1,8 +1,10 @@
 """Configuration management for the CLI using class-based approach"""
 
+import contextlib
 import json
 import os
 import sys
+import threading
 
 from pathlib import Path
 from urllib.parse import urlparse
@@ -11,6 +13,9 @@ import asyncclick as click
 import inquirer
 import keyring
 
+from keyring.backend import KeyringBackend
+from keyring.compat import properties
+from keyring.errors import KeyringError, NoKeyringError
 from pydantic import BaseModel, Field, field_validator
 
 from workato_platform import Workato
@@ -77,6 +82,87 @@ AVAILABLE_REGIONS = {
 }
 
 
+def _set_secure_permissions(path: Path) -> None:
+    """Best-effort attempt to set secure file permissions."""
+    with contextlib.suppress(OSError):
+        path.chmod(0o600)
+        # On some platforms (e.g., Windows) chmod may fail; ignore silently.
+
+
+class _WorkatoFileKeyring(KeyringBackend):
+    """Fallback keyring that stores secrets in a local JSON file."""
+
+    @properties.classproperty
+    def priority(self) -> float:
+        return 0.1
+
+    def __init__(self, storage_path: Path) -> None:
+        super().__init__()
+        self._storage_path = storage_path
+        self._lock = threading.Lock()
+        self._ensure_storage_initialized()
+
+    def _ensure_storage_initialized(self) -> None:
+        self._storage_path.parent.mkdir(parents=True, exist_ok=True)
+        if not self._storage_path.exists():
+            self._storage_path.write_text("{}", encoding="utf-8")
+            _set_secure_permissions(self._storage_path)
+
+    def _load_data(self) -> dict[str, dict[str, str]]:
+        try:
+            raw = self._storage_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            return {}
+        except OSError:
+            return {}
+
+        if not raw.strip():
+            return {}
+
+        try:
+            loaded = json.loads(raw)
+        except json.JSONDecodeError:
+            return {}
+
+        if isinstance(loaded, dict):
+            # Ensure nested dictionaries
+            normalized: dict[str, dict[str, str]] = {}
+            for service, usernames in loaded.items():
+                if isinstance(usernames, dict):
+                    normalized[service] = {
+                        str(username): str(password)
+                        for username, password in usernames.items()
+                    }
+            return normalized
+        return {}
+
+    def _save_data(self, data: dict[str, dict[str, str]]) -> None:
+        serialized = json.dumps(data, indent=2)
+        self._storage_path.write_text(serialized, encoding="utf-8")
+        _set_secure_permissions(self._storage_path)
+
+    def get_password(self, service: str, username: str) -> str | None:
+        with self._lock:
+            data = self._load_data()
+            return data.get(service, {}).get(username)
+
+    def set_password(self, service: str, username: str, password: str) -> None:
+        with self._lock:
+            data = self._load_data()
+            data.setdefault(service, {})[username] = password
+            self._save_data(data)
+
+    def delete_password(self, service: str, username: str) -> None:
+        with self._lock:
+            data = self._load_data()
+            usernames = data.get(service)
+            if usernames and username in usernames:
+                del usernames[username]
+                if not usernames:
+                    del data[service]
+                self._save_data(data)
+
+
 class ProjectInfo(BaseModel):
     """Data model for project information"""
 
@@ -135,6 +221,48 @@ class ProfileManager:
         self.global_config_dir = Path.home() / ".workato"
         self.credentials_file = self.global_config_dir / "credentials"
         self.keyring_service = "workato-platform-cli"
+        self._fallback_token_file = self.global_config_dir / "token_store.json"
+        self._using_fallback_keyring = False
+        self._ensure_keyring_backend()
+
+    def _ensure_keyring_backend(self, force_fallback: bool = False) -> None:
+        """Ensure a usable keyring backend is available for storing tokens."""
+        if os.environ.get("WORKATO_DISABLE_KEYRING", "").lower() == "true":
+            self._using_fallback_keyring = False
+            return
+
+        if force_fallback:
+            fallback_keyring = _WorkatoFileKeyring(self._fallback_token_file)
+            keyring.set_keyring(fallback_keyring)
+            self._using_fallback_keyring = True
+            return
+
+        try:
+            backend = keyring.get_keyring()
+        except Exception:
+            backend = None
+
+        backend_priority = getattr(backend, "priority", 0) if backend else 0
+        backend_module = getattr(backend, "__class__", type("", (), {})).__module__
+
+        if (
+            backend_priority
+            and backend_priority > 0
+            and not str(backend_module).startswith("keyring.backends.fail")
+        ):
+            # Perform a quick health check to ensure the backend is usable.
+            test_service = f"{self.keyring_service}-self-test"
+            test_username = "__workato__"
+            with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                backend = backend or keyring.get_keyring()
+                backend.set_password(test_service, test_username, "0")
+                backend.delete_password(test_service, test_username)
+                self._using_fallback_keyring = False
+                return
+
+        fallback_keyring = _WorkatoFileKeyring(self._fallback_token_file)
+        keyring.set_keyring(fallback_keyring)
+        self._using_fallback_keyring = True
 
     def _is_keyring_enabled(self) -> bool:
         """Check if keyring usage is enabled"""
@@ -148,8 +276,27 @@ class ProfileManager:
         try:
             pw: str | None = keyring.get_password(self.keyring_service, profile_name)
             return pw
+        except NoKeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    token: str | None = keyring.get_password(
+                        self.keyring_service, profile_name
+                    )
+                    return token
+            return None
+        except KeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    fallback_token: str | None = keyring.get_password(
+                        self.keyring_service, profile_name
+                    )
+                    return fallback_token
+            return None
         except Exception:
-            # Keyring access failed, return None to allow fallback
             return None
 
     def _store_token_in_keyring(self, profile_name: str, token: str) -> bool:
@@ -160,8 +307,23 @@ class ProfileManager:
         try:
             keyring.set_password(self.keyring_service, profile_name, token)
             return True
+        except NoKeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    keyring.set_password(self.keyring_service, profile_name, token)
+                    return True
+            return False
+        except KeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    keyring.set_password(self.keyring_service, profile_name, token)
+                    return True
+            return False
         except Exception:
-            # Keyring storage failed
             return False
 
     def _delete_token_from_keyring(self, profile_name: str) -> bool:
@@ -172,8 +334,23 @@ class ProfileManager:
         try:
             keyring.delete_password(self.keyring_service, profile_name)
             return True
+        except NoKeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    keyring.delete_password(self.keyring_service, profile_name)
+                    return True
+            return False
+        except KeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    keyring.delete_password(self.keyring_service, profile_name)
+                    return True
+            return False
         except Exception:
-            # Keyring deletion failed or password doesn't exist
             return False
 
     def _ensure_global_config_dir(self) -> None:

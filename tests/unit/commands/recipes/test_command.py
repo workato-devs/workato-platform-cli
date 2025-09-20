@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import AsyncMock, Mock
 
@@ -27,8 +26,19 @@ def _get_callback(cmd: Any) -> Callable[..., Any]:
     return cast(Callable[..., Any], callback)
 
 
+def _make_stub(**attrs: Any) -> Mock:
+    stub = Mock()
+    stub.configure_mock(**attrs)
+    return stub
+
+
 def _workato_stub(**kwargs: Any) -> Workato:
-    return cast("Workato", SimpleNamespace(**kwargs))
+    from workato_platform import Workato
+
+    stub = cast(Any, Mock(spec=Workato))
+    for key, value in kwargs.items():
+        setattr(stub, key, value)
+    return cast("Workato", stub)
 
 
 class DummySpinner:
@@ -79,7 +89,7 @@ async def test_list_recipes_requires_folder_id(
     """When no folder is configured the command guides the user."""
 
     config_manager = Mock()
-    config_manager.load_config.return_value = SimpleNamespace(folder_id=None)
+    config_manager.load_config.return_value = _make_stub(folder_id=None)
 
     list_recipes_cb = _get_callback(command.list_recipes)
     await list_recipes_cb(config_manager=config_manager)
@@ -95,8 +105,8 @@ async def test_list_recipes_recursive_filters_running(
 ) -> None:
     """Recursive listing warns about ignored filters and respects the running flag."""
 
-    running_recipe = SimpleNamespace(running=True, name="Active", id=1)
-    stopped_recipe = SimpleNamespace(running=False, name="Stopped", id=2)
+    running_recipe = _make_stub(running=True, name="Active", id=1)
+    stopped_recipe = _make_stub(running=False, name="Stopped", id=2)
 
     mock_recursive = AsyncMock(return_value=[running_recipe, stopped_recipe])
     monkeypatch.setattr(
@@ -104,9 +114,9 @@ async def test_list_recipes_recursive_filters_running(
         mock_recursive,
     )
 
-    seen: list[SimpleNamespace] = []
+    seen: list[Any] = []
 
-    def fake_display(recipe: SimpleNamespace) -> None:
+    def fake_display(recipe: Any) -> None:
         seen.append(recipe)
 
     monkeypatch.setattr(
@@ -115,7 +125,7 @@ async def test_list_recipes_recursive_filters_running(
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = SimpleNamespace(folder_id=999)
+    config_manager.load_config.return_value = _make_stub(folder_id=999)
 
     list_recipes_cb = _get_callback(command.list_recipes)
     await list_recipes_cb(
@@ -138,7 +148,7 @@ async def test_list_recipes_non_recursive_with_filters(
 ) -> None:
     """The non-recursive path fetches recipes and surfaces filter details."""
 
-    recipe_stub = SimpleNamespace(running=True, name="Demo", id=99)
+    recipe_stub = _make_stub(running=True, name="Demo", id=99)
 
     mock_paginated = AsyncMock(return_value=[recipe_stub])
     monkeypatch.setattr(
@@ -146,9 +156,9 @@ async def test_list_recipes_non_recursive_with_filters(
         mock_paginated,
     )
 
-    recorded: list[SimpleNamespace] = []
+    recorded: list[Any] = []
 
-    def fake_display(recipe: SimpleNamespace) -> None:
+    def fake_display(recipe: Any) -> None:
         recorded.append(recipe)
 
     monkeypatch.setattr(
@@ -157,7 +167,7 @@ async def test_list_recipes_non_recursive_with_filters(
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = SimpleNamespace(folder_id=None)
+    config_manager.load_config.return_value = _make_stub(folder_id=None)
 
     list_recipes_cb = _get_callback(command.list_recipes)
     await list_recipes_cb(
@@ -246,7 +256,7 @@ async def test_validate_success(tmp_path: Path, capture_echo: list[str]) -> None
     ok_file = tmp_path / "valid.json"
     ok_file.write_text("{}")
 
-    result = SimpleNamespace(is_valid=True, errors=[], warnings=[])
+    result = _make_stub(is_valid=True, errors=[], warnings=[])
 
     validator = Mock()
     validator.validate_recipe = AsyncMock(return_value=result)
@@ -272,15 +282,15 @@ async def test_validate_failure_with_warnings(
     data_file = tmp_path / "invalid.json"
     data_file.write_text("{}")
 
-    error = SimpleNamespace(
+    error = _make_stub(
         line_number=7,
         field_label="field",
         field_path=["step", "field"],
         message="Something broke",
-        error_type=SimpleNamespace(value="issue"),
+        error_type=_make_stub(value="issue"),
     )
-    warning = SimpleNamespace(message="Be careful")
-    result = SimpleNamespace(is_valid=False, errors=[error], warnings=[warning])
+    warning = _make_stub(message="Be careful")
+    result = _make_stub(is_valid=False, errors=[error], warnings=[warning])
 
     validator = Mock()
     validator.validate_recipe = AsyncMock(return_value=result)
@@ -396,9 +406,9 @@ async def test_stop_dispatches_correct_handler(monkeypatch: pytest.MonkeyPatch) 
 async def test_start_single_recipe_success(capture_echo: list[str]) -> None:
     """Successful start prints a confirmation message."""
 
-    response = SimpleNamespace(success=True)
+    response = _make_stub(success=True)
     client = _workato_stub(
-        recipes_api=SimpleNamespace(start_recipe=AsyncMock(return_value=response))
+        recipes_api=_make_stub(start_recipe=AsyncMock(return_value=response))
     )
 
     await command.start_single_recipe(42, workato_api_client=client)
@@ -416,13 +426,13 @@ async def test_start_single_recipe_failure_shows_detailed_errors(
 ) -> None:
     """Failure path surfaces detailed error output."""
 
-    response = SimpleNamespace(
+    response = _make_stub(
         success=False,
         code_errors=[[1, [["Label", 12, "Message", "field.path"]]]],
         config_errors=[[2, [["ConfigField", None, "Missing"]]], "Other issue"],
     )
     client = _workato_stub(
-        recipes_api=SimpleNamespace(start_recipe=AsyncMock(return_value=response))
+        recipes_api=_make_stub(start_recipe=AsyncMock(return_value=response))
     )
 
     await command.start_single_recipe(55, workato_api_client=client)
@@ -441,7 +451,7 @@ async def test_start_project_recipes_requires_configuration(
     """Missing folder configuration blocks bulk start."""
 
     config_manager = Mock()
-    config_manager.load_config.return_value = SimpleNamespace(folder_id=None)
+    config_manager.load_config.return_value = _make_stub(folder_id=None)
 
     await command.start_project_recipes(config_manager=config_manager)
 
@@ -455,7 +465,7 @@ async def test_start_project_recipes_delegates_to_folder(
     """When configured the project helper delegates to folder start."""
 
     config_manager = Mock()
-    config_manager.load_config.return_value = SimpleNamespace(folder_id=777)
+    config_manager.load_config.return_value = _make_stub(folder_id=777)
 
     start_folder = AsyncMock()
     monkeypatch.setattr(
@@ -476,8 +486,8 @@ async def test_start_folder_recipes_handles_success_and_failure(
     """Folder start reports results per recipe and summarises failures."""
 
     assets = [
-        SimpleNamespace(id=1, name="Recipe One"),
-        SimpleNamespace(id=2, name="Recipe Two"),
+        _make_stub(id=1, name="Recipe One"),
+        _make_stub(id=2, name="Recipe Two"),
     ]
     monkeypatch.setattr(
         "workato_platform.cli.commands.recipes.command.get_folder_recipe_assets",
@@ -485,19 +495,19 @@ async def test_start_folder_recipes_handles_success_and_failure(
     )
 
     responses = [
-        SimpleNamespace(success=True, code_errors=[], config_errors=[]),
-        SimpleNamespace(
+        _make_stub(success=True, code_errors=[], config_errors=[]),
+        _make_stub(
             success=False,
             code_errors=[[3, [["Label", 99, "Err", "path"]]]],
             config_errors=[],
         ),
     ]
 
-    async def _start_recipe(recipe_id: int) -> SimpleNamespace:
+    async def _start_recipe(recipe_id: int) -> Any:
         return responses[recipe_id - 1]
 
     client = _workato_stub(
-        recipes_api=SimpleNamespace(start_recipe=AsyncMock(side_effect=_start_recipe))
+        recipes_api=_make_stub(start_recipe=AsyncMock(side_effect=_start_recipe))
     )
 
     await command.start_folder_recipes(123, workato_api_client=client)
@@ -523,7 +533,7 @@ async def test_start_folder_recipes_handles_empty_folder(
         AsyncMock(return_value=[]),
     )
 
-    client = _workato_stub(recipes_api=SimpleNamespace(start_recipe=AsyncMock()))
+    client = _workato_stub(recipes_api=_make_stub(start_recipe=AsyncMock()))
 
     await command.start_folder_recipes(789, workato_api_client=client)
 
@@ -536,7 +546,7 @@ async def test_start_folder_recipes_handles_empty_folder(
 async def test_stop_single_recipe_outputs_confirmation(capture_echo: list[str]) -> None:
     """Stopping a recipe forwards to the API and reports success."""
 
-    client = _workato_stub(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
+    client = _workato_stub(recipes_api=_make_stub(stop_recipe=AsyncMock()))
 
     await command.stop_single_recipe(88, workato_api_client=client)
 
@@ -552,7 +562,7 @@ async def test_stop_project_recipes_requires_configuration(
     """Missing project configuration prevents stopping all recipes."""
 
     config_manager = Mock()
-    config_manager.load_config.return_value = SimpleNamespace(folder_id=None)
+    config_manager.load_config.return_value = _make_stub(folder_id=None)
 
     await command.stop_project_recipes(config_manager=config_manager)
 
@@ -564,7 +574,7 @@ async def test_stop_project_recipes_delegates(monkeypatch: pytest.MonkeyPatch) -
     """Project-level stop delegates to folder helper."""
 
     config_manager = Mock()
-    config_manager.load_config.return_value = SimpleNamespace(folder_id=123)
+    config_manager.load_config.return_value = _make_stub(folder_id=123)
 
     stop_folder = AsyncMock()
     monkeypatch.setattr(
@@ -585,15 +595,15 @@ async def test_stop_folder_recipes_iterates_assets(
     """Stop helper iterates through retrieved assets."""
 
     assets = [
-        SimpleNamespace(id=1, name="Recipe One"),
-        SimpleNamespace(id=2, name="Recipe Two"),
+        _make_stub(id=1, name="Recipe One"),
+        _make_stub(id=2, name="Recipe Two"),
     ]
     monkeypatch.setattr(
         "workato_platform.cli.commands.recipes.command.get_folder_recipe_assets",
         AsyncMock(return_value=assets),
     )
 
-    client = _workato_stub(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
+    client = _workato_stub(recipes_api=_make_stub(stop_recipe=AsyncMock()))
 
     await command.stop_folder_recipes(44, workato_api_client=client)
 
@@ -615,7 +625,7 @@ async def test_stop_folder_recipes_no_assets(
         AsyncMock(return_value=[]),
     )
 
-    client = _workato_stub(recipes_api=SimpleNamespace(stop_recipe=AsyncMock()))
+    client = _workato_stub(recipes_api=_make_stub(stop_recipe=AsyncMock()))
 
     await command.stop_folder_recipes(44, workato_api_client=client)
 
@@ -631,15 +641,13 @@ async def test_get_folder_recipe_assets_filters_non_recipes(
     """Asset helper filters responses down to recipe entries."""
 
     assets = [
-        SimpleNamespace(type="recipe", id=1, name="R"),
-        SimpleNamespace(type="folder", id=2, name="F"),
+        _make_stub(type="recipe", id=1, name="R"),
+        _make_stub(type="folder", id=2, name="F"),
     ]
-    response = SimpleNamespace(result=SimpleNamespace(assets=assets))
+    response = _make_stub(result=_make_stub(assets=assets))
 
     client = _workato_stub(
-        export_api=SimpleNamespace(
-            list_assets_in_folder=AsyncMock(return_value=response)
-        )
+        export_api=_make_stub(list_assets_in_folder=AsyncMock(return_value=response))
     )
 
     recipes = await command.get_folder_recipe_assets(5, workato_api_client=client)
@@ -656,12 +664,12 @@ async def test_get_all_recipes_paginated_handles_multiple_pages(
 ) -> None:
     """Pagination helper keeps fetching until fewer than 100 results are returned."""
 
-    first_page = SimpleNamespace(items=[SimpleNamespace(id=i) for i in range(100)])
-    second_page = SimpleNamespace(items=[SimpleNamespace(id=101)])
+    first_page = _make_stub(items=[_make_stub(id=i) for i in range(100)])
+    second_page = _make_stub(items=[_make_stub(id=101)])
 
     list_recipes_mock = AsyncMock(side_effect=[first_page, second_page])
 
-    client = _workato_stub(recipes_api=SimpleNamespace(list_recipes=list_recipes_mock))
+    client = _workato_stub(recipes_api=_make_stub(list_recipes=list_recipes_mock))
 
     recipes = await command.get_all_recipes_paginated(
         folder_id=9,
@@ -695,7 +703,7 @@ async def test_get_recipes_recursive_traverses_subfolders(
     """Recursive helper visits child folders exactly once."""
 
     async def _get_all_recipes_paginated(**kwargs: Any) -> list[Any]:
-        return [SimpleNamespace(id=kwargs["folder_id"])]
+        return [_make_stub(id=kwargs["folder_id"])]
 
     mock_get_all = AsyncMock(side_effect=_get_all_recipes_paginated)
     monkeypatch.setattr(
@@ -704,17 +712,15 @@ async def test_get_recipes_recursive_traverses_subfolders(
     )
 
     list_calls = {
-        1: [SimpleNamespace(id=2)],
+        1: [_make_stub(id=2)],
         2: [],
     }
 
-    async def _list_folders(
-        parent_id: int, page: int, per_page: int
-    ) -> list[SimpleNamespace]:
+    async def _list_folders(parent_id: int, page: int, per_page: int) -> list[Any]:
         return list_calls[parent_id]
 
     client = _workato_stub(
-        folders_api=SimpleNamespace(list_folders=AsyncMock(side_effect=_list_folders))
+        folders_api=_make_stub(list_folders=AsyncMock(side_effect=_list_folders))
     )
 
     raw_recursive = cast(Any, command.get_recipes_recursive).__wrapped__
@@ -744,7 +750,7 @@ async def test_get_recipes_recursive_skips_visited(
         mock_get_all,
     )
 
-    client = _workato_stub(folders_api=SimpleNamespace(list_folders=AsyncMock()))
+    client = _workato_stub(folders_api=_make_stub(list_folders=AsyncMock()))
 
     raw_recursive = cast(Any, command.get_recipes_recursive).__wrapped__
     monkeypatch.setattr(
@@ -767,8 +773,8 @@ def test_display_recipe_summary_outputs_all_sections(
 ) -> None:
     """Summary printer shows optional metadata when available."""
 
-    config_item = SimpleNamespace(keyword="application", name="App", account_id=321)
-    recipe = SimpleNamespace(
+    config_item = _make_stub(keyword="application", name="App", account_id=321)
+    recipe = _make_stub(
         name="Complex Recipe",
         id=555,
         running=False,
@@ -803,12 +809,7 @@ def test_display_recipe_summary_outputs_all_sections(
 async def test_update_connection_invokes_api(capture_echo: list[str]) -> None:
     """Connection update forwards parameters to Workato client."""
 
-    client = cast(
-        "Workato",
-        SimpleNamespace(
-            recipes_api=SimpleNamespace(update_recipe_connection=AsyncMock())
-        ),
-    )
+    client = _workato_stub(recipes_api=_make_stub(update_recipe_connection=AsyncMock()))
 
     update_connection_cb = _get_callback(command.update_connection)
     await update_connection_cb(
@@ -831,7 +832,7 @@ async def test_update_connection_invokes_api(capture_echo: list[str]) -> None:
 def test_display_recipe_errors_with_string_config(capture_echo: list[str]) -> None:
     """Error display can handle string entries in config errors."""
 
-    response = SimpleNamespace(
+    response = _make_stub(
         code_errors=[],
         config_errors=["Generic problem"],
     )
@@ -848,7 +849,7 @@ async def test_list_recipes_no_results(
     """Listing with filters reports when nothing matches."""
 
     config_manager = Mock()
-    config_manager.load_config.return_value = SimpleNamespace(folder_id=50)
+    config_manager.load_config.return_value = _make_stub(folder_id=50)
 
     monkeypatch.setattr(
         "workato_platform.cli.commands.recipes.command.get_all_recipes_paginated",

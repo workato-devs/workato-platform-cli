@@ -1,6 +1,5 @@
 """Tests for connections command."""
 
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -36,6 +35,12 @@ from workato_platform.client.workato_api.models.connection import Connection
 from workato_platform.client.workato_api.models.connection_update_request import (
     ConnectionUpdateRequest,
 )
+
+
+def make_stub(**attrs: object) -> Mock:
+    stub = Mock()
+    stub.configure_mock(**attrs)
+    return stub
 
 
 class TestConnectionsCommand:
@@ -407,8 +412,8 @@ class TestOAuthFlowFunctions:
         """Test is_platform_oauth_provider function."""
         connector_manager = AsyncMock()
         connector_manager.list_platform_connectors.return_value = [
-            SimpleNamespace(name="salesforce", oauth=True),
-            SimpleNamespace(name="hubspot", oauth=False),
+            make_stub(name="salesforce", oauth=True),
+            make_stub(name="hubspot", oauth=False),
         ]
 
         result = await is_platform_oauth_provider(
@@ -421,13 +426,11 @@ class TestOAuthFlowFunctions:
         """Test is_custom_connector_oauth function."""
         connections_api = Mock()
         connections_api.list_custom_connectors = AsyncMock(
-            return_value=SimpleNamespace(
-                result=[SimpleNamespace(name="custom_connector", id=123)]
-            )
+            return_value=make_stub(result=[make_stub(name="custom_connector", id=123)])
         )
         connections_api.get_custom_connector_code = AsyncMock(
-            return_value=SimpleNamespace(
-                data=SimpleNamespace(code="oauth authorization_url client_id")
+            return_value=make_stub(
+                data=make_stub(code="oauth authorization_url client_id")
             )
         )
         workato_client = Mock()
@@ -443,9 +446,7 @@ class TestOAuthFlowFunctions:
         """Test is_custom_connector_oauth with connector not found."""
         connections_api = Mock()
         connections_api.list_custom_connectors = AsyncMock(
-            return_value=SimpleNamespace(
-                result=[SimpleNamespace(name="other_connector", id=123)]
-            )
+            return_value=make_stub(result=[make_stub(name="other_connector", id=123)])
         )
         connections_api.get_custom_connector_code = AsyncMock()
         workato_client = Mock()
@@ -461,9 +462,7 @@ class TestOAuthFlowFunctions:
         """Test is_custom_connector_oauth with connector having no ID."""
         connections_api = Mock()
         connections_api.list_custom_connectors = AsyncMock(
-            return_value=SimpleNamespace(
-                result=[SimpleNamespace(name="custom_connector", id=None)]
-            )
+            return_value=make_stub(result=[make_stub(name="custom_connector", id=None)])
         )
         connections_api.get_custom_connector_code = AsyncMock()
         workato_client = Mock()
@@ -577,8 +576,8 @@ class TestConnectionCreationEdgeCases:
     @pytest.mark.asyncio
     async def test_create_invalid_json_input(self) -> None:
         """Test create command with invalid JSON input."""
-        config_manager = SimpleNamespace(
-            load_config=Mock(return_value=SimpleNamespace(folder_id=123))
+        config_manager = make_stub(
+            load_config=Mock(return_value=make_stub(folder_id=123))
         )
 
         with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
@@ -597,16 +596,16 @@ class TestConnectionCreationEdgeCases:
     @pytest.mark.asyncio
     async def test_create_oauth_browser_error(self) -> None:
         """Test create OAuth command with browser opening error."""
-        connections_api = SimpleNamespace(
+        connections_api = make_stub(
             create_runtime_user_connection=AsyncMock(
-                return_value=SimpleNamespace(
-                    data=SimpleNamespace(id=123, url="https://oauth.example.com")
+                return_value=make_stub(
+                    data=make_stub(id=123, url="https://oauth.example.com")
                 )
             )
         )
-        workato_client = SimpleNamespace(connections_api=connections_api)
-        config_manager = SimpleNamespace(
-            load_config=Mock(return_value=SimpleNamespace(folder_id=456)),
+        workato_client = make_stub(connections_api=connections_api)
+        config_manager = make_stub(
+            load_config=Mock(return_value=make_stub(folder_id=456)),
             api_host="https://www.workato.com",
         )
 
@@ -639,8 +638,8 @@ class TestConnectionCreationEdgeCases:
     @pytest.mark.asyncio
     async def test_create_oauth_missing_folder_id(self) -> None:
         """Test create-oauth when folder cannot be resolved."""
-        config_manager = SimpleNamespace(
-            load_config=Mock(return_value=SimpleNamespace(folder_id=None)),
+        config_manager = make_stub(
+            load_config=Mock(return_value=make_stub(folder_id=None)),
             api_host="https://www.workato.com",
         )
 
@@ -649,8 +648,8 @@ class TestConnectionCreationEdgeCases:
             await create_oauth.callback(
                 parent_id=1,
                 external_id="user@example.com",
-                workato_api_client=SimpleNamespace(
-                    connections_api=SimpleNamespace(
+                workato_api_client=make_stub(
+                    connections_api=make_stub(
                         create_runtime_user_connection=AsyncMock()
                     )
                 ),
@@ -667,16 +666,16 @@ class TestConnectionCreationEdgeCases:
     @pytest.mark.asyncio
     async def test_create_oauth_opens_browser_success(self) -> None:
         """Test create-oauth when browser opens successfully."""
-        connections_api = SimpleNamespace(
+        connections_api = make_stub(
             create_runtime_user_connection=AsyncMock(
-                return_value=SimpleNamespace(
-                    data=SimpleNamespace(id=234, url="https://oauth.example.com"),
+                return_value=make_stub(
+                    data=make_stub(id=234, url="https://oauth.example.com")
                 )
             )
         )
-        workato_client = SimpleNamespace(connections_api=connections_api)
-        config_manager = SimpleNamespace(
-            load_config=Mock(return_value=SimpleNamespace(folder_id=42)),
+        workato_client = make_stub(connections_api=connections_api)
+        config_manager = make_stub(
+            load_config=Mock(return_value=make_stub(folder_id=42)),
             api_host="https://www.workato.com",
         )
 
@@ -711,18 +710,15 @@ class TestConnectionCreationEdgeCases:
         """Test get OAuth URL with browser opening error."""
         connections_api = Mock()
         connections_api.get_connection_oauth_url = AsyncMock(
-            return_value=SimpleNamespace(
-                data=SimpleNamespace(url="https://oauth.example.com")
-            )
+            return_value=make_stub(data=make_stub(url="https://oauth.example.com"))
         )
         workato_client = Mock(spec=Workato)
         workato_client.connections_api = connections_api
 
-        spinner_stub = SimpleNamespace(
-            start=lambda: None,
-            stop=lambda: 0.5,
-            update_message=lambda *_: None,
-        )
+        spinner_stub = Mock()
+        spinner_stub.start = Mock()
+        spinner_stub.stop = Mock(return_value=0.5)
+        spinner_stub.update_message = Mock()
 
         with (
             patch(
@@ -751,9 +747,9 @@ class TestConnectionCreationEdgeCases:
     @pytest.mark.asyncio
     async def test_update_connection_unauthorized_status(self) -> None:
         """Test update connection with unauthorized status."""
-        connections_api = SimpleNamespace(
+        connections_api = make_stub(
             update_connection=AsyncMock(
-                return_value=SimpleNamespace(
+                return_value=make_stub(
                     name="Updated",
                     id=123,
                     provider="salesforce",
@@ -770,10 +766,9 @@ class TestConnectionCreationEdgeCases:
 
         update_request = ConnectionUpdateRequest(name="Updated Connection")
 
-        spinner_stub = SimpleNamespace(
-            start=lambda: None,
-            stop=lambda: 0.3,
-        )
+        spinner_stub = Mock()
+        spinner_stub.start = Mock()
+        spinner_stub.stop = Mock(return_value=0.3)
 
         with (
             patch(
@@ -800,9 +795,9 @@ class TestConnectionCreationEdgeCases:
     @pytest.mark.asyncio
     async def test_update_connection_authorized_status(self) -> None:
         """Test update_connection displays authorized details and updated fields."""
-        connections_api = SimpleNamespace(
+        connections_api = make_stub(
             update_connection=AsyncMock(
-                return_value=SimpleNamespace(
+                return_value=make_stub(
                     name="Ready",
                     id=77,
                     provider="slack",
@@ -826,10 +821,9 @@ class TestConnectionCreationEdgeCases:
             external_id="ext-1",
         )
 
-        spinner_stub = SimpleNamespace(
-            start=lambda: None,
-            stop=lambda: 1.2,
-        )
+        spinner_stub = Mock()
+        spinner_stub.start = Mock()
+        spinner_stub.stop = Mock(return_value=1.2)
 
         with (
             patch(
@@ -904,8 +898,8 @@ class TestConnectionCreationEdgeCases:
     @pytest.mark.asyncio
     async def test_create_missing_folder_id(self) -> None:
         """Test create command when folder ID cannot be resolved."""
-        config_manager = SimpleNamespace(
-            load_config=Mock(return_value=SimpleNamespace(folder_id=None))
+        config_manager = make_stub(
+            load_config=Mock(return_value=make_stub(folder_id=None))
         )
 
         with patch("workato_platform.cli.commands.connections.click.echo") as mock_echo:
@@ -928,19 +922,19 @@ class TestConnectionCreationEdgeCases:
     @pytest.mark.asyncio
     async def test_create_oauth_success_flow(self) -> None:
         """Test create command OAuth path when automatic flow succeeds."""
-        config_manager = SimpleNamespace(
-            load_config=Mock(return_value=SimpleNamespace(folder_id=101)),
+        config_manager = make_stub(
+            load_config=Mock(return_value=make_stub(folder_id=101)),
             api_host="https://www.workato.com",
         )
-        provider_data = SimpleNamespace(oauth=True)
-        connector_manager = SimpleNamespace(
+        provider_data = make_stub(oauth=True)
+        connector_manager = make_stub(
             get_provider_data=Mock(return_value=provider_data),
             prompt_for_oauth_parameters=Mock(return_value={"client_id": "abc"}),
         )
-        workato_client = SimpleNamespace(
-            connections_api=SimpleNamespace(
+        workato_client = make_stub(
+            connections_api=make_stub(
                 create_connection=AsyncMock(
-                    return_value=SimpleNamespace(
+                    return_value=make_stub(
                         id=321,
                         name="OAuth Conn",
                         provider="salesforce",
@@ -985,18 +979,18 @@ class TestConnectionCreationEdgeCases:
     @pytest.mark.asyncio
     async def test_create_oauth_manual_fallback(self) -> None:
         """Test create command OAuth path when automatic retrieval fails."""
-        config_manager = SimpleNamespace(
-            load_config=Mock(return_value=SimpleNamespace(folder_id=202)),
+        config_manager = make_stub(
+            load_config=Mock(return_value=make_stub(folder_id=202)),
             api_host="https://preview.workato.com",
         )
-        connector_manager = SimpleNamespace(
+        connector_manager = make_stub(
             get_provider_data=Mock(return_value=None),
             prompt_for_oauth_parameters=Mock(return_value={}),
         )
-        workato_client = SimpleNamespace(
-            connections_api=SimpleNamespace(
+        workato_client = make_stub(
+            connections_api=make_stub(
                 create_connection=AsyncMock(
-                    return_value=SimpleNamespace(
+                    return_value=make_stub(
                         id=456,
                         name="Fallback Conn",
                         provider="jira",
@@ -1143,11 +1137,10 @@ class TestOAuthPolling:
         project_manager = Mock(spec=ProjectManager)
         config_manager = Mock(spec=ConfigManager)
 
-        spinner_stub = SimpleNamespace(
-            start=lambda: None,
-            update_message=lambda *_: None,
-            stop=lambda: 0.1,
-        )
+        spinner_stub = Mock()
+        spinner_stub.start = Mock()
+        spinner_stub.update_message = Mock()
+        spinner_stub.stop = Mock(return_value=0.1)
 
         with (
             patch(
@@ -1171,7 +1164,7 @@ class TestOAuthPolling:
         """Test OAuth polling timeout scenario."""
         mock_sleep.return_value = None
 
-        pending_connection = SimpleNamespace(
+        pending_connection = make_stub(
             id=123,
             authorization_status="pending",
             name="Pending",
@@ -1186,11 +1179,10 @@ class TestOAuthPolling:
         project_manager = Mock(spec=ProjectManager)
         config_manager = Mock(spec=ConfigManager)
 
-        spinner_stub = SimpleNamespace(
-            start=lambda: None,
-            update_message=lambda *_: None,
-            stop=lambda: 60.0,
-        )
+        spinner_stub = Mock()
+        spinner_stub.start = Mock()
+        spinner_stub.update_message = Mock()
+        spinner_stub.stop = Mock(return_value=60.0)
 
         time_values = iter([0, 1, 1, OAUTH_TIMEOUT + 1])
 
@@ -1220,7 +1212,7 @@ class TestOAuthPolling:
         self, mock_sleep: Mock
     ) -> None:
         """Test OAuth polling with keyboard interrupt."""
-        pending_connection = SimpleNamespace(
+        pending_connection = make_stub(
             id=123,
             authorization_status="pending",
             name="Pending",
@@ -1237,11 +1229,10 @@ class TestOAuthPolling:
 
         mock_sleep.side_effect = KeyboardInterrupt()
 
-        spinner_stub = SimpleNamespace(
-            start=lambda: None,
-            update_message=lambda *_: None,
-            stop=lambda: 0.2,
-        )
+        spinner_stub = Mock()
+        spinner_stub.start = Mock()
+        spinner_stub.update_message = Mock()
+        spinner_stub.stop = Mock(return_value=0.2)
 
         with (
             patch(

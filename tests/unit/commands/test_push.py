@@ -5,7 +5,6 @@ from __future__ import annotations
 import zipfile
 
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
@@ -59,6 +58,12 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     return captured
 
 
+def make_stub(**attrs: object) -> Mock:
+    stub = Mock()
+    stub.configure_mock(**attrs)
+    return stub
+
+
 @pytest.mark.asyncio
 async def test_push_requires_api_token(capture_echo: list[str]) -> None:
     config_manager = Mock()
@@ -74,7 +79,7 @@ async def test_push_requires_api_token(capture_echo: list[str]) -> None:
 async def test_push_requires_project_configuration(capture_echo: list[str]) -> None:
     config_manager = Mock()
     config_manager.api_token = "token"
-    config_manager.load_config.return_value = SimpleNamespace(
+    config_manager.load_config.return_value = make_stub(
         folder_id=None,
         project_name="demo",
     )
@@ -91,7 +96,7 @@ async def test_push_requires_project_root_when_inside_project(
 ) -> None:
     config_manager = Mock()
     config_manager.api_token = "token"
-    config_manager.load_config.return_value = SimpleNamespace(
+    config_manager.load_config.return_value = make_stub(
         folder_id=123,
         project_name="demo",
     )
@@ -112,7 +117,7 @@ async def test_push_requires_project_directory_when_missing(
 ) -> None:
     config_manager = Mock()
     config_manager.api_token = "token"
-    config_manager.load_config.return_value = SimpleNamespace(
+    config_manager.load_config.return_value = make_stub(
         folder_id=123,
         project_name="demo",
     )
@@ -134,7 +139,7 @@ async def test_push_creates_zip_and_invokes_upload(
 ) -> None:
     config_manager = Mock()
     config_manager.api_token = "token"
-    config_manager.load_config.return_value = SimpleNamespace(
+    config_manager.load_config.return_value = make_stub(
         folder_id=777,
         project_name="demo",
     )
@@ -185,8 +190,8 @@ async def test_upload_package_handles_completed_status(
     zip_file = tmp_path / "demo.zip"
     zip_file.write_bytes(b"zip-data")
 
-    import_response = SimpleNamespace(id=321, status="completed")
-    packages_api = SimpleNamespace(
+    import_response = make_stub(id=321, status="completed")
+    packages_api = make_stub(
         import_package=AsyncMock(return_value=import_response),
     )
     client = MagicMock(spec=Workato)
@@ -219,8 +224,8 @@ async def test_upload_package_triggers_poll_when_pending(
     zip_file = tmp_path / "demo.zip"
     zip_file.write_bytes(b"zip-data")
 
-    import_response = SimpleNamespace(id=321, status="processing")
-    packages_api = SimpleNamespace(
+    import_response = make_stub(id=321, status="processing")
+    packages_api = make_stub(
         import_package=AsyncMock(return_value=import_response),
     )
     client = MagicMock(spec=Workato)
@@ -249,20 +254,20 @@ async def test_poll_import_status_reports_success(
     capture_echo: list[str],
 ) -> None:
     responses = [
-        SimpleNamespace(status="processing", recipe_status=[]),
-        SimpleNamespace(
+        make_stub(status="processing", recipe_status=[]),
+        make_stub(
             status="completed",
             recipe_status=[
-                SimpleNamespace(import_result="restarted"),
-                SimpleNamespace(import_result="stop_failed"),
+                make_stub(import_result="restarted"),
+                make_stub(import_result="stop_failed"),
             ],
         ),
     ]
 
-    async def fake_get_package(_import_id: int) -> SimpleNamespace:
+    async def fake_get_package(_import_id: int) -> Mock:
         return responses.pop(0)
 
-    packages_api = SimpleNamespace(get_package=AsyncMock(side_effect=fake_get_package))
+    packages_api = make_stub(get_package=AsyncMock(side_effect=fake_get_package))
     client = MagicMock(spec=Workato)
     client.packages_api = packages_api
 
@@ -291,17 +296,17 @@ async def test_poll_import_status_reports_failure(
     capture_echo: list[str],
 ) -> None:
     responses = [
-        SimpleNamespace(
+        make_stub(
             status="failed",
             error="Something went wrong",
             recipe_status=[("Recipe A", "Error details")],
         ),
     ]
 
-    async def fake_get_package(_import_id: int) -> SimpleNamespace:
+    async def fake_get_package(_import_id: int) -> Mock:
         return responses.pop(0)
 
-    packages_api = SimpleNamespace(get_package=AsyncMock(side_effect=fake_get_package))
+    packages_api = make_stub(get_package=AsyncMock(side_effect=fake_get_package))
     client = MagicMock(spec=Workato)
     client.packages_api = packages_api
 
@@ -327,8 +332,8 @@ async def test_poll_import_status_timeout(
     monkeypatch: pytest.MonkeyPatch,
     capture_echo: list[str],
 ) -> None:
-    packages_api = SimpleNamespace(
-        get_package=AsyncMock(return_value=SimpleNamespace(status="processing"))
+    packages_api = make_stub(
+        get_package=AsyncMock(return_value=make_stub(status="processing"))
     )
     client = MagicMock(spec=Workato)
     client.packages_api = packages_api

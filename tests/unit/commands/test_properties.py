@@ -1,7 +1,6 @@
 """Tests for the properties command group."""
 
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -35,14 +34,8 @@ async def test_list_properties_success(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData(
-        project_id=101,
-        project_name="Demo",
-    )
-
     props = {"admin_email": "user@example.com"}
     client = Mock()
-    client.properties_api.list_project_properties = AsyncMock(return_value=props)
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -50,18 +43,30 @@ async def test_list_properties_success(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda msg="": captured.append(msg),
     )
 
-    assert list_properties.callback
-    await list_properties.callback(
-        prefix="admin",
-        project_id=None,
-        workato_api_client=client,
-        config_manager=config_manager,
-    )
+    with (
+        patch.object(
+            config_manager,
+            "load_config",
+            return_value=ConfigData(project_id=101, project_name="Demo"),
+        ),
+        patch.object(
+            client.properties_api,
+            "list_project_properties",
+            AsyncMock(return_value=props),
+        ) as mock_list_props,
+    ):
+        assert list_properties.callback
+        await list_properties.callback(
+            prefix="admin",
+            project_id=None,
+            workato_api_client=client,
+            config_manager=config_manager,
+        )
 
-    output = "\n".join(captured)
-    assert "admin_email" in output
-    assert "101" in output
-    client.properties_api.list_project_properties.assert_awaited_once()
+        output = "\n".join(captured)
+        assert "admin_email" in output
+        assert "101" in output
+        mock_list_props.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -72,7 +77,6 @@ async def test_list_properties_missing_project(monkeypatch: pytest.MonkeyPatch) 
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData()
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -80,16 +84,17 @@ async def test_list_properties_missing_project(monkeypatch: pytest.MonkeyPatch) 
         lambda msg="": captured.append(msg),
     )
 
-    assert list_properties.callback
-    result = await list_properties.callback(
-        prefix="admin",
-        project_id=None,
-        workato_api_client=Mock(),
-        config_manager=config_manager,
-    )
+    with patch.object(config_manager, "load_config", return_value=ConfigData()):
+        assert list_properties.callback
+        result = await list_properties.callback(
+            prefix="admin",
+            project_id=None,
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
 
-    assert "No project ID provided" in "\n".join(captured)
-    assert result is None
+        assert "No project ID provided" in "\n".join(captured)
+        assert result is None
 
 
 @pytest.mark.asyncio
@@ -101,7 +106,6 @@ async def test_upsert_properties_invalid_format(
         DummySpinner,
     )
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData(project_id=5)
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -109,15 +113,18 @@ async def test_upsert_properties_invalid_format(
         lambda msg="": captured.append(msg),
     )
 
-    assert upsert_properties.callback
-    await upsert_properties.callback(
-        project_id=None,
-        property_pairs=("invalid",),
-        workato_api_client=Mock(),
-        config_manager=config_manager,
-    )
+    with patch.object(
+        config_manager, "load_config", return_value=ConfigData(project_id=5)
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=("invalid",),
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
 
-    assert "Invalid property format" in "\n".join(captured)
+        assert "Invalid property format" in "\n".join(captured)
 
 
 @pytest.mark.asyncio
@@ -128,12 +135,8 @@ async def test_upsert_properties_success(monkeypatch: pytest.MonkeyPatch) -> Non
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData(project_id=77)
-
-    response = SimpleNamespace(success=True)
-
+    response = Mock(success=True)
     client = Mock()
-    client.properties_api.upsert_project_properties = AsyncMock(return_value=response)
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -141,18 +144,28 @@ async def test_upsert_properties_success(monkeypatch: pytest.MonkeyPatch) -> Non
         lambda msg="": captured.append(msg),
     )
 
-    assert upsert_properties.callback
-    await upsert_properties.callback(
-        project_id=None,
-        property_pairs=("admin_email=user@example.com",),
-        workato_api_client=client,
-        config_manager=config_manager,
-    )
+    with (
+        patch.object(
+            config_manager, "load_config", return_value=ConfigData(project_id=77)
+        ),
+        patch.object(
+            client.properties_api,
+            "upsert_project_properties",
+            AsyncMock(return_value=response),
+        ) as mock_upsert_props,
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=("admin_email=user@example.com",),
+            workato_api_client=client,
+            config_manager=config_manager,
+        )
 
-    text = "\n".join(captured)
-    assert "Properties upserted successfully" in text
-    assert "admin_email" in text
-    client.properties_api.upsert_project_properties.assert_awaited_once()
+        text = "\n".join(captured)
+        assert "Properties upserted successfully" in text
+        assert "admin_email" in text
+        mock_upsert_props.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -163,12 +176,8 @@ async def test_upsert_properties_failure(monkeypatch: pytest.MonkeyPatch) -> Non
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData(project_id=77)
-
-    response = SimpleNamespace(success=False)
-
+    response = Mock(success=False)
     client = Mock()
-    client.properties_api.upsert_project_properties = AsyncMock(return_value=response)
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -176,15 +185,25 @@ async def test_upsert_properties_failure(monkeypatch: pytest.MonkeyPatch) -> Non
         lambda msg="": captured.append(msg),
     )
 
-    assert upsert_properties.callback
-    await upsert_properties.callback(
-        project_id=None,
-        property_pairs=("admin_email=user@example.com",),
-        workato_api_client=client,
-        config_manager=config_manager,
-    )
+    with (
+        patch.object(
+            config_manager, "load_config", return_value=ConfigData(project_id=77)
+        ),
+        patch.object(
+            client.properties_api,
+            "upsert_project_properties",
+            AsyncMock(return_value=response),
+        ),
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=("admin_email=user@example.com",),
+            workato_api_client=client,
+            config_manager=config_manager,
+        )
 
-    assert any("Failed to upsert properties" in line for line in captured)
+        assert any("Failed to upsert properties" in line for line in captured)
 
 
 @pytest.mark.asyncio
@@ -196,12 +215,9 @@ async def test_list_properties_empty_result(monkeypatch: pytest.MonkeyPatch) -> 
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData(project_id=101)
-
     # Empty properties dict
     props: dict[str, str] = {}
     client = Mock()
-    client.properties_api.list_project_properties = AsyncMock(return_value=props)
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -209,16 +225,26 @@ async def test_list_properties_empty_result(monkeypatch: pytest.MonkeyPatch) -> 
         lambda msg="": captured.append(msg),
     )
 
-    assert list_properties.callback
-    await list_properties.callback(
-        prefix="admin",
-        project_id=None,
-        workato_api_client=client,
-        config_manager=config_manager,
-    )
+    with (
+        patch.object(
+            config_manager, "load_config", return_value=ConfigData(project_id=101)
+        ),
+        patch.object(
+            client.properties_api,
+            "list_project_properties",
+            AsyncMock(return_value=props),
+        ),
+    ):
+        assert list_properties.callback
+        await list_properties.callback(
+            prefix="admin",
+            project_id=None,
+            workato_api_client=client,
+            config_manager=config_manager,
+        )
 
-    output = "\n".join(captured)
-    assert "No properties found" in output
+        output = "\n".join(captured)
+        assert "No properties found" in output
 
 
 @pytest.mark.asyncio
@@ -232,7 +258,6 @@ async def test_upsert_properties_missing_project(
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData()  # No project_id
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -240,16 +265,21 @@ async def test_upsert_properties_missing_project(
         lambda msg="": captured.append(msg),
     )
 
-    assert upsert_properties.callback
-    await upsert_properties.callback(
-        project_id=None,
-        property_pairs=("key=value",),
-        workato_api_client=Mock(),
-        config_manager=config_manager,
-    )
+    with patch.object(
+        config_manager,
+        "load_config",
+        return_value=ConfigData(),  # No project_id
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=("key=value",),
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
 
-    output = "\n".join(captured)
-    assert "No project ID provided" in output
+        output = "\n".join(captured)
+        assert "No project ID provided" in output
 
 
 @pytest.mark.asyncio
@@ -261,7 +291,6 @@ async def test_upsert_properties_no_properties(monkeypatch: pytest.MonkeyPatch) 
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData(project_id=123)
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -269,16 +298,19 @@ async def test_upsert_properties_no_properties(monkeypatch: pytest.MonkeyPatch) 
         lambda msg="": captured.append(msg),
     )
 
-    assert upsert_properties.callback
-    await upsert_properties.callback(
-        project_id=None,
-        property_pairs=(),  # Empty tuple - no properties
-        workato_api_client=Mock(),
-        config_manager=config_manager,
-    )
+    with patch.object(
+        config_manager, "load_config", return_value=ConfigData(project_id=123)
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=(),  # Empty tuple - no properties
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
 
-    output = "\n".join(captured)
-    assert "No properties provided" in output
+        output = "\n".join(captured)
+        assert "No properties provided" in output
 
 
 @pytest.mark.asyncio
@@ -290,7 +322,6 @@ async def test_upsert_properties_name_too_long(monkeypatch: pytest.MonkeyPatch) 
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData(project_id=123)
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -301,16 +332,19 @@ async def test_upsert_properties_name_too_long(monkeypatch: pytest.MonkeyPatch) 
     # Create a property name longer than 100 characters
     long_name = "x" * 101
 
-    assert upsert_properties.callback
-    await upsert_properties.callback(
-        project_id=None,
-        property_pairs=(f"{long_name}=value",),
-        workato_api_client=Mock(),
-        config_manager=config_manager,
-    )
+    with patch.object(
+        config_manager, "load_config", return_value=ConfigData(project_id=123)
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=(f"{long_name}=value",),
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
 
-    output = "\n".join(captured)
-    assert "Property name too long" in output
+        output = "\n".join(captured)
+        assert "Property name too long" in output
 
 
 @pytest.mark.asyncio
@@ -324,7 +358,6 @@ async def test_upsert_properties_value_too_long(
     )
 
     config_manager = Mock()
-    config_manager.load_config.return_value = ConfigData(project_id=123)
 
     captured: list[str] = []
     monkeypatch.setattr(
@@ -335,16 +368,19 @@ async def test_upsert_properties_value_too_long(
     # Create a property value longer than 1024 characters
     long_value = "x" * 1025
 
-    assert upsert_properties.callback
-    await upsert_properties.callback(
-        project_id=None,
-        property_pairs=(f"key={long_value}",),
-        workato_api_client=Mock(),
-        config_manager=config_manager,
-    )
+    with patch.object(
+        config_manager, "load_config", return_value=ConfigData(project_id=123)
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=(f"key={long_value}",),
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
 
-    output = "\n".join(captured)
-    assert "Property value too long" in output
+        output = "\n".join(captured)
+        assert "Property value too long" in output
 
 
 def test_properties_group_exists() -> None:

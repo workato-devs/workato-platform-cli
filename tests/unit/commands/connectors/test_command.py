@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -30,20 +29,26 @@ async def test_list_connectors_defaults(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
     manager = Mock()
-    manager.list_platform_connectors = AsyncMock(
-        return_value=[SimpleNamespace(name="salesforce", title="Salesforce")]
-    )
-    manager.list_custom_connectors = AsyncMock()
 
-    assert command.list_connectors.callback
+    with (
+        patch.object(
+            manager,
+            "list_platform_connectors",
+            AsyncMock(return_value=[Mock(name="salesforce", title="Salesforce")]),
+        ) as mock_list_platform,
+        patch.object(
+            manager, "list_custom_connectors", AsyncMock()
+        ) as mock_list_custom,
+    ):
+        assert command.list_connectors.callback
 
-    await command.list_connectors.callback(
-        platform=False, custom=False, connector_manager=manager
-    )
+        await command.list_connectors.callback(
+            platform=False, custom=False, connector_manager=manager
+        )
 
-    manager.list_platform_connectors.assert_awaited_once()
-    manager.list_custom_connectors.assert_awaited_once()
-    assert any("Salesforce" in line for line in capture_echo)
+        mock_list_platform.assert_awaited_once()
+        mock_list_custom.assert_awaited_once()
+        assert any("Salesforce" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
@@ -51,17 +56,21 @@ async def test_list_connectors_platform_only(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
     manager = Mock()
-    manager.list_platform_connectors = AsyncMock(return_value=[])
-    manager.list_custom_connectors = AsyncMock()
 
-    assert command.list_connectors.callback
+    with (
+        patch.object(manager, "list_platform_connectors", AsyncMock(return_value=[])),
+        patch.object(
+            manager, "list_custom_connectors", AsyncMock()
+        ) as mock_list_custom,
+    ):
+        assert command.list_connectors.callback
 
-    await command.list_connectors.callback(
-        platform=True, custom=False, connector_manager=manager
-    )
+        await command.list_connectors.callback(
+            platform=True, custom=False, connector_manager=manager
+        )
 
-    manager.list_custom_connectors.assert_not_awaited()
-    assert any("No platform connectors" in line for line in capture_echo)
+        mock_list_custom.assert_not_awaited()
+        assert any("No platform connectors" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
@@ -133,26 +142,27 @@ async def test_parameters_filtered_list(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
     manager = Mock()
-    manager.load_connection_data.return_value = {
+    connection_data = {
         "jira": ProviderData(
             name="Jira", provider="jira", oauth=True, secure_tunnel=True
         ),
         "mysql": ProviderData(name="MySQL", provider="mysql", oauth=False),
     }
 
-    assert command.parameters.callback
+    with patch.object(manager, "load_connection_data", return_value=connection_data):
+        assert command.parameters.callback
 
-    await command.parameters.callback(
-        provider=None,
-        oauth_only=True,
-        search="ji",
-        connector_manager=manager,
-    )
+        await command.parameters.callback(
+            provider=None,
+            oauth_only=True,
+            search="ji",
+            connector_manager=manager,
+        )
 
-    output = "\n".join(capture_echo)
-    assert "Jira" in output
-    assert "MySQL" not in output
-    assert "secure tunnel" in output
+        output = "\n".join(capture_echo)
+        assert "Jira" in output
+        assert "MySQL" not in output
+        assert "secure tunnel" in output
 
 
 @pytest.mark.asyncio
@@ -160,17 +170,18 @@ async def test_parameters_filtered_none(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
 ) -> None:
     manager = Mock()
-    manager.load_connection_data.return_value = {
+    connection_data = {
         "jira": ProviderData(name="Jira", provider="jira", oauth=True),
     }
 
-    assert command.parameters.callback
+    with patch.object(manager, "load_connection_data", return_value=connection_data):
+        assert command.parameters.callback
 
-    await command.parameters.callback(
-        provider=None,
-        oauth_only=False,
-        search="sales",
-        connector_manager=manager,
-    )
+        await command.parameters.callback(
+            provider=None,
+            oauth_only=False,
+            search="sales",
+            connector_manager=manager,
+        )
 
-    assert any("No providers" in line for line in capture_echo)
+        assert any("No providers" in line for line in capture_echo)

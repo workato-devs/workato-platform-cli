@@ -6,11 +6,11 @@ import time
 import urllib.error
 
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from workato_platform.cli.containers import Container
 from workato_platform.cli.utils.config import ConfigManager
 from workato_platform.cli.utils.version_checker import (
     CHECK_INTERVAL,
@@ -335,13 +335,12 @@ class TestVersionChecker:
     ) -> None:
         fake_ctx = Mock()
         fake_ctx.options = 0
-        fake_ssl = SimpleNamespace(
-            create_default_context=Mock(return_value=fake_ctx),
-            OP_NO_SSLv2=1,
-            OP_NO_SSLv3=2,
-            OP_NO_TLSv1=4,
-            OP_NO_TLSv1_1=8,
-        )
+        fake_ssl = Mock()
+        fake_ssl.create_default_context = Mock(return_value=fake_ctx)
+        fake_ssl.OP_NO_SSLv2 = 1
+        fake_ssl.OP_NO_SSLv3 = 2
+        fake_ssl.OP_NO_TLSv1 = 4
+        fake_ssl.OP_NO_TLSv1_1 = 8
 
         mock_response = Mock()
         mock_response.getcode.return_value = 200
@@ -394,28 +393,29 @@ class TestVersionChecker:
         checker_instance = Mock()
         checker_instance.should_check_for_updates.return_value = True
         thread_instance = Mock()
+        with (
+            patch(
+                "workato_platform.cli.utils.version_checker.VersionChecker",
+                Mock(return_value=checker_instance),
+            ),
+            patch(
+                "workato_platform.cli.utils.version_checker.threading.Thread",
+                Mock(return_value=thread_instance),
+            ),
+            patch.object(
+                Container,
+                "config_manager",
+                Mock(return_value=mock_config_manager),
+            ),
+        ):
 
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.version_checker.VersionChecker",
-            Mock(return_value=checker_instance),
-        )
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.version_checker.threading.Thread",
-            Mock(return_value=thread_instance),
-        )
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.version_checker.Container",
-            SimpleNamespace(config_manager=Mock(return_value=mock_config_manager)),
-            raising=False,
-        )
+            @check_updates_async
+            def sample() -> str:
+                return "done"
 
-        @check_updates_async
-        def sample() -> str:
-            return "done"
-
-        assert sample() == "done"
-        thread_instance.start.assert_called_once()
-        thread_instance.join.assert_called_once_with(timeout=3)
+            assert sample() == "done"
+            thread_instance.start.assert_called_once()
+            thread_instance.join.assert_called_once_with(timeout=3)
 
     @pytest.mark.asyncio
     async def test_check_updates_async_async_wrapper(
@@ -425,27 +425,28 @@ class TestVersionChecker:
     ) -> None:
         checker_instance = Mock()
         checker_instance.should_check_for_updates.return_value = False
-
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.version_checker.VersionChecker",
-            Mock(return_value=checker_instance),
-        )
         thread_mock = Mock()
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.version_checker.threading.Thread",
-            thread_mock,
-        )
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.version_checker.Container",
-            SimpleNamespace(config_manager=Mock(return_value=mock_config_manager)),
-            raising=False,
-        )
+        with (
+            patch(
+                "workato_platform.cli.utils.version_checker.VersionChecker",
+                Mock(return_value=checker_instance),
+            ),
+            patch(
+                "workato_platform.cli.utils.version_checker.threading.Thread",
+                thread_mock,
+            ),
+            patch.object(
+                Container,
+                "config_manager",
+                Mock(return_value=mock_config_manager),
+            ),
+        ):
 
-        @check_updates_async
-        async def async_sample() -> str:
-            return "async-done"
+            @check_updates_async
+            async def async_sample() -> str:
+                return "async-done"
 
-        result = await async_sample()
+            result = await async_sample()
         assert result == "async-done"
         thread_mock.assert_not_called()
 
@@ -453,33 +454,33 @@ class TestVersionChecker:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.version_checker.Container",
-            SimpleNamespace(config_manager=Mock(side_effect=RuntimeError("boom"))),
-            raising=False,
-        )
+        with patch.object(
+            Container,
+            "config_manager",
+            Mock(side_effect=RuntimeError("boom")),
+        ):
 
-        @check_updates_async
-        def sample() -> str:
-            raise RuntimeError("command failed")
+            @check_updates_async
+            def sample() -> str:
+                raise RuntimeError("command failed")
 
-        with pytest.raises(RuntimeError):
-            sample()
+            with pytest.raises(RuntimeError):
+                sample()
 
     @pytest.mark.asyncio
     async def test_check_updates_async_async_wrapper_handles_exception(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setattr(
-            "workato_platform.cli.utils.version_checker.Container",
-            SimpleNamespace(config_manager=Mock(side_effect=RuntimeError("boom"))),
-            raising=False,
-        )
+        with patch.object(
+            Container,
+            "config_manager",
+            Mock(side_effect=RuntimeError("boom")),
+        ):
 
-        @check_updates_async
-        async def async_sample() -> None:
-            raise RuntimeError("cmd failed")
+            @check_updates_async
+            async def async_sample() -> None:
+                raise RuntimeError("cmd failed")
 
-        with pytest.raises(RuntimeError):
-            await async_sample()
+            with pytest.raises(RuntimeError):
+                await async_sample()
