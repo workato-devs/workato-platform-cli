@@ -1,0 +1,348 @@
+{
+  "name": "CSV File Processing with Data Validation",
+  "description": "Process CSV files from SFTP, validate data, and bulk insert to database with comprehensive error handling",
+  "version": 3,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_trigger",
+    "as": "scheduler",
+    "keyword": "trigger",
+    "input": {
+      "interval": "hourly",
+      "start_time": "00:15"
+    },
+    "block": [
+      {
+        "number": 1,
+        "provider": "sftp",
+        "name": "list_files",
+        "as": "list_files",
+        "keyword": "action",
+        "uuid": "r7s8t9u0-v1w2-3456-rstu-vw7890123456",
+        "input": {
+          "folder_path": "/incoming/customer_data",
+          "file_pattern": "*.csv",
+          "sort_by": "modified_date",
+          "sort_order": "desc"
+        }
+      },
+      {
+        "number": 2,
+        "provider": "workato_utility",
+        "name": "condition",
+        "as": "check_files",
+        "keyword": "action",
+        "uuid": "s8t9u0v1-w2x3-4567-stuv-wx8901234567",
+        "input": {
+          "condition": "=_('data.sftp.list_files').size > 0",
+          "actions_if_true": [
+            {
+              "number": 3,
+              "provider": "workato_utility",
+              "name": "repeat",
+              "as": "process_files",
+              "keyword": "action",
+              "uuid": "t9u0v1w2-x3y4-5678-tuvw-xy9012345678",
+              "input": {
+                "foreach": "=_('data.sftp.list_files')",
+                "actions": [
+                  {
+                    "number": 4,
+                    "provider": "workato_utility",
+                    "name": "compose",
+                    "as": "file_info",
+                    "keyword": "action",
+                    "uuid": "u0v1w2x3-y4z5-6789-uvwx-yz0123456789",
+                    "input": {
+                      "file_name": "=_('data.sftp.list_files.name')",
+                      "file_size_mb": "=(_('data.sftp.list_files.size').to_f / 1024 / 1024).round(2)",
+                      "should_process": "=_('data.sftp.list_files.name').include?('customer') && !_('data.sftp.list_files.name').include?('processed')"
+                    }
+                  },
+                  {
+                    "number": 5,
+                    "provider": "workato_utility",
+                    "name": "condition",
+                    "as": "validate_file",
+                    "keyword": "action",
+                    "uuid": "v1w2x3y4-z5a6-7890-vwxy-za1234567890",
+                    "input": {
+                      "condition": "=_('data.workato_utility.file_info.should_process') && _('data.workato_utility.file_info.file_size_mb') < 50",
+                      "actions_if_true": [
+                        {
+                          "number": 6,
+                          "provider": "sftp",
+                          "name": "download_file",
+                          "as": "download_file",
+                          "keyword": "action",
+                          "uuid": "w2x3y4z5-a6b7-8901-wxyz-ab2345678901",
+                          "input": {
+                            "file_path": "=_('data.sftp.list_files.path')"
+                          }
+                        },
+                        {
+                          "number": 7,
+                          "provider": "workato_utility",
+                          "name": "parse_csv",
+                          "as": "parse_csv",
+                          "keyword": "action",
+                          "uuid": "x3y4z5a6-b7c8-9012-xyza-bc3456789012",
+                          "input": {
+                            "csv": "=_('data.sftp.download_file.file_contents')",
+                            "headers": true,
+                            "strip_whitespace": true,
+                            "skip_blank_lines": true
+                          }
+                        },
+                        {
+                          "number": 8,
+                          "provider": "workato_utility",
+                          "name": "repeat",
+                          "as": "validate_rows",
+                          "keyword": "action",
+                          "uuid": "y4z5a6b7-c8d9-0123-yzab-cd4567890123",
+                          "input": {
+                            "foreach": "=_('data.workato_utility.parse_csv')",
+                            "actions": [
+                              {
+                                "number": 9,
+                                "provider": "workato_utility",
+                                "name": "compose",
+                                "as": "validate_record",
+                                "keyword": "action",
+                                "uuid": "z5a6b7c8-d9e0-1234-zabc-de5678901234",
+                                "input": {
+                                  "email_valid": "=_('data.workato_utility.parse_csv.email').match?(/\\A[\\w+\\-.]+@[a-z\\d\\-]+(\\.[a-z\\d\\-]+)*\\.[a-z]+\\z/i)",
+                                  "required_fields_present": "=_('data.workato_utility.parse_csv.first_name').present? && _('data.workato_utility.parse_csv.last_name').present? && _('data.workato_utility.parse_csv.email').present?",
+                                  "record_valid": "=_('data.workato_utility.parse_csv.first_name').present? && _('data.workato_utility.parse_csv.last_name').present? && _('data.workato_utility.parse_csv.email').present? && _('data.workato_utility.parse_csv.email').match?(/\\A[\\w+\\-.]+@[a-z\\d\\-]+(\\.[a-z\\d\\-]+)*\\.[a-z]+\\z/i)"
+                                }
+                              },
+                              {
+                                "number": 10,
+                                "provider": "workato_utility",
+                                "name": "condition",
+                                "as": "route_record",
+                                "keyword": "action",
+                                "uuid": "a6b7c8d9-e0f1-2345-abcd-ef6789012345",
+                                "input": {
+                                  "condition": "=_('data.workato_utility.validate_record.record_valid')",
+                                  "actions_if_true": [
+                                    {
+                                      "number": 11,
+                                      "provider": "postgresql",
+                                      "name": "upsert_rows",
+                                      "as": "insert_customer",
+                                      "keyword": "action",
+                                      "uuid": "b7c8d9e0-f1g2-3456-bcde-fg7890123456",
+                                      "input": {
+                                        "schema": "public",
+                                        "table": "customers",
+                                        "columns": [
+                                          {
+                                            "name": "customer_id",
+                                            "value": "=_('data.workato_utility.parse_csv.customer_id')"
+                                          },
+                                          {
+                                            "name": "first_name",
+                                            "value": "=_('data.workato_utility.parse_csv.first_name').strip.titleize"
+                                          },
+                                          {
+                                            "name": "last_name",
+                                            "value": "=_('data.workato_utility.parse_csv.last_name').strip.titleize"
+                                          },
+                                          {
+                                            "name": "email",
+                                            "value": "=_('data.workato_utility.parse_csv.email').downcase.strip"
+                                          },
+                                          {
+                                            "name": "phone",
+                                            "value": "=_('data.workato_utility.parse_csv.phone').gsub(/[^0-9]/, '')"
+                                          },
+                                          {
+                                            "name": "company",
+                                            "value": "=_('data.workato_utility.parse_csv.company').strip"
+                                          },
+                                          {
+                                            "name": "source_file",
+                                            "value": "=_('data.workato_utility.file_info.file_name')"
+                                          },
+                                          {
+                                            "name": "processed_at",
+                                            "value": "=_('job.started_at')"
+                                          }
+                                        ],
+                                        "unique_columns": ["customer_id"]
+                                      }
+                                    }
+                                  ],
+                                  "actions_if_false": [
+                                    {
+                                      "number": 12,
+                                      "provider": "postgresql",
+                                      "name": "insert_rows",
+                                      "as": "log_error",
+                                      "keyword": "action",
+                                      "uuid": "c8d9e0f1-g2h3-4567-cdef-gh8901234567",
+                                      "input": {
+                                        "schema": "public",
+                                        "table": "data_processing_errors",
+                                        "columns": [
+                                          {
+                                            "name": "customer_id",
+                                            "value": "=_('data.workato_utility.parse_csv.customer_id')"
+                                          },
+                                          {
+                                            "name": "email",
+                                            "value": "=_('data.workato_utility.parse_csv.email')"
+                                          },
+                                          {
+                                            "name": "error_type",
+                                            "value": "validation_error"
+                                          },
+                                          {
+                                            "name": "error_details",
+                                            "value": "=if !_('data.workato_utility.validate_record.required_fields_present') then 'Missing required fields' else 'Invalid data format' end"
+                                          },
+                                          {
+                                            "name": "source_file",
+                                            "value": "=_('data.workato_utility.file_info.file_name')"
+                                          },
+                                          {
+                                            "name": "processed_at",
+                                            "value": "=_('job.started_at')"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "number": 13,
+                          "provider": "sftp",
+                          "name": "move_file",
+                          "as": "archive_file",
+                          "keyword": "action",
+                          "uuid": "d9e0f1g2-h3i4-5678-defg-hi9012345678",
+                          "input": {
+                            "source_path": "=_('data.sftp.list_files.path')",
+                            "destination_path": "=/processed/#{_('data.workato_utility.file_info.file_name').gsub('.csv', '_processed_#{now.strftime('%Y%m%d_%H%M%S')}.csv')}"
+                          }
+                        },
+                        {
+                          "number": 14,
+                          "provider": "slack",
+                          "name": "post_message",
+                          "as": "notify_success",
+                          "keyword": "action",
+                          "uuid": "e0f1g2h3-i4j5-6789-efgh-ij0123456789",
+                          "input": {
+                            "channel": "#data-pipeline",
+                            "text": "✅ File processed successfully: =_('data.workato_utility.file_info.file_name')"
+                          }
+                        }
+                      ],
+                      "actions_if_false": [
+                        {
+                          "number": 15,
+                          "provider": "workato_utility",
+                          "name": "condition",
+                          "as": "check_size_limit",
+                          "keyword": "action",
+                          "uuid": "f1g2h3i4-j5k6-7890-fghi-jk1234567890",
+                          "input": {
+                            "condition": "=_('data.workato_utility.file_info.file_size_mb') >= 50",
+                            "actions_if_true": [
+                              {
+                                "number": 16,
+                                "provider": "workato_utility",
+                                "name": "email",
+                                "as": "alert_large_file",
+                                "keyword": "action",
+                                "uuid": "g2h3i4j5-k6l7-8901-ghij-kl2345678901",
+                                "input": {
+                                  "to": "data-team@company.com",
+                                  "subject": "File Too Large - =_('data.workato_utility.file_info.file_name')",
+                                  "body": "File =_('data.workato_utility.file_info.file_name') is =_('data.workato_utility.file_info.file_size_mb')MB, which exceeds the 50MB limit. Please split the file into smaller chunks and reprocess."
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "actions_if_false": [
+            {
+              "number": 17,
+              "provider": "workato_utility",
+              "name": "compose",
+              "as": "no_files_message",
+              "keyword": "action",
+              "uuid": "h3i4j5k6-l7m8-9012-hijk-lm3456789012",
+              "input": {
+                "message": "No new files found for processing at =_('job.started_at')"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "uuid": "56789012-34de-f567-8901-234567def890",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "sftp",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "sftp.connection.json",
+        "name": "sftp",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "workato_utility",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "postgresql",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "postgresql.connection.json",
+        "name": "postgresql",
+        "folder": ""
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "slack",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "slack.connection.json",
+        "name": "slack",
+        "folder": ""
+      }
+    }
+  ]
+}
