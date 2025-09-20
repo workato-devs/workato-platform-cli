@@ -13,7 +13,7 @@ class TestCLI:
     """Test the main CLI interface."""
 
     @pytest.mark.asyncio
-    async def test_cli_help(self):
+    async def test_cli_help(self) -> None:
         """Test CLI shows help message."""
         runner = CliRunner()
         result = await runner.invoke(cli, ["--help"])
@@ -22,7 +22,7 @@ class TestCLI:
         assert "CLI tool for the Workato API" in result.output
 
     @pytest.mark.asyncio
-    async def test_cli_with_profile(self):
+    async def test_cli_with_profile(self) -> None:
         """Test CLI accepts profile option."""
         runner = CliRunner()
 
@@ -41,7 +41,7 @@ class TestCLI:
             )
 
     @pytest.mark.asyncio
-    async def test_cli_commands_registered(self):
+    async def test_cli_commands_registered(self) -> None:
         """Test that all expected commands are registered."""
         runner = CliRunner()
         result = await runner.invoke(cli, ["--help"])
@@ -70,7 +70,7 @@ class TestCLI:
             )
 
     @pytest.mark.asyncio
-    async def test_cli_version_checking_decorator(self):
+    async def test_cli_version_checking_decorator(self) -> None:
         """Test that version checking functionality exists."""
         # Check that the cli function exists and is callable
         assert callable(cli)
@@ -84,7 +84,7 @@ class TestCLIIntegration:
     """Integration tests for CLI commands."""
 
     @pytest.mark.asyncio
-    async def test_init_command_exists(self):
+    async def test_init_command_exists(self) -> None:
         """Test that init command is available."""
         runner = CliRunner()
         result = await runner.invoke(cli, ["init", "--help"])
@@ -93,7 +93,7 @@ class TestCLIIntegration:
         assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_profiles_command_exists(self):
+    async def test_profiles_command_exists(self) -> None:
         """Test that profiles command is available."""
         runner = CliRunner()
         result = await runner.invoke(cli, ["profiles", "--help"])
@@ -102,7 +102,7 @@ class TestCLIIntegration:
         assert "list" in result.output  # Should show subcommands
 
     @pytest.mark.asyncio
-    async def test_recipes_command_exists(self):
+    async def test_recipes_command_exists(self) -> None:
         """Test that recipes command is available."""
         runner = CliRunner()
         result = await runner.invoke(cli, ["recipes", "--help"])
@@ -110,7 +110,7 @@ class TestCLIIntegration:
         assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_connections_command_exists(self):
+    async def test_connections_command_exists(self) -> None:
         """Test that connections command is available."""
         runner = CliRunner()
         result = await runner.invoke(cli, ["connections", "--help"])
@@ -118,7 +118,7 @@ class TestCLIIntegration:
         assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_guide_command_exists(self):
+    async def test_guide_command_exists(self) -> None:
         """Test that guide command is available (for AI agents)."""
         runner = CliRunner()
         result = await runner.invoke(cli, ["guide", "--help"])

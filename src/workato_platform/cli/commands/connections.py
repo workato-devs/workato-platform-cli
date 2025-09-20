@@ -674,10 +674,8 @@ def group_connections_by_provider(
     grouped: dict[str, list[Connection]] = {}
 
     for connection in connections:
-        provider = connection.provider
-        if not provider:
-            provider = "unknown"
-        provider_display = provider.replace("_", " ").title()
+        application = connection.application
+        provider_display = application.replace("_", " ").title()
 
         if provider_display not in grouped:
             grouped[provider_display] = []

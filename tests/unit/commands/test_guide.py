@@ -1,240 +1,330 @@
-"""Tests for guide command (AI agent documentation interface)."""
+"""Tests for the guide command group."""
 
-from unittest.mock import Mock, mock_open, patch
+import json
+
+from pathlib import Path
 
 import pytest
 
-from asyncclick.testing import CliRunner
-
-from workato_platform.cli.commands.guide import (
-    content,
-    guide,
-    index,
-    search,
-    structure,
-    topics,
-)
+from workato_platform.cli.commands import guide
 
 
-class TestGuideCommand:
-    """Test the guide command for AI agents."""
+@pytest.fixture
+def docs_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    module_file = tmp_path / "fake" / "guide.py"
+    module_file.parent.mkdir(parents=True)
+    module_file.write_text("# dummy")
+    docs_dir = tmp_path / "resources" / "docs"
+    (docs_dir / "formulas").mkdir(parents=True)
+    monkeypatch.setattr(guide, "__file__", str(module_file))
+    return docs_dir
 
-    @pytest.mark.asyncio
-    async def test_guide_command_group_exists(self):
-        """Test that guide command group can be invoked."""
-        runner = CliRunner()
-        result = await runner.invoke(guide, ["--help"])
 
-        assert result.exit_code == 0
-        assert "documentation" in result.output.lower()
+@pytest.mark.asyncio
+async def test_topics_lists_available_docs(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-    @pytest.mark.asyncio
-    async def test_guide_topics_command(self):
-        """Test the topics subcommand."""
-        runner = CliRunner()
+    assert guide.topics.callback
+    await guide.topics.callback()
 
-        # Mock the docs directory and files
-        with patch("workato_platform.cli.commands.guide.Path") as mock_path:
-            mock_docs_dir = Mock()
-            mock_docs_dir.exists.return_value = True
-            mock_docs_dir.glob.return_value = [
-                Mock(name="recipe-fundamentals.md"),
-                Mock(name="connections-parameters.md"),
-            ]
-            mock_path.return_value.parent.parent.joinpath.return_value = mock_docs_dir
+    payload = json.loads("".join(captured))
+    assert payload["total_topics"] == len(payload["core_topics"]) + len(
+        payload["formula_topics"]
+    )
 
-            result = await runner.invoke(topics)
 
-            assert result.exit_code == 0
+@pytest.mark.asyncio
+async def test_topics_missing_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module_file = tmp_path / "fake" / "guide.py"
+    module_file.parent.mkdir(parents=True)
+    module_file.write_text("# dummy")
+    monkeypatch.setattr(guide, "__file__", str(module_file))
 
-    @pytest.mark.asyncio
-    async def test_guide_content_command_with_valid_topic(self):
-        """Test the content subcommand with valid topic."""
-        runner = CliRunner()
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-        with patch("workato_platform.cli.commands.guide.Path") as mock_path:
-            mock_file = Mock()
-            mock_file.exists.return_value = True
-            mock_path.return_value.parent.parent.joinpath.return_value = mock_file
+    assert guide.topics.callback
+    await guide.topics.callback()
 
-            with patch(
-                "builtins.open",
-                mock_open(read_data="# Test Content\nThis is test documentation."),
-            ):
-                result = await runner.invoke(content, ["recipe-fundamentals"])
+    assert "Documentation not found" in "".join(captured)
 
-                assert result.exit_code == 0
 
-    @pytest.mark.asyncio
-    async def test_guide_content_command_with_invalid_topic(self):
-        """Test the content subcommand with invalid topic."""
-        runner = CliRunner()
+@pytest.mark.asyncio
+async def test_content_returns_topic(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    topic_file = docs_setup / "sample.md"
+    topic_file.write_text("---\nmetadata\n---\nActual content\nNext line")
 
-        with patch("workato_platform.cli.commands.guide.Path") as mock_path:
-            mock_file = Mock()
-            mock_file.exists.return_value = False
-            mock_path.return_value.parent.parent.joinpath.return_value = mock_file
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-            result = await runner.invoke(content, ["nonexistent-topic"])
+    assert guide.content.callback
+    await guide.content.callback("sample")
 
-            # Should handle missing file gracefully
-            assert result.exit_code == 0 or result.exit_code == 1
+    output = "".join(captured)
+    assert "Actual content" in output
+    assert "metadata" in output
 
-    @pytest.mark.asyncio
-    async def test_guide_search_command(self):
-        """Test the search subcommand."""
-        runner = CliRunner()
 
-        with patch("workato_platform.cli.commands.guide.Path") as mock_path:
-            mock_docs_dir = Mock()
-            mock_docs_dir.exists.return_value = True
-            mock_docs_dir.glob.return_value = [
-                Mock(name="recipe-fundamentals.md", stem="recipe-fundamentals"),
-                Mock(name="connections-parameters.md", stem="connections-parameters"),
-            ]
+@pytest.mark.asyncio
+async def test_content_missing_topic(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-            # Mock file reading
-            def mock_read_text(encoding=None):
-                return "This document covers OAuth authentication and connection setup."
+    assert guide.content.callback
+    await guide.content.callback("missing")
 
-            for mock_file in mock_docs_dir.glob.return_value:
-                mock_file.read_text = Mock(side_effect=mock_read_text)
+    assert "Topic 'missing' not found" in "".join(captured)
 
-            mock_path.return_value.parent.parent.joinpath.return_value = mock_docs_dir
 
-            result = await runner.invoke(search, ["oauth"])
+@pytest.mark.asyncio
+async def test_search_returns_matches(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (docs_setup / "guide.md").write_text("This line mentions Trigger\nSecond line")
+    (docs_setup / "formulas" / "calc.md").write_text("Formula trigger usage")
 
-            assert result.exit_code == 0
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-    @pytest.mark.asyncio
-    async def test_guide_search_with_no_results(self):
-        """Test search command when no results found."""
-        runner = CliRunner()
+    assert guide.search.callback
+    await guide.search.callback("trigger", topic=None, max_results=5)
 
-        with patch("workato_platform.cli.commands.guide.Path") as mock_path:
-            mock_docs_dir = Mock()
-            mock_docs_dir.exists.return_value = True
-            mock_docs_dir.glob.return_value = []
-            mock_path.return_value.parent.parent.joinpath.return_value = mock_docs_dir
+    payload = json.loads("".join(captured))
+    assert payload["results_count"] > 0
+    assert payload["query"] == "trigger"
 
-            result = await runner.invoke(search, ["nonexistent"])
 
-            assert result.exit_code == 0
+@pytest.mark.asyncio
+async def test_structure_outputs_relationships(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (docs_setup / "overview.md").write_text(
+        "# Overview\n## Section One\n### Details\nLink to [docs](file.md)\n````code````"
+    )
 
-    @pytest.mark.asyncio
-    async def test_guide_structure_command(self):
-        """Test the structure subcommand."""
-        runner = CliRunner()
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-        with patch("workato_platform.cli.commands.guide.Path") as mock_path:
-            mock_docs_dir = Mock()
-            mock_docs_dir.exists.return_value = True
-            mock_docs_dir.rglob.return_value = [
-                Mock(
-                    name="recipe-fundamentals.md",
-                    relative_to=Mock(return_value="recipe-fundamentals.md"),
-                ),
-                Mock(
-                    name="connections-parameters.md",
-                    relative_to=Mock(return_value="connections-parameters.md"),
-                ),
-            ]
-            mock_path.return_value.parent.parent.joinpath.return_value = mock_docs_dir
+    assert guide.structure.callback
+    await guide.structure.callback("overview")
 
-            result = await runner.invoke(structure, ["recipe-fundamentals"])
+    payload = json.loads("".join(captured))
+    assert payload["topic"] == "overview"
+    assert "Section One" in payload["sections"][0]
+    assert payload["code_blocks"] >= 1
+    assert payload["links"]
 
-            assert result.exit_code == 0
 
-    @pytest.mark.asyncio
-    async def test_guide_index_command(self):
-        """Test the index subcommand."""
-        runner = CliRunner()
+@pytest.mark.asyncio
+async def test_structure_missing_topic(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-        with patch("workato_platform.cli.commands.guide.Path") as mock_path:
-            mock_docs_dir = Mock()
-            mock_docs_dir.exists.return_value = True
-            mock_docs_dir.glob.return_value = [
-                Mock(name="recipe-fundamentals.md", stem="recipe-fundamentals"),
-                Mock(name="connections-parameters.md", stem="connections-parameters"),
-            ]
+    assert guide.structure.callback
+    await guide.structure.callback("missing")
 
-            # Mock file content
-            def mock_read_text(encoding=None):
-                return """# Recipe Fundamentals
+    assert "Topic 'missing' not found" in "".join(captured)
 
-This document explains recipe basics.
 
-## Topics Covered
-- Recipe structure
-- Triggers and actions
-"""
+@pytest.mark.asyncio
+async def test_index_builds_summary(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (docs_setup / "core.md").write_text("# Core\n## Section")
+    formulas_dir = docs_setup / "formulas"
+    (formulas_dir / "calc.md").write_text("# Formula\n```\nSUM(1,2)\n```\n")
 
-            for mock_file in mock_docs_dir.glob.return_value:
-                mock_file.read_text = Mock(side_effect=mock_read_text)
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-            mock_path.return_value.parent.parent.joinpath.return_value = mock_docs_dir
+    assert guide.index.callback
+    await guide.index.callback()
 
-            result = await runner.invoke(index)
+    payload = json.loads("".join(captured))
+    assert "core" in payload["documentation_index"]
+    assert "calc" in payload["formula_index"]
 
-            assert result.exit_code == 0
 
-    @pytest.mark.asyncio
-    async def test_guide_handles_missing_docs_directory(self):
-        """Test guide commands handle missing docs directory gracefully."""
-        runner = CliRunner()
+@pytest.mark.asyncio
+async def test_guide_group_invocation(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-        with patch("workato_platform.cli.commands.guide.Path") as mock_path:
-            mock_docs_dir = Mock()
-            mock_docs_dir.exists.return_value = False
-            mock_path.return_value.parent.parent.joinpath.return_value = mock_docs_dir
+    assert guide.guide.callback
+    await guide.guide.callback()
 
-            result = await runner.invoke(topics)
+    assert captured == []
 
-            # Should handle missing directory gracefully
-            assert result.exit_code in [
-                0,
-                1,
-            ]  # Either success with message or handled error
 
-    @pytest.mark.asyncio
-    async def test_guide_json_output_format(self):
-        """Test guide commands with JSON output format."""
-        runner = CliRunner()
+@pytest.mark.asyncio
+async def test_content_missing_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test content command when docs directory doesn't exist."""
+    module_file = tmp_path / "fake" / "guide.py"
+    module_file.parent.mkdir(parents=True)
+    module_file.write_text("# dummy")
+    monkeypatch.setattr(guide, "__file__", str(module_file))
 
-        with patch("workato_platform.cli.commands.guide.Path") as mock_path:
-            mock_docs_dir = Mock()
-            mock_docs_dir.exists.return_value = True
-            mock_docs_dir.glob.return_value = [Mock(name="test.md", stem="test")]
-            mock_path.return_value.parent.parent.joinpath.return_value = mock_docs_dir
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-            result = await runner.invoke(topics)
+    assert guide.content.callback
+    await guide.content.callback("sample")
 
-            assert result.exit_code == 0
+    assert "Documentation not found" in "".join(captured)
 
-    @pytest.mark.asyncio
-    async def test_guide_text_processing(self):
-        """Test that guide commands properly process markdown text."""
-        runner = CliRunner()
 
-        markdown_content = """# Test Document
+@pytest.mark.asyncio
+async def test_content_finds_numbered_topic(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test content command finding topic with number prefix."""
+    topic_file = docs_setup / "01-recipe-fundamentals.md"
+    topic_file.write_text("Recipe fundamentals content")
 
-This is a test document with **bold** text and `code`.
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
 
-## Section 1
-Content here.
+    assert guide.content.callback
+    await guide.content.callback("recipe-fundamentals")
 
-## Section 2
-More content.
-"""
+    output = "".join(captured)
+    assert "Recipe fundamentals content" in output
 
-        with (
-            patch("workato_platform.cli.commands.guide.Path") as mock_path,
-            patch("builtins.open", mock_open(read_data=markdown_content)),
-        ):
-            mock_file = Mock()
-            mock_file.exists.return_value = True
-            mock_path.return_value.parent.parent.joinpath.return_value = mock_file
 
-            result = await runner.invoke(content, ["test"])
+@pytest.mark.asyncio
+async def test_content_finds_formula_topic(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test content command finding topic in formulas directory."""
+    formula_file = docs_setup / "formulas" / "string-formulas.md"
+    formula_file.write_text("String formula content")
 
-            assert result.exit_code == 0
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
+
+    assert guide.content.callback
+    await guide.content.callback("string-formulas")
+
+    output = "".join(captured)
+    assert "String formula content" in output
+
+
+@pytest.mark.asyncio
+async def test_content_handles_empty_lines_at_start(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test content command skipping empty lines at start."""
+    topic_file = docs_setup / "sample.md"
+    topic_file.write_text("---\nmetadata\n---\n\n\n\nActual content")
+
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
+
+    assert guide.content.callback
+    await guide.content.callback("sample")
+
+    output = "".join(captured)
+    assert "Actual content" in output
+
+
+@pytest.mark.asyncio
+async def test_search_missing_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test search command when docs directory doesn't exist."""
+    module_file = tmp_path / "fake" / "guide.py"
+    module_file.parent.mkdir(parents=True)
+    module_file.write_text("# dummy")
+    monkeypatch.setattr(guide, "__file__", str(module_file))
+
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
+
+    assert guide.search.callback
+    await guide.search.callback("query", topic=None, max_results=10)
+
+    assert "Documentation not found" in "".join(captured)
+
+
+@pytest.mark.asyncio
+async def test_search_specific_topic(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test search command with specific topic."""
+    topic_file = docs_setup / "triggers.md"
+    topic_file.write_text("This line mentions trigger functionality")
+
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
+
+    assert guide.search.callback
+    await guide.search.callback("trigger", topic="triggers", max_results=10)
+
+    payload = json.loads("".join(captured))
+    assert payload["results_count"] > 0
+
+
+@pytest.mark.asyncio
+async def test_structure_missing_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test structure command when docs directory doesn't exist."""
+    module_file = tmp_path / "fake" / "guide.py"
+    module_file.parent.mkdir(parents=True)
+    module_file.write_text("# dummy")
+    monkeypatch.setattr(guide, "__file__", str(module_file))
+
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
+
+    assert guide.structure.callback
+    await guide.structure.callback("sample")
+
+    assert "Documentation not found" in "".join(captured)
+
+
+@pytest.mark.asyncio
+async def test_structure_formula_topic(
+    docs_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test structure command with formula topic."""
+    formula_file = docs_setup / "formulas" / "string-formulas.md"
+    formula_file.write_text(
+        "# String Formulas\n## Basic Functions\n### UPPER\n```ruby\nUPPER('test')\n```"
+    )
+
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
+
+    assert guide.structure.callback
+    await guide.structure.callback("string-formulas")
+
+    payload = json.loads("".join(captured))
+    assert payload["topic"] == "string-formulas"
+    assert "Basic Functions" in payload["sections"]
+
+
+@pytest.mark.asyncio
+async def test_index_missing_docs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test index command when docs directory doesn't exist."""
+    module_file = tmp_path / "fake" / "guide.py"
+    module_file.parent.mkdir(parents=True)
+    module_file.write_text("# dummy")
+    monkeypatch.setattr(guide, "__file__", str(module_file))
+
+    captured: list[str] = []
+    monkeypatch.setattr(guide.click, "echo", lambda msg="": captured.append(msg))
+
+    assert guide.index.callback
+    await guide.index.callback()
+
+    assert "Documentation not found" in "".join(captured)

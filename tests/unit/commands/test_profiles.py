@@ -1,260 +1,411 @@
-"""Tests for profiles command."""
+"""Focused tests for the profiles command module."""
 
-from unittest.mock import Mock, patch
+from collections.abc import Callable
+from unittest.mock import Mock
 
 import pytest
 
-from asyncclick.testing import CliRunner
-
 from workato_platform.cli.commands.profiles import (
-    profiles,
+    delete,
+    list_profiles,
+    show,
+    status,
+    use,
 )
+from workato_platform.cli.utils.config import ConfigData, ProfileData
 
 
-class TestProfilesCommand:
-    """Test the profiles command and subcommands."""
+@pytest.fixture
+def profile_data_factory() -> Callable[..., ProfileData]:
+    """Create ProfileData instances for test scenarios."""
 
-    @pytest.mark.asyncio
-    async def test_profiles_command_group_exists(self):
-        """Test that profiles command group can be invoked."""
-        runner = CliRunner()
-        result = await runner.invoke(profiles, ["--help"])
-
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
-        assert "profile" in result.output.lower()
-
-    @patch("workato_platform.cli.containers.Container")
-    @pytest.mark.asyncio
-    async def test_profiles_list_command(self, mock_container):
-        """Test the list subcommand."""
-        # Mock the profile manager
-        mock_profile_manager = Mock()
-        mock_profile_manager.list_profiles.return_value = [
-            Mock(name="dev", region="us", created_at="2024-01-01T00:00:00Z"),
-            Mock(name="prod", region="eu", created_at="2024-01-01T00:00:00Z"),
-        ]
-
-        mock_container_instance = Mock()
-        mock_container_instance.profile_manager.return_value = mock_profile_manager
-        mock_container.return_value = mock_container_instance
-
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
-
-        result = await runner.invoke(cli, ["profiles", "list"])
-
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
-        # Test passes if command doesn't crash
-
-    @patch("workato_platform.cli.containers.Container")
-    @pytest.mark.asyncio
-    async def test_profiles_list_command_json_format(self, mock_container):
-        """Test the list subcommand with JSON format."""
-        mock_profile_manager = Mock()
-        mock_profile_manager.list_profiles.return_value = []
-
-        mock_container_instance = Mock()
-        mock_container_instance.profile_manager.return_value = mock_profile_manager
-        mock_container.return_value = mock_container_instance
-
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
-
-        result = await runner.invoke(cli, ["profiles", "list"])
-
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
-
-    @patch("workato_platform.cli.containers.Container")
-    @pytest.mark.asyncio
-    async def test_profiles_show_command(self, mock_container):
-        """Test the show subcommand."""
-        mock_profile_manager = Mock()
-        mock_profile = Mock(
-            name="test-profile", region="us", created_at="2024-01-01T00:00:00Z"
+    def _factory(
+        *,
+        region: str = "us",
+        region_url: str = "https://app.workato.com",
+        workspace_id: int = 123,
+    ) -> ProfileData:
+        return ProfileData(
+            region=region,
+            region_url=region_url,
+            workspace_id=workspace_id,
         )
-        mock_profile_manager.get_profile.return_value = mock_profile
 
-        mock_container_instance = Mock()
-        mock_container_instance.profile_manager.return_value = mock_profile_manager
-        mock_container.return_value = mock_container_instance
+    return _factory
 
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
 
-        result = await runner.invoke(cli, ["profiles", "show", "test-profile"])
+@pytest.fixture
+def make_config_manager() -> Callable[..., Mock]:
+    """Factory for building config manager stubs with attached profile manager."""
 
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
-        # Test passes if command doesn't crash
+    def _factory(**profile_methods: Mock) -> Mock:
+        profile_manager = Mock()
+        for name, value in profile_methods.items():
+            setattr(profile_manager, name, value)
 
-    @patch("workato_platform.cli.containers.Container")
-    @pytest.mark.asyncio
-    async def test_profiles_show_command_json_format(self, mock_container):
-        """Test the show subcommand with JSON format."""
-        mock_profile_manager = Mock()
-        mock_profile = Mock(
-            name="test-profile", region="us", created_at="2024-01-01T00:00:00Z"
-        )
-        mock_profile_manager.get_profile.return_value = mock_profile
+        config_manager = Mock()
+        config_manager.profile_manager = profile_manager
+        # Provide deterministic config data unless overridden in tests
+        config_manager.load_config.return_value = ConfigData()
+        return config_manager
 
-        mock_container_instance = Mock()
-        mock_container_instance.profile_manager.return_value = mock_profile_manager
-        mock_container.return_value = mock_container_instance
+    return _factory
 
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
 
-        result = await runner.invoke(cli, ["profiles", "show", "test-profile"])
+@pytest.mark.asyncio
+async def test_list_profiles_displays_profile_details(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    profiles_dict = {
+        "default": profile_data_factory(workspace_id=111),
+        "dev": profile_data_factory(
+            region="eu", region_url="https://app.eu.workato.com", workspace_id=222
+        ),
+    }
 
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
+    config_manager = make_config_manager(
+        list_profiles=Mock(return_value=profiles_dict),
+        get_current_profile_name=Mock(return_value="default"),
+    )
 
-    @patch("workato_platform.cli.containers.Container")
-    @pytest.mark.asyncio
-    async def test_profiles_use_command(self, mock_container):
-        """Test the use subcommand."""
-        mock_config_manager = Mock()
-        mock_profile_manager = Mock()
-        mock_profile_manager.profile_exists.return_value = True
+    assert list_profiles.callback
+    await list_profiles.callback(config_manager=config_manager)
 
-        mock_container_instance = Mock()
-        mock_container_instance.config_manager.return_value = mock_config_manager
-        mock_container_instance.profile_manager.return_value = mock_profile_manager
-        mock_container.return_value = mock_container_instance
+    output = capsys.readouterr().out
+    assert "Available profiles" in output
+    assert "• default (current)" in output
+    assert "Region: US Data Center (us)" in output
+    assert "Workspace ID: 222" in output
 
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
 
-        result = await runner.invoke(cli, ["profiles", "use", "dev-profile"])
+@pytest.mark.asyncio
+async def test_list_profiles_handles_empty_state(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    config_manager = make_config_manager(
+        list_profiles=Mock(return_value={}),
+        get_current_profile_name=Mock(return_value=None),
+    )
 
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
-        # Test passes if command doesn't crash
+    assert list_profiles.callback
+    await list_profiles.callback(config_manager=config_manager)
 
-    @patch("workato_platform.cli.containers.Container")
-    @pytest.mark.asyncio
-    async def test_profiles_use_nonexistent_profile(self, mock_container):
-        """Test the use subcommand with nonexistent profile."""
-        mock_profile_manager = Mock()
-        mock_profile_manager.profile_exists.return_value = False
+    output = capsys.readouterr().out
+    assert "No profiles configured" in output
+    assert "Run 'workato init'" in output
 
-        mock_container_instance = Mock()
-        mock_container_instance.profile_manager.return_value = mock_profile_manager
-        mock_container.return_value = mock_container_instance
 
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
+@pytest.mark.asyncio
+async def test_use_sets_current_profile(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        set_current_profile=Mock(),
+    )
 
-        result = await runner.invoke(cli, ["profiles", "use", "nonexistent"])
+    assert use.callback
+    await use.callback(profile_name="dev", config_manager=config_manager)
 
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
+    config_manager.profile_manager.set_current_profile.assert_called_once_with("dev")
+    assert "Set 'dev' as current profile" in capsys.readouterr().out
 
-    @patch("workato_platform.cli.containers.Container")
-    @pytest.mark.asyncio
-    async def test_profiles_status_command(self, mock_container):
-        """Test the status subcommand."""
-        mock_config_manager = Mock()
-        mock_config_manager.get_current_profile.return_value = "current-profile"
 
-        mock_container_instance = Mock()
-        mock_container_instance.config_manager.return_value = mock_config_manager
-        mock_container.return_value = mock_container_instance
+@pytest.mark.asyncio
+async def test_use_missing_profile_shows_hint(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=None),
+    )
 
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
+    assert use.callback
+    await use.callback(profile_name="ghost", config_manager=config_manager)
 
-        result = await runner.invoke(cli, ["profiles", "status"])
+    output = capsys.readouterr().out
+    assert "Profile 'ghost' not found" in output
+    assert not config_manager.profile_manager.set_current_profile.called
 
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
-        # Test passes if command doesn't crash
 
-    @patch("workato_platform.cli.containers.Container")
-    @pytest.mark.asyncio
-    async def test_profiles_status_json_format(self, mock_container):
-        """Test the status subcommand with JSON format."""
-        mock_config_manager = Mock()
-        mock_config_manager.get_current_profile.return_value = "current-profile"
+@pytest.mark.asyncio
+async def test_show_displays_profile_and_token_source(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    monkeypatch.delenv("WORKATO_API_TOKEN", raising=False)
 
-        mock_container_instance = Mock()
-        mock_container_instance.config_manager.return_value = mock_config_manager
-        mock_container.return_value = mock_container_instance
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        get_current_profile_name=Mock(return_value="default"),
+        resolve_environment_variables=Mock(return_value=("token", profile.region_url)),
+    )
 
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
+    assert show.callback
+    await show.callback(profile_name="default", config_manager=config_manager)
 
-        result = await runner.invoke(cli, ["profiles", "status"])
+    output = capsys.readouterr().out
+    assert "Profile: default" in output
+    assert "Token configured" in output
+    assert "Source: ~/.workato/credentials" in output
 
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
 
-    @patch("workato_platform.cli.containers.Container")
-    @patch("workato_platform.cli.commands.profiles.click.confirm")
-    @pytest.mark.asyncio
-    async def test_profiles_delete_command(self, mock_confirm, mock_container):
-        """Test the delete subcommand."""
-        mock_confirm.return_value = True
+@pytest.mark.asyncio
+async def test_show_handles_missing_profile(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=None),
+    )
 
-        mock_profile_manager = Mock()
-        mock_profile_manager.profile_exists.return_value = True
+    assert show.callback
+    await show.callback(profile_name="missing", config_manager=config_manager)
 
-        mock_container_instance = Mock()
-        mock_container_instance.profile_manager.return_value = mock_profile_manager
-        mock_container.return_value = mock_container_instance
+    output = capsys.readouterr().out
+    assert "Profile 'missing' not found" in output
 
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
 
-        result = await runner.invoke(cli, ["profiles", "delete", "old-profile"])
+@pytest.mark.asyncio
+async def test_status_reports_project_override(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    profile = profile_data_factory(workspace_id=789)
+    config_manager = make_config_manager(
+        get_current_profile_name=Mock(return_value="override"),
+        get_current_profile_data=Mock(return_value=profile),
+        resolve_environment_variables=Mock(return_value=("token", profile.region_url)),
+    )
+    config_manager.load_config.return_value = ConfigData(profile="override")
 
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
-        # Test passes if command doesn't crash
+    assert status.callback
+    await status.callback(config_manager=config_manager)
 
-    @patch("workato_platform.cli.containers.Container")
-    @patch("workato_platform.cli.commands.profiles.click.confirm")
-    @pytest.mark.asyncio
-    async def test_profiles_delete_command_cancelled(
-        self, mock_confirm, mock_container
-    ):
-        """Test the delete subcommand when user cancels."""
-        mock_confirm.return_value = False
+    output = capsys.readouterr().out
+    assert "Source: Project override" in output
+    assert "Workspace ID: 789" in output
 
-        mock_profile_manager = Mock()
-        mock_profile_manager.profile_exists.return_value = True
 
-        mock_container_instance = Mock()
-        mock_container_instance.profile_manager.return_value = mock_profile_manager
-        mock_container.return_value = mock_container_instance
+@pytest.mark.asyncio
+async def test_status_handles_missing_profile(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    config_manager = make_config_manager(
+        get_current_profile_name=Mock(return_value=None),
+    )
 
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
+    assert status.callback
+    await status.callback(config_manager=config_manager)
 
-        result = await runner.invoke(cli, ["profiles", "delete", "profile-to-keep"])
+    output = capsys.readouterr().out
+    assert "No active profile configured" in output
 
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
-        # Test passes if command doesn't crash
 
-    @patch("workato_platform.cli.containers.Container")
-    @pytest.mark.asyncio
-    async def test_profiles_delete_nonexistent_profile(self, mock_container):
-        """Test deleting a profile that doesn't exist."""
-        mock_profile_manager = Mock()
-        mock_profile_manager.profile_exists.return_value = False
+@pytest.mark.asyncio
+async def test_delete_confirms_successful_removal(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        delete_profile=Mock(return_value=True),
+    )
 
-        mock_container_instance = Mock()
-        mock_container_instance.profile_manager.return_value = mock_profile_manager
-        mock_container.return_value = mock_container_instance
+    assert delete.callback
+    await delete.callback(profile_name="old", config_manager=config_manager)
 
-        runner = CliRunner()
-        from workato_platform.cli.cli import cli
+    output = capsys.readouterr().out
+    assert "Profile 'old' deleted successfully" in output
 
-        result = await runner.invoke(cli, ["profiles", "delete", "nonexistent"])
 
-        # Should not crash and command should be found
-        assert "No such command" not in result.output
+@pytest.mark.asyncio
+async def test_delete_handles_missing_profile(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=None),
+    )
+
+    assert delete.callback
+    await delete.callback(profile_name="missing", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "Profile 'missing' not found" in output
+
+
+@pytest.mark.asyncio
+async def test_show_displays_env_token_source(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test show command displays WORKATO_API_TOKEN environment variable source."""
+    monkeypatch.setenv("WORKATO_API_TOKEN", "env_token")
+
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        get_current_profile_name=Mock(return_value="default"),
+        resolve_environment_variables=Mock(
+            return_value=("env_token", profile.region_url)
+        ),
+    )
+
+    assert show.callback
+    await show.callback(profile_name="default", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "Source: WORKATO_API_TOKEN environment variable" in output
+
+
+@pytest.mark.asyncio
+async def test_show_handles_missing_token(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test show command handles missing API token."""
+    monkeypatch.delenv("WORKATO_API_TOKEN", raising=False)
+
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        get_current_profile_name=Mock(return_value="default"),
+        resolve_environment_variables=Mock(return_value=(None, profile.region_url)),
+    )
+
+    assert show.callback
+    await show.callback(profile_name="default", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "Token not found" in output
+    assert "Token should be stored in ~/.workato/credentials" in output
+    assert "Or set WORKATO_API_TOKEN environment variable" in output
+
+
+@pytest.mark.asyncio
+async def test_status_displays_env_profile_source(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test status command displays WORKATO_PROFILE environment variable source."""
+    monkeypatch.setenv("WORKATO_PROFILE", "env_profile")
+
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_current_profile_name=Mock(return_value="env_profile"),
+        get_current_profile_data=Mock(return_value=profile),
+        resolve_environment_variables=Mock(return_value=("token", profile.region_url)),
+    )
+    # No project profile override
+    config_manager.load_config.return_value = ConfigData(profile=None)
+
+    assert status.callback
+    await status.callback(config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "Source: Environment variable (WORKATO_PROFILE)" in output
+
+
+@pytest.mark.asyncio
+async def test_status_displays_env_token_source(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test status command displays WORKATO_API_TOKEN environment variable source."""
+    monkeypatch.setenv("WORKATO_API_TOKEN", "env_token")
+
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_current_profile_name=Mock(return_value="default"),
+        get_current_profile_data=Mock(return_value=profile),
+        resolve_environment_variables=Mock(
+            return_value=("env_token", profile.region_url)
+        ),
+    )
+
+    assert status.callback
+    await status.callback(config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "Source: WORKATO_API_TOKEN environment variable" in output
+
+
+@pytest.mark.asyncio
+async def test_status_handles_missing_token(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test status command handles missing API token."""
+    monkeypatch.delenv("WORKATO_API_TOKEN", raising=False)
+
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_current_profile_name=Mock(return_value="default"),
+        get_current_profile_data=Mock(return_value=profile),
+        resolve_environment_variables=Mock(return_value=(None, profile.region_url)),
+    )
+
+    assert status.callback
+    await status.callback(config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "Token not found" in output
+    assert "Token should be stored in ~/.workato/credentials" in output
+    assert "Or set WORKATO_API_TOKEN environment variable" in output
+
+
+@pytest.mark.asyncio
+async def test_delete_handles_failure(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test delete command handles deletion failure."""
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        delete_profile=Mock(return_value=False),  # Simulate failure
+    )
+
+    assert delete.callback
+    await delete.callback(profile_name="old", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "Failed to delete profile 'old'" in output
+
+
+def test_profiles_group_exists() -> None:
+    """Test that the profiles group command exists."""
+    from workato_platform.cli.commands.profiles import profiles
+
+    # Test that the profiles group function exists and is callable
+    assert callable(profiles)
+
+    # Test that it's a click group
+    import asyncclick as click
+
+    assert isinstance(profiles, click.Group)

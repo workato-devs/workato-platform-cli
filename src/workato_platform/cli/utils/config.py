@@ -1,8 +1,10 @@
 """Configuration management for the CLI using class-based approach"""
 
+import contextlib
 import json
 import os
 import sys
+import threading
 
 from pathlib import Path
 from urllib.parse import urlparse
@@ -11,9 +13,13 @@ import asyncclick as click
 import inquirer
 import keyring
 
+from keyring.backend import KeyringBackend
+from keyring.compat import properties
+from keyring.errors import KeyringError, NoKeyringError
 from pydantic import BaseModel, Field, field_validator
 
 from workato_platform import Workato
+from workato_platform.cli.commands.projects.project_manager import ProjectManager
 from workato_platform.client.workato_api.configuration import Configuration
 
 
@@ -50,9 +56,6 @@ class RegionInfo(BaseModel):
     name: str = Field(..., description="Human-readable region name")
     url: str | None = Field(None, description="Base URL for the region")
 
-    class Config:
-        frozen = True
-
 
 # Available Workato regions
 AVAILABLE_REGIONS = {
@@ -79,15 +82,93 @@ AVAILABLE_REGIONS = {
 }
 
 
+def _set_secure_permissions(path: Path) -> None:
+    """Best-effort attempt to set secure file permissions."""
+    with contextlib.suppress(OSError):
+        path.chmod(0o600)
+        # On some platforms (e.g., Windows) chmod may fail; ignore silently.
+
+
+class _WorkatoFileKeyring(KeyringBackend):
+    """Fallback keyring that stores secrets in a local JSON file."""
+
+    @properties.classproperty
+    def priority(self) -> float:
+        return 0.1
+
+    def __init__(self, storage_path: Path) -> None:
+        super().__init__()
+        self._storage_path = storage_path
+        self._lock = threading.Lock()
+        self._ensure_storage_initialized()
+
+    def _ensure_storage_initialized(self) -> None:
+        self._storage_path.parent.mkdir(parents=True, exist_ok=True)
+        if not self._storage_path.exists():
+            self._storage_path.write_text("{}", encoding="utf-8")
+            _set_secure_permissions(self._storage_path)
+
+    def _load_data(self) -> dict[str, dict[str, str]]:
+        try:
+            raw = self._storage_path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            return {}
+        except OSError:
+            return {}
+
+        if not raw.strip():
+            return {}
+
+        try:
+            loaded = json.loads(raw)
+        except json.JSONDecodeError:
+            return {}
+
+        if isinstance(loaded, dict):
+            # Ensure nested dictionaries
+            normalized: dict[str, dict[str, str]] = {}
+            for service, usernames in loaded.items():
+                if isinstance(usernames, dict):
+                    normalized[service] = {
+                        str(username): str(password)
+                        for username, password in usernames.items()
+                    }
+            return normalized
+        return {}
+
+    def _save_data(self, data: dict[str, dict[str, str]]) -> None:
+        serialized = json.dumps(data, indent=2)
+        self._storage_path.write_text(serialized, encoding="utf-8")
+        _set_secure_permissions(self._storage_path)
+
+    def get_password(self, service: str, username: str) -> str | None:
+        with self._lock:
+            data = self._load_data()
+            return data.get(service, {}).get(username)
+
+    def set_password(self, service: str, username: str, password: str) -> None:
+        with self._lock:
+            data = self._load_data()
+            data.setdefault(service, {})[username] = password
+            self._save_data(data)
+
+    def delete_password(self, service: str, username: str) -> None:
+        with self._lock:
+            data = self._load_data()
+            usernames = data.get(service)
+            if usernames and username in usernames:
+                del usernames[username]
+                if not usernames:
+                    del data[service]
+                self._save_data(data)
+
+
 class ProjectInfo(BaseModel):
     """Data model for project information"""
 
     id: int = Field(..., description="Project ID")
     name: str = Field(..., description="Project name")
     folder_id: int | None = Field(None, description="Associated folder ID")
-
-    class Config:
-        frozen = True
 
 
 class ProfileData(BaseModel):
@@ -140,6 +221,48 @@ class ProfileManager:
         self.global_config_dir = Path.home() / ".workato"
         self.credentials_file = self.global_config_dir / "credentials"
         self.keyring_service = "workato-platform-cli"
+        self._fallback_token_file = self.global_config_dir / "token_store.json"
+        self._using_fallback_keyring = False
+        self._ensure_keyring_backend()
+
+    def _ensure_keyring_backend(self, force_fallback: bool = False) -> None:
+        """Ensure a usable keyring backend is available for storing tokens."""
+        if os.environ.get("WORKATO_DISABLE_KEYRING", "").lower() == "true":
+            self._using_fallback_keyring = False
+            return
+
+        if force_fallback:
+            fallback_keyring = _WorkatoFileKeyring(self._fallback_token_file)
+            keyring.set_keyring(fallback_keyring)
+            self._using_fallback_keyring = True
+            return
+
+        try:
+            backend = keyring.get_keyring()
+        except Exception:
+            backend = None
+
+        backend_priority = getattr(backend, "priority", 0) if backend else 0
+        backend_module = getattr(backend, "__class__", type("", (), {})).__module__
+
+        if (
+            backend_priority
+            and backend_priority > 0
+            and not str(backend_module).startswith("keyring.backends.fail")
+        ):
+            # Perform a quick health check to ensure the backend is usable.
+            test_service = f"{self.keyring_service}-self-test"
+            test_username = "__workato__"
+            with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                backend = backend or keyring.get_keyring()
+                backend.set_password(test_service, test_username, "0")
+                backend.delete_password(test_service, test_username)
+                self._using_fallback_keyring = False
+                return
+
+        fallback_keyring = _WorkatoFileKeyring(self._fallback_token_file)
+        keyring.set_keyring(fallback_keyring)
+        self._using_fallback_keyring = True
 
     def _is_keyring_enabled(self) -> bool:
         """Check if keyring usage is enabled"""
@@ -153,8 +276,27 @@ class ProfileManager:
         try:
             pw: str | None = keyring.get_password(self.keyring_service, profile_name)
             return pw
+        except NoKeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    token: str | None = keyring.get_password(
+                        self.keyring_service, profile_name
+                    )
+                    return token
+            return None
+        except KeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    fallback_token: str | None = keyring.get_password(
+                        self.keyring_service, profile_name
+                    )
+                    return fallback_token
+            return None
         except Exception:
-            # Keyring access failed, return None to allow fallback
             return None
 
     def _store_token_in_keyring(self, profile_name: str, token: str) -> bool:
@@ -165,8 +307,23 @@ class ProfileManager:
         try:
             keyring.set_password(self.keyring_service, profile_name, token)
             return True
+        except NoKeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    keyring.set_password(self.keyring_service, profile_name, token)
+                    return True
+            return False
+        except KeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    keyring.set_password(self.keyring_service, profile_name, token)
+                    return True
+            return False
         except Exception:
-            # Keyring storage failed
             return False
 
     def _delete_token_from_keyring(self, profile_name: str) -> bool:
@@ -177,8 +334,23 @@ class ProfileManager:
         try:
             keyring.delete_password(self.keyring_service, profile_name)
             return True
+        except NoKeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    keyring.delete_password(self.keyring_service, profile_name)
+                    return True
+            return False
+        except KeyringError:
+            if not self._using_fallback_keyring:
+                self._ensure_keyring_backend(force_fallback=True)
+            if self._using_fallback_keyring:
+                with contextlib.suppress(NoKeyringError, KeyringError, Exception):
+                    keyring.delete_password(self.keyring_service, profile_name)
+                    return True
+            return False
         except Exception:
-            # Keyring deletion failed or password doesn't exist
             return False
 
     def _ensure_global_config_dir(self) -> None:
@@ -377,8 +549,8 @@ class ConfigManager:
         manager = cls(config_dir, skip_validation=True)
         await manager._run_setup_flow()
 
-        # Return validated instance after setup completes
-        return cls(config_dir)
+        # Return the setup manager instance - it should work fine for credential access
+        return manager
 
     async def _run_setup_flow(self) -> None:
         """Run the complete setup flow"""
@@ -519,22 +691,45 @@ class ConfigManager:
 
         # Step 4: Setup project
         click.echo("📁 Step 4: Setup your project")
-        from workato_platform.cli.commands.projects.project_manager import (
-            ProjectManager,
-        )
-
         # Check for existing project first
         meta_data = self.load_config()
         if meta_data.project_id:
             click.echo(f"Found existing project: {meta_data.project_name or 'Unknown'}")
             if click.confirm("Use this project?", default=True):
-                click.echo("✅ Using existing project")
-                click.echo("🎉 Setup complete!")
-                click.echo()
-                click.echo("💡 Next steps:")
-                click.echo("  • workato workspace")
-                click.echo("  • workato --help")
-                return
+                # Update project to use the current profile
+                current_profile_name = self.profile_manager.get_current_profile_name()
+                if current_profile_name:
+                    meta_data.profile = current_profile_name
+
+                # Validate that the project exists in the current workspace
+                async with Workato(configuration=api_config) as workato_api_client:
+                    project_manager = ProjectManager(
+                        workato_api_client=workato_api_client
+                    )
+
+                    # Check if the folder exists by trying to list its assets
+                    try:
+                        if meta_data.folder_id is None:
+                            raise Exception("No folder ID configured")
+                        await project_manager.check_folder_assets(meta_data.folder_id)
+                        # Project exists, save the updated config
+                        self.save_config(meta_data)
+                        click.echo(f"   Updated profile: {current_profile_name}")
+                        click.echo("✅ Using existing project")
+                        click.echo("🎉 Setup complete!")
+                        click.echo()
+                        click.echo("💡 Next steps:")
+                        click.echo("  • workato workspace")
+                        click.echo("  • workato --help")
+                        return
+                    except Exception:
+                        # Project doesn't exist in current workspace
+                        project_name = meta_data.project_name
+                        msg = f"❌ Project '{project_name}' not found in workspace"
+                        click.echo(msg)
+                        click.echo("   This can happen when switching profiles")
+                        click.echo("   Please select a new project:")
+                        # Continue to project selection below
 
         # Create a new client instance for project operations
         async with Workato(configuration=api_config) as workato_api_client:

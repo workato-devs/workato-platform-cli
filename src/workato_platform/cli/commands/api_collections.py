@@ -87,6 +87,7 @@ async def create(
         async with aiohttp.ClientSession() as session:
             response = await session.get(content)
             openapi_spec["content"] = await response.text()
+            openapi_spec["format"] = "json"
 
     # Create API collection
     spinner = Spinner(f"Creating API collection '{name}'")
@@ -222,14 +223,15 @@ async def list_endpoints(
         endpoints: list[ApiEndpoint] = []
         page = 1
         while True:
-            endpoints.extend(
+            page_endpoints = (
                 await workato_api_client.api_platform_api.list_api_endpoints(
                     api_collection_id=api_collection_id,
                     page=page,
                     per_page=100,
                 )
             )
-            if len(endpoints) < 100:
+            endpoints.extend(page_endpoints)
+            if len(page_endpoints) < 100:
                 break
             page += 1
 
@@ -325,14 +327,15 @@ async def enable_all_endpoints_in_collection(
         endpoints: list[ApiEndpoint] = []
         page = 1
         while True:
-            endpoints.extend(
+            page_endpoints = (
                 await workato_api_client.api_platform_api.list_api_endpoints(
                     api_collection_id=api_collection_id,
                     page=page,
                     per_page=100,
                 )
             )
-            if len(endpoints) < 100:
+            endpoints.extend(page_endpoints)
+            if len(page_endpoints) < 100:
                 break
             page += 1
 

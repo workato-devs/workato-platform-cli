@@ -3,8 +3,8 @@
 import webbrowser
 
 
-def test_webbrowser_is_mocked():
-    """Test that webbrowser.open is properly mocked and doesn't actually open browser."""
+def test_webbrowser_is_mocked() -> None:
+    """Test that webbrowser.open is properly mocked and doesn't open browser."""
     # This should not actually open a browser
     result = webbrowser.open("https://example.com")
 
@@ -12,7 +12,7 @@ def test_webbrowser_is_mocked():
     assert result is None
 
 
-def test_connections_webbrowser_is_mocked():
+def test_connections_webbrowser_is_mocked() -> None:
     """Test that connections module webbrowser is also mocked."""
     from workato_platform.cli.commands.connections import (
         webbrowser as connections_webbrowser,

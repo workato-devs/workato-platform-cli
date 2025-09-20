@@ -116,13 +116,12 @@ select = [
     "T20",  # flake8-print
     "SIM",  # flake8-simplify
 ]
-ignore = []
+ignore = [
+    "S101",  # Skip assert_used test (used in generated client code)
+]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
-"**/test_*.py" = ["B011", "S101", "S105", "S106"]
-"**/*_test.py" = ["B011", "S101", "S105", "S106"]
-"tests/**/*.py" = ["S101", "S105", "S106"]
+"tests/**/*.py" = ["B011", "S101", "S105", "S106"]
 
 # Ruff isort configuration
 [tool.ruff.lint.isort]
@@ -158,10 +157,13 @@ strict_equality = true
 namespace_packages = true
 explicit_package_bases = true
 mypy_path = "src"
+files = [
+    "src/workato_platform",
+    "tests",
+]
 plugins = ["pydantic.mypy"]
 exclude = [
-    "src/workato_platform/client/workato_api/.*",
-    "test/*"
+    "src/workato_platform/client/*",
 ]
 
 [[tool.mypy.overrides]]
@@ -174,6 +176,12 @@ module = [
     "dependency_injector.*",
     "asyncclick.*",
     "keyring.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "certifi",
 ]
 ignore_missing_imports = true
 
@@ -191,9 +199,8 @@ pythonpath = ["src"]
 [tool.coverage.run]
 source = ["src/workato_platform"]
 omit = [
-    "*/tests/*",
-    "*/test_*",
-    "client/*",
+    "tests/*",
+    "src/workato_platform/client/*",
 ]
 
 [tool.coverage.report]
@@ -216,18 +223,9 @@ source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "src/workato_platform/_version.py"
 
-# Bandit configuration for security linting
-[tool.bandit]
-exclude_dirs = [
-    "tests",
-    "client",
-    "src/workato_platform/client",
-]
-skips = ["B101"]  # Skip assert_used test
 
 [dependency-groups]
 dev = [
-    "bandit>=1.8.6",
     "build>=1.3.0",
     "hatch-vcs>=0.5.0",
     "mypy>=1.17.1",
@@ -235,6 +233,7 @@ dev = [
     "pre-commit>=4.3.0",
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-cov>=7.0.0",
     "pytest-mock>=3.10.0",
     "ruff>=0.12.11",
     "types-click>=7.0.0",

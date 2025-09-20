@@ -7,6 +7,7 @@ help:
 	@echo "  test         Run all tests"
 	@echo "  test-unit    Run unit tests only"
 	@echo "  test-integration Run integration tests only"
+	@echo "  test-client  Run generated client tests only"
 	@echo "  test-cov     Run tests with coverage report"
 	@echo "  test-watch   Run tests in watch mode"
 	@echo "  lint         Run linting checks"
@@ -43,8 +44,11 @@ test-unit:
 test-integration:
 	uv run pytest tests/integration/ -v
 
+test-client:
+	uv run pytest src/workato_platform/client/workato_api/test/ -v
+
 test-cov:
-	uv run pytest tests/ --cov=src/workato --cov-report=html --cov-report=term --cov-report=xml
+	uv run pytest tests/ --cov=src/workato_platform --cov-report=html --cov-report=term --cov-report=xml
 
 test-watch:
 	uv run pytest tests/ -v --tb=short -x --lf
@@ -58,7 +62,7 @@ format:
 check:
 	uv run ruff check src/ tests/
 	uv run ruff format --check src/ tests/
-	uv run mypy src/
+	uv run mypy --explicit-package-bases src/ tests/
 
 clean:
 	rm -rf build/

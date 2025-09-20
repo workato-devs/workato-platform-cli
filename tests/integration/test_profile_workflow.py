@@ -1,6 +1,6 @@
 """Integration tests for profile management workflow."""
 
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -13,7 +13,7 @@ class TestProfileWorkflow:
     """Test complete profile management workflows."""
 
     @pytest.mark.asyncio
-    async def test_profile_creation_and_usage(self, temp_config_dir) -> None:
+    async def test_profile_creation_and_usage(self) -> None:
         """Test creating and using profiles end-to-end."""
         runner = CliRunner()
 
@@ -24,7 +24,7 @@ class TestProfileWorkflow:
         assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_profile_switching(self, temp_config_dir) -> None:
+    async def test_profile_switching(self) -> None:
         """Test switching between profiles."""
         runner = CliRunner()
 
@@ -41,9 +41,7 @@ class TestProfileWorkflow:
         assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_profile_with_api_operations(
-        self, temp_config_dir, mock_workato_client
-    ) -> None:
+    async def test_profile_with_api_operations(self, mock_workato_client: Mock) -> None:
         """Test using profiles with API operations."""
         runner = CliRunner()
 

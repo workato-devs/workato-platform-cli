@@ -1,0 +1,393 @@
+"""Tests for the properties command group."""
+
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+
+from workato_platform.cli.commands.properties import (
+    list_properties,
+    properties,
+    upsert_properties,
+)
+from workato_platform.cli.utils.config import ConfigData
+
+
+class DummySpinner:
+    """Minimal spinner stub for testing."""
+
+    def __init__(self, _message: str) -> None:
+        self._stopped = False
+
+    def start(self) -> None:
+        pass
+
+    def stop(self) -> float:
+        self._stopped = True
+        return 0.5
+
+
+@pytest.mark.asyncio
+async def test_list_properties_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.Spinner",
+        DummySpinner,
+    )
+
+    config_manager = Mock()
+    props = {"admin_email": "user@example.com"}
+    client = Mock()
+
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.click.echo",
+        lambda msg="": captured.append(msg),
+    )
+
+    with (
+        patch.object(
+            config_manager,
+            "load_config",
+            return_value=ConfigData(project_id=101, project_name="Demo"),
+        ),
+        patch.object(
+            client.properties_api,
+            "list_project_properties",
+            AsyncMock(return_value=props),
+        ) as mock_list_props,
+    ):
+        assert list_properties.callback
+        await list_properties.callback(
+            prefix="admin",
+            project_id=None,
+            workato_api_client=client,
+            config_manager=config_manager,
+        )
+
+        output = "\n".join(captured)
+        assert "admin_email" in output
+        assert "101" in output
+        mock_list_props.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_list_properties_missing_project(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.Spinner",
+        DummySpinner,
+    )
+
+    config_manager = Mock()
+
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.click.echo",
+        lambda msg="": captured.append(msg),
+    )
+
+    with patch.object(config_manager, "load_config", return_value=ConfigData()):
+        assert list_properties.callback
+        result = await list_properties.callback(
+            prefix="admin",
+            project_id=None,
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
+
+        assert "No project ID provided" in "\n".join(captured)
+        assert result is None
+
+
+@pytest.mark.asyncio
+async def test_upsert_properties_invalid_format(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.Spinner",
+        DummySpinner,
+    )
+    config_manager = Mock()
+
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.click.echo",
+        lambda msg="": captured.append(msg),
+    )
+
+    with patch.object(
+        config_manager, "load_config", return_value=ConfigData(project_id=5)
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=("invalid",),
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
+
+        assert "Invalid property format" in "\n".join(captured)
+
+
+@pytest.mark.asyncio
+async def test_upsert_properties_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.Spinner",
+        DummySpinner,
+    )
+
+    config_manager = Mock()
+    response = Mock(success=True)
+    client = Mock()
+
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.click.echo",
+        lambda msg="": captured.append(msg),
+    )
+
+    with (
+        patch.object(
+            config_manager, "load_config", return_value=ConfigData(project_id=77)
+        ),
+        patch.object(
+            client.properties_api,
+            "upsert_project_properties",
+            AsyncMock(return_value=response),
+        ) as mock_upsert_props,
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=("admin_email=user@example.com",),
+            workato_api_client=client,
+            config_manager=config_manager,
+        )
+
+        text = "\n".join(captured)
+        assert "Properties upserted successfully" in text
+        assert "admin_email" in text
+        mock_upsert_props.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_upsert_properties_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.Spinner",
+        DummySpinner,
+    )
+
+    config_manager = Mock()
+    response = Mock(success=False)
+    client = Mock()
+
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.click.echo",
+        lambda msg="": captured.append(msg),
+    )
+
+    with (
+        patch.object(
+            config_manager, "load_config", return_value=ConfigData(project_id=77)
+        ),
+        patch.object(
+            client.properties_api,
+            "upsert_project_properties",
+            AsyncMock(return_value=response),
+        ),
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=("admin_email=user@example.com",),
+            workato_api_client=client,
+            config_manager=config_manager,
+        )
+
+        assert any("Failed to upsert properties" in line for line in captured)
+
+
+@pytest.mark.asyncio
+async def test_list_properties_empty_result(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test list properties when no properties are found."""
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.Spinner",
+        DummySpinner,
+    )
+
+    config_manager = Mock()
+    # Empty properties dict
+    props: dict[str, str] = {}
+    client = Mock()
+
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.click.echo",
+        lambda msg="": captured.append(msg),
+    )
+
+    with (
+        patch.object(
+            config_manager, "load_config", return_value=ConfigData(project_id=101)
+        ),
+        patch.object(
+            client.properties_api,
+            "list_project_properties",
+            AsyncMock(return_value=props),
+        ),
+    ):
+        assert list_properties.callback
+        await list_properties.callback(
+            prefix="admin",
+            project_id=None,
+            workato_api_client=client,
+            config_manager=config_manager,
+        )
+
+        output = "\n".join(captured)
+        assert "No properties found" in output
+
+
+@pytest.mark.asyncio
+async def test_upsert_properties_missing_project(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test upsert properties when no project ID is provided."""
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.Spinner",
+        DummySpinner,
+    )
+
+    config_manager = Mock()
+
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.click.echo",
+        lambda msg="": captured.append(msg),
+    )
+
+    with patch.object(
+        config_manager,
+        "load_config",
+        return_value=ConfigData(),  # No project_id
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=("key=value",),
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
+
+        output = "\n".join(captured)
+        assert "No project ID provided" in output
+
+
+@pytest.mark.asyncio
+async def test_upsert_properties_no_properties(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test upsert properties when no properties are provided."""
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.Spinner",
+        DummySpinner,
+    )
+
+    config_manager = Mock()
+
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.click.echo",
+        lambda msg="": captured.append(msg),
+    )
+
+    with patch.object(
+        config_manager, "load_config", return_value=ConfigData(project_id=123)
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=(),  # Empty tuple - no properties
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
+
+        output = "\n".join(captured)
+        assert "No properties provided" in output
+
+
+@pytest.mark.asyncio
+async def test_upsert_properties_name_too_long(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test upsert properties with property name that's too long."""
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.Spinner",
+        DummySpinner,
+    )
+
+    config_manager = Mock()
+
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.click.echo",
+        lambda msg="": captured.append(msg),
+    )
+
+    # Create a property name longer than 100 characters
+    long_name = "x" * 101
+
+    with patch.object(
+        config_manager, "load_config", return_value=ConfigData(project_id=123)
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=(f"{long_name}=value",),
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
+
+        output = "\n".join(captured)
+        assert "Property name too long" in output
+
+
+@pytest.mark.asyncio
+async def test_upsert_properties_value_too_long(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test upsert properties with property value that's too long."""
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.Spinner",
+        DummySpinner,
+    )
+
+    config_manager = Mock()
+
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.properties.click.echo",
+        lambda msg="": captured.append(msg),
+    )
+
+    # Create a property value longer than 1024 characters
+    long_value = "x" * 1025
+
+    with patch.object(
+        config_manager, "load_config", return_value=ConfigData(project_id=123)
+    ):
+        assert upsert_properties.callback
+        await upsert_properties.callback(
+            project_id=None,
+            property_pairs=(f"key={long_value}",),
+            workato_api_client=Mock(),
+            config_manager=config_manager,
+        )
+
+        output = "\n".join(captured)
+        assert "Property value too long" in output
+
+
+def test_properties_group_exists() -> None:
+    """Test that the properties group command exists."""
+    assert callable(properties)
+
+    # Test that it's a click group
+    import asyncclick as click
+
+    assert isinstance(properties, click.Group)

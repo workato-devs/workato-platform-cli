@@ -13,7 +13,7 @@ class TestRecipeWorkflow:
     """Test complete recipe management workflows."""
 
     @pytest.mark.asyncio
-    async def test_recipe_validation_workflow(self, temp_config_dir) -> None:
+    async def test_recipe_validation_workflow(self) -> None:
         """Test end-to-end recipe validation workflow."""
         runner = CliRunner()
 
@@ -33,7 +33,7 @@ class TestRecipeWorkflow:
             assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_recipe_lifecycle_workflow(self, temp_config_dir) -> None:
+    async def test_recipe_lifecycle_workflow(self) -> None:
         """Test recipe start/stop lifecycle."""
         runner = CliRunner()
 
@@ -63,7 +63,7 @@ class TestRecipeWorkflow:
             assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_recipe_bulk_operations_workflow(self, temp_config_dir) -> None:
+    async def test_recipe_bulk_operations_workflow(self) -> None:
         """Test bulk recipe operations."""
         runner = CliRunner()
 
@@ -90,7 +90,7 @@ class TestRecipeWorkflow:
             assert "No such command" not in result.output
 
     @pytest.mark.asyncio
-    async def test_recipe_connection_update_workflow(self, temp_config_dir) -> None:
+    async def test_recipe_connection_update_workflow(self) -> None:
         """Test recipe connection update workflow."""
         runner = CliRunner()
 
@@ -126,7 +126,7 @@ class TestRecipeWorkflow:
                 pass
 
     @pytest.mark.asyncio
-    async def test_recipe_async_operations(self, temp_config_dir) -> None:
+    async def test_recipe_async_operations(self) -> None:
         """Test async recipe operations."""
         runner = CliRunner()
 
