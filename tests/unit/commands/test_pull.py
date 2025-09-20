@@ -436,7 +436,7 @@ class TestPullCommand:
         project_manager.export_project = AsyncMock(side_effect=fake_export)
 
         class StubConfig:
-            def __init__(self, config_dir: Path):
+            def __init__(self, config_dir: Path, skip_validation: bool = False):
                 self.config_dir = Path(config_dir)
                 self.saved: ConfigData | None = None
 

@@ -549,8 +549,8 @@ class ConfigManager:
         manager = cls(config_dir, skip_validation=True)
         await manager._run_setup_flow()
 
-        # Return validated instance after setup completes
-        return cls(config_dir)
+        # Return the setup manager instance - it should work fine for credential access
+        return manager
 
     async def _run_setup_flow(self) -> None:
         """Run the complete setup flow"""
@@ -696,13 +696,40 @@ class ConfigManager:
         if meta_data.project_id:
             click.echo(f"Found existing project: {meta_data.project_name or 'Unknown'}")
             if click.confirm("Use this project?", default=True):
-                click.echo("✅ Using existing project")
-                click.echo("🎉 Setup complete!")
-                click.echo()
-                click.echo("💡 Next steps:")
-                click.echo("  • workato workspace")
-                click.echo("  • workato --help")
-                return
+                # Update project to use the current profile
+                current_profile_name = self.profile_manager.get_current_profile_name()
+                if current_profile_name:
+                    meta_data.profile = current_profile_name
+
+                # Validate that the project exists in the current workspace
+                async with Workato(configuration=api_config) as workato_api_client:
+                    project_manager = ProjectManager(
+                        workato_api_client=workato_api_client
+                    )
+
+                    # Check if the folder exists by trying to list its assets
+                    try:
+                        if meta_data.folder_id is None:
+                            raise Exception("No folder ID configured")
+                        await project_manager.check_folder_assets(meta_data.folder_id)
+                        # Project exists, save the updated config
+                        self.save_config(meta_data)
+                        click.echo(f"   Updated profile: {current_profile_name}")
+                        click.echo("✅ Using existing project")
+                        click.echo("🎉 Setup complete!")
+                        click.echo()
+                        click.echo("💡 Next steps:")
+                        click.echo("  • workato workspace")
+                        click.echo("  • workato --help")
+                        return
+                    except Exception:
+                        # Project doesn't exist in current workspace
+                        project_name = meta_data.project_name
+                        msg = f"❌ Project '{project_name}' not found in workspace"
+                        click.echo(msg)
+                        click.echo("   This can happen when switching profiles")
+                        click.echo("   Please select a new project:")
+                        # Continue to project selection below
 
         # Create a new client instance for project operations
         async with Workato(configuration=api_config) as workato_api_client:

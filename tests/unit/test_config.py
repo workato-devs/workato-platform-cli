@@ -16,6 +16,7 @@ from workato_platform.cli.utils.config import (
     ProfileData,
     ProfileManager,
     RegionInfo,
+    _WorkatoFileKeyring,
 )
 
 
@@ -1200,7 +1201,17 @@ class TestConfigManagerInteractive:
                     users_api = Mock(
                         get_workspace_details=AsyncMock(return_value=user_info)
                     )
-                    return Mock(users_api=users_api)
+                    export_api = Mock(
+                        list_assets_in_folder=AsyncMock(
+                            return_value=Mock(result=Mock(assets=[]))
+                        )
+                    )
+                    projects_api = Mock(list_projects=AsyncMock(return_value=[]))
+                    return Mock(
+                        users_api=users_api,
+                        export_api=export_api,
+                        projects_api=projects_api,
+                    )
 
                 async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
                     return None
@@ -1212,11 +1223,34 @@ class TestConfigManagerInteractive:
                 "workato_platform.cli.utils.config.Workato", StubWorkato
             )
 
-            with patch.object(
-                config_manager,
-                "load_config",
-                return_value=ConfigData(project_id=1, project_name="Demo"),
+            # Mock the inquirer.prompt for project selection
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.inquirer.prompt",
+                lambda _questions: {"project": "Create new project"},
+            )
+
+            with (
+                patch.object(
+                    config_manager,
+                    "load_config",
+                    return_value=ConfigData(project_id=1, project_name="Demo"),
+                ),
+                patch(
+                    "workato_platform.cli.utils.config.ProjectManager"
+                ) as mock_project_manager,
             ):
+                # Set up project manager mock for project creation
+                mock_project_instance = Mock()
+                project_obj = Mock()
+                project_obj.id = 999
+                project_obj.name = "New Project"
+                project_obj.folder_id = 888
+                mock_project_instance.create_project = AsyncMock(
+                    return_value=project_obj
+                )
+                mock_project_instance.get_all_projects = AsyncMock(return_value=[])
+                mock_project_manager.return_value = mock_project_instance
+
                 await config_manager._run_setup_flow()
 
             assert stub_profile_manager.saved_profile is not None
@@ -1484,6 +1518,99 @@ class TestRegionInfo:
 class TestProfileManagerEdgeCases:
     """Test edge cases and error handling in ProfileManager."""
 
+    def test_file_keyring_handles_invalid_json(self, tmp_path: Path) -> None:
+        """_WorkatoFileKeyring gracefully handles corrupt storage."""
+
+        storage = tmp_path / "tokens.json"
+        file_keyring = _WorkatoFileKeyring(storage)
+        storage.write_text("[]", encoding="utf-8")
+
+        assert file_keyring.get_password("svc", "user") is None
+
+    def test_profile_manager_ensure_keyring_disabled_env(
+        self, monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path
+    ) -> None:
+        """Environment variable disables keyring usage."""
+
+        monkeypatch.setenv("WORKATO_DISABLE_KEYRING", "true")
+        with patch("pathlib.Path.home", return_value=temp_config_dir):
+            profile_manager = ProfileManager()
+
+        assert profile_manager._using_fallback_keyring is False
+
+    def test_profile_manager_get_token_fallback_on_no_keyring(
+        self, monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path
+    ) -> None:
+        """_get_token_from_keyring falls back when keyring raises."""
+
+        import workato_platform.cli.utils.config as config_module
+
+        with patch("pathlib.Path.home", return_value=temp_config_dir):
+            profile_manager = ProfileManager()
+
+        profile_manager._using_fallback_keyring = False
+
+        monkeypatch.setattr(
+            profile_manager,
+            "_ensure_keyring_backend",
+            lambda force_fallback=False: setattr(
+                profile_manager, "_using_fallback_keyring", True
+            ),
+        )
+
+        responses: list[Any] = [
+            config_module.keyring.errors.NoKeyringError("missing"),
+            "stored-token",
+        ]
+
+        def fake_get_password(*_args: Any, **_kwargs: Any) -> str:
+            result = responses.pop(0)
+            if isinstance(result, Exception):
+                raise result
+            return str(result)
+
+        monkeypatch.setattr(config_module.keyring, "get_password", fake_get_password)
+
+        token = profile_manager._get_token_from_keyring("prof")
+        assert token == "stored-token"
+        assert profile_manager._using_fallback_keyring is True
+
+    def test_profile_manager_get_token_fallback_on_keyring_error(
+        self, monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path
+    ) -> None:
+        """_get_token_from_keyring handles generic KeyringError."""
+
+        import workato_platform.cli.utils.config as config_module
+
+        with patch("pathlib.Path.home", return_value=temp_config_dir):
+            profile_manager = ProfileManager()
+
+        profile_manager._using_fallback_keyring = False
+        monkeypatch.setattr(
+            profile_manager,
+            "_ensure_keyring_backend",
+            lambda force_fallback=False: setattr(
+                profile_manager, "_using_fallback_keyring", True
+            ),
+        )
+
+        responses: list[Any] = [
+            config_module.keyring.errors.KeyringError("boom"),
+            "fallback-token",
+        ]
+
+        def fake_get_password(*_args: Any, **_kwargs: Any) -> str:
+            result = responses.pop(0)
+            if isinstance(result, Exception):
+                raise result
+            return str(result)
+
+        monkeypatch.setattr(config_module.keyring, "get_password", fake_get_password)
+
+        token = profile_manager._get_token_from_keyring("prof")
+        assert token == "fallback-token"
+        assert profile_manager._using_fallback_keyring is True
+
     def test_get_current_profile_data_no_profile_name(
         self, temp_config_dir: Path
     ) -> None:
@@ -1517,6 +1644,66 @@ class TestProfileManagerEdgeCases:
 
 class TestConfigManagerEdgeCases:
     """Test simpler edge cases that improve coverage."""
+
+    def test_file_keyring_roundtrip(self, tmp_path: Path) -> None:
+        """Fallback keyring persists and removes credentials."""
+
+        storage = tmp_path / "token_store.json"
+        file_keyring = _WorkatoFileKeyring(storage)
+
+        file_keyring.set_password("svc", "user", "secret")
+        assert storage.exists()
+        assert file_keyring.get_password("svc", "user") == "secret"
+
+        file_keyring.delete_password("svc", "user")
+        assert file_keyring.get_password("svc", "user") is None
+
+    def test_profile_manager_ensure_keyring_backend_fallback(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """ProfileManager falls back to file keyring when backend fails."""
+
+        from workato_platform.cli.utils import config as config_module
+
+        profile_manager = ProfileManager()
+        profile_manager._fallback_token_file = tmp_path / "fallback_tokens.json"
+
+        class BrokenBackend:
+            priority = 1
+            __module__ = "keyring.backends.dummy"
+
+            def set_password(self, *args: Any, **kwargs: Any) -> None:
+                raise config_module.keyring.errors.KeyringError("fail")
+
+            def delete_password(self, *args: Any, **kwargs: Any) -> None:
+                raise config_module.keyring.errors.KeyringError("fail")
+
+        broken_backend = BrokenBackend()
+
+        monkeypatch.delenv("WORKATO_DISABLE_KEYRING", raising=False)
+        monkeypatch.setattr(
+            "workato_platform.cli.utils.config.keyring.get_keyring",
+            lambda: broken_backend,
+        )
+
+        captured: dict[str, Any] = {}
+
+        def fake_set_keyring(instance: Any) -> None:
+            captured["instance"] = instance
+
+        monkeypatch.setattr(
+            "workato_platform.cli.utils.config.keyring.set_keyring",
+            fake_set_keyring,
+        )
+
+        profile_manager._ensure_keyring_backend()
+
+        assert profile_manager._using_fallback_keyring is True
+        assert isinstance(captured["instance"], _WorkatoFileKeyring)
+
+        captured_keyring: _WorkatoFileKeyring = captured["instance"]
+        captured_keyring.set_password("svc", "user", "value")
+        assert profile_manager._fallback_token_file.exists()
 
     def test_profile_manager_keyring_token_access(self, temp_config_dir: Path) -> None:
         """Test accessing token from keyring when it exists."""
@@ -1600,6 +1787,78 @@ class TestConfigManagerEdgeCases:
             # Verify it's gone
             token = profile_manager._get_token_from_keyring("test_profile")
             assert token is None
+
+    def test_profile_manager_store_token_fallback(
+        self, monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path
+    ) -> None:
+        """_store_token_in_keyring retries with fallback backend."""
+
+        import workato_platform.cli.utils.config as config_module
+
+        with patch("pathlib.Path.home", return_value=temp_config_dir):
+            profile_manager = ProfileManager()
+
+        profile_manager._using_fallback_keyring = False
+        monkeypatch.setattr(
+            profile_manager,
+            "_ensure_keyring_backend",
+            lambda force_fallback=False: setattr(
+                profile_manager, "_using_fallback_keyring", True
+            ),
+        )
+
+        responses: list[Any] = [
+            config_module.keyring.errors.NoKeyringError("fail"),
+            None,
+        ]
+
+        def fake_set_password(*_args: Any, **_kwargs: Any) -> None:
+            result = responses.pop(0)
+            if isinstance(result, Exception):
+                raise result
+            return None
+
+        monkeypatch.setattr(config_module.keyring, "set_password", fake_set_password)
+
+        assert profile_manager._store_token_in_keyring("profile", "token") is True
+        assert profile_manager._using_fallback_keyring is True
+
+    def test_profile_manager_delete_token_fallback(
+        self, monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path
+    ) -> None:
+        """_delete_token_from_keyring retries with fallback backend."""
+
+        import workato_platform.cli.utils.config as config_module
+
+        with patch("pathlib.Path.home", return_value=temp_config_dir):
+            profile_manager = ProfileManager()
+
+        profile_manager._using_fallback_keyring = False
+        monkeypatch.setattr(
+            profile_manager,
+            "_ensure_keyring_backend",
+            lambda force_fallback=False: setattr(
+                profile_manager, "_using_fallback_keyring", True
+            ),
+        )
+
+        responses: list[Any] = [
+            config_module.keyring.errors.NoKeyringError("missing"),
+            None,
+        ]
+
+        def fake_delete_password(*_args: Any, **_kwargs: Any) -> None:
+            result = responses.pop(0)
+            if isinstance(result, Exception):
+                raise result
+            return None
+
+        monkeypatch.setattr(
+            config_module.keyring, "delete_password", fake_delete_password
+        )
+
+        assert profile_manager._delete_token_from_keyring("profile") is True
+        assert profile_manager._using_fallback_keyring is True
 
     def test_get_current_project_name_no_project_root(
         self, temp_config_dir: Path
@@ -1853,3 +2112,264 @@ class TestConfigManagerEdgeCases:
             assert result is not None
             assert result.region == "custom"
             assert result.url == "https://custom.workato.com"
+
+
+class TestConfigManagerErrorHandling:
+    """Test error handling paths in ConfigManager."""
+
+    def test_file_keyring_error_handling(self, temp_config_dir: Path) -> None:
+        """Test error handling in _WorkatoFileKeyring."""
+        from workato_platform.cli.utils.config import _WorkatoFileKeyring
+
+        keyring_file = temp_config_dir / "keyring.json"
+        file_keyring = _WorkatoFileKeyring(keyring_file)
+
+        # Test OSError handling in _load_data
+        with patch("pathlib.Path.read_text", side_effect=OSError("Permission denied")):
+            data = file_keyring._load_data()
+            assert data == {}
+
+        # Test empty file handling
+        keyring_file.write_text("   ", encoding="utf-8")
+        data = file_keyring._load_data()
+        assert data == {}
+
+        # Test JSON decode error handling
+        keyring_file.write_text("invalid json {", encoding="utf-8")
+        data = file_keyring._load_data()
+        assert data == {}
+
+    def test_profile_manager_keyring_error_handling(
+        self, temp_config_dir: Path
+    ) -> None:
+        """Test keyring error handling in ProfileManager."""
+        with patch("pathlib.Path.home") as mock_home:
+            mock_home.return_value = temp_config_dir
+            profile_manager = ProfileManager()
+
+            # Test NoKeyringError handling in _get_token_from_keyring
+            with patch("keyring.get_password", side_effect=Exception("Keyring error")):
+                result = profile_manager._get_token_from_keyring("test-profile")
+                assert result is None
+
+            # Test keyring storage error handling
+            with patch("keyring.set_password", side_effect=Exception("Storage error")):
+                stored = profile_manager._store_token_in_keyring(
+                    "test-profile", "token"
+                )
+                assert not stored
+
+    @pytest.mark.asyncio
+    async def test_setup_flow_edge_cases(
+        self, monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path
+    ) -> None:
+        """Test edge cases in setup flow."""
+        config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
+
+        class StubProfileManager(ProfileManager):
+            def __init__(self) -> None:
+                self.profiles: dict[str, ProfileData] = {}
+
+            def list_profiles(self) -> dict[str, ProfileData]:
+                return {
+                    "existing": ProfileData(
+                        region="us",
+                        region_url="https://app.workato.com",
+                        workspace_id=123,
+                    )
+                }
+
+            def get_profile(self, name: str) -> ProfileData | None:
+                return self.profiles.get(name)
+
+            def set_profile(
+                self, name: str, data: ProfileData, token: str | None = None
+            ) -> None:
+                self.profiles[name] = data
+
+            def set_current_profile(self, name: str | None) -> None:
+                pass
+
+            def get_current_profile_name(
+                self, override: str | None = None
+            ) -> str | None:
+                return "test-profile"
+
+            def _get_token_from_keyring(self, name: str) -> str | None:
+                return "token"
+
+        stub_profile_manager = StubProfileManager()
+
+        with (
+            patch.object(config_manager, "profile_manager", stub_profile_manager),
+            patch("sys.exit") as mock_exit,
+            patch(
+                "workato_platform.cli.utils.config.click.prompt",
+                return_value="",
+            ),
+            patch(
+                "workato_platform.cli.utils.config.inquirer.prompt",
+                return_value={"profile_choice": "Create new profile"},
+            ),
+        ):
+            mock_exit.side_effect = SystemExit(1)
+            with pytest.raises(SystemExit):
+                await config_manager._run_setup_flow()
+            mock_exit.assert_called_with(1)
+
+    @pytest.mark.asyncio
+    async def test_setup_flow_project_validation_error(
+        self, monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path
+    ) -> None:
+        """Test project validation error path in setup flow."""
+        config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
+
+        # Create config with existing project
+        existing_config = ConfigData(
+            project_id=123, project_name="Test Project", folder_id=456
+        )
+        config_manager.save_config(existing_config)
+
+        class StubProfileManager:
+            def get_current_profile_name(self, _: str | None = None) -> str:
+                return "test-profile"
+
+            def list_profiles(self) -> dict[str, ProfileData]:
+                return {}
+
+            def get_profile(self, name: str) -> ProfileData | None:
+                return None
+
+            def set_profile(
+                self, name: str, data: ProfileData, token: str | None = None
+            ) -> None:
+                pass
+
+            def set_current_profile(self, name: str | None) -> None:
+                pass
+
+        class StubWorkato:
+            def __init__(self, **kwargs: Any):
+                pass
+
+            async def __aenter__(self) -> Mock:
+                user_info = Mock(
+                    id=999,
+                    name="Tester",
+                    plan_id="enterprise",
+                    recipes_count=1,
+                    active_recipes_count=1,
+                    last_seen="2024-01-01",
+                )
+                users_api = Mock(
+                    get_workspace_details=AsyncMock(return_value=user_info)
+                )
+                return Mock(users_api=users_api)
+
+            async def __aexit__(self, *args: Any) -> None:
+                pass
+
+        captured_output = []
+
+        def capture_echo(msg: str = "") -> None:
+            captured_output.append(msg)
+
+        with (
+            patch.object(config_manager, "profile_manager", StubProfileManager()),
+            patch("workato_platform.cli.utils.config.click.confirm", return_value=True),
+            patch("workato_platform.cli.utils.config.click.echo", capture_echo),
+            patch("workato_platform.cli.utils.config.Workato", StubWorkato),
+            patch("workato_platform.cli.utils.config.Configuration"),
+            patch(
+                "workato_platform.cli.utils.config.ProjectManager"
+            ) as mock_project_manager,
+            patch(
+                "workato_platform.cli.utils.config.inquirer.prompt",
+                side_effect=[{"project": "Create new project"}],
+            ),
+        ):
+            # Configure the mock to raise an exception for project validation
+            mock_instance = Mock()
+            mock_instance.check_folder_assets = AsyncMock(
+                side_effect=Exception("Not found")
+            )
+            mock_instance.get_all_projects = AsyncMock(return_value=[])
+
+            class _Project:
+                id = 999
+                name = "Created"
+                folder_id = 888
+
+            mock_instance.create_project = AsyncMock(return_value=_Project())
+            mock_project_manager.return_value = mock_instance
+
+            region = RegionInfo(region="us", name="US", url="https://app.workato.com")
+            monkeypatch.setattr(
+                config_manager, "select_region_interactive", lambda _: region
+            )
+            monkeypatch.setattr(
+                "workato_platform.cli.utils.config.click.prompt",
+                lambda *a, **k: "token",
+            )
+
+            await config_manager._run_setup_flow()
+
+            # Check that error message was displayed
+            output_text = " ".join(captured_output)
+            assert "not found in workspace" in output_text
+
+    def test_config_manager_file_operations_error_handling(
+        self, temp_config_dir: Path
+    ) -> None:
+        """Test file operation error handling in ConfigManager."""
+        config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
+
+        # Test load_config with JSON decode error
+        config_file = temp_config_dir / "config.json"
+        config_file.write_text("invalid json", encoding="utf-8")
+
+        config = config_manager.load_config()
+        # Should return default ConfigData on JSON error
+        assert config.project_id is None
+        assert config.project_name is None
+
+    def test_profile_manager_delete_token_error_handling(
+        self, temp_config_dir: Path
+    ) -> None:
+        """Test error handling in _delete_token_from_keyring."""
+        with patch("pathlib.Path.home") as mock_home:
+            mock_home.return_value = temp_config_dir
+            profile_manager = ProfileManager()
+
+            # Test exception handling in delete
+            with patch(
+                "keyring.delete_password", side_effect=Exception("Delete error")
+            ):
+                result = profile_manager._delete_token_from_keyring("test-profile")
+                assert not result
+
+    def test_keyring_fallback_scenarios(self, temp_config_dir: Path) -> None:
+        """Test keyring fallback scenarios."""
+        from keyring.errors import KeyringError, NoKeyringError
+
+        with patch("pathlib.Path.home") as mock_home:
+            mock_home.return_value = temp_config_dir
+            profile_manager = ProfileManager()
+
+            # Test NoKeyringError handling with fallback
+            with (
+                patch("keyring.get_password", side_effect=NoKeyringError("No keyring")),
+                patch.object(profile_manager, "_using_fallback_keyring", True),
+            ):
+                result = profile_manager._get_token_from_keyring("test-profile")
+                assert result is None
+
+            # Test KeyringError handling with fallback
+            with (
+                patch(
+                    "keyring.get_password", side_effect=KeyringError("Keyring error")
+                ),
+                patch.object(profile_manager, "_using_fallback_keyring", True),
+            ):
+                result = profile_manager._get_token_from_keyring("test-profile")
+                assert result is None

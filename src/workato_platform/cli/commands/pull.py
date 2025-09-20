@@ -88,7 +88,9 @@ async def _pull_project(
             folder_id=meta_data.folder_id,
             profile=meta_data.profile,  # Keep profile reference for this project
         )
-        project_config_manager = ConfigManager(project_workato_dir)
+        project_config_manager = ConfigManager(
+            project_workato_dir, skip_validation=True
+        )
         project_config_manager.save_config(project_config_data)
 
         # Ensure .workato/ is in workspace root .gitignore
