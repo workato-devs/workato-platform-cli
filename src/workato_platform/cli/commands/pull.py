@@ -16,10 +16,10 @@ from workato_platform.cli.utils.config import ConfigData, ConfigManager
 from workato_platform.cli.utils.exception_handler import handle_api_exceptions
 
 
-def _ensure_workato_in_gitignore(project_dir: Path) -> None:
-    """Ensure .workato/ is added to .gitignore in the project directory"""
+def _ensure_workatoenv_in_gitignore(project_dir: Path) -> None:
+    """Ensure .workatoenv is added to .gitignore in the project directory"""
     gitignore_file = project_dir / ".gitignore"
-    workato_entry = ".workato/"
+    workatoenv_entry = ".workatoenv"
 
     # Read existing .gitignore if it exists
     existing_lines = []
@@ -27,13 +27,13 @@ def _ensure_workato_in_gitignore(project_dir: Path) -> None:
         with open(gitignore_file) as f:
             existing_lines = [line.rstrip("\n") for line in f.readlines()]
 
-    # Check if .workato/ is already in .gitignore
-    if workato_entry not in existing_lines:
-        # Add .workato/ to .gitignore
+    # Check if .workatoenv is already in .gitignore
+    if workatoenv_entry not in existing_lines:
+        # Add .workatoenv to .gitignore
         with open(gitignore_file, "a") as f:
             if existing_lines and existing_lines[-1] != "":
                 f.write("\n")  # Add newline if file doesn't end with one
-            f.write(f"{workato_entry}\n")
+            f.write(f"{workatoenv_entry}\n")
 
 
 async def _pull_project(
@@ -77,10 +77,6 @@ async def _pull_project(
         project_dir = projects_root / project_name
         project_dir.mkdir(exist_ok=True)
 
-        # Create project-specific .workato directory with only project metadata
-        project_workato_dir = project_dir / "workato"
-        project_workato_dir.mkdir(exist_ok=True)
-
         # Save only project-specific metadata (no credentials/profiles)
         project_config_data = ConfigData(
             project_id=meta_data.project_id,
@@ -88,13 +84,11 @@ async def _pull_project(
             folder_id=meta_data.folder_id,
             profile=meta_data.profile,  # Keep profile reference for this project
         )
-        project_config_manager = ConfigManager(
-            project_workato_dir, skip_validation=True
-        )
+        project_config_manager = ConfigManager(project_dir, skip_validation=True)
         project_config_manager.save_config(project_config_data)
 
         # Ensure .workato/ is in workspace root .gitignore
-        _ensure_workato_in_gitignore(workspace_root)
+        _ensure_workatoenv_in_gitignore(workspace_root)
 
     # Export the project to a temporary directory first
     click.echo(f"Pulling latest changes for project: {project_name}")
@@ -303,10 +297,10 @@ def merge_directories(
                 changes["modified"].append((str(rel_path), diff_stats))
 
     # Handle deletions (files that exist locally but not remotely)
-    # Exclude .workato directory from deletion
+    # Exclude .workatoenv file from deletion
     for rel_path in local_files - remote_files:
-        # Skip files in .workato directory
-        if rel_path.parts[0] == "workato":
+        # Skip .workatoenv file
+        if rel_path.name == ".workatoenv":
             continue
 
         local_file = local_path / rel_path

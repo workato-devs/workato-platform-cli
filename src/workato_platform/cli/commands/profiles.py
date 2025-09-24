@@ -83,10 +83,10 @@ async def show(
         if os.environ.get("WORKATO_API_TOKEN"):
             click.echo("   Source: WORKATO_API_TOKEN environment variable")
         else:
-            click.echo("   Source: ~/.workato/credentials")
+            click.echo("   Source: ~/.workato/profiles")
     else:
         click.echo("   Status: ❌ Token not found")
-        click.echo("   💡 Token should be stored in ~/.workato/credentials")
+        click.echo("   💡 Token should be stored in keyring")
         click.echo("   💡 Or set WORKATO_API_TOKEN environment variable")
 
 
@@ -134,13 +134,13 @@ async def status(
 
     # Show source of profile selection
     if project_profile_override:
-        click.echo("   Source: Project override (from .workato/config.json)")
+        click.echo("   Source: Project override (from .workatoenv)")
     else:
         env_profile = os.environ.get("WORKATO_PROFILE")
         if env_profile:
             click.echo("   Source: Environment variable (WORKATO_PROFILE)")
         else:
-            click.echo("   Source: Global setting (~/.workato/credentials)")
+            click.echo("   Source: Global setting (~/.workato/profiles)")
 
     click.echo()
 
@@ -170,10 +170,10 @@ async def status(
             if os.environ.get("WORKATO_API_TOKEN"):
                 click.echo("   Source: WORKATO_API_TOKEN environment variable")
             else:
-                click.echo("   Source: ~/.workato/credentials")
+                click.echo("   Source: ~/.workato/profiles")
         else:
             click.echo("   Status: ❌ Token not found")
-            click.echo("   💡 Token should be stored in ~/.workato/credentials")
+            click.echo("   💡 Token should be stored in keyring")
             click.echo("   💡 Or set WORKATO_API_TOKEN environment variable")
 
 
@@ -194,7 +194,7 @@ async def delete(
 
     if success:
         click.echo(f"✅ Profile '{profile_name}' deleted successfully")
-        click.echo("💡 Credentials removed from ~/.workato/credentials")
+        click.echo("💡 Profile removed from ~/.workato/profiles")
     else:
         click.echo(f"❌ Failed to delete profile '{profile_name}'")
 

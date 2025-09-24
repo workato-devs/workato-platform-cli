@@ -109,7 +109,7 @@ async def push(
             )
             return
 
-    # Create zip file from project directory, excluding .workato/
+    # Create zip file from project directory, excluding .workatoenv
     zip_path = f"{project_name}.zip"
 
     try:
@@ -117,11 +117,11 @@ async def push(
         spinner.start()
         try:
             with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                for root, dirs, files in os.walk(project_dir):
-                    # Exclude workato directories from traversal
-                    dirs[:] = [d for d in dirs if d != "workato"]
-
+                for root, _dirs, files in os.walk(project_dir):
                     for file in files:
+                        # Skip .workatoenv file
+                        if file == ".workatoenv":
+                            continue
                         file_path = Path(root) / file
                         # Get relative path from project directory
                         arcname = file_path.relative_to(project_dir)

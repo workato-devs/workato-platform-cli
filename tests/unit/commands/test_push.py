@@ -148,8 +148,8 @@ async def test_push_creates_zip_and_invokes_upload(
     project_dir = tmp_path / "projects" / "demo"
     (project_dir / "nested").mkdir(parents=True)
     (project_dir / "nested" / "file.txt").write_text("content")
-    (project_dir / "workato").mkdir()  # Should be excluded
-    (project_dir / "workato" / "skip.txt").write_text("skip")
+    # Should be excluded
+    (project_dir / ".workatoenv").write_text('{"project_id": 123}')
 
     monkeypatch.chdir(tmp_path)
 

@@ -51,3 +51,13 @@ repos:
     hooks:
       - id: pip-audit
         args: [--format=json]
+
+  # Local hooks for project-specific tasks
+  - repo: local
+    hooks:
+      - id: generate-client
+        name: Generate OpenAPI client
+        entry: make generate-client
+        language: system
+        files: ^(workato-api-spec\.yaml|openapi-config\.yaml)$
+        pass_filenames: false

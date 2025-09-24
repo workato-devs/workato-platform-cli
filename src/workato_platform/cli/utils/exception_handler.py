@@ -118,7 +118,7 @@ def _handle_client_error(
 def _handle_auth_error(_: UnauthorizedException) -> None:
     """Handle 401 Unauthorized errors."""
     click.echo("❌ Authentication failed")
-    click.echo("   Your API token may be invalid or expired")
+    click.echo("   Your API token may be invalid")
     click.echo("💡 Please check your authentication:")
     click.echo("   • Verify your API token is correct")
     click.echo("   • Run 'workato profiles list' to check your profile")

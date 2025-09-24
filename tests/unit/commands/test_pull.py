@@ -9,7 +9,7 @@ import pytest
 
 from workato_platform.cli.commands.projects.project_manager import ProjectManager
 from workato_platform.cli.commands.pull import (
-    _ensure_workato_in_gitignore,
+    _ensure_workatoenv_in_gitignore,
     _pull_project,
     calculate_diff_stats,
     calculate_json_diff_stats,
@@ -24,7 +24,7 @@ class TestPullCommand:
     """Test the pull command functionality."""
 
     def test_ensure_gitignore_creates_file(self) -> None:
-        """Test _ensure_workato_in_gitignore creates .gitignore."""
+        """Test _ensure_workatoenv_in_gitignore creates .gitignore."""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             gitignore_file = project_root / ".gitignore"
@@ -32,30 +32,30 @@ class TestPullCommand:
             # File doesn't exist
             assert not gitignore_file.exists()
 
-            _ensure_workato_in_gitignore(project_root)
+            _ensure_workatoenv_in_gitignore(project_root)
 
-            # File should now exist with .workato/ entry
+            # File should now exist with .workatoenv entry
             assert gitignore_file.exists()
             content = gitignore_file.read_text()
-            assert ".workato/" in content
+            assert ".workatoenv" in content
 
     def test_ensure_gitignore_adds_entry_to_existing_file(self) -> None:
-        """Test _ensure_workato_in_gitignore adds entry to existing .gitignore."""
+        """Test _ensure_workatoenv_in_gitignore adds entry to existing .gitignore."""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             gitignore_file = project_root / ".gitignore"
 
-            # Create existing .gitignore without .workato/
+            # Create existing .gitignore without .workatoenv
             gitignore_file.write_text("node_modules/\n*.log\n")
 
-            _ensure_workato_in_gitignore(project_root)
+            _ensure_workatoenv_in_gitignore(project_root)
 
             content = gitignore_file.read_text()
-            assert ".workato/" in content
+            assert ".workatoenv" in content
             assert "node_modules/" in content  # Original content preserved
 
     def test_ensure_gitignore_adds_newline_to_non_empty_file(self) -> None:
-        """Test _ensure_workato_in_gitignore adds newline to non-empty file."""
+        """Test _ensure_workatoenv_in_gitignore adds newline to non-empty file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             gitignore_file = project_root / ".gitignore"
@@ -63,31 +63,31 @@ class TestPullCommand:
             # Create existing .gitignore without newline at end
             gitignore_file.write_text("node_modules/")
 
-            _ensure_workato_in_gitignore(project_root)
+            _ensure_workatoenv_in_gitignore(project_root)
 
             content = gitignore_file.read_text()
             lines = content.split("\n")
-            # Should have newline added before .workato/ entry
-            assert lines[-2] == ".workato/"
+            # Should have newline added before .workatoenv entry
+            assert lines[-2] == ".workatoenv"
             assert lines[-1] == ""  # Final newline
 
     def test_ensure_gitignore_skips_if_entry_exists(self) -> None:
-        """Test _ensure_workato_in_gitignore skips adding entry if it already exists."""
+        """Test _ensure_workatoenv_in_gitignore skips adding entry if it exists."""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             gitignore_file = project_root / ".gitignore"
 
-            # Create .gitignore with .workato/ already present
-            original_content = "node_modules/\n.workato/\n*.log\n"
+            # Create .gitignore with .workatoenv already present
+            original_content = "node_modules/\n.workatoenv\n*.log\n"
             gitignore_file.write_text(original_content)
 
-            _ensure_workato_in_gitignore(project_root)
+            _ensure_workatoenv_in_gitignore(project_root)
 
             # Content should be unchanged
             assert gitignore_file.read_text() == original_content
 
     def test_ensure_gitignore_handles_empty_file(self) -> None:
-        """Test _ensure_workato_in_gitignore handles empty .gitignore file."""
+        """Test _ensure_workatoenv_in_gitignore handles empty .gitignore file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
             gitignore_file = project_root / ".gitignore"
@@ -95,10 +95,10 @@ class TestPullCommand:
             # Create empty .gitignore
             gitignore_file.write_text("")
 
-            _ensure_workato_in_gitignore(project_root)
+            _ensure_workatoenv_in_gitignore(project_root)
 
             content = gitignore_file.read_text()
-            assert content == ".workato/\n"
+            assert content == ".workatoenv\n"
 
     def test_count_lines_with_text_file(self) -> None:
         """Test count_lines with a regular text file."""
@@ -191,10 +191,8 @@ class TestPullCommand:
         (local_dir / "update.txt").write_text("local\n", encoding="utf-8")
         (local_dir / "remove.txt").write_text("remove\n", encoding="utf-8")
 
-        # .workato contents must be preserved
-        workato_dir = local_dir / "workato"
-        workato_dir.mkdir()
-        sensitive = workato_dir / "config.json"
+        # .workatoenv contents must be preserved
+        sensitive = local_dir / ".workatoenv"
         sensitive.write_text("keep", encoding="utf-8")
 
         changes = merge_directories(remote_dir, local_dir)
@@ -212,8 +210,9 @@ class TestPullCommand:
         assert (local_dir / "update.txt").read_text(encoding="utf-8") == "remote\n"
         assert not (local_dir / "remove.txt").exists()
 
-        # Workato file should still exist and be untouched
+        # .workatoenv file should still exist and be untouched
         assert sensitive.exists()
+        assert sensitive.read_text(encoding="utf-8") == "keep"
 
     @pytest.mark.asyncio
     @patch("workato_platform.cli.commands.pull.click.echo")
@@ -442,6 +441,12 @@ class TestPullCommand:
 
             def save_config(self, data: ConfigData) -> None:
                 self.saved = data
+                # Actually create the .workatoenv file for test validation
+                config_file = self.config_dir / ".workatoenv"
+                import json
+
+                with open(config_file, "w") as f:
+                    json.dump(data.model_dump(exclude_none=True), f, indent=2)
 
         monkeypatch.chdir(workspace_root)
         monkeypatch.setattr(
@@ -472,7 +477,7 @@ class TestPullCommand:
         ):
             await _pull_project(config_manager, project_manager)
 
-        project_config_dir = workspace_root / "projects" / "Demo" / "workato"
-        assert project_config_dir.exists()
-        assert (workspace_root / ".gitignore").read_text().count(".workato/") >= 1
+        project_config_file = workspace_root / "projects" / "Demo" / ".workatoenv"
+        assert project_config_file.exists()
+        assert (workspace_root / ".gitignore").read_text().count(".workatoenv") >= 1
         project_manager.export_project.assert_awaited_once()

@@ -67,11 +67,7 @@ target/
 
 .DS_Store
 .claude/
-.workato/
+.workatoenv
 .vscode/
 .mypy_cache
 .ruff_cache
-
-projects/*/workato/
-projects/
-workato/

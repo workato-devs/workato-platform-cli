@@ -195,8 +195,8 @@ class ProfileData(BaseModel):
         return region_info.name if region_info else f"Unknown ({self.region})"
 
 
-class CredentialsConfig(BaseModel):
-    """Data model for credentials file (~/.workato/credentials)"""
+class ProfilesConfig(BaseModel):
+    """Data model for profiles file (~/.workato/profiles)"""
 
     current_profile: str | None = Field(None, description="Currently active profile")
     profiles: dict[str, ProfileData] = Field(
@@ -214,12 +214,12 @@ class ConfigData(BaseModel):
 
 
 class ProfileManager:
-    """Manages credentials file configuration"""
+    """Manages profiles file configuration"""
 
     def __init__(self) -> None:
         """Initialize profile manager"""
         self.global_config_dir = Path.home() / ".workato"
-        self.credentials_file = self.global_config_dir / "credentials"
+        self.profiles_file = self.global_config_dir / "profiles"
         self.keyring_service = "workato-platform-cli"
         self._fallback_token_file = self.global_config_dir / "token_store.json"
         self._using_fallback_keyring = False
@@ -357,48 +357,48 @@ class ProfileManager:
         """Ensure global config directory exists with proper permissions"""
         self.global_config_dir.mkdir(exist_ok=True, mode=0o700)  # Only user can access
 
-    def load_credentials(self) -> CredentialsConfig:
-        """Load credentials configuration from file"""
-        if not self.credentials_file.exists():
-            return CredentialsConfig(current_profile=None, profiles={})
+    def load_profiles(self) -> ProfilesConfig:
+        """Load profiles configuration from file"""
+        if not self.profiles_file.exists():
+            return ProfilesConfig(current_profile=None, profiles={})
 
         try:
-            with open(self.credentials_file) as f:
+            with open(self.profiles_file) as f:
                 data = json.load(f)
                 if not isinstance(data, dict):
-                    raise ValueError("Invalid credentials file")
-                config: CredentialsConfig = CredentialsConfig.model_validate(data)
+                    raise ValueError("Invalid profiles file")
+                config: ProfilesConfig = ProfilesConfig.model_validate(data)
                 return config
         except (json.JSONDecodeError, ValueError):
-            return CredentialsConfig(current_profile=None, profiles={})
+            return ProfilesConfig(current_profile=None, profiles={})
 
-    def save_credentials(self, credentials_config: CredentialsConfig) -> None:
-        """Save credentials configuration to file with secure permissions"""
+    def save_profiles(self, profiles_config: ProfilesConfig) -> None:
+        """Save profiles configuration to file with secure permissions"""
         self._ensure_global_config_dir()
 
         # Write to temp file first, then rename for atomic operation
-        temp_file = self.credentials_file.with_suffix(".tmp")
+        temp_file = self.profiles_file.with_suffix(".tmp")
         with open(temp_file, "w") as f:
-            json.dump(credentials_config.model_dump(exclude_none=True), f, indent=2)
+            json.dump(profiles_config.model_dump(exclude_none=True), f, indent=2)
 
         # Set secure permissions (only user can read/write)
         temp_file.chmod(0o600)
 
         # Atomic rename
-        temp_file.rename(self.credentials_file)
+        temp_file.rename(self.profiles_file)
 
     def get_profile(self, profile_name: str) -> ProfileData | None:
         """Get profile data by name"""
-        credentials_config = self.load_credentials()
-        return credentials_config.profiles.get(profile_name)
+        profiles_config = self.load_profiles()
+        return profiles_config.profiles.get(profile_name)
 
     def set_profile(
         self, profile_name: str, profile_data: ProfileData, token: str | None = None
     ) -> None:
         """Set or update a profile"""
-        credentials_config = self.load_credentials()
-        credentials_config.profiles[profile_name] = profile_data
-        self.save_credentials(credentials_config)
+        profiles_config = self.load_profiles()
+        profiles_config.profiles[profile_name] = profile_data
+        self.save_profiles(profiles_config)
 
         # Store token in keyring if provided
         if not token or self._store_token_in_keyring(profile_name, token):
@@ -417,20 +417,20 @@ class ProfileManager:
 
     def delete_profile(self, profile_name: str) -> bool:
         """Delete a profile by name"""
-        credentials_config = self.load_credentials()
-        if profile_name not in credentials_config.profiles:
+        profiles_config = self.load_profiles()
+        if profile_name not in profiles_config.profiles:
             return False
 
-        del credentials_config.profiles[profile_name]
+        del profiles_config.profiles[profile_name]
 
         # If this was the current profile, clear it
-        if credentials_config.current_profile == profile_name:
-            credentials_config.current_profile = None
+        if profiles_config.current_profile == profile_name:
+            profiles_config.current_profile = None
 
         # Delete token from keyring
         self._delete_token_from_keyring(profile_name)
 
-        self.save_credentials(credentials_config)
+        self.save_profiles(profiles_config)
         return True
 
     def get_current_profile_name(
@@ -449,14 +449,14 @@ class ProfileManager:
         if env_profile:
             return env_profile
 
-        credentials_config = self.load_credentials()
-        return credentials_config.current_profile
+        profiles_config = self.load_profiles()
+        return profiles_config.current_profile
 
     def set_current_profile(self, profile_name: str | None) -> None:
         """Set the current profile in global config"""
-        credentials_config = self.load_credentials()
-        credentials_config.current_profile = profile_name
-        self.save_credentials(credentials_config)
+        profiles_config = self.load_profiles()
+        profiles_config.current_profile = profile_name
+        self.save_profiles(profiles_config)
 
     def get_current_profile_data(
         self, project_profile_override: str | None = None
@@ -469,8 +469,8 @@ class ProfileManager:
 
     def list_profiles(self) -> dict[str, ProfileData]:
         """Get all available profiles"""
-        credentials_config = self.load_credentials()
-        return credentials_config.profiles.copy()
+        profiles_config = self.load_profiles()
+        return profiles_config.profiles.copy()
 
     def resolve_environment_variables(
         self, project_profile_override: str | None = None
@@ -491,7 +491,7 @@ class ProfileManager:
         if env_token and env_host:
             return env_token, env_host
 
-        # Fall back to profile-based credentials
+        # Fall back to profile-based configuration
         profile_name = self.get_current_profile_name(project_profile_override)
         if not profile_name:
             return None, None
@@ -635,12 +635,17 @@ class ConfigManager:
                 )
                 if keyring_token:
                     current_token = keyring_token
+                    click.echo(
+                        f"🔧 Debug: Retrieved token length from "
+                        f"keyring: {len(keyring_token)}"
+                    )
                     masked_token = current_token[:8] + "..." + current_token[-4:]
                     click.echo(f"Current token: {masked_token} (from keyring)")
 
             if current_token:
                 if click.confirm("Use existing token?", default=True):
                     token = current_token
+                    click.echo(f"🔧 Debug: Using existing token, length: {len(token)}")
                 else:
                     token = click.prompt(
                         "Enter your Workato API token", hide_input=True
@@ -660,34 +665,51 @@ class ConfigManager:
         api_config = Configuration(access_token=token, host=region.url)
         api_config.verify_ssl = False
 
+        # Debug logging
+        click.echo(f"🔧 Debug: API Host: {api_config.host}")
+        click.echo(f"🔧 Debug: Token present: {'Yes' if token else 'No'}")
+        click.echo(f"🔧 Debug: Token length: {len(token) if token else 0}")
+
         # Test authentication
-        async with Workato(configuration=api_config) as workato_api_client:
-            user_info = await workato_api_client.users_api.get_workspace_details()
-
-            # Create profile data (without token)
-            profile_data = ProfileData(
-                region=region.region,
-                region_url=region.url,
-                workspace_id=user_info.id,
-            )
-
-            # Save profile to credentials file and store token in keyring
-            self.profile_manager.set_profile(profile_name, profile_data, token)
-
-            # Set as current profile
-            self.profile_manager.set_current_profile(profile_name)
-
-            action = "updated" if is_existing_profile else "created"
+        try:
+            async with Workato(configuration=api_config) as workato_api_client:
+                click.echo("🔧 Debug: Making API request to /api/users/me")
+                user_info = await workato_api_client.users_api.get_workspace_details()
+                click.echo(
+                    f"🔧 Debug: API request successful, workspace ID: {user_info.id}"
+                )
+        except Exception as e:
             click.echo(
-                f"✅ Profile '{profile_name}' {action} and saved to "
-                "~/.workato/credentials"
+                f"🔧 Debug: API request failed with exception: {type(e).__name__}"
             )
-            click.echo("✅ Credentials available immediately for all CLI commands")
-            click.echo(
-                "💡 Override with WORKATO_API_TOKEN environment variable if needed"
-            )
+            click.echo(f"🔧 Debug: Exception details: {str(e)}")
+            if hasattr(e, "status"):
+                click.echo(f"🔧 Debug: HTTP Status: {e.status}")
+            if hasattr(e, "body"):
+                click.echo(f"🔧 Debug: Response body: {e.body}")
+            raise
 
-            click.echo(f"✅ Authenticated as: {user_info.name}")
+        # Create profile data (without token)
+        profile_data = ProfileData(
+            region=region.region,
+            region_url=region.url,
+            workspace_id=user_info.id,
+        )
+
+        # Save profile to profiles file and store token in keyring
+        self.profile_manager.set_profile(profile_name, profile_data, token)
+
+        # Set as current profile
+        self.profile_manager.set_current_profile(profile_name)
+
+        action = "updated" if is_existing_profile else "created"
+        click.echo(
+            f"✅ Profile '{profile_name}' {action} and saved to ~/.workato/profiles"
+        )
+        click.echo("✅ Credentials available immediately for all CLI commands")
+        click.echo("💡 Override with WORKATO_API_TOKEN environment variable if needed")
+
+        click.echo(f"✅ Authenticated as: {user_info.name}")
 
         # Step 4: Setup project
         click.echo("📁 Step 4: Setup your project")
@@ -763,7 +785,7 @@ class ConfigManager:
             # Handle "Create new project" option
             if answers["project"] == "Create new project":
                 project_name = click.prompt("Enter project name", type=str)
-                if not project_name.strip():
+                if not project_name or not project_name.strip():
                     click.echo("❌ Project name cannot be empty")
                     sys.exit(1)
 
@@ -800,18 +822,17 @@ class ConfigManager:
 
     def _get_default_config_dir(self) -> Path:
         """Get the default configuration directory using hierarchical search"""
-        # First, try to find nearest .workato directory up the hierarchy
-        config_dir = self._find_nearest_workato_dir()
+        # First, try to find nearest .workatoenv file up the hierarchy
+        config_file_path = self._find_nearest_workatoenv_file()
 
-        # If no .workato found up the hierarchy, create one in current directory
-        if config_dir is None:
-            config_dir = Path.cwd() / "workato"
-            config_dir.mkdir(exist_ok=True)
+        # If no .workatoenv found up the hierarchy, use current directory
+        if config_file_path is None:
+            return Path.cwd()
+        else:
+            return config_file_path.parent
 
-        return config_dir
-
-    def _find_nearest_workato_dir(self) -> Path | None:
-        """Find the nearest .workato directory by traversing up the directory tree"""
+    def _find_nearest_workatoenv_file(self) -> Path | None:
+        """Find the nearest .workatoenv file by traversing up the directory tree"""
         current = Path.cwd().resolve()
 
         # Only traverse up within reasonable project boundaries
@@ -819,17 +840,17 @@ class ConfigManager:
         home_dir = Path.home().resolve()
 
         while current != current.parent and current != home_dir:
-            workato_dir = current / "workato"
-            if workato_dir.exists() and workato_dir.is_dir():
-                return workato_dir
+            workatoenv_file = current / ".workatoenv"
+            if workatoenv_file.exists() and workatoenv_file.is_file():
+                return workatoenv_file
             current = current.parent
 
         return None
 
     def get_project_root(self) -> Path | None:
-        """Get the root directory of the current project (containing workato)"""
-        workato_dir = self._find_nearest_workato_dir()
-        return workato_dir.parent if workato_dir else None
+        """Get the root directory of the current project (containing .workatoenv)"""
+        workatoenv_file = self._find_nearest_workatoenv_file()
+        return workatoenv_file.parent if workatoenv_file else None
 
     def get_current_project_name(self) -> str | None:
         """Get the current project name from directory structure"""
@@ -848,13 +869,13 @@ class ConfigManager:
 
     def is_in_project_workspace(self) -> bool:
         """Check if current directory is within a project workspace"""
-        return self._find_nearest_workato_dir() is not None
+        return self._find_nearest_workatoenv_file() is not None
 
     # Configuration File Management
 
     def load_config(self) -> ConfigData:
-        """Load project metadata from .workato/config.json"""
-        config_file = self.config_dir / "config.json"
+        """Load project metadata from .workatoenv"""
+        config_file = self.config_dir / ".workatoenv"
 
         if not config_file.exists():
             return ConfigData.model_construct()
@@ -867,10 +888,8 @@ class ConfigManager:
             return ConfigData.model_construct()
 
     def save_config(self, config_data: ConfigData) -> None:
-        """Save project metadata (without sensitive data) to .workato/config.json"""
-        # Ensure config directory exists
-        self.config_dir.mkdir(exist_ok=True)
-        config_file = self.config_dir / "config.json"
+        """Save project metadata (without sensitive data) to .workatoenv"""
+        config_file = self.config_dir / ".workatoenv"
 
         with open(config_file, "w") as f:
             json.dump(config_data.model_dump(exclude_none=True), f, indent=2)
@@ -946,8 +965,8 @@ class ConfigManager:
             current_profile_name = "default"
 
         # Check if profile exists
-        credentials = self.profile_manager.load_credentials()
-        if current_profile_name not in credentials.profiles:
+        profiles = self.profile_manager.load_profiles()
+        if current_profile_name not in profiles.profiles:
             # If profile doesn't exist, we need more info to create it
             raise ValueError(
                 f"Profile '{current_profile_name}' does not exist. "
@@ -1006,10 +1025,10 @@ class ConfigManager:
         if not current_profile_name:
             current_profile_name = "default"
 
-        # Load credentials
-        credentials = self.profile_manager.load_credentials()
+        # Load profiles
+        profiles = self.profile_manager.load_profiles()
 
-        if current_profile_name not in credentials.profiles:
+        if current_profile_name not in profiles.profiles:
             return False, f"Profile '{current_profile_name}' does not exist"
 
         # Handle custom region
@@ -1029,11 +1048,11 @@ class ConfigManager:
             region_url = region_info.url or ""
 
         # Update the profile with new region info
-        credentials.profiles[current_profile_name].region = region_code.lower()
-        credentials.profiles[current_profile_name].region_url = region_url
+        profiles.profiles[current_profile_name].region = region_code.lower()
+        profiles.profiles[current_profile_name].region_url = region_url
 
-        # Save updated credentials
-        self.profile_manager.save_credentials(credentials)
+        # Save updated profiles
+        self.profile_manager.save_profiles(profiles)
 
         return True, f"{region_info.name} ({region_info.url})"
 

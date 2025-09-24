@@ -156,7 +156,7 @@ async def test_show_displays_profile_and_token_source(
     output = capsys.readouterr().out
     assert "Profile: default" in output
     assert "Token configured" in output
-    assert "Source: ~/.workato/credentials" in output
+    assert "Source: ~/.workato/profiles" in output
 
 
 @pytest.mark.asyncio
@@ -296,7 +296,7 @@ async def test_show_handles_missing_token(
 
     output = capsys.readouterr().out
     assert "Token not found" in output
-    assert "Token should be stored in ~/.workato/credentials" in output
+    assert "Token should be stored in keyring" in output
     assert "Or set WORKATO_API_TOKEN environment variable" in output
 
 
@@ -374,7 +374,7 @@ async def test_status_handles_missing_token(
 
     output = capsys.readouterr().out
     assert "Token not found" in output
-    assert "Token should be stored in ~/.workato/credentials" in output
+    assert "Token should be stored in keyring" in output
     assert "Or set WORKATO_API_TOKEN environment variable" in output
 
 

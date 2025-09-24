@@ -12,9 +12,9 @@ import pytest
 from workato_platform.cli.utils.config import (
     ConfigData,
     ConfigManager,
-    CredentialsConfig,
     ProfileData,
     ProfileManager,
+    ProfilesConfig,
     RegionInfo,
     _WorkatoFileKeyring,
 )
@@ -80,19 +80,19 @@ class TestProfileManager:
 
         # ProfileManager uses global config dir, not temp_config_dir
         assert profile_manager.global_config_dir.name == ".workato"
-        assert profile_manager.credentials_file.name == "credentials"
+        assert profile_manager.profiles_file.name == "profiles"
 
-    def test_load_credentials_no_file(self, temp_config_dir: Path) -> None:
+    def test_load_profiles_no_file(self, temp_config_dir: Path) -> None:
         """Test loading credentials when file doesn't exist."""
         with patch("pathlib.Path.home") as mock_home:
             mock_home.return_value = temp_config_dir
             profile_manager = ProfileManager()
-            credentials = profile_manager.load_credentials()
+            profiles = profile_manager.load_profiles()
 
-            assert isinstance(credentials, CredentialsConfig)
-            assert credentials.profiles == {}
+            assert isinstance(profiles, ProfilesConfig)
+            assert profiles.profiles == {}
 
-    def test_save_and_load_credentials(self, temp_config_dir: Path) -> None:
+    def test_save_and_load_profiles(self, temp_config_dir: Path) -> None:
         """Test saving and loading credentials."""
         from workato_platform.cli.utils.config import ProfileData
 
@@ -106,17 +106,17 @@ class TestProfileManager:
                 region_url="https://app.workato.com",
                 workspace_id=123,
             )
-            credentials = CredentialsConfig(profiles={"test": profile_data})
+            profiles = ProfilesConfig(profiles={"test": profile_data})
 
             # Save credentials
-            profile_manager.save_credentials(credentials)
+            profile_manager.save_profiles(profiles)
 
             # Verify file exists
-            assert profile_manager.credentials_file.exists()
+            assert profile_manager.profiles_file.exists()
 
             # Load and verify
-            loaded_credentials = profile_manager.load_credentials()
-            assert "test" in loaded_credentials.profiles
+            loaded_profiles = profile_manager.load_profiles()
+            assert "test" in loaded_profiles.profiles
 
     def test_set_profile(self, temp_config_dir: Path) -> None:
         """Test setting a new profile."""
@@ -137,9 +137,9 @@ class TestProfileManager:
 
             profile_manager.set_profile("new-profile", profile_data, "test-token")
 
-            credentials = profile_manager.load_credentials()
-            assert "new-profile" in credentials.profiles
-            profile = credentials.profiles["new-profile"]
+            profiles = profile_manager.load_profiles()
+            assert "new-profile" in profiles.profiles
+            profile = profiles.profiles["new-profile"]
             assert profile.region == "eu"
 
             # Verify token was stored in keyring
@@ -164,16 +164,16 @@ class TestProfileManager:
             profile_manager.set_profile("to-delete", profile_data)
 
             # Verify it exists
-            credentials = profile_manager.load_credentials()
-            assert "to-delete" in credentials.profiles
+            profiles = profile_manager.load_profiles()
+            assert "to-delete" in profiles.profiles
 
             # Delete it
             result = profile_manager.delete_profile("to-delete")
             assert result is True
 
             # Verify it's gone
-            credentials = profile_manager.load_credentials()
-            assert "to-delete" not in credentials.profiles
+            profiles = profile_manager.load_profiles()
+            assert "to-delete" not in profiles.profiles
 
     def test_delete_nonexistent_profile(self, temp_config_dir: Path) -> None:
         """Test deleting a profile that doesn't exist."""
@@ -201,35 +201,33 @@ class TestProfileManager:
         token = profile_manager._get_token_from_keyring("test_profile")
         assert token is None
 
-    def test_load_credentials_invalid_dict_structure(
-        self, temp_config_dir: Path
-    ) -> None:
+    def test_load_profiles_invalid_dict_structure(self, temp_config_dir: Path) -> None:
         """Test loading credentials with invalid dict structure"""
         profile_manager = ProfileManager()
         profile_manager.global_config_dir = temp_config_dir
-        profile_manager.credentials_file = temp_config_dir / "credentials.json"
+        profile_manager.profiles_file = temp_config_dir / "profiles.json"
 
         # Create credentials file with non-dict content
-        profile_manager.credentials_file.write_text('"this is a string, not a dict"')
+        profile_manager.profiles_file.write_text('"this is a string, not a dict"')
 
         # Should return default config when file contains invalid structure
-        config = profile_manager.load_credentials()
-        assert isinstance(config, CredentialsConfig)
+        config = profile_manager.load_profiles()
+        assert isinstance(config, ProfilesConfig)
         assert config.current_profile is None
         assert config.profiles == {}
 
-    def test_load_credentials_json_decode_error(self, temp_config_dir: Path) -> None:
+    def test_load_profiles_json_decode_error(self, temp_config_dir: Path) -> None:
         """Test loading credentials with JSON decode error"""
         profile_manager = ProfileManager()
         profile_manager.global_config_dir = temp_config_dir
-        profile_manager.credentials_file = temp_config_dir / "credentials.json"
+        profile_manager.profiles_file = temp_config_dir / "profiles.json"
 
         # Create credentials file with invalid JSON
-        profile_manager.credentials_file.write_text('{"invalid": json}')
+        profile_manager.profiles_file.write_text('{"invalid": json}')
 
         # Should return default config when JSON is malformed
-        config = profile_manager.load_credentials()
-        assert isinstance(config, CredentialsConfig)
+        config = profile_manager.load_profiles()
+        assert isinstance(config, ProfilesConfig)
         assert config.current_profile is None
         assert config.profiles == {}
 
@@ -288,7 +286,7 @@ class TestProfileManager:
         with contextlib.suppress(PermissionError):
             profile_manager._ensure_global_config_dir()
 
-    def test_save_credentials_permission_error(self, tmp_path: Path) -> None:
+    def test_save_profiles_permission_error(self, tmp_path: Path) -> None:
         """Test save credentials with permission error"""
         profile_manager = ProfileManager()
         readonly_dir = tmp_path / "readonly"
@@ -296,23 +294,23 @@ class TestProfileManager:
         readonly_dir.chmod(0o444)  # Read-only
 
         profile_manager.global_config_dir = readonly_dir
-        profile_manager.credentials_file = readonly_dir / "credentials"
+        profile_manager.profiles_file = readonly_dir / "profiles"
 
-        credentials = CredentialsConfig(current_profile=None, profiles={})
+        profiles = ProfilesConfig(current_profile=None, profiles={})
 
         # Should handle permission errors gracefully
         with contextlib.suppress(PermissionError):
-            profile_manager.save_credentials(credentials)
+            profile_manager.save_profiles(profiles)
 
-    def test_credentials_config_validation(self) -> None:
-        """Test CredentialsConfig validation"""
-        from workato_platform.cli.utils.config import CredentialsConfig, ProfileData
+    def test_profiles_config_validation(self) -> None:
+        """Test ProfilesConfig validation"""
+        from workato_platform.cli.utils.config import ProfileData, ProfilesConfig
 
         # Test with valid data
         profile_data = ProfileData(
             region="us", region_url="https://www.workato.com", workspace_id=123
         )
-        config = CredentialsConfig(
+        config = ProfilesConfig(
             current_profile="default", profiles={"default": profile_data}
         )
         assert config.current_profile == "default"
@@ -322,10 +320,10 @@ class TestProfileManager:
         """Test deleting current profile resets current_profile to None"""
         profile_manager = ProfileManager()
         profile_manager.global_config_dir = temp_config_dir
-        profile_manager.credentials_file = temp_config_dir / "credentials"
+        profile_manager.profiles_file = temp_config_dir / "profiles"
 
         # Set up existing credentials with current profile
-        credentials = CredentialsConfig(
+        profiles = ProfilesConfig(
             current_profile="test",
             profiles={
                 "test": ProfileData(
@@ -333,14 +331,14 @@ class TestProfileManager:
                 )
             },
         )
-        profile_manager.save_credentials(credentials)
+        profile_manager.save_profiles(profiles)
 
         # Delete the current profile - should reset current_profile to None
         result = profile_manager.delete_profile("test")
         assert result is True
 
         # Verify current_profile is None
-        reloaded = profile_manager.load_credentials()
+        reloaded = profile_manager.load_profiles()
         assert reloaded.current_profile is None
 
     def test_get_current_profile_name_with_project_override(self) -> None:
@@ -689,15 +687,16 @@ class TestConfigManagerWorkspace:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         project_root = temp_config_dir / "projects" / "demo"
-        workato_dir = project_root / "workato"
-        workato_dir.mkdir(parents=True)
+        project_root.mkdir(parents=True)
+        workatoenv_file = project_root / ".workatoenv"
+        workatoenv_file.write_text('{"project_id": 123}')
         monkeypatch.chdir(project_root)
 
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
 
         assert config_manager.get_current_project_name() == "demo"
 
-    def test_get_project_root_returns_none_when_missing_workato(
+    def test_get_project_root_returns_none_when_missing_workatoenv(
         self,
         temp_config_dir: Path,
         monkeypatch: pytest.MonkeyPatch,
@@ -710,16 +709,17 @@ class TestConfigManagerWorkspace:
 
         assert config_manager.get_project_root() is None
 
-    def test_get_project_root_detects_nearest_workato_folder(
+    def test_get_project_root_detects_nearest_workatoenv_file(
         self,
         temp_config_dir: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         project_root = temp_config_dir / "projects" / "demo"
         nested_dir = project_root / "src"
-        workato_dir = project_root / "workato"
-        workato_dir.mkdir(parents=True)
+        project_root.mkdir(parents=True)
         nested_dir.mkdir(parents=True)
+        workatoenv_file = project_root / ".workatoenv"
+        workatoenv_file.write_text('{"project_id": 123}')
         monkeypatch.chdir(nested_dir)
 
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
@@ -728,14 +728,15 @@ class TestConfigManagerWorkspace:
         assert project_root_result is not None
         assert project_root_result.resolve() == project_root.resolve()
 
-    def test_is_in_project_workspace_checks_for_workato_folder(
+    def test_is_in_project_workspace_checks_for_workatoenv_file(
         self,
         temp_config_dir: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         workspace_dir = temp_config_dir / "workspace"
-        workato_dir = workspace_dir / "workato"
-        workato_dir.mkdir(parents=True)
+        workspace_dir.mkdir(parents=True)
+        workatoenv_file = workspace_dir / ".workatoenv"
+        workatoenv_file.write_text('{"project_id": 123}')
         monkeypatch.chdir(workspace_dir)
 
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
@@ -785,16 +786,15 @@ class TestConfigManagerWorkspace:
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
         monkeypatch.setattr(
             config_manager,
-            "_find_nearest_workato_dir",
+            "_find_nearest_workatoenv_file",
             lambda: None,
         )
 
         default_dir = config_manager._get_default_config_dir()
 
-        assert default_dir.exists()
-        assert default_dir.name == "workato"
+        assert default_dir.resolve() == temp_config_dir.resolve()
 
-    def test_find_nearest_workato_dir_returns_none_when_absent(
+    def test_find_nearest_workatoenv_file_returns_none_when_absent(
         self,
         temp_config_dir: Path,
         monkeypatch: pytest.MonkeyPatch,
@@ -805,7 +805,7 @@ class TestConfigManagerWorkspace:
 
         config_manager = ConfigManager(config_dir=temp_config_dir, skip_validation=True)
 
-        assert config_manager._find_nearest_workato_dir() is None
+        assert config_manager._find_nearest_workatoenv_file() is None
 
     def test_save_project_info_round_trip(
         self,
@@ -913,9 +913,9 @@ class TestConfigManagerWorkspace:
             workspace_id=1,
         )
 
-        credentials = CredentialsConfig(profiles={})
-        monkeypatch.setattr(profile_manager, "load_credentials", lambda: credentials)
-        monkeypatch.setattr(profile_manager, "save_credentials", lambda cfg: None)
+        profiles = ProfilesConfig(profiles={})
+        monkeypatch.setattr(profile_manager, "load_profiles", lambda: profiles)
+        monkeypatch.setattr(profile_manager, "save_profiles", lambda cfg: None)
         monkeypatch.setattr(
             profile_manager, "_store_token_in_keyring", lambda *args, **kwargs: False
         )
@@ -936,9 +936,9 @@ class TestConfigManagerWorkspace:
             workspace_id=1,
         )
 
-        credentials = CredentialsConfig(profiles={})
-        monkeypatch.setattr(profile_manager, "load_credentials", lambda: credentials)
-        monkeypatch.setattr(profile_manager, "save_credentials", lambda cfg: None)
+        profiles = ProfilesConfig(profiles={})
+        monkeypatch.setattr(profile_manager, "load_profiles", lambda: profiles)
+        monkeypatch.setattr(profile_manager, "save_profiles", lambda cfg: None)
         monkeypatch.setattr(
             profile_manager, "_store_token_in_keyring", lambda *args, **kwargs: False
         )
@@ -959,7 +959,7 @@ class TestConfigManagerWorkspace:
             region_url="https://app.workato.com",
             workspace_id=1,
         )
-        credentials = CredentialsConfig(profiles={"default": profile})
+        profiles = ProfilesConfig(profiles={"default": profile})
 
         with (
             patch.object(
@@ -969,8 +969,8 @@ class TestConfigManagerWorkspace:
             ),
             patch.object(
                 config_manager.profile_manager,
-                "load_credentials",
-                return_value=credentials,
+                "load_profiles",
+                return_value=profiles,
             ),
             patch.object(
                 config_manager.profile_manager,
@@ -997,8 +997,8 @@ class TestConfigManagerWorkspace:
             ),
             patch.object(
                 config_manager.profile_manager,
-                "load_credentials",
-                return_value=CredentialsConfig(profiles={}),
+                "load_profiles",
+                return_value=ProfilesConfig(profiles={}),
             ),
             pytest.raises(ValueError),
         ):
@@ -1014,7 +1014,7 @@ class TestConfigManagerWorkspace:
             region_url="https://app.workato.com",
             workspace_id=1,
         )
-        credentials = CredentialsConfig(profiles={"default": profile})
+        profiles = ProfilesConfig(profiles={"default": profile})
 
         with (
             patch.object(
@@ -1024,8 +1024,8 @@ class TestConfigManagerWorkspace:
             ),
             patch.object(
                 config_manager.profile_manager,
-                "load_credentials",
-                return_value=credentials,
+                "load_profiles",
+                return_value=profiles,
             ),
             patch.object(
                 config_manager.profile_manager,
@@ -1051,7 +1051,7 @@ class TestConfigManagerWorkspace:
             region_url="https://app.workato.com",
             workspace_id=1,
         )
-        credentials = CredentialsConfig(profiles={"default": profile})
+        profiles = ProfilesConfig(profiles={"default": profile})
 
         with (
             patch.object(
@@ -1061,8 +1061,8 @@ class TestConfigManagerWorkspace:
             ),
             patch.object(
                 config_manager.profile_manager,
-                "load_credentials",
-                return_value=credentials,
+                "load_profiles",
+                return_value=profiles,
             ),
             patch.object(
                 config_manager.profile_manager,
@@ -1146,11 +1146,11 @@ class TestConfigManagerInteractive:
             ) -> tuple[str | None, str | None]:
                 return None, None
 
-            def load_credentials(self) -> CredentialsConfig:
-                return CredentialsConfig(current_profile=None, profiles=self.profiles)
+            def load_profiles(self) -> ProfilesConfig:
+                return ProfilesConfig(current_profile=None, profiles=self.profiles)
 
-            def save_credentials(self, credentials: CredentialsConfig) -> None:
-                self.profiles = credentials.profiles
+            def save_profiles(self, profiles_config: ProfilesConfig) -> None:
+                self.profiles = profiles_config.profiles
 
         stub_profile_manager = StubProfileManager()
 
@@ -1369,13 +1369,11 @@ class TestConfigManagerInteractive:
             ) -> tuple[str | None, str | None]:
                 return "env-token", existing_profile.region_url
 
-            def load_credentials(self) -> CredentialsConfig:
-                return CredentialsConfig(
-                    current_profile="default", profiles=self.profiles
-                )
+            def load_profiles(self) -> ProfilesConfig:
+                return ProfilesConfig(current_profile="default", profiles=self.profiles)
 
-            def save_credentials(self, credentials: CredentialsConfig) -> None:
-                self.profiles = credentials.profiles
+            def save_profiles(self, profiles_config: ProfilesConfig) -> None:
+                self.profiles = profiles_config.profiles
 
         stub_profile_manager = StubProfileManager()
 
@@ -1900,9 +1898,9 @@ class TestConfigManagerEdgeCases:
         """Test is_in_project_workspace when not in workspace."""
         config_manager = ConfigManager(temp_config_dir, skip_validation=True)
 
-        # Mock _find_nearest_workato_dir to return None
+        # Mock _find_nearest_workatoenv_file to return None
         with patch.object(
-            config_manager, "_find_nearest_workato_dir", return_value=None
+            config_manager, "_find_nearest_workatoenv_file", return_value=None
         ):
             result = config_manager.is_in_project_workspace()
             assert result is False
@@ -1911,10 +1909,10 @@ class TestConfigManagerEdgeCases:
         """Test is_in_project_workspace when in workspace."""
         config_manager = ConfigManager(temp_config_dir, skip_validation=True)
 
-        # Mock _find_nearest_workato_dir to return a directory
-        mock_dir = temp_config_dir / ".workato"
+        # Mock _find_nearest_workatoenv_file to return a file
+        mock_file = temp_config_dir / ".workatoenv"
         with patch.object(
-            config_manager, "_find_nearest_workato_dir", return_value=mock_dir
+            config_manager, "_find_nearest_workatoenv_file", return_value=mock_file
         ):
             result = config_manager.is_in_project_workspace()
             assert result is True
@@ -1964,14 +1962,12 @@ class TestConfigManagerEdgeCases:
                 "get_current_profile_name",
                 return_value=None,
             ),
-            patch.object(
-                config_manager.profile_manager, "load_credentials"
-            ) as mock_load,
+            patch.object(config_manager.profile_manager, "load_profiles") as mock_load,
             pytest.raises(ValueError, match="Profile 'default' does not exist"),
         ):
-            mock_credentials = Mock()
-            mock_credentials.profiles = {}
-            mock_load.return_value = mock_credentials
+            mock_profiles = Mock()
+            mock_profiles.profiles = {}
+            mock_load.return_value = mock_profiles
 
             # This should trigger the default profile name assignment and raise error
             config_manager._set_api_token("test_token")
