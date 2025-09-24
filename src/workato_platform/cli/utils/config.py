@@ -635,17 +635,12 @@ class ConfigManager:
                 )
                 if keyring_token:
                     current_token = keyring_token
-                    click.echo(
-                        f"🔧 Debug: Retrieved token length from "
-                        f"keyring: {len(keyring_token)}"
-                    )
                     masked_token = current_token[:8] + "..." + current_token[-4:]
                     click.echo(f"Current token: {masked_token} (from keyring)")
 
             if current_token:
                 if click.confirm("Use existing token?", default=True):
                     token = current_token
-                    click.echo(f"🔧 Debug: Using existing token, length: {len(token)}")
                 else:
                     token = click.prompt(
                         "Enter your Workato API token", hide_input=True
@@ -665,29 +660,9 @@ class ConfigManager:
         api_config = Configuration(access_token=token, host=region.url)
         api_config.verify_ssl = False
 
-        # Debug logging
-        click.echo(f"🔧 Debug: API Host: {api_config.host}")
-        click.echo(f"🔧 Debug: Token present: {'Yes' if token else 'No'}")
-        click.echo(f"🔧 Debug: Token length: {len(token) if token else 0}")
-
         # Test authentication
-        try:
-            async with Workato(configuration=api_config) as workato_api_client:
-                click.echo("🔧 Debug: Making API request to /api/users/me")
-                user_info = await workato_api_client.users_api.get_workspace_details()
-                click.echo(
-                    f"🔧 Debug: API request successful, workspace ID: {user_info.id}"
-                )
-        except Exception as e:
-            click.echo(
-                f"🔧 Debug: API request failed with exception: {type(e).__name__}"
-            )
-            click.echo(f"🔧 Debug: Exception details: {str(e)}")
-            if hasattr(e, "status"):
-                click.echo(f"🔧 Debug: HTTP Status: {e.status}")
-            if hasattr(e, "body"):
-                click.echo(f"🔧 Debug: Response body: {e.body}")
-            raise
+        async with Workato(configuration=api_config) as workato_api_client:
+            user_info = await workato_api_client.users_api.get_workspace_details()
 
         # Create profile data (without token)
         profile_data = ProfileData(
