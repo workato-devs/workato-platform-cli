@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -19,8 +23,26 @@ jobs:
     - name: Install dependencies
       run: uv sync --group dev
 
-    - name: Run tests
-      run: uv run pytest tests/ -v
+    - name: Run tests with coverage
+      run: uv run coverage run -m pytest tests/ -v
 
-    - name: Check coverage
-      run: uv run coverage run -m pytest tests/ && uv run coverage report --fail-under=85
+    - name: Generate coverage report
+      run: |
+        uv run coverage report --format=markdown > coverage.md
+        uv run coverage report --fail-under=85
+        uv run coverage xml
+
+    - name: Add coverage comment to PR
+      uses: MishaKav/pytest-coverage-comment@main
+      if: github.event_name == 'pull_request'
+      with:
+        pytest-xml-coverage-path: ./coverage.xml
+        coverage-path-prefix: src/
+        title: Coverage Report
+        badge-title: Coverage
+        hide-badge: false
+        hide-report: false
+        create-new-comment: false
+        hide-comment: false
+        report-only-changed-files: false
+        remove-link-from-badge: false

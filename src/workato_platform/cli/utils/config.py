@@ -657,7 +657,10 @@ class ConfigManager:
             sys.exit(1)
 
         # Create configuration for API client
-        api_config = Configuration(access_token=token, host=region.url)
+        api_config = Configuration(
+            access_token=token,
+            host=region.url,
+        )
         api_config.verify_ssl = False
 
         # Test authentication
