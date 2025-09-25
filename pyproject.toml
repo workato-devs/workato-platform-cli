@@ -201,6 +201,7 @@ source = ["src/workato_platform"]
 omit = [
     "tests/*",
     "src/workato_platform/client/*",
+    "src/workato_platform/_version.py",
 ]
 
 [tool.coverage.report]

@@ -1,6 +1,7 @@
 """Focused tests for the profiles command module."""
 
 from collections.abc import Callable
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -108,13 +109,15 @@ async def test_use_sets_current_profile(
     config_manager = make_config_manager(
         get_profile=Mock(return_value=profile),
         set_current_profile=Mock(),
+        get_workspace_root=Mock(return_value=Path("/workspace")),
+        load_config=Mock(return_value=Mock(project_id=None)),  # No project context
     )
 
     assert use.callback
     await use.callback(profile_name="dev", config_manager=config_manager)
 
     config_manager.profile_manager.set_current_profile.assert_called_once_with("dev")
-    assert "Set 'dev' as current profile" in capsys.readouterr().out
+    assert "Set 'dev' as global default profile" in capsys.readouterr().out
 
 
 @pytest.mark.asyncio

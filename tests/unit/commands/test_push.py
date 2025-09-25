@@ -101,12 +101,13 @@ async def test_push_requires_project_root_when_inside_project(
         project_name="demo",
     )
     config_manager.get_current_project_name.return_value = "demo"
-    config_manager.get_project_root.return_value = None
+    config_manager.get_project_directory.return_value = None
+    config_manager.get_workspace_root.return_value = Path("/workspace")
 
     assert push.push.callback
     await push.push.callback(config_manager=config_manager)
 
-    assert any("Could not determine project root" in line for line in capture_echo)
+    assert any("Could not determine project directory" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
@@ -122,13 +123,15 @@ async def test_push_requires_project_directory_when_missing(
         project_name="demo",
     )
     config_manager.get_current_project_name.return_value = None
+    config_manager.get_project_directory.return_value = None
+    config_manager.get_workspace_root.return_value = Path("/workspace")
 
     monkeypatch.chdir(tmp_path)
 
     assert push.push.callback
     await push.push.callback(config_manager=config_manager)
 
-    assert any("No project directory found" in line for line in capture_echo)
+    assert any("Could not determine project directory" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
@@ -144,8 +147,10 @@ async def test_push_creates_zip_and_invokes_upload(
         project_name="demo",
     )
     config_manager.get_current_project_name.return_value = None
+    config_manager.get_workspace_root.return_value = Path("/workspace")
 
     project_dir = tmp_path / "projects" / "demo"
+    config_manager.get_project_directory.return_value = project_dir
     (project_dir / "nested").mkdir(parents=True)
     (project_dir / "nested" / "file.txt").write_text("content")
     # Should be excluded
