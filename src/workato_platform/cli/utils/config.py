@@ -1,18 +1,17 @@
-"""Configuration management for the CLI using class-based approach"""
+"""Simplified configuration management for the CLI with clear workspace rules"""
 
 import contextlib
 import json
 import os
 import sys
 import threading
-
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse
 
 import asyncclick as click
 import inquirer
 import keyring
-
 from keyring.backend import KeyringBackend
 from keyring.compat import properties
 from keyring.errors import KeyringError, NoKeyringError
@@ -24,14 +23,7 @@ from workato_platform.client.workato_api.configuration import Configuration
 
 
 def _validate_url_security(url: str) -> tuple[bool, str]:
-    """Validate URL security - only allow HTTP for localhost, require HTTPS for others.
-
-    Args:
-        url: The URL to validate
-
-    Returns:
-        Tuple of (is_valid, error_message)
-    """
+    """Validate URL security - only allow HTTP for localhost, require HTTPS for others."""
     if not url.startswith(("http://", "https://")):
         return False, "URL must start with http:// or https://"
 
@@ -49,9 +41,14 @@ def _validate_url_security(url: str) -> tuple[bool, str]:
     return True, ""
 
 
+def _set_secure_permissions(path: Path) -> None:
+    """Best-effort attempt to set secure file permissions."""
+    with contextlib.suppress(OSError):
+        path.chmod(0o600)
+
+
 class RegionInfo(BaseModel):
     """Data model for region information"""
-
     region: str = Field(..., description="Region code")
     name: str = Field(..., description="Human-readable region name")
     url: str | None = Field(None, description="Base URL for the region")
@@ -80,13 +77,6 @@ AVAILABLE_REGIONS = {
     ),
     "custom": RegionInfo(region="custom", name="Custom URL", url=None),
 }
-
-
-def _set_secure_permissions(path: Path) -> None:
-    """Best-effort attempt to set secure file permissions."""
-    with contextlib.suppress(OSError):
-        path.chmod(0o600)
-        # On some platforms (e.g., Windows) chmod may fail; ignore silently.
 
 
 class _WorkatoFileKeyring(KeyringBackend):
@@ -163,14 +153,6 @@ class _WorkatoFileKeyring(KeyringBackend):
                 self._save_data(data)
 
 
-class ProjectInfo(BaseModel):
-    """Data model for project information"""
-
-    id: int = Field(..., description="Project ID")
-    name: str = Field(..., description="Project name")
-    folder_id: int | None = Field(None, description="Associated folder ID")
-
-
 class ProfileData(BaseModel):
     """Data model for a single profile"""
 
@@ -202,15 +184,6 @@ class ProfilesConfig(BaseModel):
     profiles: dict[str, ProfileData] = Field(
         default_factory=dict, description="Profile definitions"
     )
-
-
-class ConfigData(BaseModel):
-    """Data model for project-specific configuration file data"""
-
-    project_id: int | None = Field(None, description="Current project ID")
-    project_name: str | None = Field(None, description="Current project name")
-    folder_id: int | None = Field(None, description="Current folder ID")
-    profile: str | None = Field(None, description="Profile override for this project")
 
 
 class ProfileManager:
@@ -355,7 +328,7 @@ class ProfileManager:
 
     def _ensure_global_config_dir(self) -> None:
         """Ensure global config directory exists with proper permissions"""
-        self.global_config_dir.mkdir(exist_ok=True, mode=0o700)  # Only user can access
+        self.global_config_dir.mkdir(exist_ok=True, mode=0o700)
 
     def load_profiles(self) -> ProfilesConfig:
         """Load profiles configuration from file"""
@@ -475,15 +448,7 @@ class ProfileManager:
     def resolve_environment_variables(
         self, project_profile_override: str | None = None
     ) -> tuple[str | None, str | None]:
-        """Resolve API token and host with environment variable override support
-
-        Priority order:
-        1. Environment variables: WORKATO_API_TOKEN, WORKATO_HOST (highest)
-        2. Profile from keyring + credentials file
-
-        Returns:
-            Tuple of (api_token, api_host) or (None, None) if no valid source
-        """
+        """Resolve API token and host with environment variable override support"""
         # Check for environment variable overrides first (highest priority)
         env_token = os.environ.get("WORKATO_API_TOKEN")
         env_host = os.environ.get("WORKATO_HOST")
@@ -509,11 +474,7 @@ class ProfileManager:
     def validate_credentials(
         self, project_profile_override: str | None = None
     ) -> tuple[bool, list[str]]:
-        """Validate that credentials are available from environment or profile
-
-        Returns:
-            Tuple of (is_valid, missing_items)
-        """
+        """Validate that credentials are available from environment or profile"""
         api_token, api_host = self.resolve_environment_variables(
             project_profile_override
         )
@@ -526,517 +487,7 @@ class ProfileManager:
 
         return len(missing_items) == 0, missing_items
 
-
-class ConfigManager:
-    """Configuration manager for Workato CLI"""
-
-    def __init__(self, config_dir: Path | None = None, skip_validation: bool = False):
-        """Initialize config manager"""
-        self.config_dir = config_dir or self._get_default_config_dir()
-        self.profile_manager = ProfileManager()
-
-        # Only validate if not explicitly skipped
-        if not skip_validation:
-            self._validate_env_vars_or_exit()
-
-    @classmethod
-    async def initialize(cls, config_dir: Path | None = None) -> "ConfigManager":
-        """Complete workspace initialization flow"""
-        click.echo("🚀 Welcome to Workato CLI")
-        click.echo()
-
-        # Use skip_validation=True for setup
-        manager = cls(config_dir, skip_validation=True)
-        await manager._run_setup_flow()
-
-        # Return the setup manager instance - it should work fine for credential access
-        return manager
-
-    async def _run_setup_flow(self) -> None:
-        """Run the complete setup flow"""
-        # Step 1: Configure profile name
-        click.echo("📋 Step 1: Create or select a profile")
-        existing_profiles = self.profile_manager.list_profiles()
-
-        profile_name = None
-        is_existing_profile = False
-
-        if existing_profiles:
-            # Show profile selection menu
-            choices = list(existing_profiles.keys()) + ["Create new profile"]  # noboost
-            questions = [
-                inquirer.List(
-                    "profile_choice",
-                    message="Select a profile",  # noboost
-                    choices=choices,
-                )
-            ]
-
-            answers = inquirer.prompt(questions)
-            if not answers:
-                click.echo("❌ No profile selected")
-                sys.exit(1)
-
-            if answers["profile_choice"] == "Create new profile":
-                profile_name = click.prompt("Enter new profile name", type=str).strip()
-                if not profile_name:
-                    click.echo("❌ Profile name cannot be empty")
-                    sys.exit(1)
-                is_existing_profile = False
-            else:
-                profile_name = answers["profile_choice"]
-                is_existing_profile = True
-        else:
-            # No existing profiles, create first one
-            profile_name = click.prompt(
-                "Enter profile name", default="default", type=str
-            ).strip()
-
-            if not profile_name:
-                click.echo("❌ Profile name cannot be empty")
-                sys.exit(1)
-            is_existing_profile = False
-
-        # Get existing profile data for defaults
-        existing_profile_data = None
-        if is_existing_profile:
-            existing_profile_data = self.profile_manager.get_profile(profile_name)
-
-        # Step 2: Configure region
-        click.echo("📍 Step 2: Select your Workato region")
-        if existing_profile_data:
-            click.echo(
-                f"Current region: {existing_profile_data.region_name} "
-                f"({existing_profile_data.region_url})"
-            )
-
-        region = self.select_region_interactive(profile_name)
-        if not region or not region.url:
-            click.echo("❌ Setup cancelled")
-            sys.exit(1)
-
-        click.echo(f"✅ Region: {region.name}")
-
-        # Step 3: Authenticate user
-        click.echo("🔐 Step 3: Authenticate with your API token")
-
-        # Check if token already exists for this profile
-        current_token = None
-        if is_existing_profile and existing_profile_data:
-            # Check for environment variable override first
-            env_token = os.environ.get("WORKATO_API_TOKEN")
-            if env_token:
-                current_token = env_token
-                click.echo("Current token: Found in WORKATO_API_TOKEN")
-            else:
-                # Try to get token from keyring
-                keyring_token = self.profile_manager._get_token_from_keyring(
-                    profile_name
-                )
-                if keyring_token:
-                    current_token = keyring_token
-                    masked_token = current_token[:8] + "..." + current_token[-4:]
-                    click.echo(f"Current token: {masked_token} (from keyring)")
-
-            if current_token:
-                if click.confirm("Use existing token?", default=True):
-                    token = current_token
-                else:
-                    token = click.prompt(
-                        "Enter your Workato API token", hide_input=True
-                    )
-            else:
-                click.echo("No token found for this profile")
-                token = click.prompt("Enter your Workato API token", hide_input=True)
-        else:
-            # New profile
-            token = click.prompt("Enter your Workato API token", hide_input=True)
-
-        if not token.strip():
-            click.echo("❌ No token provided")
-            sys.exit(1)
-
-        # Create configuration for API client
-        api_config = Configuration(
-            access_token=token,
-            host=region.url,
-        )
-        api_config.verify_ssl = False
-
-        # Test authentication
-        async with Workato(configuration=api_config) as workato_api_client:
-            user_info = await workato_api_client.users_api.get_workspace_details()
-
-        # Create profile data (without token)
-        profile_data = ProfileData(
-            region=region.region,
-            region_url=region.url,
-            workspace_id=user_info.id,
-        )
-
-        # Save profile to profiles file and store token in keyring
-        self.profile_manager.set_profile(profile_name, profile_data, token)
-
-        # Set as current profile
-        self.profile_manager.set_current_profile(profile_name)
-
-        action = "updated" if is_existing_profile else "created"
-        click.echo(
-            f"✅ Profile '{profile_name}' {action} and saved to ~/.workato/profiles"
-        )
-        click.echo("✅ Credentials available immediately for all CLI commands")
-        click.echo("💡 Override with WORKATO_API_TOKEN environment variable if needed")
-
-        click.echo(f"✅ Authenticated as: {user_info.name}")
-
-        # Step 4: Setup project
-        click.echo("📁 Step 4: Setup your project")
-        # Check for existing project first
-        meta_data = self.load_config()
-        if meta_data.project_id:
-            click.echo(f"Found existing project: {meta_data.project_name or 'Unknown'}")
-            if click.confirm("Use this project?", default=True):
-                # Update project to use the current profile
-                current_profile_name = self.profile_manager.get_current_profile_name()
-                if current_profile_name:
-                    meta_data.profile = current_profile_name
-
-                # Validate that the project exists in the current workspace
-                async with Workato(configuration=api_config) as workato_api_client:
-                    project_manager = ProjectManager(
-                        workato_api_client=workato_api_client
-                    )
-
-                    # Check if the folder exists by trying to list its assets
-                    try:
-                        if meta_data.folder_id is None:
-                            raise Exception("No folder ID configured")
-                        await project_manager.check_folder_assets(meta_data.folder_id)
-                        # Project exists, save the updated config
-                        self.save_config(meta_data)
-                        click.echo(f"   Updated profile: {current_profile_name}")
-                        click.echo("✅ Using existing project")
-                        click.echo("🎉 Setup complete!")
-                        click.echo()
-                        click.echo("💡 Next steps:")
-                        click.echo("  • workato workspace")
-                        click.echo("  • workato --help")
-                        return
-                    except Exception:
-                        # Project doesn't exist in current workspace
-                        project_name = meta_data.project_name
-                        msg = f"❌ Project '{project_name}' not found in workspace"
-                        click.echo(msg)
-                        click.echo("   This can happen when switching profiles")
-                        click.echo("   Please select a new project:")
-                        # Continue to project selection below
-
-        # Create a new client instance for project operations
-        async with Workato(configuration=api_config) as workato_api_client:
-            project_manager = ProjectManager(workato_api_client=workato_api_client)
-
-            # Select new project
-            projects = await project_manager.get_all_projects()
-
-            # Always include "Create new project" option
-            choices = ["Create new project"]
-            project_choices = []
-
-            if projects:
-                project_choices = [(f"{p.name} (ID: {p.id})", p) for p in projects]
-                choices.extend([choice[0] for choice in project_choices])
-
-            questions = [
-                inquirer.List(
-                    "project",
-                    message="Select a project",  # noboost
-                    choices=choices,
-                )
-            ]
-            answers = inquirer.prompt(questions)
-            if not answers:
-                click.echo("❌ No project selected")
-                sys.exit(1)
-
-            selected_project = None
-
-            # Handle "Create new project" option
-            if answers["project"] == "Create new project":
-                project_name = click.prompt("Enter project name", type=str)
-                if not project_name or not project_name.strip():
-                    click.echo("❌ Project name cannot be empty")
-                    sys.exit(1)
-
-                click.echo(f"🔨 Creating project: {project_name}")
-                selected_project = await project_manager.create_project(project_name)
-                click.echo(f"✅ Created project: {selected_project.name}")
-            else:
-                # Find selected existing project
-                for choice_text, project in project_choices:
-                    if choice_text == answers["project"]:
-                        selected_project = project
-                        break
-
-            if selected_project:
-                # Save project info and tie it to current profile for safety
-                meta_data.project_id = selected_project.id
-                meta_data.project_name = selected_project.name
-                meta_data.folder_id = selected_project.folder_id
-
-                # Capture current effective profile to tie project to workspace
-                current_profile_name = self.profile_manager.get_current_profile_name()
-                if current_profile_name:
-                    meta_data.profile = current_profile_name
-                    click.echo(f"   Profile: {current_profile_name}")
-
-                self.save_config(meta_data)
-                click.echo(f"✅ Project: {selected_project.name}")
-
-        click.echo("🎉 Setup complete!")
-        click.echo()
-        click.echo("💡 Next steps:")
-        click.echo("  • workato workspace")
-        click.echo("  • workato --help")
-
-    def _get_default_config_dir(self) -> Path:
-        """Get the default configuration directory using hierarchical search"""
-        # First, try to find nearest .workatoenv file up the hierarchy
-        config_file_path = self._find_nearest_workatoenv_file()
-
-        # If no .workatoenv found up the hierarchy, use current directory
-        if config_file_path is None:
-            return Path.cwd()
-        else:
-            return config_file_path.parent
-
-    def _find_nearest_workatoenv_file(self) -> Path | None:
-        """Find the nearest .workatoenv file by traversing up the directory tree"""
-        current = Path.cwd().resolve()
-
-        # Only traverse up within reasonable project boundaries
-        # Stop at home directory to avoid going to global config
-        home_dir = Path.home().resolve()
-
-        while current != current.parent and current != home_dir:
-            workatoenv_file = current / ".workatoenv"
-            if workatoenv_file.exists() and workatoenv_file.is_file():
-                return workatoenv_file
-            current = current.parent
-
-        return None
-
-    def get_project_root(self) -> Path | None:
-        """Get the root directory of the current project (containing .workatoenv)"""
-        workatoenv_file = self._find_nearest_workatoenv_file()
-        return workatoenv_file.parent if workatoenv_file else None
-
-    def get_current_project_name(self) -> str | None:
-        """Get the current project name from directory structure"""
-        project_root = self.get_project_root()
-        if not project_root:
-            return None
-
-        # Check if we're in a projects/{name} structure
-        if (
-            project_root.parent.name == "projects"
-            and project_root.parent.parent.exists()
-        ):
-            return project_root.name
-
-        return None
-
-    def is_in_project_workspace(self) -> bool:
-        """Check if current directory is within a project workspace"""
-        return self._find_nearest_workatoenv_file() is not None
-
-    # Configuration File Management
-
-    def load_config(self) -> ConfigData:
-        """Load project metadata from .workatoenv"""
-        config_file = self.config_dir / ".workatoenv"
-
-        if not config_file.exists():
-            return ConfigData.model_construct()
-
-        try:
-            with open(config_file) as f:
-                data = json.load(f)
-                return ConfigData.model_validate(data)
-        except (json.JSONDecodeError, ValueError):
-            return ConfigData.model_construct()
-
-    def save_config(self, config_data: ConfigData) -> None:
-        """Save project metadata (without sensitive data) to .workatoenv"""
-        config_file = self.config_dir / ".workatoenv"
-
-        with open(config_file, "w") as f:
-            json.dump(config_data.model_dump(exclude_none=True), f, indent=2)
-
-    def save_project_info(self, project_info: ProjectInfo) -> None:
-        """Save project information to configuration - returns success boolean"""
-        config_data = self.load_config()
-        updated_config = ConfigData(
-            **config_data.model_dump(),
-            project_id=project_info.id,
-            project_name=project_info.name,
-            folder_id=project_info.folder_id,
-        )
-        self.save_config(updated_config)
-
-    # API Token Management
-
-    def validate_environment_config(self) -> tuple[bool, list[str]]:
-        """Validate that required credentials are available
-
-        Returns:
-            Tuple of (is_valid, missing_items) where missing_items contains
-            descriptions of missing required credentials
-        """
-        # Get current profile from project config
-        config_data = self.load_config()
-        project_profile_override = config_data.profile
-
-        # Validate credentials using profile manager
-        return self.profile_manager.validate_credentials(project_profile_override)
-
-    def _validate_env_vars_or_exit(self) -> None:
-        """Validate credentials and exit if missing"""
-        is_valid, missing_items = self.validate_environment_config()
-        if not is_valid:
-            import sys
-
-            click.echo("❌ Missing required credentials:")
-            for item in missing_items:
-                click.echo(f"   • {item}")
-            click.echo()
-            click.echo(
-                "💡 Run 'workato init' to set up authentication and configuration"
-            )
-            sys.exit(1)
-
-    @property
-    def api_token(self) -> str | None:
-        """Get API token from current profile environment variable"""
-        config_data = self.load_config()
-        project_profile_override = config_data.profile
-        api_token, _ = self.profile_manager.resolve_environment_variables(
-            project_profile_override
-        )
-        return api_token
-
-    @api_token.setter
-    def api_token(self, value: str) -> None:
-        """Save API token as environment variable with shell persistence"""
-        self._set_api_token(value)
-
-    def _set_api_token(self, api_token: str) -> None:
-        """Internal method to save API token to the current profile"""
-        # Get current profile from project config
-        config_data = self.load_config()
-        project_profile_override = config_data.profile
-
-        # Get current profile name or use "default"
-        current_profile_name = self.profile_manager.get_current_profile_name(
-            project_profile_override
-        )
-        if not current_profile_name:
-            current_profile_name = "default"
-
-        # Check if profile exists
-        profiles = self.profile_manager.load_profiles()
-        if current_profile_name not in profiles.profiles:
-            # If profile doesn't exist, we need more info to create it
-            raise ValueError(
-                f"Profile '{current_profile_name}' does not exist. "
-                "Please run 'workato init' to create a profile first."
-            )
-
-        # Store the token in keyring
-        success = self.profile_manager._store_token_in_keyring(
-            current_profile_name, api_token
-        )
-        if not success:
-            if self.profile_manager._is_keyring_enabled():
-                raise ValueError(
-                    "Failed to store token in keyring. "
-                    "Please check your system keyring setup."
-                )
-            else:
-                raise ValueError(
-                    "Keyring is disabled. "
-                    "Please set WORKATO_API_TOKEN environment variable instead."
-                )
-
-        click.echo(f"✅ API token saved to profile '{current_profile_name}'")
-
-    # API Host Management
-
-    @property
-    def api_host(self) -> str | None:
-        """Get API host from current profile"""
-        config_data = self.load_config()
-        project_profile_override = config_data.profile
-        _, api_host = self.profile_manager.resolve_environment_variables(
-            project_profile_override
-        )
-        return api_host
-
-    def validate_region(self, region_code: str) -> bool:
-        """Validate if region code is valid"""
-        return region_code.lower() in AVAILABLE_REGIONS
-
-    def set_region(
-        self, region_code: str, custom_url: str | None = None
-    ) -> tuple[bool, str]:
-        """Set region by updating the current profile"""
-        if region_code.lower() not in AVAILABLE_REGIONS:
-            return False, f"Invalid region: {region_code}"
-
-        region_info = AVAILABLE_REGIONS[region_code.lower()]
-
-        # Get current profile name
-        config_data = self.load_config()
-        project_profile_override = config_data.profile
-        current_profile_name = self.profile_manager.get_current_profile_name(
-            project_profile_override
-        )
-        if not current_profile_name:
-            current_profile_name = "default"
-
-        # Load profiles
-        profiles = self.profile_manager.load_profiles()
-
-        if current_profile_name not in profiles.profiles:
-            return False, f"Profile '{current_profile_name}' does not exist"
-
-        # Handle custom region
-        if region_code.lower() == "custom":
-            if not custom_url:
-                return False, "Custom region requires a URL to be provided"
-
-            # Validate URL format and security
-            is_valid, error_msg = _validate_url_security(custom_url)
-            if not is_valid:
-                return False, error_msg
-
-            # Parse URL and keep only scheme + netloc (strip any path components)
-            parsed = urlparse(custom_url)
-            region_url = f"{parsed.scheme}://{parsed.netloc}"
-        else:
-            region_url = region_info.url or ""
-
-        # Update the profile with new region info
-        profiles.profiles[current_profile_name].region = region_code.lower()
-        profiles.profiles[current_profile_name].region_url = region_url
-
-        # Save updated profiles
-        self.profile_manager.save_profiles(profiles)
-
-        return True, f"{region_info.name} ({region_info.url})"
-
-    def select_region_interactive(
-        self, profile_name: str | None = None
-    ) -> RegionInfo | None:
+    def select_region_interactive(self, profile_name: str | None = None) -> RegionInfo | None:
         """Interactive region selection"""
         regions = list(AVAILABLE_REGIONS.values())
 
@@ -1055,7 +506,7 @@ class ConfigManager:
         questions = [
             inquirer.List(
                 "region",
-                message="Select your Workato region",  # noboost
+                message="Select your Workato region",
                 choices=choices,
             ),
         ]
@@ -1076,9 +527,9 @@ class ConfigManager:
             # Get selected profile's custom URL as default
             profile_data = None
             if profile_name:
-                profile_data = self.profile_manager.get_profile(profile_name)
+                profile_data = self.get_profile(profile_name)
             else:
-                profile_data = self.profile_manager.get_current_profile_data()
+                profile_data = self.get_current_profile_data()
 
             current_url = "https://www.workato.com"  # fallback default
             if profile_data and profile_data.region == "custom":
@@ -1103,3 +554,836 @@ class ConfigManager:
             return RegionInfo(region="custom", name="Custom URL", url=custom_url)
 
         return selected_region
+
+
+class ProjectInfo(BaseModel):
+    """Data model for project information"""
+    id: int = Field(..., description="Project ID")
+    name: str = Field(..., description="Project name")
+    folder_id: Optional[int] = Field(None, description="Associated folder ID")
+
+
+class ConfigData(BaseModel):
+    """Data model for configuration file data"""
+    project_id: Optional[int] = Field(None, description="Project ID")
+    project_name: Optional[str] = Field(None, description="Project name")
+    project_path: Optional[str] = Field(None, description="Relative path to project (workspace only)")
+    folder_id: Optional[int] = Field(None, description="Folder ID")
+    profile: Optional[str] = Field(None, description="Profile override")
+
+
+class WorkspaceManager:
+    """Manages workspace root detection and validation"""
+
+    def __init__(self, start_path: Optional[Path] = None):
+        self.start_path = start_path or Path.cwd()
+
+    def find_nearest_workatoenv(self) -> Optional[Path]:
+        """Find the nearest .workatoenv file by traversing up the directory tree"""
+        current = self.start_path.resolve()
+
+        while current != current.parent:
+            workatoenv_file = current / ".workatoenv"
+            if workatoenv_file.exists():
+                return current
+            current = current.parent
+
+        return None
+
+    def find_workspace_root(self) -> Path:
+        """Find workspace root by traversing up for .workatoenv file with project_path"""
+        current = self.start_path.resolve()
+
+        while current != current.parent:
+            workatoenv_file = current / ".workatoenv"
+            if workatoenv_file.exists():
+                try:
+                    with open(workatoenv_file) as f:
+                        data = json.load(f)
+                        # Workspace root has project_path pointing to a project
+                        if "project_path" in data and data["project_path"]:
+                            return current
+                        # If no project_path, this might be a project directory itself
+                        elif "project_id" in data and not data.get("project_path"):
+                            # This is a project directory, continue searching up
+                            pass
+                except (json.JSONDecodeError, OSError):
+                    pass
+            current = current.parent
+
+        # If no workspace found, current directory becomes workspace root
+        return self.start_path
+
+    def is_in_project_directory(self) -> bool:
+        """Check if current directory is a project directory"""
+        workatoenv_file = self.start_path / ".workatoenv"
+        if not workatoenv_file.exists():
+            return False
+
+        try:
+            with open(workatoenv_file) as f:
+                data = json.load(f)
+                # Project directory has project_id but no project_path
+                return "project_id" in data and not data.get("project_path")
+        except (json.JSONDecodeError, OSError):
+            return False
+
+    def validate_not_in_project(self) -> None:
+        """Validate that we're not running from within a project directory"""
+        if self.is_in_project_directory():
+            workspace_root = self.find_workspace_root()
+            if workspace_root != self.start_path:
+                click.echo(f"❌ Run init from workspace root: {workspace_root}")
+            else:
+                click.echo("❌ Cannot run init from within a project directory")
+            sys.exit(1)
+
+    def validate_project_path(self, project_path: Path, workspace_root: Path) -> None:
+        """Validate project path follows our rules"""
+        # Convert to absolute paths for comparison
+        abs_project_path = project_path.resolve()
+        abs_workspace_root = workspace_root.resolve()
+
+        # Project cannot be in workspace root directly
+        if abs_project_path == abs_workspace_root:
+            raise ValueError("Projects cannot be created in workspace root directly. Use a subdirectory.")
+
+        # Project must be within workspace
+        try:
+            abs_project_path.relative_to(abs_workspace_root)
+        except ValueError:
+            raise ValueError(f"Project path must be within workspace root: {abs_workspace_root}")
+
+        # Check for nested projects by looking for .workatoenv in parent directories
+        current = abs_project_path.parent
+        while current != abs_workspace_root and current != current.parent:
+            if (current / ".workatoenv").exists():
+                try:
+                    with open(current / ".workatoenv") as f:
+                        data = json.load(f)
+                        if "project_id" in data:
+                            raise ValueError(f"Cannot create project within another project: {current}")
+                except (json.JSONDecodeError, OSError):
+                    pass
+            current = current.parent
+
+
+class ConfigManager:
+    """Simplified configuration manager with clear workspace rules"""
+
+    def __init__(self, config_dir: Optional[Path] = None, skip_validation: bool = False):
+        start_path = config_dir or Path.cwd()
+        self.workspace_manager = WorkspaceManager(start_path)
+
+        # If explicit config_dir provided, use it directly
+        if config_dir:
+            self.config_dir = config_dir
+        else:
+            # Find nearest .workatoenv file and use that directory as config directory
+            nearest_config = self.workspace_manager.find_nearest_workatoenv()
+            self.config_dir = nearest_config or start_path
+
+        self.profile_manager = ProfileManager()
+
+        # Validate credentials unless skipped
+        if not skip_validation:
+            self._validate_credentials_or_exit()
+
+    @classmethod
+    async def initialize(cls, config_dir: Optional[Path] = None) -> "ConfigManager":
+        """Initialize workspace with interactive setup"""
+        click.echo("🚀 Welcome to Workato CLI")
+        click.echo()
+
+        # Create manager without validation for setup
+        manager = cls(config_dir, skip_validation=True)
+
+        # Validate we're not in a project directory
+        manager.workspace_manager.validate_not_in_project()
+
+        # Run setup flow
+        await manager._run_setup_flow()
+
+        return manager
+
+    async def _run_setup_flow(self) -> None:
+        """Run the complete setup flow"""
+        workspace_root = self.workspace_manager.find_workspace_root()
+        self.config_dir = workspace_root
+
+        click.echo(f"📁 Workspace root: {workspace_root}")
+        click.echo()
+
+        # Step 1: Profile setup
+        profile_name = await self._setup_profile()
+
+        # Step 2: Project setup
+        await self._setup_project(profile_name, workspace_root)
+
+        # Step 3: Create workspace files
+        self._create_workspace_files(workspace_root)
+
+    async def _setup_profile(self) -> str:
+        """Setup or select profile"""
+        click.echo("📋 Step 1: Configure profile")
+
+        existing_profiles = self.profile_manager.list_profiles()
+        profile_name: str | None = None
+
+        if existing_profiles:
+            choices = list(existing_profiles.keys()) + ["Create new profile"]
+            questions = [
+                inquirer.List(
+                    "profile_choice",
+                    message="Select a profile",
+                    choices=choices,
+                )
+            ]
+
+            answers: dict[str, str] = inquirer.prompt(questions)
+            if not answers:
+                click.echo("❌ No profile selected")
+                sys.exit(1)
+
+            if answers["profile_choice"] == "Create new profile":
+                profile_name = click.prompt("Enter new profile name", type=str).strip()
+                if not profile_name:
+                    click.echo("❌ Profile name cannot be empty")
+                    sys.exit(1)
+                await self._create_new_profile(profile_name)
+            else:
+                profile_name = answers["profile_choice"]
+        else:
+            profile_name = click.prompt(
+                "Enter profile name", default="default", type=str
+            ).strip()
+            if not profile_name:
+                click.echo("❌ Profile name cannot be empty")
+                sys.exit(1)
+            await self._create_new_profile(profile_name)
+
+        # Set as current profile
+        self.profile_manager.set_current_profile(profile_name)
+        click.echo(f"✅ Profile: {profile_name}")
+
+        return profile_name
+
+    async def _create_new_profile(self, profile_name: str) -> None:
+        """Create a new profile interactively"""
+        # AVAILABLE_REGIONS and RegionInfo already imported at top
+
+        # Region selection
+        click.echo("📍 Select your Workato region")
+        regions = list(AVAILABLE_REGIONS.values())
+        choices = []
+
+        for region in regions:
+            if region.region == "custom":
+                choice_text = "Custom URL"
+            else:
+                choice_text = f"{region.name} ({region.url})"
+            choices.append(choice_text)
+
+        questions = [
+            inquirer.List(
+                "region",
+                message="Select your Workato region",
+                choices=choices,
+            ),
+        ]
+
+        answers = inquirer.prompt(questions)
+        if not answers:
+            click.echo("❌ Setup cancelled")
+            sys.exit(1)
+
+        selected_index = choices.index(answers["region"])
+        selected_region = regions[selected_index]
+
+        # Handle custom URL
+        if selected_region.region == "custom":
+            custom_url = click.prompt(
+                "Enter your custom Workato base URL",
+                type=str,
+                default="https://www.workato.com",
+            )
+            selected_region = RegionInfo(region="custom", name="Custom URL", url=custom_url)
+
+        # Get API token
+        click.echo("🔐 Enter your API token")
+        token = click.prompt("Enter your Workato API token", hide_input=True)
+        if not token.strip():
+            click.echo("❌ No token provided")
+            sys.exit(1)
+
+        # Test authentication and get workspace info
+        api_config = Configuration(access_token=token, host=selected_region.url)
+        api_config.verify_ssl = False
+
+        async with Workato(configuration=api_config) as workato_api_client:
+            user_info = await workato_api_client.users_api.get_workspace_details()
+
+        # Create and save profile
+        profile_data = ProfileData(
+            region=selected_region.region,
+            region_url=selected_region.url,
+            workspace_id=user_info.id,
+        )
+
+        self.profile_manager.set_profile(profile_name, profile_data, token)
+        click.echo(f"✅ Authenticated as: {user_info.name}")
+
+    async def _setup_project(self, profile_name: str, workspace_root: Path) -> None:
+        """Setup project interactively"""
+        click.echo("📁 Step 2: Setup project")
+
+        # Check for existing project
+        existing_config = self.load_config()
+        if existing_config.project_id:
+            click.echo(f"Found existing project: {existing_config.project_name}")
+            if click.confirm("Use this project?", default=True):
+                # Update profile and we're done
+                existing_config.profile = profile_name
+                self.save_config(existing_config)
+                return
+
+        # Determine project location from current directory
+        current_dir = Path.cwd().resolve()
+        if current_dir == workspace_root:
+            # Running from workspace root - need to create subdirectory
+            project_location_mode = "workspace_root"
+        else:
+            # Running from subdirectory - use current directory as project location
+            project_location_mode = "current_dir"
+
+        # Get API client for project operations
+        config_data = ConfigData(profile=profile_name)
+        api_token, api_host = self.profile_manager.resolve_environment_variables(profile_name)
+        api_config = Configuration(access_token=api_token, host=api_host)
+        api_config.verify_ssl = False
+
+        async with Workato(configuration=api_config) as workato_api_client:
+            project_manager = ProjectManager(workato_api_client=workato_api_client)
+
+            # Get available projects
+            projects = await project_manager.get_all_projects()
+            choices = ["Create new project"]
+
+            if projects:
+                project_choices = [(f"{p.name} (ID: {p.id})", p) for p in projects]
+                choices.extend([choice[0] for choice in project_choices])
+
+            questions = [
+                inquirer.List(
+                    "project",
+                    message="Select a project",
+                    choices=choices,
+                )
+            ]
+
+            answers = inquirer.prompt(questions)
+            if not answers:
+                click.echo("❌ No project selected")
+                sys.exit(1)
+
+            selected_project = None
+
+            if answers["project"] == "Create new project":
+                project_name = click.prompt("Enter project name", type=str)
+                if not project_name or not project_name.strip():
+                    click.echo("❌ Project name cannot be empty")
+                    sys.exit(1)
+
+                click.echo(f"🔨 Creating project: {project_name}")
+                selected_project = await project_manager.create_project(project_name)
+                click.echo(f"✅ Created project: {selected_project.name}")
+            else:
+                # Find selected existing project
+                for choice_text, project in [(choices[0], None)] + project_choices:
+                    if choice_text == answers["project"] and project:
+                        selected_project = project
+                        break
+
+            if not selected_project:
+                click.echo("❌ No project selected")
+                sys.exit(1)
+
+            # Always create project subdirectory named after the project
+            project_name = selected_project.name
+
+            if project_location_mode == "current_dir":
+                # Create project subdirectory within current directory
+                project_path = current_dir / project_name
+            else:
+                # Create project subdirectory in workspace root
+                project_path = workspace_root / project_name
+
+            # Validate project path
+            try:
+                self.workspace_manager.validate_project_path(project_path, workspace_root)
+            except ValueError as e:
+                click.echo(f"❌ {e}")
+                sys.exit(1)
+
+            # Check if project directory already exists and is non-empty
+            if project_path.exists():
+                try:
+                    # Check if directory has any files
+                    existing_files = list(project_path.iterdir())
+                    if existing_files:
+                        # Check if it's a Workato project with matching project ID
+                        existing_workatoenv = project_path / ".workatoenv"
+                        if existing_workatoenv.exists():
+                            try:
+                                with open(existing_workatoenv) as f:
+                                    existing_data = json.load(f)
+                                    existing_project_id = existing_data.get("project_id")
+
+                                if existing_project_id == selected_project.id:
+                                    # Same project ID - allow reconfiguration
+                                    click.echo(f"🔄 Reconfiguring existing project: {selected_project.name}")
+                                elif existing_project_id:
+                                    # Different project ID - block it
+                                    existing_name = existing_data.get("project_name", "Unknown")
+                                    click.echo(f"❌ Directory contains different Workato project: {existing_name} (ID: {existing_project_id})")
+                                    click.echo(f"   Cannot initialize {selected_project.name} (ID: {selected_project.id}) here")
+                                    click.echo("💡 Choose a different directory or project name")
+                                    sys.exit(1)
+                                # If no project_id in existing config, treat as invalid and block below
+                            except (json.JSONDecodeError, OSError):
+                                # Invalid .workatoenv file - treat as non-Workato project
+                                pass
+
+                        # Not a Workato project or invalid config - block it
+                        if not (existing_workatoenv.exists() and existing_project_id == selected_project.id):
+                            click.echo(f"❌ Project directory is not empty: {project_path.relative_to(workspace_root)}")
+                            click.echo(f"   Found {len(existing_files)} existing files")
+                            click.echo("💡 Choose a different project name or clean the directory first")
+                            sys.exit(1)
+                except OSError:
+                    pass  # If we can't read the directory, let mkdir handle it
+
+            # Create project directory
+            project_path.mkdir(parents=True, exist_ok=True)
+            click.echo(f"✅ Project directory: {project_path.relative_to(workspace_root)}")
+
+            # Save workspace config (with project_path)
+            relative_project_path = str(project_path.relative_to(workspace_root))
+            workspace_config = ConfigData(
+                project_id=selected_project.id,
+                project_name=selected_project.name,
+                project_path=relative_project_path,
+                folder_id=selected_project.folder_id,
+                profile=profile_name,
+            )
+
+            self.save_config(workspace_config)
+
+            # Save project config (without project_path)
+            project_config_manager = ConfigManager(project_path, skip_validation=True)
+            project_config = ConfigData(
+                project_id=selected_project.id,
+                project_name=selected_project.name,
+                project_path=None,  # No project_path in project directory
+                folder_id=selected_project.folder_id,
+                profile=profile_name,
+            )
+
+            project_config_manager.save_config(project_config)
+
+            click.echo(f"✅ Project: {selected_project.name}")
+
+    def _create_workspace_files(self, workspace_root: Path) -> None:
+        """Create workspace .gitignore and .workato-ignore files"""
+        # Create .gitignore entry for .workatoenv
+        gitignore_file = workspace_root / ".gitignore"
+        workatoenv_entry = ".workatoenv"
+
+        existing_lines = []
+        if gitignore_file.exists():
+            with open(gitignore_file) as f:
+                existing_lines = [line.rstrip("\n") for line in f.readlines()]
+
+        if workatoenv_entry not in existing_lines:
+            with open(gitignore_file, "a") as f:
+                if existing_lines and existing_lines[-1] != "":
+                    f.write("\n")
+                f.write(f"{workatoenv_entry}\n")
+
+        # Create .workato-ignore file
+        workato_ignore_file = workspace_root / ".workato-ignore"
+        if not workato_ignore_file.exists():
+            workato_ignore_content = """# Workato CLI ignore patterns
+# Files matching these patterns will be preserved during 'workato pull'
+# and excluded from 'workato push' operations
+
+# Configuration files
+.workatoenv
+
+# Git files
+.git
+.gitignore
+.gitattributes
+.gitmodules
+
+# Python files and virtual environments
+*.py
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Node.js files
+node_modules/
+package.json
+package-lock.json
+yarn.lock
+.npmrc
+
+# Development tools
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.tox/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+dist/
+build/
+*.egg
+
+# Documentation and project files
+*.md
+LICENSE
+.editorconfig
+pyproject.toml
+setup.py
+setup.cfg
+Makefile
+Dockerfile
+docker-compose.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Add your own patterns below
+"""
+            with open(workato_ignore_file, "w") as f:
+                f.write(workato_ignore_content)
+
+    # Configuration file management
+
+    def load_config(self) -> ConfigData:
+        """Load configuration from .workatoenv file"""
+        config_file = self.config_dir / ".workatoenv"
+
+        if not config_file.exists():
+            return ConfigData()
+
+        try:
+            with open(config_file) as f:
+                data = json.load(f)
+                return ConfigData.model_validate(data)
+        except (json.JSONDecodeError, ValueError):
+            return ConfigData()
+
+    def save_config(self, config_data: ConfigData) -> None:
+        """Save configuration to .workatoenv file"""
+        config_file = self.config_dir / ".workatoenv"
+
+        with open(config_file, "w") as f:
+            json.dump(config_data.model_dump(exclude_none=True), f, indent=2)
+
+    def save_project_info(self, project_info: ProjectInfo) -> None:
+        """Save project information to configuration"""
+        config_data = self.load_config()
+        config_data.project_id = project_info.id
+        config_data.project_name = project_info.name
+        config_data.folder_id = project_info.folder_id
+        self.save_config(config_data)
+
+    # Project and workspace detection methods
+
+    def get_workspace_root(self) -> Path:
+        """Get workspace root directory"""
+        return self.workspace_manager.find_workspace_root()
+
+    def get_project_directory(self) -> Optional[Path]:
+        """Get project directory from closest .workatoenv config"""
+        # Load config from closest .workatoenv file (already found in __init__)
+        config_data = self.load_config()
+
+        if not config_data.project_id:
+            return None
+
+        if not config_data.project_path:
+            # No project_path means this .workatoenv IS in the project directory
+            # Update workspace root to select this project as current
+            self._update_workspace_selection()
+            return self.config_dir
+
+        # Has project_path, so this is a workspace config - resolve relative path
+        workspace_root = self.config_dir
+        project_dir = workspace_root / config_data.project_path
+
+        if project_dir.exists():
+            return project_dir.resolve()
+        else:
+            # Current selection is invalid - let user choose from available projects
+            return self._handle_invalid_project_selection(workspace_root, config_data)
+
+    def _update_workspace_selection(self) -> None:
+        """Update workspace root config to select current project"""
+        workspace_root = self.workspace_manager.find_workspace_root()
+        if not workspace_root or workspace_root == self.config_dir:
+            return  # Already at workspace root or no workspace found
+
+        # Load current project config
+        project_config = self.load_config()
+        if not project_config.project_id:
+            return
+
+        # Calculate relative path from workspace root to current project
+        try:
+            relative_path = self.config_dir.relative_to(workspace_root)
+        except ValueError:
+            return  # Current dir not within workspace
+
+        # Update workspace config
+        workspace_manager = ConfigManager(workspace_root, skip_validation=True)
+        workspace_config = workspace_manager.load_config()
+        workspace_config.project_id = project_config.project_id
+        workspace_config.project_name = project_config.project_name
+        workspace_config.project_path = str(relative_path)
+        workspace_config.folder_id = project_config.folder_id
+        workspace_config.profile = project_config.profile
+        workspace_manager.save_config(workspace_config)
+
+        click.echo(f"✅ Selected '{project_config.project_name}' as current project")
+
+    def _handle_invalid_project_selection(self, workspace_root: Path, current_config: ConfigData) -> Optional[Path]:
+        """Handle case where current project selection is invalid"""
+        click.echo(f"⚠️  Configured project directory does not exist: {current_config.project_path}")
+        click.echo(f"   Project: {current_config.project_name}")
+        click.echo()
+
+        # Find all available projects in workspace hierarchy
+        available_projects = self._find_all_projects(workspace_root)
+
+        if not available_projects:
+            click.echo("❌ No projects found in workspace")
+            click.echo("💡 Run 'workato init' to create a new project")
+            return None
+
+        # Prepare choices for inquirer
+        choices = []
+        for project_path, project_name in available_projects:
+            rel_path = project_path.relative_to(workspace_root)
+            choice_text = f"{project_name} ({rel_path})"
+            choices.append(choice_text)
+
+        # Let user select
+        try:
+            import inquirer
+            questions = [
+                inquirer.List(
+                    "project",
+                    message="Select a project to use",
+                    choices=choices,
+                )
+            ]
+
+            answers = inquirer.prompt(questions)
+            if not answers:
+                return None
+
+            # Find selected project
+            selected_index = choices.index(answers["project"])
+            selected_path, selected_name = available_projects[selected_index]
+
+            # Load selected project config to get full details
+            selected_manager = ConfigManager(selected_path, skip_validation=True)
+            selected_config = selected_manager.load_config()
+
+            # Update workspace config
+            workspace_manager = ConfigManager(workspace_root, skip_validation=True)
+            workspace_config = workspace_manager.load_config()
+            workspace_config.project_id = selected_config.project_id
+            workspace_config.project_name = selected_config.project_name
+            workspace_config.project_path = str(selected_path.relative_to(workspace_root))
+            workspace_config.folder_id = selected_config.folder_id
+            workspace_config.profile = selected_config.profile
+            workspace_manager.save_config(workspace_config)
+
+            click.echo(f"✅ Selected '{selected_name}' as current project")
+            return selected_path
+
+        except (ImportError, KeyboardInterrupt):
+            click.echo("❌ Project selection cancelled")
+            return None
+
+    def _find_all_projects(self, workspace_root: Path) -> list[tuple[Path, str]]:
+        """Find all project directories in workspace hierarchy"""
+        projects = []
+
+        # Recursively search for .workatoenv files without project_path
+        for workatoenv_file in workspace_root.rglob(".workatoenv"):
+            try:
+                with open(workatoenv_file) as f:
+                    data = json.load(f)
+                    # Project config has project_id but no project_path
+                    if "project_id" in data and data.get("project_id") and not data.get("project_path"):
+                        project_dir = workatoenv_file.parent
+                        project_name = data.get("project_name", project_dir.name)
+                        projects.append((project_dir, project_name))
+            except (json.JSONDecodeError, OSError):
+                continue
+
+        return sorted(projects, key=lambda x: x[1])  # Sort by project name
+
+    def get_current_project_name(self) -> Optional[str]:
+        """Get current project name"""
+        config_data = self.load_config()
+        return config_data.project_name
+
+    def get_project_root(self) -> Optional[Path]:
+        """Get project root (directory containing .workatoenv)"""
+        # For compatibility - this is the same as config_dir when in project
+        if self.workspace_manager.is_in_project_directory():
+            return self.config_dir
+
+        # If in workspace, return project directory
+        return self.get_project_directory()
+
+    def is_in_project_workspace(self) -> bool:
+        """Check if in a project workspace"""
+        return self.get_workspace_root() is not None
+
+    # Credential management
+
+    def _validate_credentials_or_exit(self) -> None:
+        """Validate credentials and exit if missing"""
+        is_valid, missing_items = self.validate_environment_config()
+        if not is_valid:
+            click.echo("❌ Missing required credentials:")
+            for item in missing_items:
+                click.echo(f"   • {item}")
+            click.echo()
+            click.echo("💡 Run 'workato init' to set up authentication")
+            sys.exit(1)
+
+    def validate_environment_config(self) -> tuple[bool, list[str]]:
+        """Validate environment configuration"""
+        config_data = self.load_config()
+        return self.profile_manager.validate_credentials(config_data.profile)
+
+    @property
+    def api_token(self) -> Optional[str]:
+        """Get API token"""
+        config_data = self.load_config()
+        api_token, _ = self.profile_manager.resolve_environment_variables(config_data.profile)
+        return api_token
+
+    @api_token.setter
+    def api_token(self, value: str) -> None:
+        """Save API token to current profile"""
+        config_data = self.load_config()
+        current_profile_name = self.profile_manager.get_current_profile_name(config_data.profile)
+
+        if not current_profile_name:
+            current_profile_name = "default"
+
+        # Check if profile exists
+        profiles = self.profile_manager.load_profiles()
+        if current_profile_name not in profiles.profiles:
+            raise ValueError(
+                f"Profile '{current_profile_name}' does not exist. "
+                "Please run 'workato init' to create a profile first."
+            )
+
+        # Store token in keyring
+        success = self.profile_manager._store_token_in_keyring(current_profile_name, value)
+        if not success:
+            if self.profile_manager._is_keyring_enabled():
+                raise ValueError(
+                    "Failed to store token in keyring. "
+                    "Please check your system keyring setup."
+                )
+            else:
+                raise ValueError(
+                    "Keyring is disabled. "
+                    "Please set WORKATO_API_TOKEN environment variable instead."
+                )
+
+        click.echo(f"✅ API token saved to profile '{current_profile_name}'")
+
+    @property
+    def api_host(self) -> Optional[str]:
+        """Get API host"""
+        config_data = self.load_config()
+        _, api_host = self.profile_manager.resolve_environment_variables(config_data.profile)
+        return api_host
+
+    # Region management methods
+
+    def validate_region(self, region_code: str) -> bool:
+        """Validate if region code is valid"""
+        return region_code.lower() in AVAILABLE_REGIONS
+
+    def set_region(self, region_code: str, custom_url: Optional[str] = None) -> tuple[bool, str]:
+        """Set region by updating the current profile"""
+
+        if region_code.lower() not in AVAILABLE_REGIONS:
+            return False, f"Invalid region: {region_code}"
+
+        region_info = AVAILABLE_REGIONS[region_code.lower()]
+
+        # Get current profile
+        config_data = self.load_config()
+        current_profile_name = self.profile_manager.get_current_profile_name(config_data.profile)
+        if not current_profile_name:
+            current_profile_name = "default"
+
+        # Load profiles
+        profiles = self.profile_manager.load_profiles()
+        if current_profile_name not in profiles.profiles:
+            return False, f"Profile '{current_profile_name}' does not exist"
+
+        # Handle custom region
+        if region_code.lower() == "custom":
+            if not custom_url:
+                return False, "Custom region requires a URL to be provided"
+
+            # Validate URL security
+            is_valid, error_msg = _validate_url_security(custom_url)
+            if not is_valid:
+                return False, error_msg
+
+            # Parse URL and keep only scheme + netloc
+            from urllib.parse import urlparse
+            parsed = urlparse(custom_url)
+            region_url = f"{parsed.scheme}://{parsed.netloc}"
+        else:
+            region_url = region_info.url or ""
+
+        # Update profile
+        profiles.profiles[current_profile_name].region = region_code.lower()
+        profiles.profiles[current_profile_name].region_url = region_url
+
+        # Save updated profiles
+        self.profile_manager.save_profiles(profiles)
+
+        return True, f"{region_info.name} ({region_url})"

@@ -97,7 +97,7 @@ async def use(
     profile_name: str,
     config_manager: ConfigManager = Provide[Container.config_manager],
 ) -> None:
-    """Set the current active profile"""
+    """Set the current active profile (context-aware: workspace or global)"""
     profile_data = config_manager.profile_manager.get_profile(profile_name)
 
     if not profile_data:
@@ -105,8 +105,30 @@ async def use(
         click.echo("💡 Use 'workato profiles list' to see available profiles")
         return
 
-    config_manager.profile_manager.set_current_profile(profile_name)
-    click.echo(f"✅ Set '{profile_name}' as current profile")
+    # Check if we're in a workspace context
+    workspace_root = config_manager.get_workspace_root()
+    config_data = config_manager.load_config()
+
+    # If we have a workspace config (project_id exists), update workspace profile
+    if config_data.project_id:
+        config_data.profile = profile_name
+        config_manager.save_config(config_data)
+        click.echo(f"✅ Set '{profile_name}' as profile for current workspace")
+        click.echo(f"   Workspace: {workspace_root}")
+
+        # Also update project config if it exists
+        project_dir = config_manager.get_project_directory()
+        if project_dir and project_dir != workspace_root:
+            project_config_manager = ConfigManager(project_dir, skip_validation=True)
+            project_config = project_config_manager.load_config()
+            if project_config.project_id:
+                project_config.profile = profile_name
+                project_config_manager.save_config(project_config)
+                click.echo(f"   Project config also updated: {project_dir.relative_to(workspace_root)}")
+    else:
+        # No workspace context, set global profile
+        config_manager.profile_manager.set_current_profile(profile_name)
+        click.echo(f"✅ Set '{profile_name}' as global default profile")
 
 
 @profiles.command()

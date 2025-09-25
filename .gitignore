@@ -71,3 +71,6 @@ target/
 .vscode/
 .mypy_cache
 .ruff_cache
+
+
+src/workato_platform/_version.py

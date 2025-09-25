@@ -11,6 +11,7 @@ from workato_platform import Workato
 from workato_platform.cli.containers import Container
 from workato_platform.cli.utils.config import ConfigManager
 from workato_platform.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform.cli.utils.ignore_patterns import load_ignore_patterns, should_skip_file
 from workato_platform.cli.utils.spinner import Spinner
 
 
@@ -85,31 +86,21 @@ async def push(
     folder_id = meta_data.folder_id
     project_name = meta_data.project_name
 
-    # Determine project directory based on current location
-    current_project_name = config_manager.get_current_project_name()
-    if current_project_name:
-        # We're in a project directory, use the project root (not cwd)
-        project_dir = config_manager.get_project_root()
-        if not project_dir:
-            click.echo("❌ Could not determine project root directory")
-            return
-    else:
-        # Look for projects/{name} structure
-        projects_root = Path("projects")
-        if projects_root.exists() and project_name:
-            project_dir = projects_root / project_name
-            if not project_dir.exists():
-                click.echo(
-                    "❌ No project directory found. Please run 'workato pull' first."
-                )
-                return
-        else:
-            click.echo(
-                "❌ No project directory found. Please run 'workato pull' first."
-            )
-            return
+    # Get project directory using simplified logic
+    project_dir = config_manager.get_project_directory()
+    if not project_dir:
+        click.echo("❌ Could not determine project directory. Please run 'workato init' first.")
+        return
 
-    # Create zip file from project directory, excluding .workatoenv
+    if not project_dir.exists():
+        click.echo("❌ Project directory does not exist. Please run 'workato pull' first.")
+        return
+
+    # Get workspace root to load ignore patterns
+    workspace_root = config_manager.get_workspace_root()
+    ignore_patterns = load_ignore_patterns(workspace_root)
+
+    # Create zip file from project directory, excluding ignored files
     zip_path = f"{project_name}.zip"
 
     try:
@@ -119,12 +110,14 @@ async def push(
             with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                 for root, _dirs, files in os.walk(project_dir):
                     for file in files:
-                        # Skip .workatoenv file
-                        if file == ".workatoenv":
-                            continue
                         file_path = Path(root) / file
                         # Get relative path from project directory
                         arcname = file_path.relative_to(project_dir)
+
+                        # Skip files matching ignore patterns
+                        if should_skip_file(arcname, ignore_patterns):
+                            continue
+
                         zipf.write(file_path, arcname)
         finally:
             elapsed = spinner.stop()

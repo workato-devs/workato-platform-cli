@@ -122,7 +122,7 @@ def _handle_auth_error(_: UnauthorizedException) -> None:
     click.echo("💡 Please check your authentication:")
     click.echo("   • Verify your API token is correct")
     click.echo("   • Run 'workato profiles list' to check your profile")
-    click.echo("   • Run 'workato profiles set' to update your credentials")
+    click.echo("   • Run 'workato profiles use' to update your credentials")
 
 
 def _handle_forbidden_error(e: ForbiddenException) -> None:

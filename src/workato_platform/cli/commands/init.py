@@ -14,12 +14,11 @@ from workato_platform.client.workato_api.configuration import Configuration
 @handle_api_exceptions
 async def init() -> None:
     """Initialize Workato CLI for a new project"""
-    # Initialize configuration in current directory - this handles the full setup flow
+    # Initialize configuration with simplified setup flow
     config_manager = await ConfigManager.initialize()
 
     # Automatically run pull to set up project structure
     click.echo()
-    click.echo("🚀 Setting up project structure...")
 
     # Get API credentials from the newly configured profile
     config_data = config_manager.load_config()
@@ -39,3 +38,6 @@ async def init() -> None:
             config_manager=config_manager,
             project_manager=project_manager,
         )
+
+    # Final completion message
+    click.echo("🎉 Project setup complete!")
