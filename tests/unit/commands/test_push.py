@@ -20,7 +20,7 @@ class DummySpinner:
         self.message = _message
         self._stopped = False
 
-    def start(self) -> None:  # pragma: no cover - no behaviour to test
+    def start(self) -> None:
         pass
 
     def stop(self) -> float:

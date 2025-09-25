@@ -7,7 +7,7 @@ import asyncclick as click
 from dependency_injector.wiring import Provide, inject
 
 from workato_platform.cli.containers import Container
-from workato_platform.cli.utils.config import ConfigManager
+from workato_platform.cli.utils.config import ConfigData, ConfigManager
 
 
 @click.group()
@@ -106,8 +106,12 @@ async def use(
         return
 
     # Check if we're in a workspace context
-    workspace_root = config_manager.get_workspace_root()
-    config_data = config_manager.load_config()
+    try:
+        workspace_root = config_manager.get_workspace_root()
+        config_data = config_manager.load_config()
+    except Exception:
+        workspace_root = None
+        config_data = ConfigData()
 
     # If we have a workspace config (project_id exists), update workspace profile
     if config_data.project_id:

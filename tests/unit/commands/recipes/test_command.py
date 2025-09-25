@@ -44,10 +44,10 @@ def _workato_stub(**kwargs: Any) -> Workato:
 class DummySpinner:
     """Minimal spinner stub that mimics the runtime interface."""
 
-    def __init__(self, _message: str) -> None:  # pragma: no cover - simple wiring
+    def __init__(self, _message: str) -> None:
         self._stopped = False
 
-    def start(self) -> None:  # pragma: no cover - side-effect free
+    def start(self) -> None:
         pass
 
     def stop(self) -> float:

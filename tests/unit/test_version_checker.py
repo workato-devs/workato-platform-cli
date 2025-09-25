@@ -603,3 +603,66 @@ class TestVersionChecker:
 
         with patch("workato_platform.cli.utils.version_checker.HAS_DEPENDENCIES", True):
             assert checker.should_check_for_updates() is True
+
+    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    def test_get_latest_version_invalid_scheme_validation(
+        self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
+    ) -> None:
+        """Test get_latest_version validates URL scheme properly."""
+        checker = VersionChecker(mock_config_manager)
+
+        # Test with non-https scheme in parsed URL
+        with patch("workato_platform.cli.utils.version_checker.urlparse") as mock_urlparse:
+            mock_urlparse.return_value.scheme = "http"  # Not https
+            result = checker.get_latest_version()
+            assert result is None
+            mock_urlopen.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("workato_platform.cli.utils.version_checker.threading.Thread")
+    async def test_check_updates_async_thread_timeout(
+        self, mock_thread, mock_config_manager: ConfigManager
+    ) -> None:
+        """Test check_updates_async when thread times out."""
+        thread_instance = Mock()
+        mock_thread.return_value = thread_instance
+
+        checker_instance = Mock()
+        checker_instance.should_check_for_updates.return_value = True
+
+        with (
+            patch(
+                "workato_platform.cli.utils.version_checker.VersionChecker",
+                Mock(return_value=checker_instance),
+            ),
+            patch.object(
+                Container,
+                "config_manager",
+                Mock(return_value=mock_config_manager),
+            ),
+        ):
+            @check_updates_async
+            async def sample() -> str:
+                return "done"
+
+            result = await sample()
+
+        assert result == "done"
+        thread_instance.start.assert_called_once()
+        thread_instance.join.assert_called_once_with(timeout=3)
+
+    def test_check_updates_async_detects_sync_function(self) -> None:
+        """Test check_updates_async properly detects sync vs async functions."""
+        import asyncio
+
+        @check_updates_async
+        def sync_func() -> str:
+            return "sync"
+
+        @check_updates_async
+        async def async_func() -> str:
+            return "async"
+
+        # The decorator should return different wrappers
+        assert not asyncio.iscoroutinefunction(sync_func)
+        assert asyncio.iscoroutinefunction(async_func)

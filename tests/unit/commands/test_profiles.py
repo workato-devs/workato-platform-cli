@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -41,13 +41,24 @@ def make_config_manager() -> Callable[..., Mock]:
 
     def _factory(**profile_methods: Mock) -> Mock:
         profile_manager = Mock()
-        for name, value in profile_methods.items():
-            setattr(profile_manager, name, value)
-
         config_manager = Mock()
         config_manager.profile_manager = profile_manager
         # Provide deterministic config data unless overridden in tests
         config_manager.load_config.return_value = ConfigData()
+
+        config_methods = {
+            "load_config",
+            "save_config",
+            "get_workspace_root",
+            "get_project_directory",
+        }
+
+        for name, value in profile_methods.items():
+            if name in config_methods:
+                setattr(config_manager, name, value)
+            else:
+                setattr(profile_manager, name, value)
+
         return config_manager
 
     return _factory
@@ -412,3 +423,209 @@ def test_profiles_group_exists() -> None:
     import asyncclick as click
 
     assert isinstance(profiles, click.Group)
+
+
+@pytest.mark.asyncio
+async def test_use_sets_workspace_profile(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test use command sets workspace profile when in workspace context."""
+    profile = profile_data_factory()
+    project_config = ConfigData(project_id=123, project_name="test")
+
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        get_workspace_root=Mock(return_value=Path("/workspace")),
+        load_config=Mock(return_value=project_config),
+        save_config=Mock(),
+        get_project_directory=Mock(return_value=Path("/workspace/project")),
+    )
+
+    assert use.callback
+    await use.callback(profile_name="dev", config_manager=config_manager)
+
+    # Should save config with updated profile
+    config_manager.save_config.assert_called()
+    saved_config = config_manager.save_config.call_args[0][0]
+    assert saved_config.profile == "dev"
+
+    output = capsys.readouterr().out
+    assert "Set 'dev' as profile for current workspace" in output
+
+
+@pytest.mark.asyncio
+async def test_use_updates_both_workspace_and_project_configs(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test use command updates both workspace and project configs when different."""
+    profile = profile_data_factory()
+    project_config = ConfigData(project_id=123, project_name="test")
+
+    # Mock project config manager
+    project_config_manager = Mock()
+    project_config_manager.load_config.return_value = Mock(project_id=123)
+    project_config_manager.save_config = Mock()
+
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        get_workspace_root=Mock(return_value=Path("/workspace")),
+        load_config=Mock(return_value=project_config),
+        save_config=Mock(),
+        get_project_directory=Mock(return_value=Path("/workspace/project")),
+    )
+
+    # Mock ConfigManager constructor for project config
+    with patch("workato_platform.cli.commands.profiles.ConfigManager", return_value=project_config_manager):
+        assert use.callback
+        await use.callback(profile_name="dev", config_manager=config_manager)
+
+    # Should update both configs
+    config_manager.save_config.assert_called()
+    project_config_manager.save_config.assert_called()
+
+    output = capsys.readouterr().out
+    assert "Project config also updated" in output
+
+
+@pytest.mark.asyncio
+async def test_status_displays_global_setting_source(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test status command displays global setting source."""
+    monkeypatch.delenv("WORKATO_PROFILE", raising=False)
+
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_current_profile_name=Mock(return_value="global"),
+        get_current_profile_data=Mock(return_value=profile),
+        resolve_environment_variables=Mock(return_value=("token", profile.region_url)),
+    )
+    # No project profile override and no env var
+    config_manager.load_config.return_value = ConfigData(profile=None)
+
+    assert status.callback
+    await status.callback(config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "Source: Global setting (~/.workato/profiles)" in output
+
+
+@pytest.mark.asyncio
+async def test_show_handles_different_profile_name_resolution(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test show command when showing different profile than current."""
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        get_current_profile_name=Mock(return_value="current"),  # Different from shown profile
+        resolve_environment_variables=Mock(return_value=("token", profile.region_url)),
+    )
+
+    assert show.callback
+    await show.callback(profile_name="other", config_manager=config_manager)
+
+    # Should call resolve_environment_variables with the shown profile name
+    config_manager.profile_manager.resolve_environment_variables.assert_called_with("other")
+
+
+@pytest.mark.asyncio
+async def test_use_handles_exception_gracefully(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test use command handles exceptions gracefully and falls back to global."""
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        set_current_profile=Mock(),
+        get_workspace_root=Mock(side_effect=RuntimeError("Workspace error")),
+    )
+
+    assert use.callback
+    await use.callback(profile_name="dev", config_manager=config_manager)
+
+    # Should fall back to global profile setting
+    config_manager.profile_manager.set_current_profile.assert_called_once_with("dev")
+    assert "Set 'dev' as global default profile" in capsys.readouterr().out
+
+
+@pytest.mark.asyncio
+async def test_use_workspace_context_same_directory(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test use command when workspace and project are the same directory."""
+    profile = profile_data_factory()
+    project_config = ConfigData(project_id=123, project_name="test")
+
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        get_workspace_root=Mock(return_value=Path("/workspace")),
+        load_config=Mock(return_value=project_config),
+        save_config=Mock(),
+        get_project_directory=Mock(return_value=Path("/workspace")),  # Same as workspace
+    )
+
+    assert use.callback
+    await use.callback(profile_name="dev", config_manager=config_manager)
+
+    # Should update workspace config but not create separate project config
+    config_manager.save_config.assert_called()
+    output = capsys.readouterr().out
+    assert "Set 'dev' as profile for current workspace" in output
+    # Should NOT show "Project config also updated" since directories are the same
+
+
+@pytest.mark.asyncio
+async def test_status_shows_current_profile_indicator(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test status command shows current profile indicator."""
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_current_profile_name=Mock(return_value="dev"),
+        get_current_profile_data=Mock(return_value=profile),
+        resolve_environment_variables=Mock(return_value=("token", profile.region_url)),
+    )
+    config_manager.load_config.return_value = ConfigData(profile=None)
+
+    assert status.callback
+    await status.callback(config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "Current Profile: dev" in output
+
+
+@pytest.mark.asyncio
+async def test_show_handles_current_profile_check(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test show command checks if profile is current."""
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),
+        get_current_profile_name=Mock(return_value="dev"),  # Same as shown profile
+        resolve_environment_variables=Mock(return_value=("token", profile.region_url)),
+    )
+
+    assert show.callback
+    await show.callback(profile_name="dev", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "This is the current active profile" in output

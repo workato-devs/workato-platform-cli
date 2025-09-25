@@ -17,11 +17,11 @@ from workato_platform.client.workato_api.models.project import Project
 class DummySpinner:
     """Minimal spinner stub to avoid timing noise."""
 
-    def __init__(self, message: str) -> None:  # pragma: no cover - simple wiring
+    def __init__(self, message: str) -> None:
         self.message = message
         self.stopped = False
 
-    def start(self) -> None:  # pragma: no cover - no behaviour needed
+    def start(self) -> None:
         pass
 
     def stop(self) -> float:

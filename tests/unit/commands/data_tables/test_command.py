@@ -37,11 +37,11 @@ def _workato_stub(**kwargs: Any) -> Workato:
 
 
 class DummySpinner:
-    def __init__(self, _message: str) -> None:  # pragma: no cover - trivial init
+    def __init__(self, _message: str) -> None:
         self.message = _message
         self.stopped = False
 
-    def start(self) -> None:  # pragma: no cover - no behaviour
+    def start(self) -> None:
         pass
 
     def stop(self) -> float:
