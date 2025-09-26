@@ -42,14 +42,12 @@ async def init(
 
     if non_interactive:
         # Validate required parameters for non-interactive mode
-        if not profile:
-            click.echo("❌ --profile is required in non-interactive mode")
-            raise click.Abort()
-        if not region:
-            click.echo("❌ --region is required in non-interactive mode")
-            raise click.Abort()
-        if not api_token:
-            click.echo("❌ --api-token is required in non-interactive mode")
+        # Either profile OR individual attributes (region, api_token) are required
+        if not profile and not (region and api_token):
+            click.echo(
+                "❌ Either --profile or both --region and --api-token are "
+                "required in non-interactive mode"
+            )
             raise click.Abort()
         if region == "custom" and not api_url:
             click.echo(

@@ -93,12 +93,13 @@ async def test_init_non_interactive_success(monkeypatch: pytest.MonkeyPatch) -> 
 
         monkeypatch.setattr(init_module.click, "echo", lambda _="": None)
 
-        # Test non-interactive mode with all parameters
+        # Test non-interactive mode with profile
+        # (region and api_token can be None when profile provided)
         assert init_module.init.callback
         await init_module.init.callback(
             profile="test-profile",
-            region="us",
-            api_token="test-token",
+            region=None,
+            api_token=None,
             api_url=None,
             project_name="test-project",
             project_id=None,
@@ -108,8 +109,8 @@ async def test_init_non_interactive_success(monkeypatch: pytest.MonkeyPatch) -> 
         # Should call initialize with provided parameters
         mock_initialize.assert_awaited_once_with(
             profile_name="test-profile",
-            region="us",
-            api_token="test-token",
+            region=None,
+            api_token=None,
             api_url=None,
             project_name="test-project",
             project_id=None,
@@ -178,14 +179,15 @@ async def test_init_non_interactive_custom_region(
 
 
 @pytest.mark.asyncio
-async def test_init_non_interactive_missing_profile() -> None:
-    """Test non-interactive mode fails when profile is missing."""
+async def test_init_non_interactive_missing_profile_and_credentials() -> None:
+    """Test non-interactive mode fails when neither profile
+    nor (region+token) provided."""
     with pytest.raises(click.Abort):
         assert init_module.init.callback
         await init_module.init.callback(
             profile=None,
-            region="us",
-            api_token="test-token",
+            region=None,
+            api_token=None,
             api_url=None,
             project_name="test-project",
             project_id=None,
@@ -194,12 +196,12 @@ async def test_init_non_interactive_missing_profile() -> None:
 
 
 @pytest.mark.asyncio
-async def test_init_non_interactive_missing_region() -> None:
-    """Test non-interactive mode fails when region is missing."""
+async def test_init_non_interactive_missing_region_without_profile() -> None:
+    """Test non-interactive mode fails when region missing and no profile provided."""
     with pytest.raises(click.Abort):
         assert init_module.init.callback
         await init_module.init.callback(
-            profile="test-profile",
+            profile=None,
             region=None,
             api_token="test-token",
             api_url=None,
@@ -210,12 +212,13 @@ async def test_init_non_interactive_missing_region() -> None:
 
 
 @pytest.mark.asyncio
-async def test_init_non_interactive_missing_api_token() -> None:
-    """Test non-interactive mode fails when API token is missing."""
+async def test_init_non_interactive_missing_token_without_profile() -> None:
+    """Test non-interactive mode fails when API token missing
+    and no profile provided."""
     with pytest.raises(click.Abort):
         assert init_module.init.callback
         await init_module.init.callback(
-            profile="test-profile",
+            profile=None,
             region="us",
             api_token=None,
             api_url=None,
@@ -270,4 +273,63 @@ async def test_init_non_interactive_both_project_options() -> None:
             project_name="test-project",
             project_id=123,
             non_interactive=True,
+        )
+
+
+@pytest.mark.asyncio
+async def test_init_non_interactive_with_region_and_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test non-interactive mode succeeds with region and token (no profile)."""
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="default"),
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("test-token", "https://api.workato.com"),
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+        monkeypatch.setattr(init_module.click, "echo", lambda _="": None)
+
+        # Test with region and token (no profile)
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile=None,
+            region="us",
+            api_token="test-token",
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=True,
+        )
+
+        # Should call initialize with region and token
+        mock_initialize.assert_awaited_once_with(
+            profile_name=None,
+            region="us",
+            api_token="test-token",
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
         )

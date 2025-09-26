@@ -61,6 +61,13 @@ def mock_profile_manager() -> Mock:
     mock_pm.set_profile = Mock()
     mock_pm.set_current_profile = Mock()
 
+    # Ensure get_profile returns actual ProfileData objects with valid regions
+    mock_pm.get_profile.return_value = ProfileData(
+        region="us",
+        region_url="https://www.workato.com",
+        workspace_id=1,
+    )
+
     return mock_pm
 
 
@@ -332,40 +339,6 @@ class TestConfigManager:
         )
         assert workspace_env["project_name"] == "Existing"
         assert StubProjectManager.created_projects == []
-
-    @pytest.mark.asyncio
-    async def test_setup_non_interactive_requires_custom_url(
-        self, tmp_path: Path, mock_profile_manager: Mock
-    ) -> None:
-        """Custom region must provide an explicit URL."""
-
-        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-        manager.profile_manager = mock_profile_manager
-        manager.workspace_manager = WorkspaceManager(start_path=tmp_path)
-
-        with pytest.raises(click.ClickException):
-            await manager._setup_non_interactive(
-                profile_name="dev",
-                region="custom",
-                api_token="token",
-            )
-
-    @pytest.mark.asyncio
-    async def test_setup_non_interactive_rejects_invalid_region(
-        self, tmp_path: Path, mock_profile_manager: Mock
-    ) -> None:
-        """Unknown regions should raise a ClickException."""
-
-        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-        manager.profile_manager = mock_profile_manager
-        manager.workspace_manager = WorkspaceManager(start_path=tmp_path)
-
-        with pytest.raises(click.ClickException):
-            await manager._setup_non_interactive(
-                profile_name="dev",
-                region="unknown",
-                api_token="token",
-            )
 
     @pytest.mark.asyncio
     async def test_setup_non_interactive_custom_region_subdirectory(

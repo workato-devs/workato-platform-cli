@@ -9,7 +9,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -43,7 +43,7 @@ async def test_list_projects_no_directory(
 
     await command.list_projects.callback(config_manager=config_manager)  # type: ignore[misc]
 
-    assert any("No projects found" in line for line in capture_echo)
+    assert any("No local projects found" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
@@ -272,7 +272,7 @@ async def test_list_projects_empty_directory(
 
     await command.list_projects.callback(config_manager=config_manager)  # type: ignore[misc]
 
-    assert any("No projects found" in line for line in capture_echo)
+    assert any("No local projects found" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
@@ -339,8 +339,8 @@ async def test_list_projects_json_config_error(
 
     assert capture_echo, "Expected JSON output"
     data = json.loads("".join(capture_echo))
-    assert data["projects"][0]["configured"] is False
-    assert "configuration error" in data["projects"][0]["error"]
+    assert data["local_projects"][0]["configured"] is False
+    assert "configuration error" in data["local_projects"][0]["error"]
 
 
 @pytest.mark.asyncio
@@ -357,7 +357,7 @@ async def test_list_projects_workspace_root_fallback(
 
     await command.list_projects.callback(config_manager=config_manager)  # type: ignore[misc]
 
-    assert any("No projects found" in line for line in capture_echo)
+    assert any("No local projects found" in line for line in capture_echo)
 
 
 @pytest.mark.asyncio
@@ -846,8 +846,8 @@ async def test_list_projects_json_output_mode(
     parsed = json.loads(output)
 
     assert parsed["current_project"] == "test-project"
-    assert len(parsed["projects"]) == 1
-    project = parsed["projects"][0]
+    assert len(parsed["local_projects"]) == 1
+    project = parsed["local_projects"][0]
     assert project["name"] == "test-project"
     assert project["is_current"] is True
     assert project["project_id"] == 123
@@ -881,4 +881,260 @@ async def test_list_projects_json_output_mode_empty(
     parsed = json.loads(output)
 
     assert parsed["current_project"] is None
-    assert parsed["projects"] == []
+    assert parsed["local_projects"] == []
+
+
+@pytest.mark.asyncio
+async def test_list_projects_remote_source(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
+    """Test list projects with remote source."""
+    config_manager = Mock()
+
+    # Mock create_profile_aware_workato_config and Workato client
+    mock_workato_client = Mock()
+    mock_project_manager = Mock()
+
+    # Mock remote projects
+    from workato_platform.client.workato_api.models.project import Project
+
+    remote_project = Project(
+        id=123, name="Remote Project", folder_id=456, description="A remote project"
+    )
+    mock_project_manager.get_all_projects = AsyncMock(return_value=[remote_project])
+
+    # Mock the context manager for Workato client
+    async def mock_aenter(_self: Any) -> Mock:
+        return mock_workato_client
+
+    async def mock_aexit(_self: Any, *_args: Any) -> None:
+        return None
+
+    mock_workato_client.__aenter__ = mock_aenter
+    mock_workato_client.__aexit__ = mock_aexit
+
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.create_profile_aware_workato_config",
+        Mock(return_value=Mock()),
+    )
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.Workato",
+        Mock(return_value=mock_workato_client),
+    )
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.ProjectManager",
+        Mock(return_value=mock_project_manager),
+    )
+
+    await command.list_projects.callback(  # type: ignore[misc]
+        source="remote", config_manager=config_manager
+    )
+
+    output = "\n".join(capture_echo)
+    assert "Remote projects:" in output
+    assert "Remote Project" in output
+    assert "Project ID: 123" in output
+
+
+@pytest.mark.asyncio
+async def test_list_projects_remote_source_json(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
+    """Test list projects with remote source JSON output."""
+    config_manager = Mock()
+    config_manager.get_workspace_root.return_value = None
+    config_manager.get_current_project_name.return_value = None
+
+    # Mock create_profile_aware_workato_config and Workato client
+    mock_workato_client = Mock()
+    mock_project_manager = Mock()
+
+    # Mock remote projects
+    from workato_platform.client.workato_api.models.project import Project
+
+    remote_project = Project(
+        id=123, name="Remote Project", folder_id=456, description="A remote project"
+    )
+    mock_project_manager.get_all_projects = AsyncMock(return_value=[remote_project])
+
+    # Mock the context manager for Workato client
+    async def mock_aenter(_self: Any) -> Mock:
+        return mock_workato_client
+
+    async def mock_aexit(_self: Any, *_args: Any) -> None:
+        return None
+
+    mock_workato_client.__aenter__ = mock_aenter
+    mock_workato_client.__aexit__ = mock_aexit
+
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.create_profile_aware_workato_config",
+        Mock(return_value=Mock()),
+    )
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.Workato",
+        Mock(return_value=mock_workato_client),
+    )
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.ProjectManager",
+        Mock(return_value=mock_project_manager),
+    )
+
+    await command.list_projects.callback(  # type: ignore[misc]
+        source="remote", output_mode="json", config_manager=config_manager
+    )
+
+    output = "\n".join(capture_echo)
+    parsed = json.loads(output)
+
+    assert parsed["source"] == "remote"
+    assert len(parsed["remote_projects"]) == 1
+    remote = parsed["remote_projects"][0]
+    assert remote["name"] == "Remote Project"
+    assert remote["project_id"] == 123
+    assert remote["folder_id"] == 456
+    assert remote["description"] == "A remote project"
+    assert remote["has_local_copy"] is False
+
+
+@pytest.mark.asyncio
+async def test_list_projects_both_source(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capture_echo: list[str]
+) -> None:
+    """Test list projects with both local and remote source."""
+    workspace = tmp_path
+    alpha_project = workspace / "alpha"
+    alpha_project.mkdir(parents=True)
+    (alpha_project / ".workatoenv").write_text(
+        '{"project_id": 123, "project_name": "Alpha", "folder_id": 456}'
+    )
+
+    config_manager = Mock()
+    config_manager.get_workspace_root.return_value = workspace
+    config_manager.get_current_project_name.return_value = "alpha"
+    config_manager._find_all_projects.return_value = [(alpha_project, "alpha")]
+
+    # Mock local project config loading
+    project_config = Mock()
+    project_config.project_id = 123
+    project_config.project_name = "Alpha"
+    project_config.folder_id = 456
+    project_config.profile = "dev"
+
+    class StubConfigManager:
+        def __init__(
+            self, path: Path | None = None, skip_validation: bool = False
+        ) -> None:
+            pass
+
+        def load_config(self) -> ConfigData:
+            return project_config
+
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.ConfigManager",
+        StubConfigManager,
+    )
+
+    # Mock remote projects
+    mock_workato_client = Mock()
+    mock_project_manager = Mock()
+
+    from workato_platform.client.workato_api.models.project import Project
+
+    remote_project1 = Project(
+        id=123, name="Alpha", folder_id=456, description="Synced project"
+    )
+    remote_project2 = Project(
+        id=789, name="Remote Only", folder_id=999, description="Remote only project"
+    )
+    mock_project_manager.get_all_projects = AsyncMock(
+        return_value=[remote_project1, remote_project2]
+    )
+
+    # Mock the context manager for Workato client
+    async def mock_aenter(_self: Any) -> Mock:
+        return mock_workato_client
+
+    async def mock_aexit(_self: Any, *_args: Any) -> None:
+        return None
+
+    mock_workato_client.__aenter__ = mock_aenter
+    mock_workato_client.__aexit__ = mock_aexit
+
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.create_profile_aware_workato_config",
+        Mock(return_value=Mock()),
+    )
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.Workato",
+        Mock(return_value=mock_workato_client),
+    )
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.ProjectManager",
+        Mock(return_value=mock_project_manager),
+    )
+
+    await command.list_projects.callback(  # type: ignore[misc]
+        source="both", config_manager=config_manager
+    )
+
+    output = "\n".join(capture_echo)
+    assert "All projects (local + remote):" in output
+    assert "Remote Only" in output
+    assert "synced" in output  # Alpha should be marked as synced
+    assert "remote only" in output  # Remote Only should be marked as remote only
+    # Alpha project should be shown (either as local "alpha" or remote "Alpha")
+    assert "alpha" in output.lower() or "Alpha" in output
+
+
+@pytest.mark.asyncio
+async def test_list_projects_with_profile(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
+    """Test list projects with profile parameter."""
+    config_manager = Mock()
+    config_manager.get_workspace_root.return_value = None
+    config_manager.get_current_project_name.return_value = None
+    config_manager._find_all_projects.return_value = []
+
+    # Mock profile-aware config creation
+    mock_config = Mock()
+    mock_create_config = Mock(return_value=mock_config)
+
+    # Mock Workato client
+    mock_workato_client = Mock()
+    mock_project_manager = Mock()
+    mock_project_manager.get_all_projects = AsyncMock(return_value=[])
+
+    # Mock the context manager for Workato client
+    async def mock_aenter(_self: Any) -> Mock:
+        return mock_workato_client
+
+    async def mock_aexit(_self: Any, *_args: Any) -> None:
+        return None
+
+    mock_workato_client.__aenter__ = mock_aenter
+    mock_workato_client.__aexit__ = mock_aexit
+
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.create_profile_aware_workato_config",
+        mock_create_config,
+    )
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.Workato",
+        Mock(return_value=mock_workato_client),
+    )
+    monkeypatch.setattr(
+        "workato_platform.cli.commands.projects.command.ProjectManager",
+        Mock(return_value=mock_project_manager),
+    )
+
+    await command.list_projects.callback(  # type: ignore[misc]
+        profile="test-profile", source="remote", config_manager=config_manager
+    )
+
+    # Verify that create_profile_aware_workato_config was called
+    # with the correct profile
+    mock_create_config.assert_called_once_with(
+        config_manager=config_manager, cli_profile="test-profile"
+    )

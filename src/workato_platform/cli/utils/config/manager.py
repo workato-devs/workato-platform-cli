@@ -102,9 +102,9 @@ class ConfigManager:
 
     async def _setup_non_interactive(
         self,
-        profile_name: str,
-        region: str,
-        api_token: str,
+        profile_name: str | None = None,
+        region: str | None = None,
+        api_token: str | None = None,
         api_url: str | None = None,
         project_name: str | None = None,
         project_id: int | None = None,
@@ -113,6 +113,19 @@ class ConfigManager:
 
         workspace_root = self.workspace_manager.find_workspace_root()
         self.config_dir = workspace_root
+
+        current_profile_name = self.profile_manager.get_current_profile_name(
+            profile_name
+        )
+        if not current_profile_name:
+            raise click.ClickException("Profile name is required")
+
+        profile = self.profile_manager.get_profile(current_profile_name)
+        if profile and profile.region:
+            region = profile.region
+        api_token, api_url = self.profile_manager.resolve_environment_variables(
+            project_profile_override=current_profile_name
+        )
 
         # Map region to URL
         if region == "custom":
@@ -132,14 +145,16 @@ class ConfigManager:
             user_info = await workato_api_client.users_api.get_workspace_details()
 
         # Create and save profile
+        if not region_info.url:
+            raise click.ClickException("Region URL is required")
         profile_data = ProfileData(
             region=region_info.region,
             region_url=region_info.url,
             workspace_id=user_info.id,
         )
 
-        self.profile_manager.set_profile(profile_name, profile_data, api_token)
-        self.profile_manager.set_current_profile(profile_name)
+        self.profile_manager.set_profile(current_profile_name, profile_data, api_token)
+        self.profile_manager.set_current_profile(current_profile_name)
 
         # Get API client for project operations
         api_config = Configuration(access_token=api_token, host=region_info.url)
@@ -309,6 +324,8 @@ class ConfigManager:
             user_info = await workato_api_client.users_api.get_workspace_details()
 
         # Create and save profile
+        if not selected_region.url:
+            raise click.ClickException("Region URL is required")
         profile_data = ProfileData(
             region=selected_region.region,
             region_url=selected_region.url,
@@ -602,14 +619,14 @@ Thumbs.db
         config_file = self.config_dir / ".workatoenv"
 
         if not config_file.exists():
-            return ConfigData()
+            return ConfigData.model_construct()
 
         try:
             with open(config_file) as f:
                 data = json.load(f)
                 return ConfigData.model_validate(data)
         except (json.JSONDecodeError, ValueError):
-            return ConfigData()
+            return ConfigData.model_construct()
 
     def save_config(self, config_data: ConfigData) -> None:
         """Save configuration to .workatoenv file"""
