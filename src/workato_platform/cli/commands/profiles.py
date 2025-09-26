@@ -1,13 +1,16 @@
 """Manage Workato profiles for multi-environment configurations"""
 
+import json
 import os
+
+from typing import Any
 
 import asyncclick as click
 
 from dependency_injector.wiring import Provide, inject
 
 from workato_platform.cli.containers import Container
-from workato_platform.cli.utils.config import ConfigManager
+from workato_platform.cli.utils.config import ConfigData, ConfigManager
 
 
 @click.group()
@@ -17,14 +20,36 @@ def profiles() -> None:
 
 
 @profiles.command(name="list")
+@click.option(
+    "--output-mode",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format: table (default) or json",
+)
 @inject
 async def list_profiles(
+    output_mode: str = "table",
     config_manager: ConfigManager = Provide[Container.config_manager],
 ) -> None:
     """List all available profiles"""
     profiles_dict = config_manager.profile_manager.list_profiles()
     current_profile_name = config_manager.profile_manager.get_current_profile_name()
 
+    if output_mode == "json":
+        # JSON output mode - return structured data
+        output_data: dict[str, Any] = {
+            "current_profile": current_profile_name,
+            "profiles": {},
+        }
+
+        for name, profile_data in profiles_dict.items():
+            output_data["profiles"][name] = profile_data.model_dump()
+            output_data["profiles"][name]["is_current"] = name == current_profile_name
+
+        click.echo(json.dumps(output_data))
+        return
+
+    # Table output mode (default)
     if not profiles_dict:
         click.echo("📋 No profiles configured")
         click.echo("💡 Run 'workato init' to create your first profile")
@@ -83,10 +108,10 @@ async def show(
         if os.environ.get("WORKATO_API_TOKEN"):
             click.echo("   Source: WORKATO_API_TOKEN environment variable")
         else:
-            click.echo("   Source: ~/.workato/credentials")
+            click.echo("   Source: ~/.workato/profiles")
     else:
         click.echo("   Status: ❌ Token not found")
-        click.echo("   💡 Token should be stored in ~/.workato/credentials")
+        click.echo("   💡 Token should be stored in keyring")
         click.echo("   💡 Or set WORKATO_API_TOKEN environment variable")
 
 
@@ -97,7 +122,7 @@ async def use(
     profile_name: str,
     config_manager: ConfigManager = Provide[Container.config_manager],
 ) -> None:
-    """Set the current active profile"""
+    """Set the current active profile (context-aware: workspace or global)"""
     profile_data = config_manager.profile_manager.get_profile(profile_name)
 
     if not profile_data:
@@ -105,8 +130,35 @@ async def use(
         click.echo("💡 Use 'workato profiles list' to see available profiles")
         return
 
-    config_manager.profile_manager.set_current_profile(profile_name)
-    click.echo(f"✅ Set '{profile_name}' as current profile")
+    # Check if we're in a workspace context
+    try:
+        workspace_root = config_manager.get_workspace_root()
+        config_data = config_manager.load_config()
+    except Exception:
+        workspace_root = None
+        config_data = ConfigData()
+
+    # If we have a workspace config (project_id exists), update workspace profile
+    if config_data.project_id and workspace_root:
+        config_data.profile = profile_name
+        config_manager.save_config(config_data)
+        click.echo(f"✅ Set '{profile_name}' as profile for current workspace")
+        click.echo(f"   Workspace: {workspace_root}")
+
+        # Also update project config if it exists
+        project_dir = config_manager.get_project_directory()
+        if project_dir and project_dir != workspace_root:
+            project_config_manager = ConfigManager(project_dir, skip_validation=True)
+            project_config = project_config_manager.load_config()
+            if project_config.project_id:
+                project_config.profile = profile_name
+                project_config_manager.save_config(project_config)
+                project_dir = project_dir.relative_to(workspace_root)
+                click.echo(f"   Project config also updated: {project_dir}")
+    else:
+        # No workspace context, set global profile
+        config_manager.profile_manager.set_current_profile(profile_name)
+        click.echo(f"✅ Set '{profile_name}' as global default profile")
 
 
 @profiles.command()
@@ -134,13 +186,13 @@ async def status(
 
     # Show source of profile selection
     if project_profile_override:
-        click.echo("   Source: Project override (from .workato/config.json)")
+        click.echo("   Source: Project override (from .workatoenv)")
     else:
         env_profile = os.environ.get("WORKATO_PROFILE")
         if env_profile:
             click.echo("   Source: Environment variable (WORKATO_PROFILE)")
         else:
-            click.echo("   Source: Global setting (~/.workato/credentials)")
+            click.echo("   Source: Global setting (~/.workato/profiles)")
 
     click.echo()
 
@@ -170,10 +222,10 @@ async def status(
             if os.environ.get("WORKATO_API_TOKEN"):
                 click.echo("   Source: WORKATO_API_TOKEN environment variable")
             else:
-                click.echo("   Source: ~/.workato/credentials")
+                click.echo("   Source: ~/.workato/profiles")
         else:
             click.echo("   Status: ❌ Token not found")
-            click.echo("   💡 Token should be stored in ~/.workato/credentials")
+            click.echo("   💡 Token should be stored in keyring")
             click.echo("   💡 Or set WORKATO_API_TOKEN environment variable")
 
 
@@ -194,7 +246,7 @@ async def delete(
 
     if success:
         click.echo(f"✅ Profile '{profile_name}' deleted successfully")
-        click.echo("💡 Credentials removed from ~/.workato/credentials")
+        click.echo("💡 Profile removed from ~/.workato/profiles")
     else:
         click.echo(f"❌ Failed to delete profile '{profile_name}'")
 

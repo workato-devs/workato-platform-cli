@@ -85,6 +85,40 @@ def test_validation_result_collects_errors_and_warnings() -> None:
     assert result.warnings[0].message == "W1"
 
 
+def test_recipe_line_enforces_field_lengths() -> None:
+    with pytest.raises(ValueError):
+        RecipeLine(number=1, keyword=Keyword.ACTION, uuid="u" * 37)
+
+    with pytest.raises(ValueError):
+        RecipeLine(
+            number=1,
+            keyword=Keyword.ACTION,
+            uuid="valid-uuid",
+            **{"as": "a" * 49},
+        )
+
+
+def test_recipe_line_validator_helpers_direct_calls() -> None:
+    with pytest.raises(ValueError):
+        RecipeLine.validate_as_length("x" * 49)
+
+    with pytest.raises(ValueError):
+        RecipeLine.validate_uuid_length("x" * 37)
+
+    assert RecipeLine.validate_job_report_size([{}]) == [{}]
+
+
+def test_recipe_line_limits_job_report_entries() -> None:
+    payload: list[dict[str, Any]] = [{}] * 11
+    with pytest.raises(ValueError):
+        RecipeLine(
+            number=1,
+            keyword=Keyword.ACTION,
+            uuid="valid",
+            job_report_schema=payload,
+        )
+
+
 def test_is_expression_detects_formulas_jinja_and_data_pills(
     validator: RecipeValidator,
 ) -> None:
@@ -126,6 +160,14 @@ def test_recipe_structure_accepts_valid_nested_structure(
 
     assert structure.root.block is not None
     assert structure.root.block[0].uuid == "step-1"
+
+
+def test_recipe_structure_allows_empty_root() -> None:
+    structure = RecipeStructure.model_construct(
+        root=RecipeLine(number=0, keyword=Keyword.TRIGGER, uuid="root")
+    )
+
+    assert structure.root.keyword == Keyword.TRIGGER
 
 
 def test_foreach_structure_requires_source(
@@ -178,6 +220,36 @@ def test_action_structure_disallows_blocks(
     assert errors[0].error_type is ErrorType.LINE_SYNTAX_INVALID
 
 
+def test_if_structure_allows_elsif_sequences(
+    make_line: Callable[..., RecipeLine],
+) -> None:
+    block = [
+        make_line(number=1, keyword=Keyword.ACTION),
+        make_line(number=2, keyword=Keyword.ELSIF),
+        make_line(number=3, keyword=Keyword.ELSE),
+    ]
+    line = make_line(number=0, keyword=Keyword.IF, block=block)
+
+    errors = RecipeStructure._validate_if_structure(line, [])
+    assert errors == []
+
+
+def test_if_structure_flags_unexpected_sequence(
+    make_line: Callable[..., RecipeLine],
+) -> None:
+    block = [
+        make_line(number=1, keyword=Keyword.ACTION, uuid="action"),
+        make_line(number=2, keyword=Keyword.ELSE, uuid="else"),
+        make_line(number=3, keyword=Keyword.FOREACH, uuid="loop"),
+    ]
+    line = make_line(number=0, keyword=Keyword.IF, uuid="if", block=block)
+
+    errors = RecipeStructure._validate_if_structure(line, [])
+
+    assert errors
+    assert "Unexpected line type" in errors[0].message
+
+
 def test_block_structure_requires_trigger_start(
     validator: RecipeValidator,
     make_line: Callable[..., RecipeLine],
@@ -219,6 +291,50 @@ def test_validate_references_with_context_detects_unknown_step(
 
     assert errors
     assert any("unknown step" in error.message for error in errors)
+
+
+def test_validate_references_repeat_context_adds_virtual_step(
+    validator: RecipeValidator,
+    make_line: Callable[..., RecipeLine],
+) -> None:
+    child = make_line(
+        number=2,
+        keyword=Keyword.ACTION,
+        provider="http",
+        input={"body": "#{_('data.repeat.item.value')}"},
+    )
+    repeat_line = make_line(
+        number=1,
+        keyword=Keyword.REPEAT,
+        provider="repeat",
+        block=[child],
+        **{"as": "item"},
+    )
+    assert repeat_line.as_ == "item"
+
+    base_context = {
+        "item": {
+            "provider": "repeat",
+            "keyword": "repeat",
+            "number": 1,
+            "name": "existing",
+        }
+    }
+
+    original = validator._validate_references_with_context
+    captured: list[dict[str, Any]] = []
+
+    def wrapped(line: RecipeLine, context: dict[str, Any]) -> list[ValidationError]:
+        captured.append(dict(context))
+        return original(line, context)
+
+    with patch.object(validator, "_validate_references_with_context", new=wrapped):
+        errors = wrapped(repeat_line, base_context)
+
+    assert errors == []
+    assert any(
+        ctx.get("item", {}).get("name") == "repeat_processor" for ctx in captured
+    )
 
 
 def test_validate_input_modes_flags_mixed_modes(
@@ -269,7 +385,14 @@ def test_data_pill_cross_reference_unknown_step(
     error = validator._validate_data_pill_cross_reference(
         "data.http.unknown.field",
         line_number=3,
-        step_context={},
+        step_context={
+            "known": {
+                "provider": "http",
+                "keyword": "action",
+                "number": 1,
+                "name": "known-step",
+            }
+        },
         field_path=["input"],
     )
 
@@ -1131,6 +1254,22 @@ def test_step_is_referenced_no_recipe_root(
     assert result is False
 
 
+def test_step_is_referenced_detects_references(
+    validator: RecipeValidator, make_line: Callable[..., RecipeLine]
+) -> None:
+    target = make_line(
+        number=1, keyword=Keyword.ACTION, provider="http", **{"as": "action"}
+    )
+    referencing = make_line(
+        number=2,
+        keyword=Keyword.ACTION,
+        input={"body": "#{_dp('data.http.action.result')}"},
+    )
+    validator.current_recipe_root = make_line(block=[target, referencing])
+
+    assert validator._step_is_referenced(target) is True
+
+
 def test_step_exists_with_recipe_context(
     validator: RecipeValidator,
     make_line: Callable[..., RecipeLine],
@@ -1517,6 +1656,21 @@ def test_validate_data_pill_references_legacy_method(
 
     # Should use empty context and return results
     assert isinstance(errors, list)
+
+
+def test_validate_data_pill_references_with_context_invalid_format(
+    validator: RecipeValidator,
+) -> None:
+    """Invalid data pill formats should yield descriptive errors."""
+    input_data = {
+        "payload": ["#{_('badpill')}", "no pill"],
+    }
+
+    errors = validator._validate_data_pill_references_with_context(
+        input_data, line_number=5, step_context={}
+    )
+
+    assert any("Invalid data pill format" in err.message for err in errors)
 
 
 def test_step_uses_data_pills_detection(

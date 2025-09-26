@@ -484,3 +484,196 @@ class TestVersionChecker:
 
             with pytest.raises(RuntimeError):
                 await async_sample()
+
+    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    def test_get_latest_version_json_error(
+        self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
+    ) -> None:
+        """Test version retrieval handles JSON decode errors."""
+        mock_response = Mock()
+        mock_response.getcode.return_value = 200
+        mock_response.read.return_value.decode.return_value = "invalid json"
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        checker = VersionChecker(mock_config_manager)
+        version = checker.get_latest_version()
+
+        assert version is None
+
+    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    def test_get_latest_version_missing_version_key(
+        self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
+    ) -> None:
+        """Test version retrieval handles missing version key."""
+        mock_response = Mock()
+        mock_response.getcode.return_value = 200
+        mock_response.read.return_value.decode.return_value = json.dumps(
+            {"info": {}}  # Missing "version" key
+        )
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        checker = VersionChecker(mock_config_manager)
+        version = checker.get_latest_version()
+
+        assert version is None
+
+    def test_update_cache_timestamp_handles_os_error(
+        self,
+        mock_config_manager: ConfigManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test update_cache_timestamp handles OS errors gracefully."""
+        checker = VersionChecker(mock_config_manager)
+        checker.cache_file = tmp_path / "readonly" / "cache"
+
+        # Create readonly directory to trigger OSError
+        readonly_dir = tmp_path / "readonly"
+        readonly_dir.mkdir(mode=0o444)  # Read-only
+
+        # Should not raise exception
+        checker.update_cache_timestamp()
+
+        # Clean up
+        readonly_dir.chmod(0o755)
+
+    def test_ensure_cache_dir_creates_directory(
+        self, mock_config_manager: ConfigManager, tmp_path: Path
+    ) -> None:
+        """Test _ensure_cache_dir creates directory with correct permissions."""
+        checker = VersionChecker(mock_config_manager)
+        checker.cache_dir = tmp_path / "new_cache_dir"
+
+        assert not checker.cache_dir.exists()
+        checker._ensure_cache_dir()
+        assert checker.cache_dir.exists()
+
+    def test_check_for_updates_no_latest_version(
+        self, mock_config_manager: ConfigManager
+    ) -> None:
+        """Test check_for_updates when get_latest_version returns None."""
+        checker = VersionChecker(mock_config_manager)
+
+        with patch.object(checker, "get_latest_version", return_value=None):
+            result = checker.check_for_updates("1.0.0")
+            assert result is None
+
+    def test_is_update_check_disabled_various_values(
+        self, mock_config_manager: ConfigManager, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test various environment variable values for disabling updates."""
+        checker = VersionChecker(mock_config_manager)
+
+        # Test all truthy values
+        for value in ["1", "true", "TRUE", "yes", "YES"]:
+            monkeypatch.setenv("WORKATO_DISABLE_UPDATE_CHECK", value)
+            assert checker.is_update_check_disabled() is True
+
+        # Test falsy values
+        for value in ["0", "false", "no", "random"]:
+            monkeypatch.setenv("WORKATO_DISABLE_UPDATE_CHECK", value)
+            assert checker.is_update_check_disabled() is False
+
+    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    def test_get_latest_version_handles_value_error(
+        self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
+    ) -> None:
+        """Test version retrieval handles ValueError from JSON parsing."""
+        mock_response = Mock()
+        mock_response.getcode.return_value = 200
+        mock_response.read.return_value.decode.side_effect = ValueError(
+            "encoding error"
+        )
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        checker = VersionChecker(mock_config_manager)
+        version = checker.get_latest_version()
+
+        assert version is None
+
+    def test_should_check_for_updates_old_cache(
+        self,
+        mock_config_manager: ConfigManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test should_check_for_updates with old cache timestamp."""
+        monkeypatch.delenv("WORKATO_DISABLE_UPDATE_CHECK", raising=False)
+
+        checker = VersionChecker(mock_config_manager)
+        checker.cache_dir = tmp_path
+        checker.cache_file = tmp_path / "last_update_check"
+        checker.cache_file.touch()
+
+        # Set old timestamp (more than CHECK_INTERVAL seconds ago)
+        old_time = time.time() - (CHECK_INTERVAL + 100)
+        os.utime(checker.cache_file, (old_time, old_time))
+
+        with patch("workato_platform.cli.utils.version_checker.HAS_DEPENDENCIES", True):
+            assert checker.should_check_for_updates() is True
+
+    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    def test_get_latest_version_invalid_scheme_validation(
+        self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
+    ) -> None:
+        """Test get_latest_version validates URL scheme properly."""
+        checker = VersionChecker(mock_config_manager)
+
+        # Test with non-https scheme in parsed URL
+        with patch(
+            "workato_platform.cli.utils.version_checker.urlparse"
+        ) as mock_urlparse:
+            mock_urlparse.return_value.scheme = "http"  # Not https
+            result = checker.get_latest_version()
+            assert result is None
+            mock_urlopen.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("workato_platform.cli.utils.version_checker.threading.Thread")
+    async def test_check_updates_async_thread_timeout(
+        self, mock_thread: Mock, mock_config_manager: ConfigManager
+    ) -> None:
+        """Test check_updates_async when thread times out."""
+        thread_instance = Mock()
+        mock_thread.return_value = thread_instance
+
+        checker_instance = Mock()
+        checker_instance.should_check_for_updates.return_value = True
+
+        with (
+            patch(
+                "workato_platform.cli.utils.version_checker.VersionChecker",
+                Mock(return_value=checker_instance),
+            ),
+            patch.object(
+                Container,
+                "config_manager",
+                Mock(return_value=mock_config_manager),
+            ),
+        ):
+
+            @check_updates_async
+            async def sample() -> str:
+                return "done"
+
+            result = await sample()
+
+        assert result == "done"
+        thread_instance.start.assert_called_once()
+        thread_instance.join.assert_called_once_with(timeout=3)
+
+    def test_check_updates_async_detects_sync_function(self) -> None:
+        """Test check_updates_async properly detects sync vs async functions."""
+        import asyncio
+
+        @check_updates_async
+        def sync_func() -> str:
+            return "sync"
+
+        @check_updates_async
+        async def async_func() -> str:
+            return "async"
+
+        # The decorator should return different wrappers
+        assert not asyncio.iscoroutinefunction(sync_func)
+        assert asyncio.iscoroutinefunction(async_func)

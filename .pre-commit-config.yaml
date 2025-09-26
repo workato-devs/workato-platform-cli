@@ -17,7 +17,6 @@ repos:
     rev: v0.13.0
     hooks:
       - id: ruff
-        args: [--fix]
         exclude: ^(client/|src/workato_platform/client/)
       - id: ruff-format
         exclude: ^(client/|src/workato_platform/client/)
@@ -51,3 +50,13 @@ repos:
     hooks:
       - id: pip-audit
         args: [--format=json]
+
+  # Local hooks for project-specific tasks
+  - repo: local
+    hooks:
+      - id: generate-client
+        name: Generate OpenAPI client
+        entry: make generate-client
+        language: system
+        always_run: true
+        pass_filenames: false

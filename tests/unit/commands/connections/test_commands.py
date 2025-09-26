@@ -20,10 +20,10 @@ from workato_platform.cli.utils.config import ConfigData
 class DummySpinner:
     """Spinner stub to avoid timing in tests."""
 
-    def __init__(self, _message: str) -> None:  # pragma: no cover - trivial init
+    def __init__(self, _message: str) -> None:
         self.stopped = False
 
-    def start(self) -> None:  # pragma: no cover - no behaviour
+    def start(self) -> None:
         pass
 
     def stop(self) -> float:

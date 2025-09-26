@@ -1,5 +1,6 @@
 """Tests for the pull command."""
 
+import shutil
 import tempfile
 
 from pathlib import Path
@@ -9,7 +10,6 @@ import pytest
 
 from workato_platform.cli.commands.projects.project_manager import ProjectManager
 from workato_platform.cli.commands.pull import (
-    _ensure_workato_in_gitignore,
     _pull_project,
     calculate_diff_stats,
     calculate_json_diff_stats,
@@ -22,83 +22,6 @@ from workato_platform.cli.utils.config import ConfigData, ConfigManager
 
 class TestPullCommand:
     """Test the pull command functionality."""
-
-    def test_ensure_gitignore_creates_file(self) -> None:
-        """Test _ensure_workato_in_gitignore creates .gitignore."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            gitignore_file = project_root / ".gitignore"
-
-            # File doesn't exist
-            assert not gitignore_file.exists()
-
-            _ensure_workato_in_gitignore(project_root)
-
-            # File should now exist with .workato/ entry
-            assert gitignore_file.exists()
-            content = gitignore_file.read_text()
-            assert ".workato/" in content
-
-    def test_ensure_gitignore_adds_entry_to_existing_file(self) -> None:
-        """Test _ensure_workato_in_gitignore adds entry to existing .gitignore."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            gitignore_file = project_root / ".gitignore"
-
-            # Create existing .gitignore without .workato/
-            gitignore_file.write_text("node_modules/\n*.log\n")
-
-            _ensure_workato_in_gitignore(project_root)
-
-            content = gitignore_file.read_text()
-            assert ".workato/" in content
-            assert "node_modules/" in content  # Original content preserved
-
-    def test_ensure_gitignore_adds_newline_to_non_empty_file(self) -> None:
-        """Test _ensure_workato_in_gitignore adds newline to non-empty file."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            gitignore_file = project_root / ".gitignore"
-
-            # Create existing .gitignore without newline at end
-            gitignore_file.write_text("node_modules/")
-
-            _ensure_workato_in_gitignore(project_root)
-
-            content = gitignore_file.read_text()
-            lines = content.split("\n")
-            # Should have newline added before .workato/ entry
-            assert lines[-2] == ".workato/"
-            assert lines[-1] == ""  # Final newline
-
-    def test_ensure_gitignore_skips_if_entry_exists(self) -> None:
-        """Test _ensure_workato_in_gitignore skips adding entry if it already exists."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            gitignore_file = project_root / ".gitignore"
-
-            # Create .gitignore with .workato/ already present
-            original_content = "node_modules/\n.workato/\n*.log\n"
-            gitignore_file.write_text(original_content)
-
-            _ensure_workato_in_gitignore(project_root)
-
-            # Content should be unchanged
-            assert gitignore_file.read_text() == original_content
-
-    def test_ensure_gitignore_handles_empty_file(self) -> None:
-        """Test _ensure_workato_in_gitignore handles empty .gitignore file."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            gitignore_file = project_root / ".gitignore"
-
-            # Create empty .gitignore
-            gitignore_file.write_text("")
-
-            _ensure_workato_in_gitignore(project_root)
-
-            content = gitignore_file.read_text()
-            assert content == ".workato/\n"
 
     def test_count_lines_with_text_file(self) -> None:
         """Test count_lines with a regular text file."""
@@ -149,6 +72,31 @@ class TestPullCommand:
             assert stats["added"] > 0
             assert stats["removed"] == 0
 
+    def test_calculate_diff_stats_binary_file_shrinks(self) -> None:
+        """Binary shrink should report removals."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            old_file = Path(tmpdir) / "old.bin"
+            new_file = Path(tmpdir) / "new.bin"
+
+            old_file.write_bytes(b"\xff" * 200)
+            new_file.write_bytes(b"\xff" * 50)
+
+            stats = calculate_diff_stats(old_file, new_file)
+            assert stats["added"] == 0
+            assert stats["removed"] > 0
+
+    def test_calculate_diff_stats_delegates_to_json(self) -> None:
+        """JSON inputs should use calculate_json_diff_stats."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            old_file = Path(tmpdir) / "old.json"
+            new_file = Path(tmpdir) / "new.json"
+
+            old_file.write_text('{"key": 1}', encoding="utf-8")
+            new_file.write_text('{"key": 2}', encoding="utf-8")
+
+            stats = calculate_diff_stats(old_file, new_file)
+            assert "added" in stats and "removed" in stats
+
     def test_calculate_json_diff_stats(self) -> None:
         """Test calculate_json_diff_stats with JSON files."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -176,7 +124,9 @@ class TestPullCommand:
             assert "added" in stats
             assert "removed" in stats
 
-    def test_merge_directories(self, tmp_path: Path) -> None:
+    def test_merge_directories(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test merge_directories reports changes and preserves workato files."""
         remote_dir = tmp_path / "remote"
         local_dir = tmp_path / "local"
@@ -191,13 +141,20 @@ class TestPullCommand:
         (local_dir / "update.txt").write_text("local\n", encoding="utf-8")
         (local_dir / "remove.txt").write_text("remove\n", encoding="utf-8")
 
-        # .workato contents must be preserved
-        workato_dir = local_dir / "workato"
-        workato_dir.mkdir()
-        sensitive = workato_dir / "config.json"
+        # .workatoenv contents must be preserved
+        sensitive = local_dir / ".workatoenv"
         sensitive.write_text("keep", encoding="utf-8")
 
-        changes = merge_directories(remote_dir, local_dir)
+        # Create ignore patterns for test
+        ignore_patterns = {".workatoenv"}
+
+        # Avoid interactive confirmation during test
+        monkeypatch.setattr(
+            "workato_platform.cli.commands.pull.click.confirm",
+            lambda *args, **kwargs: True,
+        )
+
+        changes = merge_directories(remote_dir, local_dir, ignore_patterns)
 
         added_files = {name for name, _ in changes["added"]}
         modified_files = {name for name, _ in changes["modified"]}
@@ -212,8 +169,72 @@ class TestPullCommand:
         assert (local_dir / "update.txt").read_text(encoding="utf-8") == "remote\n"
         assert not (local_dir / "remove.txt").exists()
 
-        # Workato file should still exist and be untouched
+        # .workatoenv file should still exist and be untouched
         assert sensitive.exists()
+        assert sensitive.read_text(encoding="utf-8") == "keep"
+
+    def test_merge_directories_cancellation(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """User cancellation should skip deletions and emit notice."""
+
+        remote_dir = tmp_path / "remote"
+        local_dir = tmp_path / "local"
+        remote_dir.mkdir()
+        local_dir.mkdir()
+
+        (remote_dir / "keep.txt").write_text("data", encoding="utf-8")
+        (local_dir / "keep.txt").write_text("stale", encoding="utf-8")
+        (local_dir / "remove.txt").write_text("remove", encoding="utf-8")
+
+        captured: list[str] = []
+        monkeypatch.setattr(
+            "workato_platform.cli.commands.pull.click.echo",
+            lambda msg="": captured.append(msg),
+        )
+        monkeypatch.setattr(
+            "workato_platform.cli.commands.pull.click.confirm",
+            lambda *args, **kwargs: False,
+        )
+
+        ignore_patterns: set[str] = set()
+        changes = merge_directories(remote_dir, local_dir, ignore_patterns)
+
+        # No deletions should have been recorded or performed
+        assert (local_dir / "remove.txt").exists()
+        assert not changes["removed"]
+        assert any("Pull cancelled" in msg for msg in captured)
+
+    def test_merge_directories_many_deletions(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """More than ten deletions should show truncated list message."""
+
+        remote_dir = tmp_path / "remote"
+        local_dir = tmp_path / "local"
+        remote_dir.mkdir()
+        local_dir.mkdir()
+
+        (remote_dir / "keep.txt").write_text("content", encoding="utf-8")
+        (local_dir / "keep.txt").write_text("old", encoding="utf-8")
+
+        for idx in range(12):
+            (local_dir / f"extra_{idx}.txt").write_text("remove", encoding="utf-8")
+
+        captured: list[str] = []
+        monkeypatch.setattr(
+            "workato_platform.cli.commands.pull.click.echo",
+            lambda msg="": captured.append(msg),
+        )
+        monkeypatch.setattr(
+            "workato_platform.cli.commands.pull.click.confirm",
+            lambda *args, **kwargs: True,
+        )
+
+        ignore_patterns: set[str] = set()
+        merge_directories(remote_dir, local_dir, ignore_patterns)
+
+        assert any("... and 2 more" in msg for msg in captured)
 
     @pytest.mark.asyncio
     @patch("workato_platform.cli.commands.pull.click.echo")
@@ -282,7 +303,7 @@ class TestPullCommand:
             patch.object(
                 config_manager, "get_current_project_name", return_value="demo"
             ),
-            patch.object(config_manager, "get_project_root", return_value=None),
+            patch.object(config_manager, "get_project_directory", return_value=None),
         ):
             project_manager = AsyncMock()
             captured: list[str] = []
@@ -293,7 +314,9 @@ class TestPullCommand:
 
             await _pull_project(config_manager, project_manager)
 
-            assert any("project root" in msg for msg in captured)
+            assert any(
+                "Could not determine project directory" in msg for msg in captured
+            )
             project_manager.export_project.assert_not_awaited()
 
     @pytest.mark.asyncio
@@ -354,12 +377,76 @@ class TestPullCommand:
             patch.object(
                 config_manager, "get_current_project_name", return_value="demo"
             ),
-            patch.object(config_manager, "get_project_root", return_value=project_dir),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
         ):
             await _pull_project(config_manager, project_manager)
 
         assert any("Successfully pulled project changes" in msg for msg in captured)
         project_manager.export_project.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_pull_project_reports_simple_changes(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """Ensure reporting handles change entries without diff stats."""
+
+        project_dir = tmp_path / "project"
+        project_dir.mkdir()
+
+        config_manager = ConfigManager(skip_validation=True)
+
+        async def fake_export(
+            _folder_id: int, _project_name: str, target_dir: str
+        ) -> bool:
+            target = Path(target_dir)
+            target.mkdir(parents=True, exist_ok=True)
+            return True
+
+        project_manager = MagicMock(spec=ProjectManager)
+        project_manager.export_project = AsyncMock(side_effect=fake_export)
+
+        simple_changes = {
+            "added": ["new.txt"],
+            "modified": ["update.txt"],
+            "removed": ["old.txt"],
+        }
+
+        monkeypatch.setattr(
+            "workato_platform.cli.commands.pull.merge_directories",
+            lambda *args, **kwargs: simple_changes,
+        )
+
+        captured: list[str] = []
+        monkeypatch.setattr(
+            "workato_platform.cli.commands.pull.click.echo",
+            lambda msg="": captured.append(msg),
+        )
+
+        with (
+            patch.object(
+                type(config_manager),
+                "api_token",
+                new_callable=PropertyMock,
+                return_value="token",
+            ),
+            patch.object(
+                config_manager,
+                "load_config",
+                return_value=ConfigData(
+                    project_id=1, project_name="Demo", folder_id=11
+                ),
+            ),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
+        ):
+            await _pull_project(config_manager, project_manager)
+
+        assert any("📄 new.txt" in msg for msg in captured)
+        assert any("📝 update.txt" in msg for msg in captured)
+        assert any("🗑️  old.txt" in msg for msg in captured)
 
     @pytest.mark.asyncio
     async def test_pull_project_creates_new_project_directory(
@@ -403,7 +490,9 @@ class TestPullCommand:
             patch.object(
                 config_manager, "get_current_project_name", return_value="demo"
             ),
-            patch.object(config_manager, "get_project_root", return_value=project_dir),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
         ):
             await _pull_project(config_manager, project_manager)
 
@@ -415,12 +504,12 @@ class TestPullCommand:
         )
 
     @pytest.mark.asyncio
-    async def test_pull_project_workspace_structure(
+    async def test_pull_project_copies_when_local_missing(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
-        """Pulling from workspace root should create project and save metadata."""
+        """If local project disappears before merge, copytree should run."""
 
-        workspace_root = tmp_path
+        project_dir = tmp_path / "fresh_project"
 
         config_manager = ConfigManager(skip_validation=True)
 
@@ -430,24 +519,13 @@ class TestPullCommand:
             target = Path(target_dir)
             target.mkdir(parents=True, exist_ok=True)
             (target / "remote.txt").write_text("content", encoding="utf-8")
+
+            if project_dir.exists():
+                shutil.rmtree(project_dir)
             return True
 
         project_manager = MagicMock(spec=ProjectManager)
         project_manager.export_project = AsyncMock(side_effect=fake_export)
-
-        class StubConfig:
-            def __init__(self, config_dir: Path, skip_validation: bool = False):
-                self.config_dir = Path(config_dir)
-                self.saved: ConfigData | None = None
-
-            def save_config(self, data: ConfigData) -> None:
-                self.saved = data
-
-        monkeypatch.chdir(workspace_root)
-        monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.ConfigManager",
-            StubConfig,
-        )
 
         captured: list[str] = []
         monkeypatch.setattr(
@@ -467,12 +545,114 @@ class TestPullCommand:
                 "load_config",
                 return_value=ConfigData(project_id=1, project_name="Demo", folder_id=9),
             ),
-            patch.object(config_manager, "get_current_project_name", return_value=None),
-            patch.object(config_manager, "get_project_root", return_value=None),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
         ):
             await _pull_project(config_manager, project_manager)
 
-        project_config_dir = workspace_root / "projects" / "Demo" / "workato"
-        assert project_config_dir.exists()
-        assert (workspace_root / ".gitignore").read_text().count(".workato/") >= 1
+        assert (project_dir / "remote.txt").exists()
+        assert any(
+            "Successfully pulled project to ./project" in msg for msg in captured
+        )
+
+    @pytest.mark.asyncio
+    async def test_pull_project_failed_export(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """Failed export should surface an error message and stop."""
+
+        project_dir = tmp_path / "demo"
+
+        config_manager = ConfigManager(skip_validation=True)
+
+        project_manager = MagicMock(spec=ProjectManager)
+        project_manager.export_project = AsyncMock(return_value=False)
+
+        captured: list[str] = []
+        monkeypatch.setattr(
+            "workato_platform.cli.commands.pull.click.echo",
+            lambda msg="": captured.append(msg),
+        )
+
+        with (
+            patch.object(
+                type(config_manager),
+                "api_token",
+                new_callable=PropertyMock,
+                return_value="token",
+            ),
+            patch.object(
+                config_manager,
+                "load_config",
+                return_value=ConfigData(project_id=1, project_name="Demo", folder_id=9),
+            ),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
+        ):
+            await _pull_project(config_manager, project_manager)
+
         project_manager.export_project.assert_awaited_once()
+        assert any("Failed to pull project" in msg for msg in captured)
+
+    @pytest.mark.asyncio
+    async def test_pull_project_up_to_date(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """When merge returns no changes, report project is up to date."""
+
+        project_dir = tmp_path / "demo"
+        project_dir.mkdir()
+
+        config_manager = ConfigManager(skip_validation=True)
+
+        async def fake_export(
+            _folder_id: int, _project_name: str, target_dir: str
+        ) -> bool:
+            target = Path(target_dir)
+            target.mkdir(parents=True, exist_ok=True)
+            (target / "existing.txt").write_text("remote\n", encoding="utf-8")
+            return True
+
+        project_manager = MagicMock(spec=ProjectManager)
+        project_manager.export_project = AsyncMock(side_effect=fake_export)
+
+        empty_changes: dict[str, list[tuple[str, dict[str, int]]]] = {
+            "added": [],
+            "modified": [],
+            "removed": [],
+        }
+        monkeypatch.setattr(
+            "workato_platform.cli.commands.pull.merge_directories",
+            lambda *args, **kwargs: empty_changes,
+        )
+
+        captured: list[str] = []
+        monkeypatch.setattr(
+            "workato_platform.cli.commands.pull.click.echo",
+            lambda msg="": captured.append(msg),
+        )
+
+        with (
+            patch.object(
+                type(config_manager),
+                "api_token",
+                new_callable=PropertyMock,
+                return_value="token",
+            ),
+            patch.object(
+                config_manager,
+                "load_config",
+                return_value=ConfigData(
+                    project_id=1, project_name="Demo", folder_id=11
+                ),
+            ),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
+            patch.object(config_manager, "get_workspace_root", return_value=tmp_path),
+        ):
+            await _pull_project(config_manager, project_manager)
+
+        assert any("Project is already up to date" in msg for msg in captured)

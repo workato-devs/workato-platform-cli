@@ -12,28 +12,12 @@ from dependency_injector.wiring import Provide, inject
 
 from workato_platform.cli.commands.projects.project_manager import ProjectManager
 from workato_platform.cli.containers import Container
-from workato_platform.cli.utils.config import ConfigData, ConfigManager
+from workato_platform.cli.utils.config import ConfigManager
 from workato_platform.cli.utils.exception_handler import handle_api_exceptions
-
-
-def _ensure_workato_in_gitignore(project_dir: Path) -> None:
-    """Ensure .workato/ is added to .gitignore in the project directory"""
-    gitignore_file = project_dir / ".gitignore"
-    workato_entry = ".workato/"
-
-    # Read existing .gitignore if it exists
-    existing_lines = []
-    if gitignore_file.exists():
-        with open(gitignore_file) as f:
-            existing_lines = [line.rstrip("\n") for line in f.readlines()]
-
-    # Check if .workato/ is already in .gitignore
-    if workato_entry not in existing_lines:
-        # Add .workato/ to .gitignore
-        with open(gitignore_file, "a") as f:
-            if existing_lines and existing_lines[-1] != "":
-                f.write("\n")  # Add newline if file doesn't end with one
-            f.write(f"{workato_entry}\n")
+from workato_platform.cli.utils.ignore_patterns import (
+    load_ignore_patterns,
+    should_skip_file,
+)
 
 
 async def _pull_project(
@@ -57,44 +41,16 @@ async def _pull_project(
     folder_id = meta_data.folder_id
     project_name = meta_data.project_name or "project"
 
-    # Determine project structure
-    current_project_name = config_manager.get_current_project_name()
-    if current_project_name:
-        # We're in a project directory, use the project root (not cwd)
-        project_dir = config_manager.get_project_root()
-        if not project_dir:
-            click.echo("❌ Could not determine project root directory")
-            return
-    else:
-        # Find the workspace root (where workato/ config is)
-        workspace_root = config_manager.get_project_root()
-        if not workspace_root:
-            workspace_root = Path.cwd()
-
-        # Create projects/{project_name} structure relative to workspace root
-        projects_root = workspace_root / "projects"
-        projects_root.mkdir(exist_ok=True)
-        project_dir = projects_root / project_name
-        project_dir.mkdir(exist_ok=True)
-
-        # Create project-specific .workato directory with only project metadata
-        project_workato_dir = project_dir / "workato"
-        project_workato_dir.mkdir(exist_ok=True)
-
-        # Save only project-specific metadata (no credentials/profiles)
-        project_config_data = ConfigData(
-            project_id=meta_data.project_id,
-            project_name=meta_data.project_name,
-            folder_id=meta_data.folder_id,
-            profile=meta_data.profile,  # Keep profile reference for this project
+    # Get project directory using the new relative path resolution
+    project_dir = config_manager.get_project_directory()
+    if not project_dir:
+        click.echo(
+            "❌ Could not determine project directory. Run 'workato init' first."
         )
-        project_config_manager = ConfigManager(
-            project_workato_dir, skip_validation=True
-        )
-        project_config_manager.save_config(project_config_data)
+        return
 
-        # Ensure .workato/ is in workspace root .gitignore
-        _ensure_workato_in_gitignore(workspace_root)
+    # Ensure project directory exists
+    project_dir.mkdir(parents=True, exist_ok=True)
 
     # Export the project to a temporary directory first
     click.echo(f"Pulling latest changes for project: {project_name}")
@@ -119,8 +75,12 @@ async def _pull_project(
             click.echo("✅ Successfully pulled project to ./project")
             return
 
+        # Get workspace root to load ignore patterns
+        workspace_root = config_manager.get_workspace_root()
+        ignore_patterns = load_ignore_patterns(workspace_root)
+
         # Merge changes between remote and local
-        changes = merge_directories(temp_project_path, project_dir)
+        changes = merge_directories(temp_project_path, project_dir, ignore_patterns)
 
         # Show summary of changes
         if changes["added"] or changes["modified"] or changes["removed"]:
@@ -254,7 +214,7 @@ def calculate_json_diff_stats(old_file: Path, new_file: Path) -> dict[str, int]:
 
 
 def merge_directories(
-    remote_dir: Path, local_dir: Path
+    remote_dir: Path, local_dir: Path, ignore_patterns: set[str]
 ) -> dict[str, list[tuple[str, dict[str, int]]]]:
     """Merge remote directory into local directory, return summary of changes"""
     remote_path = Path(remote_dir)
@@ -303,20 +263,42 @@ def merge_directories(
                 changes["modified"].append((str(rel_path), diff_stats))
 
     # Handle deletions (files that exist locally but not remotely)
-    # Exclude .workato directory from deletion
+    files_to_delete = []
     for rel_path in local_files - remote_files:
-        # Skip files in .workato directory
-        if rel_path.parts[0] == "workato":
+        # Skip files matching ignore patterns
+        if should_skip_file(rel_path, ignore_patterns):
             continue
+        files_to_delete.append(rel_path)
 
+    # If there are files to delete, ask for confirmation
+    if files_to_delete:
+        click.echo(
+            f"\n⚠️  The following {len(files_to_delete)} file(s) will be deleted:"
+        )
+        for rel_path in files_to_delete[:10]:  # Show first 10
+            click.echo(f"   🗑️  {rel_path}")
+
+        if len(files_to_delete) > 10:
+            click.echo(f"   ... and {len(files_to_delete) - 10} more files")
+
+        if not click.confirm("\nProceed with deletions?", default=False):
+            click.echo("❌ Pull cancelled - no files were deleted")
+            return changes
+
+    # Proceed with deletions
+    for rel_path in files_to_delete:
         local_file = local_path / rel_path
         lines = count_lines(local_file)
         local_file.unlink()
         changes["removed"].append((str(rel_path), {"lines": lines}))
 
-        # Remove empty directories
+        # Remove empty directories (but not if they match ignore patterns)
+        parent_dir = local_file.parent
         with contextlib.suppress(OSError):
-            local_file.parent.rmdir()
+            if not should_skip_file(
+                parent_dir.relative_to(local_path), ignore_patterns
+            ):
+                parent_dir.rmdir()
 
     return changes
 

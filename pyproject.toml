@@ -39,6 +39,7 @@ dependencies = [
     "cbor2>=5.7.0",
     "certifi>=2025.8.3",
     "keyring>=25.6.0",
+    "ruff==0.13.0",
 ]
 
 [project.optional-dependencies]
@@ -98,8 +99,7 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
-    "client",  # Exclude generated API client
-    "src/workato_platform/_version.py",  # Exclude generated version file
+    "src/workato_platform/client/",
 ]
 
 [tool.ruff.lint]
@@ -122,6 +122,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["B011", "S101", "S105", "S106"]
+"src/workato_platform/_version.py" = ["ALL"]
 
 # Ruff isort configuration
 [tool.ruff.lint.isort]
@@ -132,12 +133,16 @@ known-first-party = ["workato_platform"]
 known-third-party = ["workato_api"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
-# Ruff formatter (replaces Black)
+# Ruff formatter
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+exclude = [
+    "src/workato_platform/_version.py",
+    "src/workato_platform/client/"
+]
 
 # MyPy configuration
 [tool.mypy]
@@ -201,6 +206,7 @@ source = ["src/workato_platform"]
 omit = [
     "tests/*",
     "src/workato_platform/client/*",
+    "src/workato_platform/_version.py",
 ]
 
 [tool.coverage.report]
@@ -229,6 +235,7 @@ dev = [
     "build>=1.3.0",
     "hatch-vcs>=0.5.0",
     "mypy>=1.17.1",
+    "openapi-generator-cli>=7.15.0",
     "pip-audit>=2.9.0",
     "pre-commit>=4.3.0",
     "pytest>=7.0.0",

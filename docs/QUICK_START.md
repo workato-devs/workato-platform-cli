@@ -54,7 +54,7 @@ workato --help
 # List your recipes
 workato recipes list
 
-# List your connections  
+# List your connections
 workato connections list
 
 # Check project status

@@ -62,9 +62,7 @@ def isolate_tests(monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path) -> Non
     # Note: Keyring mocking is handled by individual test fixtures when needed
 
     # Mock Path.home() to use temp directory for ProfileManager
-    monkeypatch.setattr(
-        "workato_platform.cli.utils.config.Path.home", lambda: temp_config_dir
-    )
+    monkeypatch.setattr("pathlib.Path.home", lambda: temp_config_dir)
 
 
 @pytest.fixture(autouse=True)
