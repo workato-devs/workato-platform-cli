@@ -99,8 +99,7 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
-    "client",  # Exclude generated API client
-    "src/workato_platform/_version.py",  # Exclude generated version file
+    "src/workato_platform/client/",
 ]
 
 [tool.ruff.lint]
@@ -134,12 +133,16 @@ known-first-party = ["workato_platform"]
 known-third-party = ["workato_api"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
-# Ruff formatter (replaces Black)
+# Ruff formatter
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+exclude = [
+    "src/workato_platform/_version.py",
+    "src/workato_platform/client/"
+]
 
 # MyPy configuration
 [tool.mypy]

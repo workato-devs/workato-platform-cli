@@ -17,7 +17,7 @@ def load_ignore_patterns(workspace_root: Path) -> set[str]:
         with open(ignore_file, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#'):
+                if line and not line.startswith("#"):
                     patterns.add(line)
     except (OSError, UnicodeDecodeError):
         # If we can't read the ignore file, just use defaults
@@ -33,10 +33,12 @@ def should_skip_file(file_path: Path, ignore_patterns: set[str]) -> bool:
 
     for pattern in ignore_patterns:
         # Check exact matches, glob patterns, and filename patterns
-        if (fnmatch.fnmatch(path_str, pattern) or
-            fnmatch.fnmatch(file_name, pattern) or
-            path_str.startswith(pattern + "/") or
-            path_str.startswith(pattern + "\\")):
+        if (
+            fnmatch.fnmatch(path_str, pattern)
+            or fnmatch.fnmatch(file_name, pattern)
+            or path_str.startswith(pattern + "/")
+            or path_str.startswith(pattern + "\\")
+        ):
             return True
 
     return False
