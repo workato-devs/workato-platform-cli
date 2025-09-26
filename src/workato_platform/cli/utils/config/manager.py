@@ -2,12 +2,12 @@
 
 import json
 import sys
+
 from pathlib import Path
-from typing import Optional
+from urllib.parse import urlparse
 
 import asyncclick as click
 import inquirer
-from urllib.parse import urlparse
 
 from workato_platform import Workato
 from workato_platform.cli.commands.projects.project_manager import ProjectManager
@@ -21,7 +21,7 @@ from .workspace import WorkspaceManager
 class ConfigManager:
     """Simplified configuration manager with clear workspace rules"""
 
-    def __init__(self, config_dir: Optional[Path] = None, skip_validation: bool = False):
+    def __init__(self, config_dir: Path | None = None, skip_validation: bool = False):
         start_path = config_dir or Path.cwd()
         self.workspace_manager = WorkspaceManager(start_path)
 
@@ -42,7 +42,7 @@ class ConfigManager:
     @classmethod
     async def initialize(
         cls,
-        config_dir: Optional[Path] = None,
+        config_dir: Path | None = None,
         profile_name: str | None = None,
         region: str | None = None,
         api_token: str | None = None,
@@ -620,7 +620,7 @@ Thumbs.db
         """Get workspace root directory"""
         return self.workspace_manager.find_workspace_root()
 
-    def get_project_directory(self) -> Optional[Path]:
+    def get_project_directory(self) -> Path | None:
         """Get project directory from closest .workatoenv config"""
         # Load config from closest .workatoenv file (already found in __init__)
         config_data = self.load_config()
@@ -673,7 +673,7 @@ Thumbs.db
 
         click.echo(f"✅ Selected '{project_config.project_name}' as current project")
 
-    def _handle_invalid_project_selection(self, workspace_root: Path, current_config: ConfigData) -> Optional[Path]:
+    def _handle_invalid_project_selection(self, workspace_root: Path, current_config: ConfigData) -> Path | None:
         """Handle case where current project selection is invalid"""
         click.echo(f"⚠️  Configured project directory does not exist: {current_config.project_path}")
         click.echo(f"   Project: {current_config.project_name}")
@@ -752,12 +752,12 @@ Thumbs.db
 
         return sorted(projects, key=lambda x: x[1])  # Sort by project name
 
-    def get_current_project_name(self) -> Optional[str]:
+    def get_current_project_name(self) -> str | None:
         """Get current project name"""
         config_data = self.load_config()
         return config_data.project_name
 
-    def get_project_root(self) -> Optional[Path]:
+    def get_project_root(self) -> Path | None:
         """Get project root (directory containing .workatoenv)"""
         # For compatibility - this is the same as config_dir when in project
         if self.workspace_manager.is_in_project_directory():
@@ -789,7 +789,7 @@ Thumbs.db
         return self.profile_manager.validate_credentials(config_data.profile)
 
     @property
-    def api_token(self) -> Optional[str]:
+    def api_token(self) -> str | None:
         """Get API token"""
         config_data = self.load_config()
         api_token, _ = self.profile_manager.resolve_environment_variables(config_data.profile)
@@ -829,7 +829,7 @@ Thumbs.db
         click.echo(f"✅ API token saved to profile '{current_profile_name}'")
 
     @property
-    def api_host(self) -> Optional[str]:
+    def api_host(self) -> str | None:
         """Get API host"""
         config_data = self.load_config()
         _, api_host = self.profile_manager.resolve_environment_variables(config_data.profile)
@@ -841,7 +841,7 @@ Thumbs.db
         """Validate if region code is valid"""
         return region_code.lower() in AVAILABLE_REGIONS
 
-    def set_region(self, region_code: str, custom_url: Optional[str] = None) -> tuple[bool, str]:
+    def set_region(self, region_code: str, custom_url: str | None = None) -> tuple[bool, str]:
         """Set region by updating the current profile"""
 
         if region_code.lower() not in AVAILABLE_REGIONS:

@@ -1,20 +1,23 @@
 """Tests for ProfileManager and related functionality."""
 
 import json
-import os
+
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from urllib.parse import urlparse
+from unittest.mock import Mock, patch
 
 import pytest
+
 from keyring.errors import KeyringError, NoKeyringError
 
-from workato_platform.cli.utils.config.models import ProfileData, ProfilesConfig, RegionInfo
+from workato_platform.cli.utils.config.models import (
+    ProfileData,
+    ProfilesConfig,
+)
 from workato_platform.cli.utils.config.profiles import (
     ProfileManager,
-    _WorkatoFileKeyring,
     _set_secure_permissions,
     _validate_url_security,
+    _WorkatoFileKeyring,
 )
 
 

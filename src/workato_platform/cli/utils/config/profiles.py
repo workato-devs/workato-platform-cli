@@ -4,12 +4,14 @@ import contextlib
 import json
 import os
 import threading
+
 from pathlib import Path
 from urllib.parse import urlparse
 
 import asyncclick as click
 import inquirer
 import keyring
+
 from keyring.backend import KeyringBackend
 from keyring.compat import properties
 from keyring.errors import KeyringError, NoKeyringError

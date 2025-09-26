@@ -1,6 +1,7 @@
 """Tests for configuration data models."""
 
 import pytest
+
 from pydantic import ValidationError
 
 from workato_platform.cli.utils.config.models import (

@@ -1,23 +1,27 @@
 """Tests for ConfigManager."""
 
 import json
-from typing import Any
+
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import asyncclick as click
-import inquirer
 import pytest
-from workato_platform import Workato
-from workato_platform.client.workato_api.configuration import Configuration
 
-from workato_platform.cli.utils.config.manager import ConfigManager, ProfileManager, WorkspaceManager
+from workato_platform import Workato
+from workato_platform.cli.utils.config.manager import (
+    ConfigManager,
+    ProfileManager,
+    WorkspaceManager,
+)
 from workato_platform.cli.utils.config.models import (
     ConfigData,
     ProfileData,
     ProjectInfo,
 )
+from workato_platform.client.workato_api.configuration import Configuration
 from workato_platform.client.workato_api.models.user import User
 
 

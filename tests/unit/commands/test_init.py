@@ -2,8 +2,8 @@
 
 from unittest.mock import AsyncMock, Mock, patch
 
-import pytest
 import asyncclick as click
+import pytest
 
 from workato_platform.cli.commands import init as init_module
 
@@ -42,7 +42,7 @@ async def test_init_interactive_mode(monkeypatch: pytest.MonkeyPatch) -> None:
 
         monkeypatch.setattr(init_module.click, "echo", lambda _="": None)
 
-        # Test interactive mode (no parameters)
+        assert init_module.init.callback
         await init_module.init.callback()
 
         # Should call initialize with no parameters (interactive mode)
@@ -92,6 +92,7 @@ async def test_init_non_interactive_success(monkeypatch: pytest.MonkeyPatch) -> 
         monkeypatch.setattr(init_module.click, "echo", lambda _="": None)
 
         # Test non-interactive mode with all parameters
+        assert init_module.init.callback
         await init_module.init.callback(
             profile="test-profile",
             region="us",
@@ -149,6 +150,7 @@ async def test_init_non_interactive_custom_region(monkeypatch: pytest.MonkeyPatc
         monkeypatch.setattr(init_module.click, "echo", lambda _="": None)
 
         # Test custom region with API URL
+        assert init_module.init.callback
         await init_module.init.callback(
             profile="test-profile",
             region="custom",
@@ -173,6 +175,7 @@ async def test_init_non_interactive_custom_region(monkeypatch: pytest.MonkeyPatc
 async def test_init_non_interactive_missing_profile() -> None:
     """Test non-interactive mode fails when profile is missing."""
     with pytest.raises(click.Abort):
+        assert init_module.init.callback
         await init_module.init.callback(
             profile=None,
             region="us",
@@ -188,6 +191,7 @@ async def test_init_non_interactive_missing_profile() -> None:
 async def test_init_non_interactive_missing_region() -> None:
     """Test non-interactive mode fails when region is missing."""
     with pytest.raises(click.Abort):
+        assert init_module.init.callback
         await init_module.init.callback(
             profile="test-profile",
             region=None,
@@ -203,6 +207,7 @@ async def test_init_non_interactive_missing_region() -> None:
 async def test_init_non_interactive_missing_api_token() -> None:
     """Test non-interactive mode fails when API token is missing."""
     with pytest.raises(click.Abort):
+        assert init_module.init.callback
         await init_module.init.callback(
             profile="test-profile",
             region="us",
@@ -218,6 +223,7 @@ async def test_init_non_interactive_missing_api_token() -> None:
 async def test_init_non_interactive_custom_region_missing_url() -> None:
     """Test non-interactive mode fails when custom region is used without API URL."""
     with pytest.raises(click.Abort):
+        assert init_module.init.callback
         await init_module.init.callback(
             profile="test-profile",
             region="custom",
@@ -233,6 +239,7 @@ async def test_init_non_interactive_custom_region_missing_url() -> None:
 async def test_init_non_interactive_missing_project() -> None:
     """Test non-interactive mode fails when neither project name nor ID is provided."""
     with pytest.raises(click.Abort):
+        assert init_module.init.callback
         await init_module.init.callback(
             profile="test-profile",
             region="us",
@@ -248,6 +255,7 @@ async def test_init_non_interactive_missing_project() -> None:
 async def test_init_non_interactive_both_project_options() -> None:
     """Test non-interactive mode fails when both project name and ID are provided."""
     with pytest.raises(click.Abort):
+        assert init_module.init.callback
         await init_module.init.callback(
             profile="test-profile",
             region="us",

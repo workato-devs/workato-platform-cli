@@ -1,6 +1,5 @@
 """Data models for configuration management."""
 
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -9,16 +8,16 @@ class ProjectInfo(BaseModel):
     """Data model for project information"""
     id: int = Field(..., description="Project ID")
     name: str = Field(..., description="Project name")
-    folder_id: Optional[int] = Field(None, description="Associated folder ID")
+    folder_id: int | None = Field(None, description="Associated folder ID")
 
 
 class ConfigData(BaseModel):
     """Data model for configuration file data"""
-    project_id: Optional[int] = Field(None, description="Project ID")
-    project_name: Optional[str] = Field(None, description="Project name")
-    project_path: Optional[str] = Field(None, description="Relative path to project (workspace only)")
-    folder_id: Optional[int] = Field(None, description="Folder ID")
-    profile: Optional[str] = Field(None, description="Profile override")
+    project_id: int | None = Field(None, description="Project ID")
+    project_name: str | None = Field(None, description="Project name")
+    project_path: str | None = Field(None, description="Relative path to project (workspace only)")
+    folder_id: int | None = Field(None, description="Folder ID")
+    profile: str | None = Field(None, description="Profile override")
 
 
 class RegionInfo(BaseModel):

@@ -11,7 +11,10 @@ from workato_platform import Workato
 from workato_platform.cli.containers import Container
 from workato_platform.cli.utils.config import ConfigManager
 from workato_platform.cli.utils.exception_handler import handle_api_exceptions
-from workato_platform.cli.utils.ignore_patterns import load_ignore_patterns, should_skip_file
+from workato_platform.cli.utils.ignore_patterns import (
+    load_ignore_patterns,
+    should_skip_file,
+)
 from workato_platform.cli.utils.spinner import Spinner
 
 

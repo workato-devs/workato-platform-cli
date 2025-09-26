@@ -1,11 +1,12 @@
 """Tests for ignore_patterns utility functions."""
 
 from pathlib import Path
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
-import pytest
-
-from workato_platform.cli.utils.ignore_patterns import load_ignore_patterns, should_skip_file
+from workato_platform.cli.utils.ignore_patterns import (
+    load_ignore_patterns,
+    should_skip_file,
+)
 
 
 class TestLoadIgnorePatterns:

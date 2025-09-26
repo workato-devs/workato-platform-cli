@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import sys
 
+from collections.abc import Iterator
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Iterator
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest

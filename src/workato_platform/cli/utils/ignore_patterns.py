@@ -1,6 +1,7 @@
 """Utility functions for handling .workato-ignore patterns"""
 
 import fnmatch
+
 from pathlib import Path
 
 

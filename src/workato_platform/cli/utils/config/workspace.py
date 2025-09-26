@@ -2,8 +2,8 @@
 
 import json
 import sys
+
 from pathlib import Path
-from typing import Optional
 
 import asyncclick as click
 
@@ -11,10 +11,10 @@ import asyncclick as click
 class WorkspaceManager:
     """Manages workspace root detection and validation"""
 
-    def __init__(self, start_path: Optional[Path] = None):
+    def __init__(self, start_path: Path | None = None):
         self.start_path = start_path or Path.cwd()
 
-    def find_nearest_workatoenv(self) -> Optional[Path]:
+    def find_nearest_workatoenv(self) -> Path | None:
         """Find the nearest .workatoenv file by traversing up the directory tree"""
         current = self.start_path.resolve()
 
