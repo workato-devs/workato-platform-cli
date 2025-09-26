@@ -53,7 +53,7 @@ class ConfigManager:
         project_id: int | None = None,
     ) -> "ConfigManager":
         """Initialize workspace with interactive or non-interactive setup"""
-        if profile_name and region and api_token:
+        if profile_name or (region and api_token):
             click.echo("🚀 Welcome to Workato CLI (Non-interactive mode)")
         else:
             click.echo("🚀 Welcome to Workato CLI")
@@ -65,7 +65,7 @@ class ConfigManager:
         # Validate we're not in a project directory
         manager.workspace_manager.validate_not_in_project()
 
-        if profile_name and region and api_token:
+        if profile_name or (region and api_token):
             # Non-interactive setup
             await manager._setup_non_interactive(
                 profile_name=profile_name,
