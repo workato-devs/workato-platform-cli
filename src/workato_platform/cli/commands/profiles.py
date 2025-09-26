@@ -46,7 +46,7 @@ async def list_profiles(
             output_data["profiles"][name] = profile_data.model_dump()
             output_data["profiles"][name]["is_current"] = name == current_profile_name
 
-        click.echo(json.dumps(output_data, indent=2))
+        click.echo(json.dumps(output_data))
         return
 
     # Table output mode (default)
