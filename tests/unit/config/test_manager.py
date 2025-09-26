@@ -1240,6 +1240,8 @@ class TestConfigManager:
                 return {"region": questions[0].choices[0]}
             if message == "Select a project":
                 return {"project": "Create new project"}
+            if message == "Select a profile":
+                return {"profile_choice": "dev"}
             raise AssertionError(f"Unexpected prompt message: {message}")
 
         monkeypatch.setattr(
