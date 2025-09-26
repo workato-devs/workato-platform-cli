@@ -20,7 +20,7 @@ jobs:
       run: uv sync --group dev
 
     - name: Run ruff check
-      run: uv run ruff check src/ tests/ --exclude src/workato_platform/client/ --fix
+      run: uv run ruff check src/ tests/ --exclude src/workato_platform/client/
 
     - name: Run ruff format check
       run: uv run ruff format --check src/ tests/ --exclude src/workato_platform/client/
