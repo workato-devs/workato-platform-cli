@@ -33,13 +33,19 @@ Get the Workato CLI running in 5 minutes.
 
 ## Installation
 
-### Standard Installation
+### From PyPI (Coming Soon)
 ```bash
-pip install -e .
-workato --version  # Verify installation
+pip install workato-platform-cli
 ```
 
-### Alternative (if standard fails)
+### From Source
+```bash
+git clone https://github.com/workato/workato-platform-cli.git
+cd workato-platform-cli
+pip install -e .
+```
+
+### Alternative (if above fails)
 If you get an "externally-managed-environment" error:
 
 ```bash
@@ -105,15 +111,23 @@ You're ready to go!
 
 ## Contributing to the CLI
 
-If you want to contribute to the Workato CLI codebase itself, use these development commands:
-
-### Development Commands
-```bash
-python -m pytest      # Run tests
-flake8 src/workato_platform/   # Check code style
-```
-
 These commands are for CLI maintainers and contributors, not for developers using the CLI to build Workato integrations.
+
+### For Development
+```bash
+# Setup (with uv - recommended)
+make install-dev
+
+# Run all checks
+make check          # linting, formatting, type checking
+make test          # run tests
+make test-cov      # run tests with coverage
+
+# Development workflow
+make format        # auto-format code
+make lint         # check code quality
+make build        # build distribution packages
+```
 
 
 ### Tech Stack
