@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
+import asyncclick as click
 import pytest
 
 from workato_platform.cli.utils.config.manager import ConfigManager
@@ -163,6 +164,41 @@ class TestConfigManager:
         run_mock.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_initialize_non_interactive_branch(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Non-interactive initialize should announce mode and call helper."""
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: StubProfileManager(),
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".WorkspaceManager.validate_not_in_project",
+            lambda self: None,
+        )
+
+        setup_mock = AsyncMock()
+        run_mock = AsyncMock()
+        monkeypatch.setattr(ConfigManager, "_setup_non_interactive", setup_mock)
+        monkeypatch.setattr(ConfigManager, "_run_setup_flow", run_mock)
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        manager = await ConfigManager.initialize(
+            tmp_path, profile_name="dev", region="us", api_token="token"
+        )
+
+        assert isinstance(manager, ConfigManager)
+        setup_mock.assert_awaited_once()
+        run_mock.assert_not_awaited()
+        assert any("Non-interactive mode" in line for line in outputs)
+
+    @pytest.mark.asyncio
     async def test_run_setup_flow_invokes_steps(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -190,6 +226,229 @@ class TestConfigManager:
         profile_mock.assert_awaited_once()
         project_mock.assert_awaited_once_with("dev", workspace_root)
         create_mock.assert_called_once_with(workspace_root)
+
+    @pytest.mark.asyncio
+    async def test_setup_non_interactive_creates_configs(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Non-interactive setup should create workspace and project configs."""
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: StubProfileManager(),
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = []
+        StubProjectManager.created_projects = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = StubProfileManager()
+        manager.workspace_manager = SimpleNamespace(find_workspace_root=lambda: tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        await manager._setup_non_interactive(
+            profile_name="dev",
+            region="us",
+            api_token="token-123",
+            project_name="DemoProject",
+        )
+
+        workspace_env = json.loads((tmp_path / ".workatoenv").read_text(encoding="utf-8"))
+        project_dir = tmp_path / "DemoProject"
+        project_env = json.loads((project_dir / ".workatoenv").read_text(encoding="utf-8"))
+
+        assert workspace_env["project_name"] == "DemoProject"
+        assert workspace_env["project_path"] == "DemoProject"
+        assert project_env["project_name"] == "DemoProject"
+        assert "project_path" not in project_env
+        assert StubProjectManager.created_projects[-1].name == "DemoProject"
+
+    @pytest.mark.asyncio
+    async def test_setup_non_interactive_uses_project_id(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Providing project_id should reuse existing remote project."""
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: StubProfileManager(),
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        existing = StubProject(777, "Existing", 55)
+        StubProjectManager.available_projects = [existing]
+        StubProjectManager.created_projects = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = StubProfileManager()
+        manager.workspace_manager = SimpleNamespace(find_workspace_root=lambda: tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        await manager._setup_non_interactive(
+            profile_name="dev",
+            region="us",
+            api_token="token-xyz",
+            project_id=777,
+        )
+
+        workspace_env = json.loads((tmp_path / ".workatoenv").read_text(encoding="utf-8"))
+        assert workspace_env["project_name"] == "Existing"
+        assert StubProjectManager.created_projects == []
+
+    @pytest.mark.asyncio
+    async def test_setup_non_interactive_requires_custom_url(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Custom region must provide an explicit URL."""
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = StubProfileManager()
+        manager.workspace_manager = SimpleNamespace(find_workspace_root=lambda: tmp_path)
+
+        with pytest.raises(click.ClickException):
+            await manager._setup_non_interactive(
+                profile_name="dev",
+                region="custom",
+                api_token="token",
+            )
+
+    @pytest.mark.asyncio
+    async def test_setup_non_interactive_rejects_invalid_region(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Unknown regions should raise a ClickException."""
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = StubProfileManager()
+        manager.workspace_manager = SimpleNamespace(find_workspace_root=lambda: tmp_path)
+
+        with pytest.raises(click.ClickException):
+            await manager._setup_non_interactive(
+                profile_name="dev",
+                region="unknown",
+                api_token="token",
+            )
+
+    @pytest.mark.asyncio
+    async def test_setup_non_interactive_custom_region_subdirectory(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Custom region should accept URL and honor running from subdirectory."""
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: StubProfileManager(),
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = []
+        StubProjectManager.created_projects = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = StubProfileManager()
+        manager.workspace_manager = SimpleNamespace(find_workspace_root=lambda: tmp_path)
+
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+        monkeypatch.chdir(subdir)
+
+        await manager._setup_non_interactive(
+            profile_name="dev",
+            region="custom",
+            api_token="token",
+            api_url="https://custom.workato.test",
+            project_name="CustomProj",
+        )
+
+        workspace_env = json.loads((tmp_path / ".workatoenv").read_text(encoding="utf-8"))
+        assert workspace_env["project_path"] == "subdir"
+        assert StubProjectManager.created_projects[-1].name == "CustomProj"
+
+    @pytest.mark.asyncio
+    async def test_setup_non_interactive_project_id_not_found(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Unknown project_id should raise a descriptive ClickException."""
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: StubProfileManager(),
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = StubProfileManager()
+        manager.workspace_manager = SimpleNamespace(find_workspace_root=lambda: tmp_path)
+
+        with pytest.raises(click.ClickException) as excinfo:
+            await manager._setup_non_interactive(
+                profile_name="dev",
+                region="us",
+                api_token="token",
+                project_id=999,
+            )
+
+        assert "Project with ID 999 not found" in str(excinfo.value)
+
+    @pytest.mark.asyncio
+    async def test_setup_non_interactive_requires_project_selection(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Missing project name and ID should raise ClickException."""
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: StubProfileManager(),
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = StubProfileManager()
+        manager.workspace_manager = SimpleNamespace(find_workspace_root=lambda: tmp_path)
+
+        with pytest.raises(click.ClickException) as excinfo:
+            await manager._setup_non_interactive(
+                profile_name="dev",
+                region="us",
+                api_token="token",
+            )
+
+        assert "No project selected" in str(excinfo.value)
 
     def test_init_with_explicit_config_dir(self, tmp_path: Path) -> None:
         """Test ConfigManager respects explicit config_dir."""
@@ -483,17 +742,6 @@ class TestConfigManager:
         success, message = config_manager.set_region("custom", custom_url="ftp://bad")
         assert success is False
         assert "URL must" in message
-
-    def test_select_region_interactive_proxy(self, tmp_path: Path) -> None:
-        """select_region_interactive should delegate to profile manager."""
-
-        config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-        stub_profile_manager = StubProfileManager()
-        config_manager.profile_manager = stub_profile_manager
-
-        result = config_manager.select_region_interactive("dev")
-        assert result == "us"
-        assert stub_profile_manager.selected_region_calls == ["dev"]
 
     def test_api_host_property(self, tmp_path: Path) -> None:
         """api_host should read host from profile manager."""
@@ -1218,6 +1466,18 @@ class TestConfigManager:
         assert (project_dir / ".workatoenv").exists()
 
     @pytest.mark.asyncio
+    async def test_setup_project_existing_missing_name(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Existing configs without a name should raise an explicit error."""
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.load_config = Mock(return_value=ConfigData(project_id=1, project_name=None))
+
+        with pytest.raises(click.ClickException):
+            await manager._setup_project("dev", tmp_path)
+
+    @pytest.mark.asyncio
     async def test_setup_project_selects_existing_remote(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -1371,6 +1631,70 @@ class TestConfigManager:
         assert any("Reconfiguring existing project" in msg for msg in outputs)
 
     @pytest.mark.asyncio
+    async def test_setup_project_handles_invalid_workatoenv(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Invalid JSON in existing project config should fall back to blocking logic."""
+
+        workspace_root = tmp_path
+        monkeypatch.chdir(workspace_root)
+
+        stub_profile = StubProfileManager()
+        stub_profile.set_profile(
+            "dev",
+            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            "token",
+        )
+        stub_profile.set_current_profile("dev")
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: stub_profile,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        project = StubProject(42, "ExistingProj", 5)
+        StubProjectManager.available_projects = [project]
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
+        manager.load_config = Mock(return_value=ConfigData())
+        manager.profile_manager = stub_profile
+        manager.workspace_manager.validate_project_path = Mock()
+        manager.workspace_manager.find_workspace_root = lambda: workspace_root
+
+        project_dir = workspace_root / project.name
+        project_dir.mkdir()
+        workatoenv = project_dir / ".workatoenv"
+        workatoenv.write_text("malformed", encoding="utf-8")
+        (project_dir / "data.txt").write_text("keep", encoding="utf-8")
+
+        def fake_prompt(questions):  # noqa: ANN001
+            assert questions[0].message == "Select a project"
+            return {"project": "ExistingProj (ID: 42)"}
+
+        def fake_json_load(_handle):  # noqa: ANN001
+            workatoenv.unlink(missing_ok=True)
+            raise json.JSONDecodeError("bad", "doc", 0)
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            fake_prompt,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".json.load",
+            fake_json_load,
+        )
+
+        with pytest.raises(SystemExit):
+            await manager._setup_project("dev", workspace_root)
+
+    @pytest.mark.asyncio
     async def test_setup_project_rejects_conflicting_directory(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -1414,6 +1738,69 @@ class TestConfigManager:
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
         with pytest.raises(SystemExit):
             await manager._setup_project("dev", workspace_root)
+
+    @pytest.mark.asyncio
+    async def test_setup_project_handles_iterdir_oserror(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """OS errors while listing directory contents should be ignored."""
+
+        workspace_root = tmp_path / "workspace"
+        workspace_root.mkdir()
+        monkeypatch.chdir(workspace_root)
+
+        stub_profile = StubProfileManager()
+        stub_profile.set_profile(
+            "dev",
+            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            "token",
+        )
+        stub_profile.set_current_profile("dev")
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: stub_profile,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        project = StubProject(77, "IterdirProj", 6)
+        StubProjectManager.available_projects = [project]
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
+        manager.load_config = Mock(return_value=ConfigData())
+        manager.profile_manager = stub_profile
+        manager.workspace_manager.validate_project_path = Mock()
+        manager.workspace_manager.find_workspace_root = lambda: workspace_root
+
+        project_dir = workspace_root / project.name
+        project_dir.mkdir()
+
+        def fake_prompt(questions):  # noqa: ANN001
+            return {"project": "IterdirProj (ID: 77)"}
+
+        original_iterdir = Path.iterdir
+
+        def fake_iterdir(self):  # noqa: ANN001
+            if self == project_dir:
+                raise OSError("permission denied")
+            return original_iterdir(self)
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            fake_prompt,
+        )
+        monkeypatch.setattr(Path, "iterdir", fake_iterdir)
+
+        await manager._setup_project("dev", workspace_root)
+
+        workspace_env = json.loads((workspace_root / ".workatoenv").read_text(encoding="utf-8"))
+        assert workspace_env["project_name"] == "IterdirProj"
     @pytest.mark.asyncio
     async def test_setup_project_requires_valid_selection(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

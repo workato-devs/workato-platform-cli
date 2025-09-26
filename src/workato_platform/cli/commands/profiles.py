@@ -1,6 +1,8 @@
 """Manage Workato profiles for multi-environment configurations"""
 
+import json
 import os
+from typing import Any
 
 import asyncclick as click
 
@@ -17,14 +19,36 @@ def profiles() -> None:
 
 
 @profiles.command(name="list")
+@click.option(
+    "--output-mode",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format: table (default) or json"
+)
 @inject
 async def list_profiles(
+    output_mode: str = "table",
     config_manager: ConfigManager = Provide[Container.config_manager],
 ) -> None:
     """List all available profiles"""
     profiles_dict = config_manager.profile_manager.list_profiles()
     current_profile_name = config_manager.profile_manager.get_current_profile_name()
 
+    if output_mode == "json":
+        # JSON output mode - return structured data
+        output_data: dict[str, Any] = {
+            "current_profile": current_profile_name,
+            "profiles": {}
+        }
+
+        for name, profile_data in profiles_dict.items():
+            output_data["profiles"][name] = profile_data.model_dump()
+            output_data["profiles"][name]["is_current"] = name == current_profile_name
+
+        click.echo(json.dumps(output_data, indent=2))
+        return
+
+    # Table output mode (default)
     if not profiles_dict:
         click.echo("📋 No profiles configured")
         click.echo("💡 Run 'workato init' to create your first profile")
@@ -114,7 +138,7 @@ async def use(
         config_data = ConfigData()
 
     # If we have a workspace config (project_id exists), update workspace profile
-    if config_data.project_id:
+    if config_data.project_id and workspace_root:
         config_data.profile = profile_name
         config_manager.save_config(config_data)
         click.echo(f"✅ Set '{profile_name}' as profile for current workspace")

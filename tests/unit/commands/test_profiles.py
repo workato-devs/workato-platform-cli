@@ -629,3 +629,66 @@ async def test_show_handles_current_profile_check(
 
     output = capsys.readouterr().out
     assert "This is the current active profile" in output
+
+
+@pytest.mark.asyncio
+async def test_list_profiles_json_output_mode(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test list_profiles with JSON output mode."""
+    profiles_dict = {
+        "dev": profile_data_factory(
+            region="us", region_url="https://www.workato.com", workspace_id=123
+        ),
+        "prod": profile_data_factory(
+            region="eu", region_url="https://app.eu.workato.com", workspace_id=456
+        ),
+    }
+
+    config_manager = make_config_manager(
+        list_profiles=Mock(return_value=profiles_dict),
+        get_current_profile_name=Mock(return_value="dev"),
+    )
+
+    assert list_profiles.callback
+    await list_profiles.callback(output_mode="json", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+
+    # Parse JSON output
+    import json
+    parsed = json.loads(output)
+
+    assert parsed["current_profile"] == "dev"
+    assert "dev" in parsed["profiles"]
+    assert "prod" in parsed["profiles"]
+    assert parsed["profiles"]["dev"]["is_current"] is True
+    assert parsed["profiles"]["prod"]["is_current"] is False
+    assert parsed["profiles"]["dev"]["region"] == "us"
+    assert parsed["profiles"]["prod"]["region"] == "eu"
+
+
+@pytest.mark.asyncio
+async def test_list_profiles_json_output_mode_empty(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test list_profiles JSON output with no profiles."""
+    config_manager = make_config_manager(
+        list_profiles=Mock(return_value={}),
+        get_current_profile_name=Mock(return_value=None),
+    )
+
+    assert list_profiles.callback
+    await list_profiles.callback(output_mode="json", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+
+    # Parse JSON output
+    import json
+    parsed = json.loads(output)
+
+    assert parsed["current_profile"] is None
+    assert parsed["profiles"] == {}

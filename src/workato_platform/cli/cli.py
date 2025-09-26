@@ -66,7 +66,7 @@ def cli(
 
 # Core setup and configuration commands
 cli.add_command(init.init)
-cli.add_command(projects.project)
+cli.add_command(projects.projects)
 cli.add_command(profiles.profiles)
 cli.add_command(properties.properties)
 

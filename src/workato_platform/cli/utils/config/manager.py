@@ -7,6 +7,7 @@ from typing import Optional
 
 import asyncclick as click
 import inquirer
+from urllib.parse import urlparse
 
 from workato_platform import Workato
 from workato_platform.cli.commands.projects.project_manager import ProjectManager
@@ -39,9 +40,21 @@ class ConfigManager:
             self._validate_credentials_or_exit()
 
     @classmethod
-    async def initialize(cls, config_dir: Optional[Path] = None) -> "ConfigManager":
-        """Initialize workspace with interactive setup"""
-        click.echo("🚀 Welcome to Workato CLI")
+    async def initialize(
+        cls,
+        config_dir: Optional[Path] = None,
+        profile_name: str | None = None,
+        region: str | None = None,
+        api_token: str | None = None,
+        api_url: str | None = None,
+        project_name: str | None = None,
+        project_id: int | None = None,
+    ) -> "ConfigManager":
+        """Initialize workspace with interactive or non-interactive setup"""
+        if profile_name and region and api_token:
+            click.echo("🚀 Welcome to Workato CLI (Non-interactive mode)")
+        else:
+            click.echo("🚀 Welcome to Workato CLI")
         click.echo()
 
         # Create manager without validation for setup
@@ -50,8 +63,19 @@ class ConfigManager:
         # Validate we're not in a project directory
         manager.workspace_manager.validate_not_in_project()
 
-        # Run setup flow
-        await manager._run_setup_flow()
+        if profile_name and region and api_token:
+            # Non-interactive setup
+            await manager._setup_non_interactive(
+                profile_name=profile_name,
+                region=region,
+                api_token=api_token,
+                api_url=api_url,
+                project_name=project_name,
+                project_id=project_id,
+            )
+        else:
+            # Run setup flow
+            await manager._run_setup_flow()
 
         return manager
 
@@ -73,6 +97,107 @@ class ConfigManager:
         self._create_workspace_files(workspace_root)
 
         click.echo("🎉 Configuration complete!")
+
+    async def _setup_non_interactive(
+        self,
+        profile_name: str,
+        region: str,
+        api_token: str,
+        api_url: str | None = None,
+        project_name: str | None = None,
+        project_id: int | None = None,
+    ) -> None:
+        """Perform all setup actions non-interactively"""
+
+        workspace_root = self.workspace_manager.find_workspace_root()
+        self.config_dir = workspace_root
+
+        # Map region to URL
+        if region == "custom":
+            if not api_url:
+                raise click.ClickException("--api-url is required when region=custom")
+            region_info = RegionInfo(region="custom", name="Custom URL", url=api_url)
+        else:
+            if region not in AVAILABLE_REGIONS:
+                raise click.ClickException(f"Invalid region: {region}")
+            region_info = AVAILABLE_REGIONS[region]
+
+        # Test authentication and get workspace info
+        api_config = Configuration(access_token=api_token, host=region_info.url)
+        api_config.verify_ssl = False
+
+        async with Workato(configuration=api_config) as workato_api_client:
+            user_info = await workato_api_client.users_api.get_workspace_details()
+
+        # Create and save profile
+        profile_data = ProfileData(
+            region=region_info.region,
+            region_url=region_info.url,
+            workspace_id=user_info.id,
+        )
+
+        self.profile_manager.set_profile(profile_name, profile_data, api_token)
+        self.profile_manager.set_current_profile(profile_name)
+
+        # Get API client for project operations
+        api_config = Configuration(access_token=api_token, host=region_info.url)
+        api_config.verify_ssl = False
+
+        async with Workato(configuration=api_config) as workato_api_client:
+            project_manager = ProjectManager(workato_api_client=workato_api_client)
+
+            selected_project = None
+
+            if project_name:
+               selected_project = await project_manager.create_project(project_name)
+            elif project_id:
+                # Use existing project
+                projects = await project_manager.get_all_projects()
+                selected_project = next((p for p in projects if p.id == project_id), None)
+                if not selected_project:
+                    raise click.ClickException(f"Project with ID {project_id} not found")
+
+            if not selected_project:
+                raise click.ClickException("No project selected")
+
+            # Determine project path
+            current_dir = Path.cwd().resolve()
+            if current_dir == workspace_root:
+                # Running from workspace root - create subdirectory
+                project_path = workspace_root / selected_project.name
+            else:
+                # Running from subdirectory - use current directory
+                project_path = current_dir
+
+            # Create project directory
+            project_path.mkdir(parents=True, exist_ok=True)
+
+            # Save workspace config (with project_path)
+            relative_project_path = str(project_path.relative_to(workspace_root))
+            workspace_config = ConfigData(
+                project_id=selected_project.id,
+                project_name=selected_project.name,
+                project_path=relative_project_path,
+                folder_id=selected_project.folder_id,
+                profile=profile_name,
+            )
+
+            self.save_config(workspace_config)
+
+            # Save project config (without project_path)
+            project_config_manager = ConfigManager(project_path, skip_validation=True)
+            project_config = ConfigData(
+                project_id=selected_project.id,
+                project_name=selected_project.name,
+                project_path=None,  # No project_path in project directory
+                folder_id=selected_project.folder_id,
+                profile=profile_name,
+            )
+
+            project_config_manager.save_config(project_config)
+
+        # Step 3: Create workspace files
+        self._create_workspace_files(workspace_root)
 
     async def _setup_profile(self) -> str:
         """Setup or select profile"""
@@ -191,6 +316,8 @@ class ConfigManager:
         # Check for existing project
         existing_config = self.load_config()
         if existing_config.project_id:
+            if not existing_config.project_name:
+                raise click.ClickException("Project name is required")
             click.echo(f"Found existing project: {existing_config.project_name}")
             if click.confirm("Use this project?", default=True):
                 # Ensure project_path is set and create project directory
@@ -230,7 +357,6 @@ class ConfigManager:
             project_location_mode = "current_dir"
 
         # Get API client for project operations
-        config_data = ConfigData(profile=profile_name)
         api_token, api_host = self.profile_manager.resolve_environment_variables(profile_name)
         api_config = Configuration(access_token=api_token, host=api_host)
         api_config.verify_ssl = False
@@ -758,7 +884,3 @@ Thumbs.db
         self.profile_manager.save_profiles(profiles)
 
         return True, f"{region_info.name} ({region_url})"
-
-    def select_region_interactive(self, profile_name: Optional[str] = None):
-        """Interactive region selection"""
-        return self.profile_manager.select_region_interactive(profile_name)

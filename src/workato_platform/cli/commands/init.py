@@ -11,11 +11,78 @@ from workato_platform.client.workato_api.configuration import Configuration
 
 
 @click.command()
+@click.option(
+    "--profile",
+    help="Profile name to use (creates new if doesn't exist)"
+)
+@click.option(
+    "--region",
+    type=click.Choice(["us", "eu", "jp", "au", "sg", "custom"]),
+    help="Workato region"
+)
+@click.option(
+    "--api-token",
+    help="Workato API token"
+)
+@click.option(
+    "--api-url",
+    help="Custom API URL (required when region=custom)"
+)
+@click.option(
+    "--project-name",
+    help="Project name (creates new project with this name)"
+)
+@click.option(
+    "--project-id",
+    type=int,
+    help="Existing project ID to use"
+)
+@click.option(
+    "--non-interactive",
+    is_flag=True,
+    help="Run in non-interactive mode (requires all necessary options)"
+)
 @handle_api_exceptions
-async def init() -> None:
+async def init(
+    profile: str | None = None,
+    region: str | None = None,
+    api_token: str | None = None,
+    api_url: str | None = None,
+    project_name: str | None = None,
+    project_id: int | None = None,
+    non_interactive: bool = False,
+) -> None:
     """Initialize Workato CLI for a new project"""
-    # Initialize configuration with simplified setup flow
-    config_manager = await ConfigManager.initialize()
+
+    if non_interactive:
+        # Validate required parameters for non-interactive mode
+        if not profile:
+            click.echo("❌ --profile is required in non-interactive mode")
+            raise click.Abort()
+        if not region:
+            click.echo("❌ --region is required in non-interactive mode")
+            raise click.Abort()
+        if not api_token:
+            click.echo("❌ --api-token is required in non-interactive mode")
+            raise click.Abort()
+        if region == "custom" and not api_url:
+            click.echo("❌ --api-url is required when region=custom in non-interactive mode")
+            raise click.Abort()
+        if not project_name and not project_id:
+            click.echo("❌ Either --project-name or --project-id is required in non-interactive mode")
+            raise click.Abort()
+        if project_name and project_id:
+            click.echo("❌ Cannot specify both --project-name and --project-id")
+            raise click.Abort()
+
+    config_manager = await ConfigManager.initialize(
+        profile_name=profile,
+        region=region,
+        api_token=api_token,
+        api_url=api_url,
+        project_name=project_name,
+        project_id=project_id,
+    )
 
     # Automatically run pull to set up project structure
     click.echo()
