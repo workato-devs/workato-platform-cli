@@ -15,6 +15,22 @@ A modern, type-safe command-line interface for the Workato API, designed for aut
 - **API Integration**: Manage API clients, collections, and endpoints
 - **AI Agent Support**: Built-in documentation and guide system
 
+# Quick Start Guide
+
+Get the Workato CLI running in 5 minutes.
+
+## Prerequisites
+
+- Python 3.11+
+- Workato account with API token
+
+### Getting Your API Token
+1. Log into your Workato account
+1. Navigate to **Workspace Admin** → **API clients**
+1. Click **Create API client**
+1. Fill out information about the client, click **Create client**
+1. Copy the generated token (starts with `wrkatrial-` for trial accounts or `wrkprod-` for production)
+
 ## Installation
 
 ### From PyPI (Coming Soon)
@@ -29,97 +45,75 @@ cd workato-platform-cli
 pip install -e .
 ```
 
-### For Development
-```bash
-# Install uv (recommended)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+### Alternative (if above fails)
+If you get an "externally-managed-environment" error:
 
-# Clone and setup
-git clone https://github.com/workato/workato-platform-cli.git
-cd workato-platform-cli
-make install-dev
+```bash
+# Virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate  # Linux/Mac
+pip install -e .
 ```
 
-## Quick Start
+Having issues? See [DEVELOPER_GUIDE.md](/docs/DEVELOPER_GUIDE.md) for troubleshooting.
+
+## Setup
 
 ```bash
-# Set up your profile and workspace
+# Initialize CLI (will prompt for API token and region)
 workato init
-workato profiles create --name dev --region us
 
+# Verify your workspace
+workato workspace
+```
+
+
+## First Commands
+
+```bash
 # List available commands
 workato --help
 
-# Explore available connectors
-workato connectors list
-workato connectors parameters --provider salesforce
+# List your recipes
+workato recipes list
 
-# Manage connections
+# List your connections
 workato connections list
-workato connections create-oauth --provider salesforce
 
-# Manage recipes
-workato recipes list --folder-id 123
-workato recipes validate --project-id 456
-workato recipes start --recipe-id 789
-
-# Project operations
-workato push --project-id 123
-workato pull
-
-# AI agent access to structured documentation
-workato guide topics      # (for AI agents)
-workato guide search "oauth"  # (for AI agents)
+# Check project status
+workato workspace
 ```
 
-## For AI Agents & Developers
+## Next Steps
 
-This CLI is designed to enable AI agents to assist developers in building Workato assets:
+- **Need detailed commands?** → See [COMMAND_REFERENCE.md](/docs/COMMAND_REFERENCE.md)
+- **Want real-world examples?** → See [USE_CASES.md](/docs/USE_CASES.md)
+- **Looking for sample recipes?** → See [examples/](/docs/examples/)
+- **Installation issues?** → See [DEVELOPER_GUIDE.md](/docs/DEVELOPER_GUIDE.md)
+- **Looking for all documentation?** → See [INDEX.md](/docs/INDEX.md)
 
-### **Recipe Development Workflow**
-1. **Validate Recipes**: `workato recipes validate` to check JSON syntax and structure
-2. **Create Connections**: `workato connections create` to set up OAuth authentication
-3. **Update Recipe Connections**: `workato recipes update-connection` to link recipes to connections
-4. **Deploy**: `workato push` to deploy recipes to Workato
-5. **Monitor**: `workato recipes jobs` to track execution
 
-### **AI Agent Capabilities**
-- **Recipe Validation**: Catch errors before deployment
-- **Connection Management**: Handle OAuth flows automatically
-- **Project Synchronization**: Keep local and remote in sync
-- **AI Documentation Interface**: `workato guide` provides structured knowledge for AI agents
-- **Error Diagnosis**: Detailed error messages and validation feedback
+## Quick Recipe Workflow
 
-## Key Commands
+```bash
+# 1. Validate a recipe file
+workato recipes validate --path ./my-recipe.json
 
-- `workato init` - Initialize CLI configuration and workspace
-- `workato profiles create/use` - Manage multiple environments
-- `workato recipes list/validate/start/stop` - Recipe lifecycle management
-- `workato connections create-oauth/list` - OAuth connection management
-- `workato connectors list/parameters` - Explore available connectors
-- `workato push/pull` - Sync projects with Workato workspace
-- `workato guide topics/search/content` - AI agent documentation interface
+# 2. Push changes to Workato
+workato push
 
-## Use Cases
+# 3. Pull latest from remote
+workato pull
+```
 
-Perfect for:
-- **🤖 AI Agents**: Automated recipe validation, connection management, and troubleshooting assistance
-- **👨‍💻 Developers**: Local-first development with git integration and multi-environment support
-- **🏢 Teams**: CI/CD pipelines, bulk operations, and standardized workflows
-- **🔧 DevOps**: Infrastructure as code, automated deployments, and monitoring
+You're ready to go!
 
-> 📖 **See [resources/use-cases.md](resources/use-cases.md) for detailed scenarios and examples**
 
-## Requirements
+## Contributing to the CLI
 
-- **Python 3.11+** (type hints and modern async support)
-- **Workato API token** (from your Workato account settings)
-- **Valid Workato account** with API access
+These commands are for CLI maintainers and contributors, not for developers using the CLI to build Workato integrations.
 
-## Development
-
-This project uses modern Python tooling for the best developer experience:
-
+### For Development
 ```bash
 # Setup (with uv - recommended)
 make install-dev
@@ -133,10 +127,8 @@ make test-cov      # run tests with coverage
 make format        # auto-format code
 make lint         # check code quality
 make build        # build distribution packages
-
-# See all available commands
-make help
 ```
+
 
 ### Tech Stack
 - **🐍 Python 3.11+** with full type annotations
