@@ -117,7 +117,8 @@ workato connections get-oauth-url --id 789
 
 ## Environment Support
 
-**Trial Accounts:** Use `wrkatrial-` tokens with `https://app.trial.workato.com/api`
+**Trial Accounts:** Use `wrkatrial-` tokens with `https://app.trial.workato.com/api` 
+
 **Production Accounts:** Use `wrkprod-` tokens with `https://www.workato.com/api`
 
 ## Requirements
