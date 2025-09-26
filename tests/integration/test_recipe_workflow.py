@@ -6,7 +6,7 @@ import pytest
 
 from asyncclick.testing import CliRunner
 
-from workato_platform.cli.cli import cli
+from workato_platform.cli import cli
 
 
 class TestRecipeWorkflow:

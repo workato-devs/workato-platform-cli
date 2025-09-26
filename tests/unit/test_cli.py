@@ -6,7 +6,7 @@ import pytest
 
 from asyncclick.testing import CliRunner
 
-from workato_platform.cli.cli import cli
+from workato_platform.cli import cli
 
 
 class TestCLI:
@@ -26,7 +26,7 @@ class TestCLI:
         """Test CLI accepts profile option."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.cli.Container") as mock_container:
+        with patch("workato_platform.cli.Container") as mock_container:
             # Mock the container to avoid actual initialization
             mock_instance = Mock()
             mock_container.return_value = mock_instance

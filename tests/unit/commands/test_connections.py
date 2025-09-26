@@ -7,7 +7,7 @@ import pytest
 from asyncclick.testing import CliRunner
 
 from workato_platform import Workato
-from workato_platform.cli.cli import cli
+from workato_platform.cli import cli
 from workato_platform.cli.commands.connections import (
     OAUTH_TIMEOUT,
     _get_callback_url_from_api_host,

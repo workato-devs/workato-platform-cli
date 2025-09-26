@@ -109,7 +109,6 @@ class TestProjectStructure:
             "pyproject.toml",
             "README.md",
             "src/workato_platform/cli/__init__.py",
-            "src/workato_platform/cli/cli.py",
         ]
 
         for file_path in required_files:

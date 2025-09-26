@@ -10,7 +10,11 @@ from unittest.mock import AsyncMock, MagicMock, Mock
 import pytest
 
 from workato_platform import Workato
-from workato_platform.cli.commands import push
+from workato_platform.cli.commands.push.command import (
+    poll_import_status,
+    push,
+    upload_package,
+)
 
 
 class DummySpinner:
@@ -36,7 +40,7 @@ def patch_spinner(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure spinner usage is deterministic across tests."""
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.push.Spinner",
+        "workato_platform.cli.commands.push.command.Spinner",
         DummySpinner,
     )
 
@@ -51,7 +55,7 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         captured.append(message)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.push.click.echo",
+        "workato_platform.cli.commands.push.command.click.echo",
         _capture,
     )
 
@@ -69,8 +73,8 @@ async def test_push_requires_api_token(capture_echo: list[str]) -> None:
     config_manager = Mock()
     config_manager.api_token = None
 
-    assert push.push.callback
-    await push.push.callback(config_manager=config_manager)
+    assert push.callback
+    await push.callback(config_manager=config_manager)
 
     assert any("No API token" in line for line in capture_echo)
 
@@ -84,8 +88,8 @@ async def test_push_requires_project_configuration(capture_echo: list[str]) -> N
         project_name="demo",
     )
 
-    assert push.push.callback
-    await push.push.callback(config_manager=config_manager)
+    assert push.callback
+    await push.callback(config_manager=config_manager)
 
     assert any("No project configured" in line for line in capture_echo)
 
@@ -104,8 +108,8 @@ async def test_push_requires_project_root_when_inside_project(
     config_manager.get_project_directory.return_value = None
     config_manager.get_workspace_root.return_value = Path("/workspace")
 
-    assert push.push.callback
-    await push.push.callback(config_manager=config_manager)
+    assert push.callback
+    await push.callback(config_manager=config_manager)
 
     assert any("Could not determine project directory" in line for line in capture_echo)
 
@@ -128,8 +132,8 @@ async def test_push_requires_project_directory_when_missing(
 
     monkeypatch.chdir(tmp_path)
 
-    assert push.push.callback
-    await push.push.callback(config_manager=config_manager)
+    assert push.callback
+    await push.callback(config_manager=config_manager)
 
     assert any("Could not determine project directory" in line for line in capture_echo)
 
@@ -170,12 +174,12 @@ async def test_push_creates_zip_and_invokes_upload(
 
     upload_mock = AsyncMock(side_effect=fake_upload)
     monkeypatch.setattr(
-        "workato_platform.cli.commands.push.upload_package",
+        "workato_platform.cli.commands.push.command.upload_package",
         upload_mock,
     )
 
-    assert push.push.callback
-    await push.push.callback(config_manager=config_manager)
+    assert push.callback
+    await push.callback(config_manager=config_manager)
 
     assert upload_mock.await_count == 1
     call_kwargs = upload_calls[0]
@@ -204,11 +208,11 @@ async def test_upload_package_handles_completed_status(
 
     poll_mock = AsyncMock()
     monkeypatch.setattr(
-        "workato_platform.cli.commands.push.poll_import_status",
+        "workato_platform.cli.commands.push.command.poll_import_status",
         poll_mock,
     )
 
-    await push.upload_package(
+    await upload_package(
         folder_id=123,
         zip_path=str(zip_file),
         restart_recipes=False,
@@ -238,11 +242,11 @@ async def test_upload_package_triggers_poll_when_pending(
 
     poll_mock = AsyncMock()
     monkeypatch.setattr(
-        "workato_platform.cli.commands.push.poll_import_status",
+        "workato_platform.cli.commands.push.command.poll_import_status",
         poll_mock,
     )
 
-    await push.upload_package(
+    await upload_package(
         folder_id=123,
         zip_path=str(zip_file),
         restart_recipes=True,
@@ -286,7 +290,7 @@ async def test_poll_import_status_reports_success(
     monkeypatch.setattr("time.time", fake_time)
     monkeypatch.setattr("time.sleep", lambda *_args, **_kwargs: None)
 
-    await push.poll_import_status(999, workato_api_client=client)
+    await poll_import_status(999, workato_api_client=client)
 
     packages_api.get_package.assert_awaited()
     assert any("Import completed successfully" in line for line in capture_echo)
@@ -325,7 +329,7 @@ async def test_poll_import_status_reports_failure(
     monkeypatch.setattr("time.time", fake_time)
     monkeypatch.setattr("time.sleep", lambda *_args, **_kwargs: None)
 
-    await push.poll_import_status(111, workato_api_client=client)
+    await poll_import_status(111, workato_api_client=client)
 
     assert any("Import failed" in line for line in capture_echo)
     assert any("Error: Something went wrong" in line for line in capture_echo)
@@ -353,7 +357,7 @@ async def test_poll_import_status_timeout(
     monkeypatch.setattr("time.time", fake_time)
     monkeypatch.setattr("time.sleep", lambda *_args, **_kwargs: None)
 
-    await push.poll_import_status(555, workato_api_client=client)
+    await poll_import_status(555, workato_api_client=client)
 
     assert any("Import still in progress" in line for line in capture_echo)
     assert any("555" in line for line in capture_echo)
