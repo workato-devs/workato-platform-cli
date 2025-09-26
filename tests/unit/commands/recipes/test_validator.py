@@ -163,7 +163,9 @@ def test_recipe_structure_accepts_valid_nested_structure(
 
 
 def test_recipe_structure_allows_empty_root() -> None:
-    structure = RecipeStructure.model_construct(root=RecipeLine(number=0, keyword=Keyword.TRIGGER, uuid="root"))
+    structure = RecipeStructure.model_construct(
+        root=RecipeLine(number=0, keyword=Keyword.TRIGGER, uuid="root")
+    )
 
     assert structure.root.keyword == Keyword.TRIGGER
 
@@ -330,7 +332,9 @@ def test_validate_references_repeat_context_adds_virtual_step(
         errors = wrapped(repeat_line, base_context)
 
     assert errors == []
-    assert any(ctx.get("item", {}).get("name") == "repeat_processor" for ctx in captured)
+    assert any(
+        ctx.get("item", {}).get("name") == "repeat_processor" for ctx in captured
+    )
 
 
 def test_validate_input_modes_flags_mixed_modes(
@@ -1253,7 +1257,9 @@ def test_step_is_referenced_no_recipe_root(
 def test_step_is_referenced_detects_references(
     validator: RecipeValidator, make_line: Callable[..., RecipeLine]
 ) -> None:
-    target = make_line(number=1, keyword=Keyword.ACTION, provider="http", **{"as": "action"})
+    target = make_line(
+        number=1, keyword=Keyword.ACTION, provider="http", **{"as": "action"}
+    )
     referencing = make_line(
         number=2,
         keyword=Keyword.ACTION,

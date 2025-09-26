@@ -80,7 +80,16 @@ node_modules/
         ignore_file.write_text("*.py")
 
         # Mock open to raise UnicodeDecodeError
-        with patch("builtins.open", side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "invalid")):
+        with patch(
+            "builtins.open",
+            side_effect=UnicodeDecodeError(
+                "utf-8",
+                b"",
+                0,
+                1,
+                "invalid",
+            ),
+        ):
             result = load_ignore_patterns(tmp_path)
             assert result == {".workatoenv"}
 
@@ -176,4 +185,6 @@ class TestShouldSkipFile:
 
         # Test non-matches
         assert should_skip_file(Path("src/normal.py"), patterns) is False
-        assert should_skip_file(Path("deep/.git/info"), patterns) is False  # Doesn't match simple ".git" pattern
+        assert (
+            should_skip_file(Path("deep/.git/info"), patterns) is False
+        )  # Doesn't match simple ".git" pattern

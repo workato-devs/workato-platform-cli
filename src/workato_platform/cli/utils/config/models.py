@@ -1,11 +1,11 @@
 """Data models for configuration management."""
 
-
 from pydantic import BaseModel, Field, field_validator
 
 
 class ProjectInfo(BaseModel):
     """Data model for project information"""
+
     id: int = Field(..., description="Project ID")
     name: str = Field(..., description="Project name")
     folder_id: int | None = Field(None, description="Associated folder ID")
@@ -13,15 +13,19 @@ class ProjectInfo(BaseModel):
 
 class ConfigData(BaseModel):
     """Data model for configuration file data"""
+
     project_id: int | None = Field(None, description="Project ID")
     project_name: str | None = Field(None, description="Project name")
-    project_path: str | None = Field(None, description="Relative path to project (workspace only)")
+    project_path: str | None = Field(
+        None, description="Relative path to project (workspace only)"
+    )
     folder_id: int | None = Field(None, description="Folder ID")
     profile: str | None = Field(None, description="Profile override")
 
 
 class RegionInfo(BaseModel):
     """Data model for region information"""
+
     region: str = Field(..., description="Region code")
     name: str = Field(..., description="Human-readable region name")
     url: str | None = Field(None, description="Base URL for the region")

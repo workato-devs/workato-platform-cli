@@ -27,7 +27,8 @@ class WorkspaceManager:
         return None
 
     def find_workspace_root(self) -> Path:
-        """Find workspace root by traversing up for .workatoenv file with project_path"""
+        """Find workspace root by traversing up for .workatoenv file
+        with project_path"""
         current = self.start_path.resolve()
 
         while current != current.parent:
@@ -82,13 +83,18 @@ class WorkspaceManager:
 
         # Project cannot be in workspace root directly
         if abs_project_path == abs_workspace_root:
-            raise ValueError("Projects cannot be created in workspace root directly. Use a subdirectory.")
+            raise ValueError(
+                "Projects cannot be created in workspace root directly. "
+                "Use a subdirectory."
+            )
 
         # Project must be within workspace
         try:
             abs_project_path.relative_to(abs_workspace_root)
-        except ValueError:
-            raise ValueError(f"Project path must be within workspace root: {abs_workspace_root}")
+        except ValueError as e:
+            raise ValueError(
+                f"Project path must be within workspace root: {abs_workspace_root}"
+            ) from e
 
         # Check for nested projects by looking for .workatoenv in parent directories
         current = abs_project_path.parent
@@ -98,7 +104,10 @@ class WorkspaceManager:
                     with open(current / ".workatoenv") as f:
                         data = json.load(f)
                         if "project_id" in data:
-                            raise ValueError(f"Cannot create project within another project: {current}")
+                            raise ValueError(
+                                f"Cannot create project within another "
+                                f"project: {current}"
+                            )
                 except (json.JSONDecodeError, OSError):
                     pass
             current = current.parent

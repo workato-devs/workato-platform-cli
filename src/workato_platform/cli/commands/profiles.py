@@ -24,7 +24,7 @@ def profiles() -> None:
     "--output-mode",
     type=click.Choice(["table", "json"]),
     default="table",
-    help="Output format: table (default) or json"
+    help="Output format: table (default) or json",
 )
 @inject
 async def list_profiles(
@@ -39,7 +39,7 @@ async def list_profiles(
         # JSON output mode - return structured data
         output_data: dict[str, Any] = {
             "current_profile": current_profile_name,
-            "profiles": {}
+            "profiles": {},
         }
 
         for name, profile_data in profiles_dict.items():
@@ -153,7 +153,8 @@ async def use(
             if project_config.project_id:
                 project_config.profile = profile_name
                 project_config_manager.save_config(project_config)
-                click.echo(f"   Project config also updated: {project_dir.relative_to(workspace_root)}")
+                project_dir = project_dir.relative_to(workspace_root)
+                click.echo(f"   Project config also updated: {project_dir}")
     else:
         # No workspace context, set global profile
         config_manager.profile_manager.set_current_profile(profile_name)

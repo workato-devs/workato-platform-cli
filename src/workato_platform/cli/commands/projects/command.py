@@ -23,7 +23,7 @@ def projects() -> None:
     "--output-mode",
     type=click.Choice(["table", "json"]),
     default="table",
-    help="Output format: table (default) or json"
+    help="Output format: table (default) or json",
 )
 @inject
 async def list_projects(
@@ -45,13 +45,16 @@ async def list_projects(
         output_data: dict[str, Any] = {
             "current_project": current_project_name,
             "workspace_root": str(workspace_root),
-            "projects": []
+            "projects": [],
         }
 
         for project_path, project_name in all_projects:
             try:
                 # Load project config
-                project_config_manager = ConfigManager(project_path, skip_validation=True)
+                project_config_manager = ConfigManager(
+                    project_path,
+                    skip_validation=True,
+                )
                 config_data = project_config_manager.load_config()
 
                 project_info = {
@@ -61,7 +64,7 @@ async def list_projects(
                     "project_id": config_data.project_id,
                     "folder_id": config_data.folder_id,
                     "profile": config_data.profile,
-                    "configured": True
+                    "configured": True,
                 }
             except Exception as e:
                 project_info = {
@@ -69,7 +72,7 @@ async def list_projects(
                     "directory": str(project_path.relative_to(workspace_root)),
                     "is_current": project_name == current_project_name,
                     "configured": False,
-                    "error": f"configuration error: {e}"
+                    "error": f"configuration error: {e}",
                 }
 
             output_data["projects"].append(project_info)
@@ -206,10 +209,7 @@ async def switch(
 
             # Create display name
             display_name = project_name
-            if (
-                config_data.project_name
-                and config_data.project_name != project_name
-            ):
+            if config_data.project_name and config_data.project_name != project_name:
                 display_name = f"{project_name} ({config_data.project_name})"
 
             if project_name == current_project_name:

@@ -86,7 +86,7 @@ class TestWorkatoClient:
         try:
             from workato_platform import Workato
 
-            with patch("workato_platform.ApiClient") as mock_api_client:
+            with patch("workato_platform.ApiClient"):
                 mock_configuration = Mock()
                 client = Workato(mock_configuration)
 
@@ -127,11 +127,11 @@ class TestWorkatoClient:
                 mock_client_instance.rest_client = mock_rest_client
                 mock_rest_client.ssl_context = mock_ssl_context
 
-                client = Workato(mock_configuration)
+                Workato(mock_configuration)
 
                 # Should set minimum TLS version (current Python has TLSVersion)
                 # This covers the hasattr(ssl, "TLSVersion") = True path
-                assert hasattr(mock_ssl_context, 'minimum_version')
+                assert hasattr(mock_ssl_context, "minimum_version")
 
         except ImportError:
             pytest.skip("Workato class not available due to missing dependencies")
@@ -145,7 +145,9 @@ class TestWorkatoClient:
             with patch("workato_platform.ApiClient") as mock_api_client:
                 mock_configuration = Mock()
                 mock_client_instance = Mock()
-                mock_client_instance.close = AsyncMock()  # Use AsyncMock for async method
+                mock_client_instance.close = (
+                    AsyncMock()
+                )  # Use AsyncMock for async method
                 mock_api_client.return_value = mock_client_instance
 
                 async with Workato(mock_configuration) as client:
@@ -166,7 +168,9 @@ class TestWorkatoClient:
             with patch("workato_platform.ApiClient") as mock_api_client:
                 mock_configuration = Mock()
                 mock_client_instance = Mock()
-                mock_client_instance.close = AsyncMock()  # Use AsyncMock for async method
+                mock_client_instance.close = (
+                    AsyncMock()
+                )  # Use AsyncMock for async method
                 mock_api_client.return_value = mock_client_instance
 
                 client = Workato(mock_configuration)
@@ -192,6 +196,7 @@ class TestWorkatoClient:
 
         # Mock the import to fail and test the fallback logic
         import workato_platform
+
         original_version = workato_platform.__version__
 
         try:
@@ -252,9 +257,17 @@ class TestWorkatoClient:
 
                 # Check that all API endpoints are initialized (lines 49-59)
                 api_endpoints = [
-                    "projects_api", "properties_api", "users_api", "recipes_api",
-                    "connections_api", "folders_api", "packages_api", "export_api",
-                    "data_tables_api", "connectors_api", "api_platform_api"
+                    "projects_api",
+                    "properties_api",
+                    "users_api",
+                    "recipes_api",
+                    "connections_api",
+                    "folders_api",
+                    "packages_api",
+                    "export_api",
+                    "data_tables_api",
+                    "connectors_api",
+                    "api_platform_api",
                 ]
 
                 for endpoint in api_endpoints:

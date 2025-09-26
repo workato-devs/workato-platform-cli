@@ -33,16 +33,27 @@ def mock_profile_manager() -> Mock:
     # Default profile data
     profiles_mock = Mock()
     profiles_mock.profiles = {
-        "default": ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
-        "dev": ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
-        "existing": ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+        "default": ProfileData(
+            region="us",
+            region_url="https://www.workato.com",
+            workspace_id=1,
+        ),
+        "dev": ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=1
+        ),
+        "existing": ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=1
+        ),
     }
 
     # Configure common methods
     mock_pm.list_profiles.return_value = profiles_mock.profiles
     mock_pm.load_profiles.return_value = profiles_mock
     mock_pm.get_current_profile_name.return_value = "default"
-    mock_pm.resolve_environment_variables.return_value = ("token", "https://www.workato.com")
+    mock_pm.resolve_environment_variables.return_value = (
+        "token",
+        "https://www.workato.com",
+    )
     mock_pm.validate_credentials.return_value = (True, [])
     mock_pm._store_token_in_keyring.return_value = True
     mock_pm._is_keyring_enabled.return_value = True
@@ -51,8 +62,6 @@ def mock_profile_manager() -> Mock:
     mock_pm.set_current_profile = Mock()
 
     return mock_pm
-
-
 
 
 class StubUsersAPI:
@@ -116,7 +125,12 @@ class StubProjectManager:
 class TestConfigManager:
     """Test ConfigManager functionality."""
 
-    def test_init_triggers_validation(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    def test_init_triggers_validation(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """__init__ should run credential validation when not skipped."""
 
         monkeypatch.setattr(
@@ -129,7 +143,9 @@ class TestConfigManager:
         def fake_validate(self: ConfigManager) -> None:  # noqa: D401
             calls.append(True)
 
-        monkeypatch.setattr(ConfigManager, "_validate_credentials_or_exit", fake_validate)
+        monkeypatch.setattr(
+            ConfigManager, "_validate_credentials_or_exit", fake_validate
+        )
 
         ConfigManager(config_dir=tmp_path)
 
@@ -137,7 +153,10 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_initialize_runs_setup_flow(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """initialize() should invoke validation guard and setup flow."""
 
@@ -203,18 +222,17 @@ class TestConfigManager:
         workspace_root = tmp_path / "workspace"
         workspace_root.mkdir()
 
-        manager.workspace_manager = WorkspaceManager(
-            start_path=workspace_root
-        )
+        manager.workspace_manager = WorkspaceManager(start_path=workspace_root)
 
         profile_mock = AsyncMock(return_value="dev")
         project_mock = AsyncMock()
         create_mock = Mock()
 
-        with patch.object(manager, '_setup_profile', profile_mock), \
-             patch.object(manager, '_setup_project', project_mock), \
-             patch.object(manager, '_create_workspace_files', create_mock):
-
+        with (
+            patch.object(manager, "_setup_profile", profile_mock),
+            patch.object(manager, "_setup_project", project_mock),
+            patch.object(manager, "_create_workspace_files", create_mock),
+        ):
             await manager._run_setup_flow()
 
             assert manager.config_dir == workspace_root
@@ -224,7 +242,10 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_non_interactive_creates_configs(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Non-interactive setup should create workspace and project configs."""
 
@@ -255,9 +276,13 @@ class TestConfigManager:
             project_name="DemoProject",
         )
 
-        workspace_env = json.loads((tmp_path / ".workatoenv").read_text(encoding="utf-8"))
+        workspace_env = json.loads(
+            (tmp_path / ".workatoenv").read_text(encoding="utf-8")
+        )
         project_dir = tmp_path / "DemoProject"
-        project_env = json.loads((project_dir / ".workatoenv").read_text(encoding="utf-8"))
+        project_env = json.loads(
+            (project_dir / ".workatoenv").read_text(encoding="utf-8")
+        )
 
         assert workspace_env["project_name"] == "DemoProject"
         assert workspace_env["project_path"] == "DemoProject"
@@ -267,7 +292,10 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_non_interactive_uses_project_id(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Providing project_id should reuse existing remote project."""
 
@@ -299,7 +327,9 @@ class TestConfigManager:
             project_id=777,
         )
 
-        workspace_env = json.loads((tmp_path / ".workatoenv").read_text(encoding="utf-8"))
+        workspace_env = json.loads(
+            (tmp_path / ".workatoenv").read_text(encoding="utf-8")
+        )
         assert workspace_env["project_name"] == "Existing"
         assert StubProjectManager.created_projects == []
 
@@ -339,7 +369,10 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_non_interactive_custom_region_subdirectory(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Custom region should accept URL and honor running from subdirectory."""
 
@@ -370,13 +403,18 @@ class TestConfigManager:
             project_name="CustomProj",
         )
 
-        workspace_env = json.loads((tmp_path / ".workatoenv").read_text(encoding="utf-8"))
+        workspace_env = json.loads(
+            (tmp_path / ".workatoenv").read_text(encoding="utf-8")
+        )
         assert workspace_env["project_path"] == "subdir"
         assert StubProjectManager.created_projects[-1].name == "CustomProj"
 
     @pytest.mark.asyncio
     async def test_setup_non_interactive_project_id_not_found(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Unknown project_id should raise a descriptive ClickException."""
 
@@ -406,7 +444,10 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_non_interactive_requires_project_selection(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Missing project name and ID should raise ClickException."""
 
@@ -441,7 +482,12 @@ class TestConfigManager:
         config_manager = ConfigManager(config_dir=config_dir, skip_validation=True)
         assert config_manager.config_dir == config_dir
 
-    def test_init_without_config_dir_finds_nearest(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    def test_init_without_config_dir_finds_nearest(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """Test ConfigManager finds nearest .workatoenv when no config_dir provided."""
         project_dir = tmp_path / "project"
         project_dir.mkdir()
@@ -458,7 +504,7 @@ class TestConfigManager:
             "project_id": 123,
             "project_name": "test",
             "folder_id": 456,
-            "profile": "dev"
+            "profile": "dev",
         }
         config_file.write_text(json.dumps(config_data))
 
@@ -491,11 +537,7 @@ class TestConfigManager:
 
     def test_save_config(self, tmp_path: Path) -> None:
         """Test saving config to file."""
-        config_data = ConfigData(
-            project_id=123,
-            project_name="test",
-            folder_id=456
-        )
+        config_data = ConfigData(project_id=123, project_name="test", folder_id=456)
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         config_manager.save_config(config_data)
@@ -530,7 +572,9 @@ class TestConfigManager:
         project_dir.mkdir(parents=True)
 
         # Create workspace config
-        (workspace_root / ".workatoenv").write_text('{"project_path": "project", "project_id": 123}')
+        (workspace_root / ".workatoenv").write_text(
+            '{"project_path": "project", "project_id": 123}'
+        )
 
         config_manager = ConfigManager(config_dir=project_dir, skip_validation=True)
         result = config_manager.get_workspace_root()
@@ -543,7 +587,9 @@ class TestConfigManager:
         project_dir.mkdir(parents=True)
 
         # Create workspace config with project_path
-        (workspace_root / ".workatoenv").write_text('{"project_path": "project", "project_id": 123}')
+        (workspace_root / ".workatoenv").write_text(
+            '{"project_path": "project", "project_id": 123}'
+        )
 
         config_manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
         result = config_manager.get_project_directory()
@@ -557,7 +603,7 @@ class TestConfigManager:
         # Create project config (no project_path)
         (project_dir / ".workatoenv").write_text('{"project_id": 123}')
 
-        with patch.object(ConfigManager, '_update_workspace_selection'):
+        with patch.object(ConfigManager, "_update_workspace_selection"):
             config_manager = ConfigManager(config_dir=project_dir, skip_validation=True)
             result = config_manager.get_project_directory()
             assert result == project_dir
@@ -592,7 +638,9 @@ class TestConfigManager:
         """Test is_in_project_workspace detection."""
         workspace_root = tmp_path / "workspace"
         workspace_root.mkdir()
-        (workspace_root / ".workatoenv").write_text('{"project_path": "project", "project_id": 123}')
+        (workspace_root / ".workatoenv").write_text(
+            '{"project_path": "project", "project_id": 123}'
+        )
 
         config_manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
         assert config_manager.is_in_project_workspace() is True
@@ -602,7 +650,11 @@ class TestConfigManager:
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
 
         # Mock the profile manager after creation
-        with patch.object(config_manager.profile_manager, 'validate_credentials', return_value=(True, [])):
+        with patch.object(
+            config_manager.profile_manager,
+            "validate_credentials",
+            return_value=(True, []),
+        ):
             is_valid, missing = config_manager.validate_environment_config()
 
             assert is_valid is True
@@ -613,10 +665,16 @@ class TestConfigManager:
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
 
         # Mock the profile manager after creation
-        with patch.object(config_manager.profile_manager, 'resolve_environment_variables', return_value=("test-token", "https://test.com")):
+        with patch.object(
+            config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("test-token", "https://test.com"),
+        ):
             assert config_manager.api_token == "test-token"
 
-    def test_api_token_setter_success(self, tmp_path: Path, mock_profile_manager: Mock) -> None:
+    def test_api_token_setter_success(
+        self, tmp_path: Path, mock_profile_manager: Mock
+    ) -> None:
         """Token setter should store token via profile manager."""
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
@@ -630,9 +688,13 @@ class TestConfigManager:
         config_manager.api_token = "new-token"
 
         # Verify the token was stored
-        mock_profile_manager._store_token_in_keyring.assert_called_with("dev", "new-token")
+        mock_profile_manager._store_token_in_keyring.assert_called_with(
+            "dev", "new-token"
+        )
 
-    def test_api_token_setter_keyring_failure(self, tmp_path: Path, mock_profile_manager: Mock) -> None:
+    def test_api_token_setter_keyring_failure(
+        self, tmp_path: Path, mock_profile_manager: Mock
+    ) -> None:
         """Failure to store token should raise informative error."""
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
@@ -655,14 +717,23 @@ class TestConfigManager:
             config_manager.api_token = "new-token"
         assert "Keyring is disabled" in str(excinfo2.value)
 
-    def test_validate_region_and_set_region(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    def test_validate_region_and_set_region(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """Region helpers should validate and persist settings."""
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
 
         # Mock the profile manager methods properly
         profiles_mock = Mock()
-        profiles_mock.profiles = {"dev": ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1)}
+        profiles_mock.profiles = {
+            "dev": ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            )
+        }
         mock_profile_manager.load_profiles.return_value = profiles_mock
         mock_profile_manager.get_current_profile_name.return_value = "dev"
         mock_profile_manager.save_profiles = Mock()
@@ -696,14 +767,23 @@ class TestConfigManager:
         assert success_missing_url is False
         assert "requires a URL" in message_missing
 
-    def test_set_region_url_validation(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    def test_set_region_url_validation(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """Custom region should reject insecure URLs."""
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
 
         # Mock the profile manager methods properly
         profiles_mock = Mock()
-        profiles_mock.profiles = {"dev": ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1)}
+        profiles_mock.profiles = {
+            "dev": ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            )
+        }
         mock_profile_manager.load_profiles.return_value = profiles_mock
         mock_profile_manager.get_current_profile_name.return_value = "dev"
 
@@ -722,17 +802,21 @@ class TestConfigManager:
         assert success is False
         assert "URL must" in message
 
-    def test_api_host_property(self, tmp_path: Path, mock_profile_manager: Mock) -> None:
+    def test_api_host_property(
+        self, tmp_path: Path, mock_profile_manager: Mock
+    ) -> None:
         """api_host should read host from profile manager."""
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-        mock_profile_manager.resolve_environment_variables.return_value = ("token", "https://example.com")
+        mock_profile_manager.resolve_environment_variables.return_value = (
+            "token",
+            "https://example.com",
+        )
 
         config_manager.profile_manager = mock_profile_manager
         config_manager.save_config(ConfigData(profile="dev"))
 
         assert config_manager.api_host == "https://example.com"
-
 
     def test_create_workspace_files(self, tmp_path: Path) -> None:
         """Workspace helper should create ignore files."""
@@ -769,12 +853,16 @@ class TestConfigManager:
             "folder_id": 55,
             "profile": "dev",
         }
-        (project_dir / ".workatoenv").write_text(json.dumps(project_config), encoding="utf-8")
+        (project_dir / ".workatoenv").write_text(
+            json.dumps(project_config), encoding="utf-8"
+        )
 
         config_manager = ConfigManager(config_dir=project_dir, skip_validation=True)
         config_manager._update_workspace_selection()
 
-        updated = json.loads((workspace_root / ".workatoenv").read_text(encoding="utf-8"))
+        updated = json.loads(
+            (workspace_root / ".workatoenv").read_text(encoding="utf-8")
+        )
         assert updated["project_name"] == "Demo"
         assert updated["project_id"] == 123
 
@@ -790,25 +878,36 @@ class TestConfigManager:
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         manager.workspace_manager = WorkspaceManager(start_path=tmp_path.parent)
-        with patch.object(manager, 'load_config', return_value=ConfigData()):
+        with patch.object(manager, "load_config", return_value=ConfigData()):
             manager._update_workspace_selection()
 
     def test_update_workspace_selection_outside_workspace(self, tmp_path: Path) -> None:
         """Projects outside workspace should be ignored."""
 
-        manager = ConfigManager(config_dir=tmp_path / "outside" / "project", skip_validation=True)
+        manager = ConfigManager(
+            config_dir=tmp_path / "outside" / "project", skip_validation=True
+        )
         workspace_root = tmp_path / "workspace"
         workspace_root.mkdir()
         manager.workspace_manager = WorkspaceManager(start_path=workspace_root)
-        with patch.object(manager, 'load_config', return_value=ConfigData(
+        with patch.object(
+            manager,
+            "load_config",
+            return_value=ConfigData(
                 project_id=1,
                 project_name="Demo",
                 folder_id=2,
                 profile="dev",
-            )):
+            ),
+        ):
             manager._update_workspace_selection()
 
-    def test_handle_invalid_project_selection_returns_none(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    def test_handle_invalid_project_selection_returns_none(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """When no projects exist, handler returns None."""
 
         workspace_root = tmp_path
@@ -826,23 +925,29 @@ class TestConfigManager:
         assert result is None
         assert any("No projects found" in msg for msg in outputs)
 
-    def test_handle_invalid_project_selection_choose_project(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    def test_handle_invalid_project_selection_choose_project(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """User selection should update workspace config with chosen project."""
 
         workspace_root = tmp_path
         available = workspace_root / "proj"
         available.mkdir()
         (available / ".workatoenv").write_text(
-            json.dumps({
-                "project_id": 200,
-                "project_name": "Chosen",
-                "folder_id": 9,
-            }),
+            json.dumps(
+                {
+                    "project_id": 200,
+                    "project_name": "Chosen",
+                    "folder_id": 9,
+                }
+            ),
             encoding="utf-8",
         )
 
         (workspace_root / ".workatoenv").write_text("{}", encoding="utf-8")
-
 
         def fake_prompt(questions: list[Any]) -> dict[str, str]:
             assert questions[0].message == "Select a project to use"
@@ -866,7 +971,9 @@ class TestConfigManager:
         )
 
         assert selected == available
-        workspace_data = json.loads((workspace_root / ".workatoenv").read_text(encoding="utf-8"))
+        workspace_data = json.loads(
+            (workspace_root / ".workatoenv").read_text(encoding="utf-8")
+        )
         assert workspace_data["project_name"] == "Chosen"
         assert any("Selected 'Chosen'" in msg for msg in outputs)
 
@@ -946,16 +1053,23 @@ class TestConfigManager:
             (workspace_root / "b", "Beta"),
         ]
 
-    def test_get_project_directory_handles_missing_selection(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    def test_get_project_directory_handles_missing_selection(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """When project path invalid, selection helper should run."""
 
         workspace_root = tmp_path
         (workspace_root / ".workatoenv").write_text(
-            json.dumps({
-                "project_id": 1,
-                "project_name": "Missing",
-                "project_path": "missing",
-            }),
+            json.dumps(
+                {
+                    "project_id": 1,
+                    "project_name": "Missing",
+                    "project_path": "missing",
+                }
+            ),
             encoding="utf-8",
         )
 
@@ -985,15 +1099,19 @@ class TestConfigManager:
         project_dir = config_manager.get_project_directory()
         assert project_dir == available.resolve()
 
-
     def test_get_project_root_delegates_to_directory(self, tmp_path: Path) -> None:
         """When not in a project directory, get_project_root should reuse lookup."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-        with patch.object(manager.workspace_manager, 'is_in_project_directory', return_value=False), \
-             patch.object(manager, 'get_project_directory', return_value=tmp_path / "project"):
+        with (
+            patch.object(
+                manager.workspace_manager, "is_in_project_directory", return_value=False
+            ),
+            patch.object(
+                manager, "get_project_directory", return_value=tmp_path / "project"
+            ),
+        ):
             assert manager.get_project_root() == tmp_path / "project"
-
 
     def test_validate_credentials_or_exit_failure(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -1001,12 +1119,14 @@ class TestConfigManager:
         """Missing credentials should trigger sys.exit."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-        with patch.object(manager, 'profile_manager', spec=ProfileManager) as mock_pm:
+        with patch.object(manager, "profile_manager", spec=ProfileManager) as mock_pm:
             mock_pm.validate_credentials = Mock(return_value=(False, ["token"]))
             with pytest.raises(SystemExit):
                 manager._validate_credentials_or_exit()
 
-    def test_api_token_setter_missing_profile(self, tmp_path: Path, mock_profile_manager: Mock) -> None:
+    def test_api_token_setter_missing_profile(
+        self, tmp_path: Path, mock_profile_manager: Mock
+    ) -> None:
         """Setting a token when the profile is missing should raise."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
@@ -1023,14 +1143,20 @@ class TestConfigManager:
         with pytest.raises(ValueError):
             manager.api_token = "token"
 
-    def test_api_token_setter_uses_default_profile(self, tmp_path: Path, mock_profile_manager: Mock) -> None:
+    def test_api_token_setter_uses_default_profile(
+        self, tmp_path: Path, mock_profile_manager: Mock
+    ) -> None:
         """Default profile should be assumed when none stored."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
 
         # Mock for default profile case
         profiles_mock = Mock()
-        profiles_mock.profiles = {"default": ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1)}
+        profiles_mock.profiles = {
+            "default": ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            )
+        }
         mock_profile_manager.load_profiles.return_value = profiles_mock
         mock_profile_manager.get_current_profile_name.return_value = "default"
         mock_profile_manager._store_token_in_keyring.return_value = True
@@ -1040,9 +1166,13 @@ class TestConfigManager:
         manager.save_config(ConfigData(profile=None))
 
         manager.api_token = "new-token"
-        mock_profile_manager._store_token_in_keyring.assert_called_with("default", "new-token")
+        mock_profile_manager._store_token_in_keyring.assert_called_with(
+            "default", "new-token"
+        )
 
-    def test_set_region_missing_profile(self, tmp_path: Path, mock_profile_manager: Mock) -> None:
+    def test_set_region_missing_profile(
+        self, tmp_path: Path, mock_profile_manager: Mock
+    ) -> None:
         """set_region should report failure when no matching profile exists."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
@@ -1060,14 +1190,20 @@ class TestConfigManager:
         assert success is False
         assert "does not exist" in message
 
-    def test_set_region_uses_default_profile(self, tmp_path: Path, mock_profile_manager: Mock) -> None:
+    def test_set_region_uses_default_profile(
+        self, tmp_path: Path, mock_profile_manager: Mock
+    ) -> None:
         """Fallback to default profile should be supported."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
 
         # Mock for default profile case
         profiles_mock = Mock()
-        profiles_mock.profiles = {"default": ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1)}
+        profiles_mock.profiles = {
+            "default": ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            )
+        }
         mock_profile_manager.load_profiles.return_value = profiles_mock
         mock_profile_manager.get_current_profile_name.return_value = "default"
         mock_profile_manager.save_profiles = Mock()
@@ -1079,10 +1215,13 @@ class TestConfigManager:
         assert success is True
         assert "US Data Center" in message
 
-
-
     @pytest.mark.asyncio
-    async def test_setup_profile_and_project_new_flow(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    async def test_setup_profile_and_project_new_flow(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """Cover happy path for profile setup and project creation."""
 
         monkeypatch.setattr(
@@ -1149,14 +1288,19 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_profile_requires_selection(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Missing selection should abort setup."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         mock_profile_manager.set_profile(
             "existing",
-            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
             "token",
         )
         manager.profile_manager = mock_profile_manager
@@ -1171,14 +1315,19 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_profile_rejects_blank_new_profile(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Entering an empty profile name should exit."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         mock_profile_manager.set_profile(
             "existing",
-            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
             "token",
         )
         manager.profile_manager = mock_profile_manager
@@ -1216,14 +1365,20 @@ class TestConfigManager:
         with pytest.raises(SystemExit):
             await manager._setup_profile()
 
-
     @pytest.mark.asyncio
-    async def test_setup_profile_with_existing_choice(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    async def test_setup_profile_with_existing_choice(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """Existing profiles branch should select the chosen profile."""
 
         mock_profile_manager.set_profile(
             "existing",
-            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
             "existing-token",
         )
         mock_profile_manager.set_current_profile("existing")
@@ -1254,7 +1409,12 @@ class TestConfigManager:
         assert any("Profile:" in line for line in outputs)
 
     @pytest.mark.asyncio
-    async def test_create_new_profile_custom_region(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    async def test_create_new_profile_custom_region(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """Cover custom region handling and token storage."""
 
         monkeypatch.setattr(
@@ -1304,7 +1464,12 @@ class TestConfigManager:
         assert token == "custom-token"
 
     @pytest.mark.asyncio
-    async def test_create_new_profile_cancelled(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    async def test_create_new_profile_cancelled(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """User cancellation at region prompt should exit."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
@@ -1320,7 +1485,10 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_create_new_profile_requires_token(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Blank token should abort profile creation."""
 
@@ -1347,14 +1515,19 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_profile_existing_create_new_success(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Choosing 'Create new profile' should call helper and return name."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         mock_profile_manager.set_profile(
             "existing",
-            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
             "token",
         )
         manager.profile_manager = mock_profile_manager
@@ -1369,13 +1542,18 @@ class TestConfigManager:
         )
 
         create_mock = AsyncMock(return_value=None)
-        with patch.object(manager, '_create_new_profile', create_mock):
+        with patch.object(manager, "_create_new_profile", create_mock):
             profile_name = await manager._setup_profile()
             assert profile_name == "newprofile"
             create_mock.assert_awaited_once_with("newprofile")
 
     @pytest.mark.asyncio
-    async def test_setup_project_reuses_existing_config(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    async def test_setup_project_reuses_existing_config(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """Existing config branch should copy metadata and skip API calls."""
 
         workspace_root = tmp_path
@@ -1387,7 +1565,9 @@ class TestConfigManager:
             "project_path": "Existing",
             "folder_id": 9,
         }
-        (workspace_root / ".workatoenv").write_text(json.dumps(workspace_config), encoding="utf-8")
+        (workspace_root / ".workatoenv").write_text(
+            json.dumps(workspace_config), encoding="utf-8"
+        )
 
         monkeypatch.setattr(
             ConfigManager.__module__ + ".ProfileManager",
@@ -1424,7 +1604,9 @@ class TestConfigManager:
             "project_name": "Existing",
             "folder_id": 9,
         }
-        (workspace_root / ".workatoenv").write_text(json.dumps(project_info), encoding="utf-8")
+        (workspace_root / ".workatoenv").write_text(
+            json.dumps(project_info), encoding="utf-8"
+        )
 
         monkeypatch.setattr(
             ConfigManager.__module__ + ".ProfileManager",
@@ -1447,13 +1629,22 @@ class TestConfigManager:
         """Existing configs without a name should raise an explicit error."""
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-        with patch.object(manager, 'load_config', return_value=ConfigData(project_id=1, project_name=None)):
-            with pytest.raises(click.ClickException):
-                await manager._setup_project("dev", tmp_path)
+        with (
+            patch.object(
+                manager,
+                "load_config",
+                return_value=ConfigData(project_id=1, project_name=None),
+            ),
+            pytest.raises(click.ClickException),
+        ):
+            await manager._setup_project("dev", tmp_path)
 
     @pytest.mark.asyncio
     async def test_setup_project_selects_existing_remote(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Selecting an existing remote project should configure directories."""
 
@@ -1463,7 +1654,9 @@ class TestConfigManager:
 
         mock_profile_manager.set_profile(
             "dev",
-            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
             "token",
         )
         mock_profile_manager.set_current_profile("dev")
@@ -1498,11 +1691,18 @@ class TestConfigManager:
 
         project_dir = workspace_root / "ExistingProj"
         assert project_dir.exists()
-        workspace_config = json.loads((workspace_root / ".workatoenv").read_text(encoding="utf-8"))
+        workspace_config = json.loads(
+            (workspace_root / ".workatoenv").read_text(encoding="utf-8")
+        )
         assert workspace_config["project_name"] == "ExistingProj"
 
     @pytest.mark.asyncio
-    async def test_setup_project_in_subdirectory(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    async def test_setup_project_in_subdirectory(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """When running from subdirectory, project should be created there."""
 
         workspace_root = tmp_path / "workspace"
@@ -1512,7 +1712,9 @@ class TestConfigManager:
 
         mock_profile_manager.set_profile(
             "dev",
-            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
             "token",
         )
         mock_profile_manager.set_current_profile("dev")
@@ -1532,7 +1734,9 @@ class TestConfigManager:
         )
 
         answers = {
-            "Select your Workato region": {"region": "US Data Center (https://www.workato.com)"},
+            "Select your Workato region": {
+                "region": "US Data Center (https://www.workato.com)"
+            },
             "Select a project": {"project": "Create new project"},
         }
 
@@ -1542,7 +1746,9 @@ class TestConfigManager:
         )
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: "NestedProj" if message == "Enter project name" else "token",
+            lambda message, **_: "NestedProj"
+            if message == "Enter project name"
+            else "token",
         )
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
@@ -1552,7 +1758,10 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_project_reconfigures_existing_directory(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Existing matching project should reconfigure without errors."""
 
@@ -1567,7 +1776,10 @@ class TestConfigManager:
         )
 
         mock_profile_manager.list_profiles.return_value = {}
-        mock_profile_manager.resolve_environment_variables.return_value = ("token", "https://www.workato.com")
+        mock_profile_manager.resolve_environment_variables.return_value = (
+            "token",
+            "https://www.workato.com",
+        )
 
         monkeypatch.setattr(
             ConfigManager.__module__ + ".ProfileManager",
@@ -1600,9 +1812,12 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_project_handles_invalid_workatoenv(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
-        """Invalid JSON in existing project config should fall back to blocking logic."""
+        """Invalid JSON in existing project config should use to blocking logic."""
 
         workspace_root = tmp_path
         monkeypatch.chdir(workspace_root)
@@ -1647,16 +1862,25 @@ class TestConfigManager:
             fake_json_load,
         )
 
-        with patch.object(manager, 'load_config', return_value=ConfigData()), \
-             patch.object(manager.workspace_manager, 'validate_project_path'), \
-             patch.object(manager.workspace_manager, 'find_workspace_root', return_value=workspace_root):
+        with (
+            patch.object(manager, "load_config", return_value=ConfigData()),
+            patch.object(manager.workspace_manager, "validate_project_path"),
+            patch.object(
+                manager.workspace_manager,
+                "find_workspace_root",
+                return_value=workspace_root,
+            ),
+        ):
             manager.profile_manager = mock_profile_manager
             with pytest.raises(SystemExit):
                 await manager._setup_project("dev", workspace_root)
 
     @pytest.mark.asyncio
     async def test_setup_project_rejects_conflicting_directory(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Different project ID in directory should raise error."""
 
@@ -1671,7 +1895,10 @@ class TestConfigManager:
         )
 
         mock_profile_manager.list_profiles.return_value = {}
-        mock_profile_manager.resolve_environment_variables.return_value = ("token", "https://www.workato.com")
+        mock_profile_manager.resolve_environment_variables.return_value = (
+            "token",
+            "https://www.workato.com",
+        )
 
         monkeypatch.setattr(
             ConfigManager.__module__ + ".ProfileManager",
@@ -1697,7 +1924,10 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_project_handles_iterdir_oserror(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """OS errors while listing directory contents should be ignored."""
 
@@ -1708,7 +1938,9 @@ class TestConfigManager:
         stub_profile = Mock(spec=ProfileManager)
         stub_profile.set_profile(
             "dev",
-            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
             "token",
         )
         stub_profile.set_current_profile("dev")
@@ -1730,9 +1962,15 @@ class TestConfigManager:
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
 
-        with patch.object(manager, 'load_config', return_value=ConfigData()), \
-             patch.object(manager.workspace_manager, 'validate_project_path'), \
-             patch.object(manager.workspace_manager, 'find_workspace_root', return_value=workspace_root):
+        with (
+            patch.object(manager, "load_config", return_value=ConfigData()),
+            patch.object(manager.workspace_manager, "validate_project_path"),
+            patch.object(
+                manager.workspace_manager,
+                "find_workspace_root",
+                return_value=workspace_root,
+            ),
+        ):
             manager.profile_manager = mock_profile_manager
 
         project_dir = workspace_root / project.name
@@ -1756,11 +1994,17 @@ class TestConfigManager:
 
         await manager._setup_project("dev", workspace_root)
 
-        workspace_env = json.loads((workspace_root / ".workatoenv").read_text(encoding="utf-8"))
+        workspace_env = json.loads(
+            (workspace_root / ".workatoenv").read_text(encoding="utf-8")
+        )
         assert workspace_env["project_name"] == "IterdirProj"
+
     @pytest.mark.asyncio
     async def test_setup_project_requires_valid_selection(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """If selection is unknown, setup should exit."""
 
@@ -1769,7 +2013,9 @@ class TestConfigManager:
 
         mock_profile_manager.set_profile(
             "dev",
-            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
             "token",
         )
 
@@ -1799,7 +2045,10 @@ class TestConfigManager:
 
     @pytest.mark.asyncio
     async def test_setup_project_path_validation_failure(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Validation errors should abort project setup."""
 
@@ -1808,7 +2057,9 @@ class TestConfigManager:
 
         mock_profile_manager.set_profile(
             "dev",
-            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
             "token",
         )
 
@@ -1827,7 +2078,9 @@ class TestConfigManager:
         )
 
         answers = {
-            "Select your Workato region": {"region": "US Data Center (https://www.workato.com)"},
+            "Select your Workato region": {
+                "region": "US Data Center (https://www.workato.com)"
+            },
             "Select a project": {"project": "Create new project"},
         }
 
@@ -1853,14 +2106,21 @@ class TestConfigManager:
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
 
         with (
-            patch.object(manager.workspace_manager, 'validate_project_path', side_effect=ValueError("bad path")),
-            pytest.raises(SystemExit)
+            patch.object(
+                manager.workspace_manager,
+                "validate_project_path",
+                side_effect=ValueError("bad path"),
+            ),
+            pytest.raises(SystemExit),
         ):
             await manager._setup_project("dev", workspace_root)
 
     @pytest.mark.asyncio
     async def test_setup_project_blocks_non_empty_directory(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
     ) -> None:
         """Non-empty directories without matching config should be rejected."""
 
@@ -1869,7 +2129,9 @@ class TestConfigManager:
 
         mock_profile_manager.set_profile(
             "dev",
-            ProfileData(region="us", region_url="https://www.workato.com", workspace_id=1),
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
             "token",
         )
 
@@ -1892,7 +2154,9 @@ class TestConfigManager:
         (project_dir / "random.txt").write_text("data", encoding="utf-8")
 
         answers = {
-            "Select your Workato region": {"region": "US Data Center (https://www.workato.com)"},
+            "Select your Workato region": {
+                "region": "US Data Center (https://www.workato.com)"
+            },
             "Select a project": {"project": "Create new project"},
         }
 
@@ -1902,7 +2166,9 @@ class TestConfigManager:
         )
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: "NewProj" if message == "Enter project name" else "token",
+            lambda message, **_: "NewProj"
+            if message == "Enter project name"
+            else "token",
         )
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
@@ -1911,7 +2177,12 @@ class TestConfigManager:
             await manager._setup_project("dev", workspace_root)
 
     @pytest.mark.asyncio
-    async def test_setup_project_requires_project_name(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    async def test_setup_project_requires_project_name(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """Empty project name should trigger exit."""
 
         monkeypatch.setattr(
@@ -1948,7 +2219,12 @@ class TestConfigManager:
             await config_manager._setup_project("dev", tmp_path)
 
     @pytest.mark.asyncio
-    async def test_setup_project_no_selection_exits(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mock_profile_manager: Mock) -> None:
+    async def test_setup_project_no_selection_exits(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
         """No selection should exit early."""
 
         monkeypatch.setattr(

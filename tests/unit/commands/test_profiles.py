@@ -479,7 +479,10 @@ async def test_use_updates_both_workspace_and_project_configs(
     )
 
     # Mock ConfigManager constructor for project config
-    with patch("workato_platform.cli.commands.profiles.ConfigManager", return_value=project_config_manager):
+    with patch(
+        "workato_platform.cli.commands.profiles.ConfigManager",
+        return_value=project_config_manager,
+    ):
         assert use.callback
         await use.callback(profile_name="dev", config_manager=config_manager)
 
@@ -527,7 +530,9 @@ async def test_show_handles_different_profile_name_resolution(
     profile = profile_data_factory()
     config_manager = make_config_manager(
         get_profile=Mock(return_value=profile),
-        get_current_profile_name=Mock(return_value="current"),  # Different from shown profile
+        get_current_profile_name=Mock(
+            return_value="current"
+        ),  # Different from shown profile
         resolve_environment_variables=Mock(return_value=("token", profile.region_url)),
     )
 
@@ -535,7 +540,9 @@ async def test_show_handles_different_profile_name_resolution(
     await show.callback(profile_name="other", config_manager=config_manager)
 
     # Should call resolve_environment_variables with the shown profile name
-    config_manager.profile_manager.resolve_environment_variables.assert_called_with("other")
+    config_manager.profile_manager.resolve_environment_variables.assert_called_with(
+        "other"
+    )
 
 
 @pytest.mark.asyncio
@@ -575,7 +582,9 @@ async def test_use_workspace_context_same_directory(
         get_workspace_root=Mock(return_value=Path("/workspace")),
         load_config=Mock(return_value=project_config),
         save_config=Mock(),
-        get_project_directory=Mock(return_value=Path("/workspace")),  # Same as workspace
+        get_project_directory=Mock(
+            return_value=Path("/workspace")
+        ),  # Same as workspace
     )
 
     assert use.callback
@@ -659,6 +668,7 @@ async def test_list_profiles_json_output_mode(
 
     # Parse JSON output
     import json
+
     parsed = json.loads(output)
 
     assert parsed["current_profile"] == "dev"
@@ -688,6 +698,7 @@ async def test_list_profiles_json_output_mode_empty(
 
     # Parse JSON output
     import json
+
     parsed = json.loads(output)
 
     assert parsed["current_profile"] is None

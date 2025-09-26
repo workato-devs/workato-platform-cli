@@ -98,7 +98,7 @@ class TestWorkatoFileKeyring:
     def test_init_creates_storage(self, tmp_path: Path) -> None:
         """Test initialization creates storage file."""
         storage_path = tmp_path / "keyring.json"
-        keyring = _WorkatoFileKeyring(storage_path)
+        _WorkatoFileKeyring(storage_path)
 
         assert storage_path.exists()
         assert json.loads(storage_path.read_text()) == {}
@@ -146,7 +146,9 @@ class TestWorkatoFileKeyring:
         storage_path = tmp_path / "nonexistent.json"
         keyring = _WorkatoFileKeyring.__new__(_WorkatoFileKeyring)
         keyring._storage_path = storage_path
-        keyring._lock = keyring.__class__._lock = type('Lock', (), {'__enter__': lambda s: None, '__exit__': lambda s, *a: None})()
+        keyring._lock = keyring.__class__._lock = type(
+            "Lock", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None}
+        )()
 
         result = keyring._load_data()
         assert result == {}
@@ -158,10 +160,12 @@ class TestWorkatoFileKeyring:
 
         keyring = _WorkatoFileKeyring.__new__(_WorkatoFileKeyring)
         keyring._storage_path = storage_path
-        keyring._lock = type('Lock', (), {'__enter__': lambda s: None, '__exit__': lambda s, *a: None})()
+        keyring._lock = type(
+            "Lock", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None}
+        )()
 
         # Mock read_text to raise OSError
-        with patch.object(Path, 'read_text', side_effect=OSError("Permission denied")):
+        with patch.object(Path, "read_text", side_effect=OSError("Permission denied")):
             result = keyring._load_data()
             assert result == {}
 
@@ -172,7 +176,9 @@ class TestWorkatoFileKeyring:
 
         keyring = _WorkatoFileKeyring.__new__(_WorkatoFileKeyring)
         keyring._storage_path = storage_path
-        keyring._lock = type('Lock', (), {'__enter__': lambda s: None, '__exit__': lambda s, *a: None})()
+        keyring._lock = type(
+            "Lock", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None}
+        )()
 
         result = keyring._load_data()
         assert result == {}
@@ -184,7 +190,9 @@ class TestWorkatoFileKeyring:
 
         keyring = _WorkatoFileKeyring.__new__(_WorkatoFileKeyring)
         keyring._storage_path = storage_path
-        keyring._lock = type('Lock', (), {'__enter__': lambda s: None, '__exit__': lambda s, *a: None})()
+        keyring._lock = type(
+            "Lock", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None}
+        )()
 
         result = keyring._load_data()
         assert result == {}
@@ -223,9 +231,9 @@ class TestProfileManager:
                 "dev": {
                     "region": "us",
                     "region_url": "https://www.workato.com",
-                    "workspace_id": 123
+                    "workspace_id": 123,
                 }
-            }
+            },
         }
         profiles_file.write_text(json.dumps(profile_data))
 
@@ -272,7 +280,9 @@ class TestProfileManager:
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
 
-            profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
+            profile = ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=123
+            )
             config = ProfilesConfig(current_profile="dev", profiles={"dev": profile})
 
             manager.save_profiles(config)
@@ -290,7 +300,9 @@ class TestProfileManager:
 
     def test_get_profile_success(self, tmp_path: Path) -> None:
         """Test getting profile data."""
-        profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
+        profile = ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=123
+        )
         config = ProfilesConfig(profiles={"dev": profile})
 
         with patch("pathlib.Path.home", return_value=tmp_path):
@@ -313,7 +325,9 @@ class TestProfileManager:
 
     def test_set_profile_without_token(self, tmp_path: Path) -> None:
         """Test setting profile without token."""
-        profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
+        profile = ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=123
+        )
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -324,21 +338,25 @@ class TestProfileManager:
 
     def test_set_profile_with_token_success(self, tmp_path: Path) -> None:
         """Test setting profile with token stored successfully."""
-        profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
+        profile = ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=123
+        )
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
 
             with (
                 patch.object(manager, "save_profiles") as mock_save,
-                patch.object(manager, "_store_token_in_keyring", return_value=True)
+                patch.object(manager, "_store_token_in_keyring", return_value=True),
             ):
                 manager.set_profile("dev", profile, "token123")
                 mock_save.assert_called_once()
 
     def test_set_profile_with_token_keyring_failure(self, tmp_path: Path) -> None:
         """Test setting profile when keyring fails but keyring is enabled."""
-        profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
+        profile = ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=123
+        )
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -346,14 +364,16 @@ class TestProfileManager:
             with (
                 patch.object(manager, "save_profiles"),
                 patch.object(manager, "_store_token_in_keyring", return_value=False),
-                patch.object(manager, "_is_keyring_enabled", return_value=True)
+                patch.object(manager, "_is_keyring_enabled", return_value=True),
+                pytest.raises(ValueError, match="Failed to store token in keyring"),
             ):
-                with pytest.raises(ValueError, match="Failed to store token in keyring"):
-                    manager.set_profile("dev", profile, "token123")
+                manager.set_profile("dev", profile, "token123")
 
     def test_set_profile_with_token_keyring_disabled(self, tmp_path: Path) -> None:
         """Test setting profile when keyring is disabled."""
-        profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
+        profile = ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=123
+        )
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -361,15 +381,19 @@ class TestProfileManager:
             with (
                 patch.object(manager, "save_profiles"),
                 patch.object(manager, "_store_token_in_keyring", return_value=False),
-                patch.object(manager, "_is_keyring_enabled", return_value=False)
+                patch.object(manager, "_is_keyring_enabled", return_value=False),
+                pytest.raises(ValueError, match="Keyring is disabled"),
             ):
-                with pytest.raises(ValueError, match="Keyring is disabled"):
-                    manager.set_profile("dev", profile, "token123")
+                manager.set_profile("dev", profile, "token123")
 
     def test_delete_profile_success(self, tmp_path: Path) -> None:
         """Test deleting existing profile."""
-        profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
-        config = ProfilesConfig(current_profile="dev", profiles={"dev": profile, "prod": profile})
+        profile = ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=123
+        )
+        config = ProfilesConfig(
+            current_profile="dev", profiles={"dev": profile, "prod": profile}
+        )
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -377,7 +401,9 @@ class TestProfileManager:
             with (
                 patch.object(manager, "load_profiles", return_value=config),
                 patch.object(manager, "save_profiles") as mock_save,
-                patch.object(manager, "_delete_token_from_keyring") as mock_delete_token
+                patch.object(
+                    manager, "_delete_token_from_keyring"
+                ) as mock_delete_token,
             ):
                 result = manager.delete_profile("dev")
 
@@ -407,7 +433,9 @@ class TestProfileManager:
             result = manager.get_current_profile_name("project-profile")
             assert result == "project-profile"
 
-    def test_get_current_profile_name_env_var(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_get_current_profile_name_env_var(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test get_current_profile_name with environment variable."""
         monkeypatch.setenv("WORKATO_PROFILE", "env-profile")
 
@@ -417,7 +445,9 @@ class TestProfileManager:
             result = manager.get_current_profile_name()
             assert result == "env-profile"
 
-    def test_get_current_profile_name_global_setting(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_get_current_profile_name_global_setting(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test get_current_profile_name with global setting."""
         monkeypatch.delenv("WORKATO_PROFILE", raising=False)
         config = ProfilesConfig(current_profile="global-profile")
@@ -438,7 +468,7 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "load_profiles", return_value=config),
-                patch.object(manager, "save_profiles") as mock_save
+                patch.object(manager, "save_profiles") as mock_save,
             ):
                 manager.set_current_profile("new-profile")
 
@@ -448,14 +478,16 @@ class TestProfileManager:
 
     def test_get_current_profile_data(self, tmp_path: Path) -> None:
         """Test getting current profile data."""
-        profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
+        profile = ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=123
+        )
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
 
             with (
                 patch.object(manager, "get_current_profile_name", return_value="dev"),
-                patch.object(manager, "get_profile", return_value=profile)
+                patch.object(manager, "get_profile", return_value=profile),
             ):
                 result = manager.get_current_profile_data()
                 assert result == profile
@@ -471,7 +503,9 @@ class TestProfileManager:
 
     def test_list_profiles(self, tmp_path: Path) -> None:
         """Test listing all profiles."""
-        profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
+        profile = ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=123
+        )
         config = ProfilesConfig(profiles={"dev": profile, "prod": profile})
 
         with patch("pathlib.Path.home", return_value=tmp_path):
@@ -483,7 +517,9 @@ class TestProfileManager:
                 assert "prod" in result
                 assert len(result) == 2
 
-    def test_resolve_environment_variables_env_override(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_resolve_environment_variables_env_override(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test resolve_environment_variables with env var override."""
         monkeypatch.setenv("WORKATO_API_TOKEN", "env-token")
         monkeypatch.setenv("WORKATO_HOST", "env-host")
@@ -495,12 +531,16 @@ class TestProfileManager:
             assert token == "env-token"
             assert host == "env-host"
 
-    def test_resolve_environment_variables_partial_env_override(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_resolve_environment_variables_partial_env_override(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test resolve_environment_variables with partial env override."""
         monkeypatch.setenv("WORKATO_API_TOKEN", "env-token")
         monkeypatch.delenv("WORKATO_HOST", raising=False)
 
-        profile = ProfileData(region="us", region_url="https://profile-host", workspace_id=123)
+        profile = ProfileData(
+            region="us", region_url="https://profile-host", workspace_id=123
+        )
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -508,18 +548,24 @@ class TestProfileManager:
             with (
                 patch.object(manager, "get_current_profile_name", return_value="dev"),
                 patch.object(manager, "get_profile", return_value=profile),
-                patch.object(manager, "_get_token_from_keyring", return_value="keyring-token")
+                patch.object(
+                    manager, "_get_token_from_keyring", return_value="keyring-token"
+                ),
             ):
                 token, host = manager.resolve_environment_variables()
                 assert token == "env-token"  # From env
                 assert host == "https://profile-host"  # From profile
 
-    def test_resolve_environment_variables_profile_fallback(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_resolve_environment_variables_profile_fallback(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test resolve_environment_variables falls back to profile."""
         monkeypatch.delenv("WORKATO_API_TOKEN", raising=False)
         monkeypatch.delenv("WORKATO_HOST", raising=False)
 
-        profile = ProfileData(region="us", region_url="https://profile-host", workspace_id=123)
+        profile = ProfileData(
+            region="us", region_url="https://profile-host", workspace_id=123
+        )
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -527,13 +573,17 @@ class TestProfileManager:
             with (
                 patch.object(manager, "get_current_profile_name", return_value="dev"),
                 patch.object(manager, "get_profile", return_value=profile),
-                patch.object(manager, "_get_token_from_keyring", return_value="keyring-token")
+                patch.object(
+                    manager, "_get_token_from_keyring", return_value="keyring-token"
+                ),
             ):
                 token, host = manager.resolve_environment_variables()
                 assert token == "keyring-token"
                 assert host == "https://profile-host"
 
-    def test_resolve_environment_variables_no_profile(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_resolve_environment_variables_no_profile(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test resolve_environment_variables when no profile configured."""
         monkeypatch.delenv("WORKATO_API_TOKEN", raising=False)
         monkeypatch.delenv("WORKATO_HOST", raising=False)
@@ -551,7 +601,9 @@ class TestProfileManager:
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
 
-            with patch.object(manager, "resolve_environment_variables", return_value=("token", "host")):
+            with patch.object(
+                manager, "resolve_environment_variables", return_value=("token", "host")
+            ):
                 is_valid, missing = manager.validate_credentials()
                 assert is_valid is True
                 assert missing == []
@@ -561,7 +613,9 @@ class TestProfileManager:
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
 
-            with patch.object(manager, "resolve_environment_variables", return_value=(None, "host")):
+            with patch.object(
+                manager, "resolve_environment_variables", return_value=(None, "host")
+            ):
                 is_valid, missing = manager.validate_credentials()
                 assert is_valid is False
                 assert any("token" in item.lower() for item in missing)
@@ -571,12 +625,16 @@ class TestProfileManager:
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
 
-            with patch.object(manager, "resolve_environment_variables", return_value=("token", None)):
+            with patch.object(
+                manager, "resolve_environment_variables", return_value=("token", None)
+            ):
                 is_valid, missing = manager.validate_credentials()
                 assert is_valid is False
                 assert any("host" in item.lower() for item in missing)
 
-    def test_is_keyring_enabled_default(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_is_keyring_enabled_default(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test keyring is enabled by default."""
         monkeypatch.delenv("WORKATO_DISABLE_KEYRING", raising=False)
 
@@ -584,7 +642,9 @@ class TestProfileManager:
             manager = ProfileManager()
             assert manager._is_keyring_enabled() is True
 
-    def test_is_keyring_disabled_env_var(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_is_keyring_disabled_env_var(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test keyring can be disabled via environment variable."""
         monkeypatch.setenv("WORKATO_DISABLE_KEYRING", "true")
 
@@ -593,7 +653,9 @@ class TestProfileManager:
             assert manager._is_keyring_enabled() is False
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_password")
-    def test_get_token_from_keyring_success(self, mock_get_password: Mock, tmp_path: Path) -> None:
+    def test_get_token_from_keyring_success(
+        self, mock_get_password: Mock, tmp_path: Path
+    ) -> None:
         """Test successful token retrieval from keyring."""
         mock_get_password.return_value = "test-token"
 
@@ -605,7 +667,9 @@ class TestProfileManager:
                 assert result == "test-token"
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_password")
-    def test_get_token_from_keyring_disabled(self, mock_get_password: Mock, tmp_path: Path) -> None:
+    def test_get_token_from_keyring_disabled(
+        self, mock_get_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token retrieval when keyring is disabled."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -616,7 +680,9 @@ class TestProfileManager:
                 mock_get_password.assert_not_called()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_password")
-    def test_get_token_from_keyring_no_keyring_error(self, mock_get_password: Mock, tmp_path: Path) -> None:
+    def test_get_token_from_keyring_no_keyring_error(
+        self, mock_get_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token retrieval handles NoKeyringError."""
         mock_get_password.side_effect = NoKeyringError("No keyring")
 
@@ -625,13 +691,15 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "_is_keyring_enabled", return_value=True),
-                patch.object(manager, "_ensure_keyring_backend") as mock_ensure
+                patch.object(manager, "_ensure_keyring_backend") as mock_ensure,
             ):
-                result = manager._get_token_from_keyring("dev")
+                manager._get_token_from_keyring("dev")
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_password")
-    def test_get_token_from_keyring_keyring_error(self, mock_get_password: Mock, tmp_path: Path) -> None:
+    def test_get_token_from_keyring_keyring_error(
+        self, mock_get_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token retrieval handles KeyringError."""
         mock_get_password.side_effect = KeyringError("Keyring error")
 
@@ -640,13 +708,15 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "_is_keyring_enabled", return_value=True),
-                patch.object(manager, "_ensure_keyring_backend") as mock_ensure
+                patch.object(manager, "_ensure_keyring_backend") as mock_ensure,
             ):
-                result = manager._get_token_from_keyring("dev")
+                manager._get_token_from_keyring("dev")
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_password")
-    def test_get_token_from_keyring_general_exception(self, mock_get_password: Mock, tmp_path: Path) -> None:
+    def test_get_token_from_keyring_general_exception(
+        self, mock_get_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token retrieval handles general exceptions."""
         mock_get_password.side_effect = RuntimeError("Unexpected error")
 
@@ -658,7 +728,9 @@ class TestProfileManager:
                 assert result is None
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.set_password")
-    def test_store_token_in_keyring_success(self, mock_set_password: Mock, tmp_path: Path) -> None:
+    def test_store_token_in_keyring_success(
+        self, mock_set_password: Mock, tmp_path: Path
+    ) -> None:
         """Test successful token storage in keyring."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -666,10 +738,14 @@ class TestProfileManager:
             with patch.object(manager, "_is_keyring_enabled", return_value=True):
                 result = manager._store_token_in_keyring("dev", "token123")
                 assert result is True
-                mock_set_password.assert_called_once_with(manager.keyring_service, "dev", "token123")
+                mock_set_password.assert_called_once_with(
+                    manager.keyring_service, "dev", "token123"
+                )
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.set_password")
-    def test_store_token_in_keyring_disabled(self, mock_set_password: Mock, tmp_path: Path) -> None:
+    def test_store_token_in_keyring_disabled(
+        self, mock_set_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token storage when keyring is disabled."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -679,7 +755,9 @@ class TestProfileManager:
                 assert result is False
                 mock_set_password.assert_not_called()
 
-    def test_ensure_keyring_backend_disabled_env(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_ensure_keyring_backend_disabled_env(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test _ensure_keyring_backend when disabled via environment."""
         monkeypatch.setenv("WORKATO_DISABLE_KEYRING", "true")
 
@@ -692,7 +770,9 @@ class TestProfileManager:
         """Test _ensure_keyring_backend with force_fallback."""
         with (
             patch("pathlib.Path.home", return_value=tmp_path),
-            patch("workato_platform.cli.utils.config.profiles.keyring.set_keyring") as mock_set_keyring
+            patch(
+                "workato_platform.cli.utils.config.profiles.keyring.set_keyring"
+            ) as mock_set_keyring,
         ):
             manager = ProfileManager()
             manager._ensure_keyring_backend(force_fallback=True)
@@ -701,7 +781,9 @@ class TestProfileManager:
             mock_set_keyring.assert_called()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_keyring")
-    def test_ensure_keyring_backend_no_backend(self, mock_get_keyring: Mock, tmp_path: Path) -> None:
+    def test_ensure_keyring_backend_no_backend(
+        self, mock_get_keyring: Mock, tmp_path: Path
+    ) -> None:
         """Test _ensure_keyring_backend when no backend available."""
         mock_get_keyring.side_effect = Exception("No backend")
 
@@ -711,9 +793,13 @@ class TestProfileManager:
             assert manager._using_fallback_keyring is True
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_standard_region(self, mock_prompt: Mock, tmp_path: Path) -> None:
+    def test_select_region_interactive_standard_region(
+        self, mock_prompt: Mock, tmp_path: Path
+    ) -> None:
         """Test interactive region selection for standard region."""
-        mock_prompt.return_value = {"region": "US Data Center (https://www.workato.com)"}
+        mock_prompt.return_value = {
+            "region": "US Data Center (https://www.workato.com)"
+        }
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -724,13 +810,15 @@ class TestProfileManager:
             assert result.name == "US Data Center"
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_custom_region(self, mock_prompt: Mock, tmp_path: Path) -> None:
+    def test_select_region_interactive_custom_region(
+        self, mock_prompt: Mock, tmp_path: Path
+    ) -> None:
         """Test interactive region selection for custom region."""
         mock_prompt.return_value = {"region": "Custom URL"}
 
         with (
             patch("pathlib.Path.home", return_value=tmp_path),
-            patch("asyncclick.prompt", return_value="https://custom.workato.com")
+            patch("asyncclick.prompt", return_value="https://custom.workato.com"),
         ):
             manager = ProfileManager()
             result = manager.select_region_interactive()
@@ -740,7 +828,9 @@ class TestProfileManager:
             assert result.url == "https://custom.workato.com"
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_user_cancel(self, mock_prompt: Mock, tmp_path: Path) -> None:
+    def test_select_region_interactive_user_cancel(
+        self, mock_prompt: Mock, tmp_path: Path
+    ) -> None:
         """Test interactive region selection when user cancels."""
         mock_prompt.return_value = None  # User cancelled
 
@@ -751,14 +841,18 @@ class TestProfileManager:
             assert result is None
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_custom_invalid_url(self, mock_prompt: Mock, tmp_path: Path) -> None:
+    def test_select_region_interactive_custom_invalid_url(
+        self, mock_prompt: Mock, tmp_path: Path
+    ) -> None:
         """Test interactive region selection with invalid custom URL."""
         mock_prompt.return_value = {"region": "Custom URL"}
 
         with (
             patch("pathlib.Path.home", return_value=tmp_path),
-            patch("asyncclick.prompt", return_value="http://insecure.com"),  # Invalid HTTP URL
-            patch("asyncclick.echo") as mock_echo
+            patch(
+                "asyncclick.prompt", return_value="http://insecure.com"
+            ),  # Invalid HTTP URL
+            patch("asyncclick.echo") as mock_echo,
         ):
             manager = ProfileManager()
             result = manager.select_region_interactive()
@@ -768,20 +862,20 @@ class TestProfileManager:
             mock_echo.assert_called()
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_custom_with_existing_profile(self, mock_prompt: Mock, tmp_path: Path) -> None:
+    def test_select_region_interactive_custom_with_existing_profile(
+        self, mock_prompt: Mock, tmp_path: Path
+    ) -> None:
         """Test interactive region selection for custom region with existing profile."""
         mock_prompt.return_value = {"region": "Custom URL"}
 
         existing_profile = ProfileData(
-            region="custom",
-            region_url="https://existing.workato.com",
-            workspace_id=123
+            region="custom", region_url="https://existing.workato.com", workspace_id=123
         )
 
         with (
             patch("pathlib.Path.home", return_value=tmp_path),
             patch("asyncclick.prompt", return_value="https://new.workato.com"),
-            patch.object(ProfileManager, "get_profile", return_value=existing_profile)
+            patch.object(ProfileManager, "get_profile", return_value=existing_profile),
         ):
             manager = ProfileManager()
             result = manager.select_region_interactive("existing-profile")
@@ -804,7 +898,9 @@ class TestProfileManager:
             assert config_dir.exists()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.delete_password")
-    def test_delete_token_from_keyring_success(self, mock_delete_password: Mock, tmp_path: Path) -> None:
+    def test_delete_token_from_keyring_success(
+        self, mock_delete_password: Mock, tmp_path: Path
+    ) -> None:
         """Test successful token deletion from keyring."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -815,7 +911,9 @@ class TestProfileManager:
                 mock_delete_password.assert_called_once()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.delete_password")
-    def test_delete_token_from_keyring_disabled(self, mock_delete_password: Mock, tmp_path: Path) -> None:
+    def test_delete_token_from_keyring_disabled(
+        self, mock_delete_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token deletion when keyring is disabled."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -826,7 +924,9 @@ class TestProfileManager:
                 mock_delete_password.assert_not_called()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.delete_password")
-    def test_delete_token_from_keyring_no_keyring_error(self, mock_delete_password: Mock, tmp_path: Path) -> None:
+    def test_delete_token_from_keyring_no_keyring_error(
+        self, mock_delete_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token deletion handles NoKeyringError."""
         mock_delete_password.side_effect = NoKeyringError("No keyring")
 
@@ -835,13 +935,15 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "_is_keyring_enabled", return_value=True),
-                patch.object(manager, "_ensure_keyring_backend") as mock_ensure
+                patch.object(manager, "_ensure_keyring_backend") as mock_ensure,
             ):
-                result = manager._delete_token_from_keyring("dev")
+                manager._delete_token_from_keyring("dev")
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.delete_password")
-    def test_delete_token_from_keyring_keyring_error(self, mock_delete_password: Mock, tmp_path: Path) -> None:
+    def test_delete_token_from_keyring_keyring_error(
+        self, mock_delete_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token deletion handles KeyringError."""
         mock_delete_password.side_effect = KeyringError("Keyring error")
 
@@ -850,13 +952,15 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "_is_keyring_enabled", return_value=True),
-                patch.object(manager, "_ensure_keyring_backend") as mock_ensure
+                patch.object(manager, "_ensure_keyring_backend") as mock_ensure,
             ):
-                result = manager._delete_token_from_keyring("dev")
+                manager._delete_token_from_keyring("dev")
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.delete_password")
-    def test_delete_token_from_keyring_general_exception(self, mock_delete_password: Mock, tmp_path: Path) -> None:
+    def test_delete_token_from_keyring_general_exception(
+        self, mock_delete_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token deletion handles general exceptions."""
         mock_delete_password.side_effect = RuntimeError("Unexpected error")
 
@@ -868,7 +972,9 @@ class TestProfileManager:
                 assert result is False
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.set_password")
-    def test_store_token_in_keyring_no_keyring_error(self, mock_set_password: Mock, tmp_path: Path) -> None:
+    def test_store_token_in_keyring_no_keyring_error(
+        self, mock_set_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token storage handles NoKeyringError."""
         mock_set_password.side_effect = NoKeyringError("No keyring")
 
@@ -877,13 +983,15 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "_is_keyring_enabled", return_value=True),
-                patch.object(manager, "_ensure_keyring_backend") as mock_ensure
+                patch.object(manager, "_ensure_keyring_backend") as mock_ensure,
             ):
-                result = manager._store_token_in_keyring("dev", "token123")
+                manager._store_token_in_keyring("dev", "token123")
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.set_password")
-    def test_store_token_in_keyring_keyring_error(self, mock_set_password: Mock, tmp_path: Path) -> None:
+    def test_store_token_in_keyring_keyring_error(
+        self, mock_set_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token storage handles KeyringError."""
         mock_set_password.side_effect = KeyringError("Keyring error")
 
@@ -892,13 +1000,15 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "_is_keyring_enabled", return_value=True),
-                patch.object(manager, "_ensure_keyring_backend") as mock_ensure
+                patch.object(manager, "_ensure_keyring_backend") as mock_ensure,
             ):
-                result = manager._store_token_in_keyring("dev", "token123")
+                manager._store_token_in_keyring("dev", "token123")
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.set_password")
-    def test_store_token_in_keyring_general_exception(self, mock_set_password: Mock, tmp_path: Path) -> None:
+    def test_store_token_in_keyring_general_exception(
+        self, mock_set_password: Mock, tmp_path: Path
+    ) -> None:
         """Test token storage handles general exceptions."""
         mock_set_password.side_effect = RuntimeError("Unexpected error")
 
@@ -910,7 +1020,9 @@ class TestProfileManager:
                 assert result is False
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_keyring")
-    def test_ensure_keyring_backend_successful_backend(self, mock_get_keyring: Mock, tmp_path: Path) -> None:
+    def test_ensure_keyring_backend_successful_backend(
+        self, mock_get_keyring: Mock, tmp_path: Path
+    ) -> None:
         """Test _ensure_keyring_backend with successful backend."""
         # Create a mock backend with proper priority
         mock_backend = Mock()
@@ -923,14 +1035,16 @@ class TestProfileManager:
         with (
             patch("pathlib.Path.home", return_value=tmp_path),
             patch.object(mock_backend, "set_password"),
-            patch.object(mock_backend, "delete_password")
+            patch.object(mock_backend, "delete_password"),
         ):
             manager = ProfileManager()
             # Should not fall back since backend is good
             assert manager._using_fallback_keyring is False
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_keyring")
-    def test_ensure_keyring_backend_failed_backend(self, mock_get_keyring: Mock, tmp_path: Path) -> None:
+    def test_ensure_keyring_backend_failed_backend(
+        self, mock_get_keyring: Mock, tmp_path: Path
+    ) -> None:
         """Test _ensure_keyring_backend with failed backend."""
         # Create a mock backend that fails health check
         mock_backend = Mock()
@@ -942,7 +1056,9 @@ class TestProfileManager:
 
         with (
             patch("pathlib.Path.home", return_value=tmp_path),
-            patch("workato_platform.cli.utils.config.profiles.keyring.set_keyring") as mock_set_keyring
+            patch(
+                "workato_platform.cli.utils.config.profiles.keyring.set_keyring"
+            ) as mock_set_keyring,
         ):
             manager = ProfileManager()
             # Should fall back due to failed health check
@@ -950,7 +1066,9 @@ class TestProfileManager:
             mock_set_keyring.assert_called()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_keyring")
-    def test_ensure_keyring_backend_fail_module(self, mock_get_keyring: Mock, tmp_path: Path) -> None:
+    def test_ensure_keyring_backend_fail_module(
+        self, mock_get_keyring: Mock, tmp_path: Path
+    ) -> None:
         """Test _ensure_keyring_backend with fail backend module."""
         # Create a mock backend from fail module
         mock_backend = Mock()
@@ -961,7 +1079,9 @@ class TestProfileManager:
 
         with (
             patch("pathlib.Path.home", return_value=tmp_path),
-            patch("workato_platform.cli.utils.config.profiles.keyring.set_keyring") as mock_set_keyring
+            patch(
+                "workato_platform.cli.utils.config.profiles.keyring.set_keyring"
+            ) as mock_set_keyring,
         ):
             manager = ProfileManager()
             # Should fall back due to fail module
@@ -969,7 +1089,9 @@ class TestProfileManager:
             mock_set_keyring.assert_called()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_keyring")
-    def test_ensure_keyring_backend_zero_priority(self, mock_get_keyring: Mock, tmp_path: Path) -> None:
+    def test_ensure_keyring_backend_zero_priority(
+        self, mock_get_keyring: Mock, tmp_path: Path
+    ) -> None:
         """Test _ensure_keyring_backend with zero priority backend."""
         # Create a mock backend with zero priority
         mock_backend = Mock()
@@ -980,7 +1102,9 @@ class TestProfileManager:
 
         with (
             patch("pathlib.Path.home", return_value=tmp_path),
-            patch("workato_platform.cli.utils.config.profiles.keyring.set_keyring") as mock_set_keyring
+            patch(
+                "workato_platform.cli.utils.config.profiles.keyring.set_keyring"
+            ) as mock_set_keyring,
         ):
             manager = ProfileManager()
             # Should fall back due to zero priority
@@ -995,7 +1119,10 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "_is_keyring_enabled", return_value=True),
-                patch("workato_platform.cli.utils.config.profiles.keyring.get_password", return_value="fallback-token")
+                patch(
+                    "workato_platform.cli.utils.config.profiles.keyring.get_password",
+                    return_value="fallback-token",
+                ),
             ):
                 result = manager._get_token_from_keyring("dev")
                 assert result == "fallback-token"
@@ -1008,8 +1135,10 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "_is_keyring_enabled", return_value=True),
-                patch("workato_platform.cli.utils.config.profiles.keyring.set_password") as mock_set_password,
-                patch.object(manager, "_ensure_keyring_backend")
+                patch(
+                    "workato_platform.cli.utils.config.profiles.keyring.set_password"
+                ) as mock_set_password,
+                patch.object(manager, "_ensure_keyring_backend"),
             ):
                 # First fails, then succeeds with fallback
                 mock_set_password.side_effect = [NoKeyringError("No keyring"), None]
@@ -1026,8 +1155,10 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "_is_keyring_enabled", return_value=True),
-                patch("workato_platform.cli.utils.config.profiles.keyring.delete_password") as mock_delete_password,
-                patch.object(manager, "_ensure_keyring_backend")
+                patch(
+                    "workato_platform.cli.utils.config.profiles.keyring.delete_password"
+                ) as mock_delete_password,
+                patch.object(manager, "_ensure_keyring_backend"),
             ):
                 # First fails, then succeeds with fallback
                 mock_delete_password.side_effect = [NoKeyringError("No keyring"), None]
@@ -1036,7 +1167,9 @@ class TestProfileManager:
                 result = manager._delete_token_from_keyring("dev")
                 assert result is True
 
-    def test_get_token_fallback_keyring_after_keyring_error(self, tmp_path: Path) -> None:
+    def test_get_token_fallback_keyring_after_keyring_error(
+        self, tmp_path: Path
+    ) -> None:
         """Test token retrieval with fallback after KeyringError."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -1044,11 +1177,16 @@ class TestProfileManager:
 
             with (
                 patch.object(manager, "_is_keyring_enabled", return_value=True),
-                patch("workato_platform.cli.utils.config.profiles.keyring.get_password") as mock_get_password,
-                patch.object(manager, "_ensure_keyring_backend")
+                patch(
+                    "workato_platform.cli.utils.config.profiles.keyring.get_password"
+                ) as mock_get_password,
+                patch.object(manager, "_ensure_keyring_backend"),
             ):
                 # First fails with KeyringError, then succeeds with fallback
-                mock_get_password.side_effect = [KeyringError("Keyring error"), "fallback-token"]
+                mock_get_password.side_effect = [
+                    KeyringError("Keyring error"),
+                    "fallback-token",
+                ]
                 manager._using_fallback_keyring = True  # Set to fallback after error
 
                 result = manager._get_token_from_keyring("dev")

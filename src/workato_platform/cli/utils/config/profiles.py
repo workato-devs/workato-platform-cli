@@ -20,7 +20,8 @@ from .models import AVAILABLE_REGIONS, ProfileData, ProfilesConfig, RegionInfo
 
 
 def _validate_url_security(url: str) -> tuple[bool, str]:
-    """Validate URL security - only allow HTTP for localhost, require HTTPS for others."""
+    """Validate URL security - only allow HTTP for localhost,
+    require HTTPS for others."""
     if not url.startswith(("http://", "https://")):
         return False, "URL must start with http:// or https://"
 
@@ -419,7 +420,9 @@ class ProfileManager:
 
         return len(missing_items) == 0, missing_items
 
-    def select_region_interactive(self, profile_name: str | None = None) -> RegionInfo | None:
+    def select_region_interactive(
+        self, profile_name: str | None = None
+    ) -> RegionInfo | None:
         """Interactive region selection"""
         regions = list(AVAILABLE_REGIONS.values())
 

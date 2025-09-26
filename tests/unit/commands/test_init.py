@@ -66,7 +66,9 @@ async def test_init_non_interactive_success(monkeypatch: pytest.MonkeyPatch) -> 
 
     with (
         patch.object(
-            mock_config_manager, "load_config", return_value=Mock(profile="test-profile")
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
         ),
         patch.object(
             mock_config_manager.profile_manager,
@@ -116,7 +118,9 @@ async def test_init_non_interactive_success(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 @pytest.mark.asyncio
-async def test_init_non_interactive_custom_region(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_init_non_interactive_custom_region(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Test non-interactive mode with custom region and API URL."""
     mock_config_manager = Mock()
     mock_workato_client = Mock()
@@ -124,7 +128,9 @@ async def test_init_non_interactive_custom_region(monkeypatch: pytest.MonkeyPatc
 
     with (
         patch.object(
-            mock_config_manager, "load_config", return_value=Mock(profile="test-profile")
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
         ),
         patch.object(
             mock_config_manager.profile_manager,

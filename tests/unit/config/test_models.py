@@ -24,7 +24,7 @@ class TestConfigData:
             project_name="test",
             project_path="projects/test",
             folder_id=456,
-            profile="dev"
+            profile="dev",
         )
         assert config.project_id == 123
         assert config.project_name == "test"
@@ -76,9 +76,7 @@ class TestProfileData:
     def test_profile_data_creation(self) -> None:
         """Test ProfileData model creation."""
         profile = ProfileData(
-            region="us",
-            region_url="https://www.workato.com",
-            workspace_id=123
+            region="us", region_url="https://www.workato.com", workspace_id=123
         )
         assert profile.region == "us"
         assert profile.region_url == "https://www.workato.com"
@@ -88,17 +86,23 @@ class TestProfileData:
         """Test ProfileData validates region codes."""
         with pytest.raises(ValidationError):
             ProfileData(
-                region="invalid",
-                region_url="https://example.com",
-                workspace_id=123
+                region="invalid", region_url="https://example.com", workspace_id=123
             )
 
     def test_profile_data_region_name_property(self) -> None:
         """Test region_name property."""
-        profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
+        profile = ProfileData(
+            region="us",
+            region_url="https://www.workato.com",
+            workspace_id=123,
+        )
         assert profile.region_name == "US Data Center"
 
-        profile_custom = ProfileData(region="custom", region_url="https://custom.com", workspace_id=123)
+        profile_custom = ProfileData(
+            region="custom",
+            region_url="https://custom.com",
+            workspace_id=123,
+        )
         assert profile_custom.region_name == "Custom URL"
 
 
@@ -113,10 +117,13 @@ class TestProfilesConfig:
 
     def test_profiles_config_with_data(self) -> None:
         """Test ProfilesConfig with profile data."""
-        profile = ProfileData(region="us", region_url="https://www.workato.com", workspace_id=123)
+        profile = ProfileData(
+            region="us",
+            region_url="https://www.workato.com",
+            workspace_id=123,
+        )
         config = ProfilesConfig(
-            current_profile="default",
-            profiles={"default": profile}
+            current_profile="default", profiles={"default": profile}
         )
         assert config.current_profile == "default"
         assert "default" in config.profiles

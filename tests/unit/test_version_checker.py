@@ -518,7 +518,10 @@ class TestVersionChecker:
         assert version is None
 
     def test_update_cache_timestamp_handles_os_error(
-        self, mock_config_manager: ConfigManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        mock_config_manager: ConfigManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test update_cache_timestamp handles OS errors gracefully."""
         checker = VersionChecker(mock_config_manager)
@@ -578,7 +581,9 @@ class TestVersionChecker:
         """Test version retrieval handles ValueError from JSON parsing."""
         mock_response = Mock()
         mock_response.getcode.return_value = 200
-        mock_response.read.return_value.decode.side_effect = ValueError("encoding error")
+        mock_response.read.return_value.decode.side_effect = ValueError(
+            "encoding error"
+        )
         mock_urlopen.return_value.__enter__.return_value = mock_response
 
         checker = VersionChecker(mock_config_manager)
@@ -587,7 +592,10 @@ class TestVersionChecker:
         assert version is None
 
     def test_should_check_for_updates_old_cache(
-        self, mock_config_manager: ConfigManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self,
+        mock_config_manager: ConfigManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test should_check_for_updates with old cache timestamp."""
         monkeypatch.delenv("WORKATO_DISABLE_UPDATE_CHECK", raising=False)
@@ -612,7 +620,9 @@ class TestVersionChecker:
         checker = VersionChecker(mock_config_manager)
 
         # Test with non-https scheme in parsed URL
-        with patch("workato_platform.cli.utils.version_checker.urlparse") as mock_urlparse:
+        with patch(
+            "workato_platform.cli.utils.version_checker.urlparse"
+        ) as mock_urlparse:
             mock_urlparse.return_value.scheme = "http"  # Not https
             result = checker.get_latest_version()
             assert result is None
@@ -641,6 +651,7 @@ class TestVersionChecker:
                 Mock(return_value=mock_config_manager),
             ),
         ):
+
             @check_updates_async
             async def sample() -> str:
                 return "done"

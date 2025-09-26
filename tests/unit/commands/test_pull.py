@@ -23,8 +23,6 @@ from workato_platform.cli.utils.config import ConfigData, ConfigManager
 class TestPullCommand:
     """Test the pull command functionality."""
 
-    # Note: gitignore tests removed - functionality moved to ConfigManager._create_workspace_files()
-
     def test_count_lines_with_text_file(self) -> None:
         """Test count_lines with a regular text file."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -316,7 +314,9 @@ class TestPullCommand:
 
             await _pull_project(config_manager, project_manager)
 
-            assert any("Could not determine project directory" in msg for msg in captured)
+            assert any(
+                "Could not determine project directory" in msg for msg in captured
+            )
             project_manager.export_project.assert_not_awaited()
 
     @pytest.mark.asyncio
@@ -377,7 +377,9 @@ class TestPullCommand:
             patch.object(
                 config_manager, "get_current_project_name", return_value="demo"
             ),
-            patch.object(config_manager, "get_project_directory", return_value=project_dir),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
         ):
             await _pull_project(config_manager, project_manager)
 
@@ -432,9 +434,13 @@ class TestPullCommand:
             patch.object(
                 config_manager,
                 "load_config",
-                return_value=ConfigData(project_id=1, project_name="Demo", folder_id=11),
+                return_value=ConfigData(
+                    project_id=1, project_name="Demo", folder_id=11
+                ),
             ),
-            patch.object(config_manager, "get_project_directory", return_value=project_dir),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
         ):
             await _pull_project(config_manager, project_manager)
 
@@ -484,7 +490,9 @@ class TestPullCommand:
             patch.object(
                 config_manager, "get_current_project_name", return_value="demo"
             ),
-            patch.object(config_manager, "get_project_directory", return_value=project_dir),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
         ):
             await _pull_project(config_manager, project_manager)
 
@@ -537,12 +545,16 @@ class TestPullCommand:
                 "load_config",
                 return_value=ConfigData(project_id=1, project_name="Demo", folder_id=9),
             ),
-            patch.object(config_manager, "get_project_directory", return_value=project_dir),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
         ):
             await _pull_project(config_manager, project_manager)
 
         assert (project_dir / "remote.txt").exists()
-        assert any("Successfully pulled project to ./project" in msg for msg in captured)
+        assert any(
+            "Successfully pulled project to ./project" in msg for msg in captured
+        )
 
     @pytest.mark.asyncio
     async def test_pull_project_failed_export(
@@ -575,7 +587,9 @@ class TestPullCommand:
                 "load_config",
                 return_value=ConfigData(project_id=1, project_name="Demo", folder_id=9),
             ),
-            patch.object(config_manager, "get_project_directory", return_value=project_dir),
+            patch.object(
+                config_manager, "get_project_directory", return_value=project_dir
+            ),
         ):
             await _pull_project(config_manager, project_manager)
 
@@ -604,7 +618,11 @@ class TestPullCommand:
         project_manager = MagicMock(spec=ProjectManager)
         project_manager.export_project = AsyncMock(side_effect=fake_export)
 
-        empty_changes: dict[str, list[tuple[str, dict[str, int]]]] = {"added": [], "modified": [], "removed": []}
+        empty_changes: dict[str, list[tuple[str, dict[str, int]]]] = {
+            "added": [],
+            "modified": [],
+            "removed": [],
+        }
         monkeypatch.setattr(
             "workato_platform.cli.commands.pull.merge_directories",
             lambda *args, **kwargs: empty_changes,
@@ -626,15 +644,15 @@ class TestPullCommand:
             patch.object(
                 config_manager,
                 "load_config",
-                return_value=ConfigData(project_id=1, project_name="Demo", folder_id=11),
+                return_value=ConfigData(
+                    project_id=1, project_name="Demo", folder_id=11
+                ),
             ),
-            patch.object(config_manager, "get_project_directory", return_value=project_dir),
             patch.object(
-                config_manager, "get_workspace_root", return_value=tmp_path
+                config_manager, "get_project_directory", return_value=project_dir
             ),
+            patch.object(config_manager, "get_workspace_root", return_value=tmp_path),
         ):
             await _pull_project(config_manager, project_manager)
 
         assert any("Project is already up to date" in msg for msg in captured)
-
-    # Note: Legacy workspace structure test removed - behavior changed in simplified config

@@ -54,7 +54,10 @@ async def test_list_projects_with_entries(
     projects_dir = workspace / "projects"
     alpha_project = projects_dir / "alpha"
     alpha_project.mkdir(parents=True)
-    (alpha_project / ".workatoenv").write_text('{"project_id": 5, "project_name": "Alpha", "folder_id": 9, "profile": "default"}')
+    (alpha_project / ".workatoenv").write_text(
+        '{"project_id": 5, "project_name": "Alpha", '
+        '"folder_id": 9, "profile": "default"}',
+    )
 
     config_manager = Mock()
     config_manager.get_workspace_root.return_value = workspace
@@ -66,7 +69,9 @@ async def test_list_projects_with_entries(
     )
 
     class StubConfigManager:
-        def __init__(self, path: Path | None = None, skip_validation: bool = False) -> None:
+        def __init__(
+            self, path: Path | None = None, skip_validation: bool = False
+        ) -> None:
             self.path = path
             self.skip_validation = skip_validation
 
@@ -94,7 +99,9 @@ async def test_use_project_success(
 
     project_dir = workspace / "projects" / "beta"
     project_dir.mkdir(parents=True)
-    (project_dir / ".workatoenv").write_text('{"project_id": 3, "project_name": "Beta", "folder_id": 7, "profile": "p1"}')
+    (project_dir / ".workatoenv").write_text(
+        '{"project_id": 3, "project_name": "Beta", "folder_id": 7, "profile": "p1"}'
+    )
 
     project_config = ConfigData(
         project_id=3, project_name="Beta", folder_id=7, profile="p1"
@@ -107,7 +114,9 @@ async def test_use_project_success(
     config_manager.save_config = Mock()
 
     class StubConfigManager:
-        def __init__(self, path: Path | None = None, skip_validation: bool = False) -> None:
+        def __init__(
+            self, path: Path | None = None, skip_validation: bool = False
+        ) -> None:
             self.path = path
             self.skip_validation = skip_validation
 
@@ -148,12 +157,17 @@ async def test_switch_interactive(
     workspace = tmp_path
     beta_project = workspace / "projects" / "beta"
     beta_project.mkdir(parents=True)
-    (beta_project / ".workatoenv").write_text('{"project_id": 9, "project_name": "Beta", "folder_id": 11}')
+    (beta_project / ".workatoenv").write_text(
+        '{"project_id": 9, "project_name": "Beta", "folder_id": 11}'
+    )
 
     config_manager = Mock()
     config_manager.get_workspace_root.return_value = workspace
     config_manager.get_current_project_name.return_value = "alpha"
-    config_manager._find_all_projects.return_value = [(workspace / "alpha", "alpha"), (beta_project, "beta")]
+    config_manager._find_all_projects.return_value = [
+        (workspace / "alpha", "alpha"),
+        (beta_project, "beta"),
+    ]
     config_manager.load_config.return_value = ConfigData()
     config_manager.save_config = Mock()
 
@@ -162,7 +176,9 @@ async def test_switch_interactive(
     )
 
     class StubConfigManager:
-        def __init__(self, path: Path | None = None, skip_validation: bool = False) -> None:
+        def __init__(
+            self, path: Path | None = None, skip_validation: bool = False
+        ) -> None:
             self.path = path
             self.skip_validation = skip_validation
 
@@ -203,7 +219,9 @@ async def test_switch_keeps_current_when_only_one(
     config_manager._find_all_projects.return_value = [(alpha_project, "alpha")]
 
     class StubConfigManager:
-        def __init__(self, path: Path | None = None, skip_validation: bool = False) -> None:
+        def __init__(
+            self, path: Path | None = None, skip_validation: bool = False
+        ) -> None:
             self.path = path
             self.skip_validation = skip_validation
 
@@ -384,7 +402,9 @@ async def test_use_project_exception_handling(
     workspace = tmp_path
     project_dir = workspace / "projects" / "beta"
     project_dir.mkdir(parents=True)
-    (project_dir / ".workatoenv").write_text('{"project_id": 3, "project_name": "Beta", "folder_id": 7}')
+    (project_dir / ".workatoenv").write_text(
+        '{"project_id": 3, "project_name": "Beta", "folder_id": 7}'
+    )
 
     config_manager = Mock()
     config_manager.get_workspace_root.return_value = workspace
@@ -745,12 +765,17 @@ async def test_switch_exception_handling(
     workspace = tmp_path
     beta_project = workspace / "projects" / "beta"
     beta_project.mkdir(parents=True)
-    (beta_project / ".workatoenv").write_text('{"project_id": 9, "project_name": "Beta", "folder_id": 11}')
+    (beta_project / ".workatoenv").write_text(
+        '{"project_id": 9, "project_name": "Beta", "folder_id": 11}'
+    )
 
     config_manager = Mock()
     config_manager.get_workspace_root.return_value = workspace
     config_manager.get_current_project_name.return_value = "alpha"
-    config_manager._find_all_projects.return_value = [(workspace / "alpha", "alpha"), (beta_project, "beta")]
+    config_manager._find_all_projects.return_value = [
+        (workspace / "alpha", "alpha"),
+        (beta_project, "beta"),
+    ]
     config_manager.load_config.side_effect = Exception(
         "Config error"
     )  # Force exception
@@ -799,22 +824,25 @@ async def test_list_projects_json_output_mode(
 
     # Mock project config manager
     project_config = ConfigData(
-        project_id=123,
-        project_name="Test Project",
-        folder_id=456,
-        profile="dev"
+        project_id=123, project_name="Test Project", folder_id=456, profile="dev"
     )
     mock_project_config_manager = Mock()
     mock_project_config_manager.load_config.return_value = project_config
 
-    with patch("workato_platform.cli.commands.projects.command.ConfigManager", return_value=mock_project_config_manager):
+    with patch(
+        "workato_platform.cli.commands.projects.command.ConfigManager",
+        return_value=mock_project_config_manager,
+    ):
         assert command.list_projects.callback
-        await command.list_projects.callback(output_mode="json", config_manager=config_manager)
+        await command.list_projects.callback(
+            output_mode="json", config_manager=config_manager
+        )
 
     output = "\n".join(capture_echo)
 
     # Parse JSON output
     import json
+
     parsed = json.loads(output)
 
     assert parsed["current_project"] == "test-project"
@@ -841,12 +869,15 @@ async def test_list_projects_json_output_mode_empty(
     config_manager._find_all_projects.return_value = []
 
     assert command.list_projects.callback
-    await command.list_projects.callback(output_mode="json", config_manager=config_manager)
+    await command.list_projects.callback(
+        output_mode="json", config_manager=config_manager
+    )
 
     output = "\n".join(capture_echo)
 
     # Parse JSON output
     import json
+
     parsed = json.loads(output)
 
     assert parsed["current_project"] is None

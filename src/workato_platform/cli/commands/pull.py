@@ -44,7 +44,9 @@ async def _pull_project(
     # Get project directory using the new relative path resolution
     project_dir = config_manager.get_project_directory()
     if not project_dir:
-        click.echo("❌ Could not determine project directory. Run 'workato init' first.")
+        click.echo(
+            "❌ Could not determine project directory. Run 'workato init' first."
+        )
         return
 
     # Ensure project directory exists
@@ -270,7 +272,9 @@ def merge_directories(
 
     # If there are files to delete, ask for confirmation
     if files_to_delete:
-        click.echo(f"\n⚠️  The following {len(files_to_delete)} file(s) will be deleted:")
+        click.echo(
+            f"\n⚠️  The following {len(files_to_delete)} file(s) will be deleted:"
+        )
         for rel_path in files_to_delete[:10]:  # Show first 10
             click.echo(f"   🗑️  {rel_path}")
 
@@ -291,7 +295,9 @@ def merge_directories(
         # Remove empty directories (but not if they match ignore patterns)
         parent_dir = local_file.parent
         with contextlib.suppress(OSError):
-            if not should_skip_file(parent_dir.relative_to(local_path), ignore_patterns):
+            if not should_skip_file(
+                parent_dir.relative_to(local_path), ignore_patterns
+            ):
                 parent_dir.rmdir()
 
     return changes

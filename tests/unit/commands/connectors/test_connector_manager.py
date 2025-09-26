@@ -281,7 +281,7 @@ def test_connection_parameter_model() -> None:
         label="Test Parameter",
         type="string",
         hint="Test hint",
-        pick_list=[["value1", "Label1"], ["value2", "Label2"]]
+        pick_list=[["value1", "Label1"], ["value2", "Label2"]],
     )
     assert param.name == "test_param"
     assert param.label == "Test Parameter"
@@ -301,9 +301,7 @@ def test_provider_data_parameter_count() -> None:
     param2 = ConnectionParameter(name="param2", label="Param 2", type="string")
 
     provider = ProviderData(
-        name="Test Provider",
-        provider="test",
-        input=[param1, param2]
+        name="Test Provider", provider="test", input=[param1, param2]
     )
     assert provider.parameter_count == 2
 
@@ -321,7 +319,7 @@ def test_provider_data_get_oauth_parameters_jira() -> None:
         name="Jira",
         provider="jira",
         oauth=True,
-        input=[auth_param, host_param, other_param]
+        input=[auth_param, host_param, other_param],
     )
 
     oauth_params = jira_provider.get_oauth_parameters()
@@ -335,10 +333,7 @@ def test_provider_data_get_oauth_parameters_other_provider() -> None:
     """Test get_oauth_parameters for non-Jira provider returns empty."""
     param = ConnectionParameter(name="param", label="Param", type="string")
     provider = ProviderData(
-        name="Other Provider",
-        provider="other",
-        oauth=True,
-        input=[param]
+        name="Other Provider", provider="other", oauth=True, input=[param]
     )
 
     oauth_params = provider.get_oauth_parameters()
@@ -351,9 +346,7 @@ def test_provider_data_get_parameter_by_name() -> None:
     param2 = ConnectionParameter(name="param2", label="Param 2", type="string")
 
     provider = ProviderData(
-        name="Test Provider",
-        provider="test",
-        input=[param1, param2]
+        name="Test Provider", provider="test", input=[param1, param2]
     )
 
     # Test existing parameter
@@ -382,14 +375,18 @@ def test_load_connection_data_missing_file(tmp_path: Path) -> None:
 
     # Point to non-existent file
     missing_path = tmp_path / "missing.json"
-    with patch.object(ConnectorManager, "data_file_path", property(lambda self: missing_path)):
+    with patch.object(
+        ConnectorManager, "data_file_path", property(lambda self: missing_path)
+    ):
         data = manager.load_connection_data()
 
     assert data == {}
     assert manager._data_cache == {}
 
 
-def test_load_connection_data_caching(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_load_connection_data_caching(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     """Test load_connection_data uses cache on subsequent calls."""
     client = Mock()
     manager = ConnectorManager(workato_api_client=client)
@@ -430,9 +427,7 @@ def test_get_oauth_required_parameters_no_provider(manager: ConnectorManager) ->
 
 def test_prompt_for_oauth_parameters_no_oauth_params(manager: ConnectorManager) -> None:
     """Test prompt_for_oauth_parameters when no OAuth params needed."""
-    manager._data_cache = {
-        "simple": ProviderData(name="Simple", provider="simple")
-    }
+    manager._data_cache = {"simple": ProviderData(name="Simple", provider="simple")}
 
     result = manager.prompt_for_oauth_parameters("simple", {"existing": "value"})
     assert result == {"existing": "value"}
@@ -442,10 +437,7 @@ def test_prompt_for_oauth_parameters_all_provided(manager: ConnectorManager) -> 
     """Test prompt_for_oauth_parameters when all params already provided."""
     auth_param = ConnectionParameter(name="auth_type", label="Auth Type", type="string")
     provider = ProviderData(
-        name="Jira",
-        provider="jira",
-        oauth=True,
-        input=[auth_param]
+        name="Jira", provider="jira", oauth=True, input=[auth_param]
     )
     manager._data_cache = {"jira": provider}
 
@@ -462,7 +454,7 @@ def test_show_provider_details_no_parameters(capture_echo: list[str]) -> None:
         oauth=False,
         personalization=False,
         secure_tunnel=False,
-        input=[]
+        input=[],
     )
 
     mock_manager = Mock()
@@ -483,7 +475,7 @@ def test_show_provider_details_with_secure_tunnel(capture_echo: list[str]) -> No
         oauth=True,
         personalization=True,
         secure_tunnel=True,
-        input=[]
+        input=[],
     )
 
     mock_manager = Mock()
@@ -497,19 +489,15 @@ def test_show_provider_details_with_secure_tunnel(capture_echo: list[str]) -> No
 
 def test_show_provider_details_long_hint_truncation(capture_echo: list[str]) -> None:
     """Test show_provider_details truncates long hints."""
-    long_hint = "This is a very long hint that should be truncated because it exceeds the 100 character limit and goes on and on"
+    long_hint = (
+        "This is a very long hint that should be truncated because "
+        "it exceeds the 100 character limit and goes on and on"
+    )
     param = ConnectionParameter(
-        name="test_param",
-        label="Test Parameter",
-        type="string",
-        hint=long_hint
+        name="test_param", label="Test Parameter", type="string", hint=long_hint
     )
 
-    provider = ProviderData(
-        name="Test Provider",
-        provider="test",
-        input=[param]
-    )
+    provider = ProviderData(name="Test Provider", provider="test", input=[param])
 
     mock_manager = Mock()
     ConnectorManager.show_provider_details(mock_manager, "test", provider)
@@ -520,19 +508,18 @@ def test_show_provider_details_long_hint_truncation(capture_echo: list[str]) -> 
 
 def test_show_provider_details_pick_list_truncation(capture_echo: list[str]) -> None:
     """Test show_provider_details truncates long pick lists."""
-    pick_list = [["opt1", "Option 1"], ["opt2", "Option 2"], ["opt3", "Option 3"], ["opt4", "Option 4"], ["opt5", "Option 5"]]
+    pick_list = [
+        ["opt1", "Option 1"],
+        ["opt2", "Option 2"],
+        ["opt3", "Option 3"],
+        ["opt4", "Option 4"],
+        ["opt5", "Option 5"],
+    ]
     param = ConnectionParameter(
-        name="test_param",
-        label="Test Parameter",
-        type="select",
-        pick_list=pick_list
+        name="test_param", label="Test Parameter", type="select", pick_list=pick_list
     )
 
-    provider = ProviderData(
-        name="Test Provider",
-        provider="test",
-        input=[param]
-    )
+    provider = ProviderData(name="Test Provider", provider="test", input=[param])
 
     mock_manager = Mock()
     ConnectorManager.show_provider_details(mock_manager, "test", provider)
@@ -542,7 +529,9 @@ def test_show_provider_details_pick_list_truncation(capture_echo: list[str]) -> 
 
 
 @pytest.mark.asyncio
-async def test_list_custom_connectors_empty(manager: ConnectorManager, capture_echo: list[str]) -> None:
+async def test_list_custom_connectors_empty(
+    manager: ConnectorManager, capture_echo: list[str]
+) -> None:
     """Test list_custom_connectors with no connectors."""
     response = Mock()
     response.result = []
@@ -559,7 +548,9 @@ async def test_list_custom_connectors_empty(manager: ConnectorManager, capture_e
 
 
 @pytest.mark.asyncio
-async def test_list_custom_connectors_long_description(manager: ConnectorManager, capture_echo: list[str]) -> None:
+async def test_list_custom_connectors_long_description(
+    manager: ConnectorManager, capture_echo: list[str]
+) -> None:
     """Test list_custom_connectors truncates long descriptions."""
     connector = Mock()
     connector.name = "Long Desc Connector"
@@ -581,7 +572,9 @@ async def test_list_custom_connectors_long_description(manager: ConnectorManager
 
 
 @pytest.mark.asyncio
-async def test_list_custom_connectors_no_version_attribute(manager: ConnectorManager, capture_echo: list[str]) -> None:
+async def test_list_custom_connectors_no_version_attribute(
+    manager: ConnectorManager, capture_echo: list[str]
+) -> None:
     """Test list_custom_connectors handles missing version attribute."""
     connector = Mock()
     connector.name = "No Version Connector"
@@ -603,7 +596,9 @@ async def test_list_custom_connectors_no_version_attribute(manager: ConnectorMan
     assert "No Version Connector (vUnknown)" in output
 
 
-def test_load_connection_data_value_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, manager: ConnectorManager) -> None:
+def test_load_connection_data_value_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, manager: ConnectorManager
+) -> None:
     """Test load_connection_data handles ValueError from invalid data structure."""
     data_path = tmp_path / "connection-data.json"
     # Valid JSON but missing required fields to trigger ValueError

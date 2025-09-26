@@ -4,6 +4,7 @@ import json
 import sys
 
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 import asyncclick as click
@@ -12,6 +13,7 @@ import inquirer
 from workato_platform import Workato
 from workato_platform.cli.commands.projects.project_manager import ProjectManager
 from workato_platform.client.workato_api.configuration import Configuration
+from workato_platform.client.workato_api.models.project import Project
 
 from .models import AVAILABLE_REGIONS, ConfigData, ProfileData, ProjectInfo, RegionInfo
 from .profiles import ProfileManager, _validate_url_security
@@ -149,13 +151,18 @@ class ConfigManager:
             selected_project = None
 
             if project_name:
-               selected_project = await project_manager.create_project(project_name)
+                selected_project = await project_manager.create_project(project_name)
             elif project_id:
                 # Use existing project
                 projects = await project_manager.get_all_projects()
-                selected_project = next((p for p in projects if p.id == project_id), None)
+                selected_project = next(
+                    (p for p in projects if p.id == project_id),
+                    None,
+                )
                 if not selected_project:
-                    raise click.ClickException(f"Project with ID {project_id} not found")
+                    raise click.ClickException(
+                        f"Project with ID {project_id} not found"
+                    )
 
             if not selected_project:
                 raise click.ClickException("No project selected")
@@ -283,7 +290,9 @@ class ConfigManager:
                 type=str,
                 default="https://www.workato.com",
             )
-            selected_region = RegionInfo(region="custom", name="Custom URL", url=custom_url)
+            selected_region = RegionInfo(
+                region="custom", name="Custom URL", url=custom_url
+            )
 
         # Get API token
         click.echo("🔐 Enter your API token")
@@ -333,7 +342,9 @@ class ConfigManager:
                 self.save_config(existing_config)
 
                 # Create project config
-                project_config_manager = ConfigManager(project_path, skip_validation=True)
+                project_config_manager = ConfigManager(
+                    project_path, skip_validation=True
+                )
                 project_config = ConfigData(
                     project_id=existing_config.project_id,
                     project_name=existing_config.project_name,
@@ -357,7 +368,9 @@ class ConfigManager:
             project_location_mode = "current_dir"
 
         # Get API client for project operations
-        api_token, api_host = self.profile_manager.resolve_environment_variables(profile_name)
+        api_token, api_host = self.profile_manager.resolve_environment_variables(
+            profile_name
+        )
         api_config = Configuration(access_token=api_token, host=api_host)
         api_config.verify_ssl = False
 
@@ -419,52 +432,51 @@ class ConfigManager:
 
             # Validate project path
             try:
-                self.workspace_manager.validate_project_path(project_path, workspace_root)
+                self.workspace_manager.validate_project_path(
+                    project_path, workspace_root
+                )
             except ValueError as e:
                 click.echo(f"❌ {e}")
                 sys.exit(1)
 
             # Check if project directory already exists and is non-empty
-            if project_path.exists():
+            if not project_path.exists():
+                pass  # Directory doesn't exist, we can proceed
+            else:
                 try:
-                    # Check if directory has any files
                     existing_files = list(project_path.iterdir())
-                    if existing_files:
-                        # Check if it's a Workato project with matching project ID
-                        existing_workatoenv = project_path / ".workatoenv"
-                        if existing_workatoenv.exists():
-                            try:
-                                with open(existing_workatoenv) as f:
-                                    existing_data = json.load(f)
-                                    existing_project_id = existing_data.get("project_id")
+                    if not existing_files:
+                        pass  # Directory is empty, we can proceed
+                    else:
+                        # Directory has files - check if it's the same Workato project
+                        existing_project_id = self._get_existing_project_id(
+                            project_path
+                        )
 
-                                if existing_project_id == selected_project.id:
-                                    # Same project ID - allow reconfiguration
-                                    click.echo(f"🔄 Reconfiguring existing project: {selected_project.name}")
-                                elif existing_project_id:
-                                    # Different project ID - block it
-                                    existing_name = existing_data.get("project_name", "Unknown")
-                                    click.echo(f"❌ Directory contains different Workato project: {existing_name} (ID: {existing_project_id})")
-                                    click.echo(f"   Cannot initialize {selected_project.name} (ID: {selected_project.id}) here")
-                                    click.echo("💡 Choose a different directory or project name")
-                                    sys.exit(1)
-                                # If no project_id in existing config, treat as invalid and block below
-                            except (json.JSONDecodeError, OSError):
-                                # Invalid .workatoenv file - treat as non-Workato project
-                                pass
-
-                        # Not a Workato project or invalid config - block it
-                        if not (existing_workatoenv.exists() and existing_project_id == selected_project.id):
-                            click.echo(f"❌ Project directory is not empty: {project_path.relative_to(workspace_root)}")
-                            click.echo(f"   Found {len(existing_files)} existing files")
-                            click.echo("💡 Choose a different project name or clean the directory first")
-                            sys.exit(1)
+                        if existing_project_id == selected_project.id:
+                            # Same project ID - allow reconfiguration
+                            click.echo(
+                                f"🔄 Reconfiguring existing project: "
+                                f"{selected_project.name}"
+                            )
+                        elif existing_project_id:
+                            # Different project ID - block it
+                            self._handle_different_project_error(
+                                project_path, existing_project_id, selected_project
+                            )
+                        else:
+                            # Not a Workato project - block it
+                            self._handle_non_empty_directory_error(
+                                project_path, workspace_root, existing_files
+                            )
                 except OSError:
                     pass  # If we can't read the directory, let mkdir handle it
 
             # Create project directory
             project_path.mkdir(parents=True, exist_ok=True)
-            click.echo(f"✅ Project directory: {project_path.relative_to(workspace_root)}")
+            click.echo(
+                f"✅ Project directory: {project_path.relative_to(workspace_root)}"
+            )
 
             # Save workspace config (with project_path)
             relative_project_path = str(project_path.relative_to(workspace_root))
@@ -673,9 +685,14 @@ Thumbs.db
 
         click.echo(f"✅ Selected '{project_config.project_name}' as current project")
 
-    def _handle_invalid_project_selection(self, workspace_root: Path, current_config: ConfigData) -> Path | None:
+    def _handle_invalid_project_selection(
+        self, workspace_root: Path, current_config: ConfigData
+    ) -> Path | None:
         """Handle case where current project selection is invalid"""
-        click.echo(f"⚠️  Configured project directory does not exist: {current_config.project_path}")
+        click.echo(
+            f"⚠️  Configured project directory does not exist: "
+            f"{current_config.project_path}"
+        )
         click.echo(f"   Project: {current_config.project_name}")
         click.echo()
 
@@ -721,7 +738,9 @@ Thumbs.db
             workspace_config = workspace_manager.load_config()
             workspace_config.project_id = selected_config.project_id
             workspace_config.project_name = selected_config.project_name
-            workspace_config.project_path = str(selected_path.relative_to(workspace_root))
+            workspace_config.project_path = str(
+                selected_path.relative_to(workspace_root)
+            )
             workspace_config.folder_id = selected_config.folder_id
             workspace_config.profile = selected_config.profile
             workspace_manager.save_config(workspace_config)
@@ -743,7 +762,11 @@ Thumbs.db
                 with open(workatoenv_file) as f:
                     data = json.load(f)
                     # Project config has project_id but no project_path
-                    if "project_id" in data and data.get("project_id") and not data.get("project_path"):
+                    if (
+                        "project_id" in data
+                        and data.get("project_id")
+                        and not data.get("project_path")
+                    ):
                         project_dir = workatoenv_file.parent
                         project_name = data.get("project_name", project_dir.name)
                         projects.append((project_dir, project_name))
@@ -770,6 +793,57 @@ Thumbs.db
         """Check if in a project workspace"""
         return self.get_workspace_root() is not None
 
+    def _get_existing_project_id(self, project_path: Path) -> int | None:
+        """Get project ID from existing .workatoenv file, if valid."""
+        workatoenv_path = project_path / ".workatoenv"
+        if not workatoenv_path.exists():
+            return None
+
+        try:
+            with open(workatoenv_path) as f:
+                data: dict[str, Any] = json.load(f)
+                return data.get("project_id")
+        except (json.JSONDecodeError, OSError):
+            return None
+
+    def _handle_different_project_error(
+        self,
+        project_path: Path,
+        existing_project_id: int,
+        selected_project: Project,
+    ) -> None:
+        """Handle error when directory contains different Workato project."""
+        workatoenv_path = project_path / ".workatoenv"
+        try:
+            with open(workatoenv_path) as f:
+                existing_data = json.load(f)
+                existing_name = existing_data.get("project_name", "Unknown")
+        except (json.JSONDecodeError, OSError):
+            existing_name = "Unknown"
+
+        click.echo(
+            f"❌ Directory contains different Workato project: "
+            f"{existing_name} (ID: {existing_project_id})"
+        )
+        click.echo(
+            f"   Cannot initialize {selected_project.name} "
+            f"(ID: {selected_project.id}) here"
+        )
+        click.echo("💡 Choose a different directory or project name")
+        sys.exit(1)
+
+    def _handle_non_empty_directory_error(
+        self, project_path: Path, workspace_root: Path, existing_files: list
+    ) -> None:
+        """Handle error when directory is non-empty but not a Workato project."""
+        click.echo(
+            f"❌ Project directory is not empty: "
+            f"{project_path.relative_to(workspace_root)}"
+        )
+        click.echo(f"   Found {len(existing_files)} existing files")
+        click.echo("💡 Choose a different project name or clean the directory first")
+        sys.exit(1)
+
     # Credential management
 
     def _validate_credentials_or_exit(self) -> None:
@@ -792,14 +866,18 @@ Thumbs.db
     def api_token(self) -> str | None:
         """Get API token"""
         config_data = self.load_config()
-        api_token, _ = self.profile_manager.resolve_environment_variables(config_data.profile)
+        api_token, _ = self.profile_manager.resolve_environment_variables(
+            config_data.profile
+        )
         return api_token
 
     @api_token.setter
     def api_token(self, value: str) -> None:
         """Save API token to current profile"""
         config_data = self.load_config()
-        current_profile_name = self.profile_manager.get_current_profile_name(config_data.profile)
+        current_profile_name = self.profile_manager.get_current_profile_name(
+            config_data.profile
+        )
 
         if not current_profile_name:
             current_profile_name = "default"
@@ -813,7 +891,9 @@ Thumbs.db
             )
 
         # Store token in keyring
-        success = self.profile_manager._store_token_in_keyring(current_profile_name, value)
+        success = self.profile_manager._store_token_in_keyring(
+            current_profile_name, value
+        )
         if not success:
             if self.profile_manager._is_keyring_enabled():
                 raise ValueError(
@@ -832,7 +912,9 @@ Thumbs.db
     def api_host(self) -> str | None:
         """Get API host"""
         config_data = self.load_config()
-        _, api_host = self.profile_manager.resolve_environment_variables(config_data.profile)
+        _, api_host = self.profile_manager.resolve_environment_variables(
+            config_data.profile
+        )
         return api_host
 
     # Region management methods
@@ -841,7 +923,9 @@ Thumbs.db
         """Validate if region code is valid"""
         return region_code.lower() in AVAILABLE_REGIONS
 
-    def set_region(self, region_code: str, custom_url: str | None = None) -> tuple[bool, str]:
+    def set_region(
+        self, region_code: str, custom_url: str | None = None
+    ) -> tuple[bool, str]:
         """Set region by updating the current profile"""
 
         if region_code.lower() not in AVAILABLE_REGIONS:
@@ -851,7 +935,9 @@ Thumbs.db
 
         # Get current profile
         config_data = self.load_config()
-        current_profile_name = self.profile_manager.get_current_profile_name(config_data.profile)
+        current_profile_name = self.profile_manager.get_current_profile_name(
+            config_data.profile
+        )
         if not current_profile_name:
             current_profile_name = "default"
 

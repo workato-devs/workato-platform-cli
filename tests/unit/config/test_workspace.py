@@ -38,7 +38,9 @@ class TestWorkspaceManager:
         project_dir.mkdir(parents=True)
 
         # Create workspace config
-        (workspace_root / ".workatoenv").write_text('{"project_path": "projects/test", "project_id": 123}')
+        (workspace_root / ".workatoenv").write_text(
+            '{"project_path": "projects/test", "project_id": 123}',
+        )
 
         manager = WorkspaceManager(project_dir)
         result = manager.find_workspace_root()
@@ -61,7 +63,9 @@ class TestWorkspaceManager:
     def test_is_in_project_directory_false_for_workspace(self, tmp_path: Path) -> None:
         """Test workspace directory is not detected as project directory."""
         # Create workspace config (has project_path)
-        (tmp_path / ".workatoenv").write_text('{"project_path": "projects/test", "project_id": 123}')
+        (tmp_path / ".workatoenv").write_text(
+            '{"project_path": "projects/test", "project_id": 123}'
+        )
 
         manager = WorkspaceManager(tmp_path)
         assert manager.is_in_project_directory() is False
@@ -85,7 +89,9 @@ class TestWorkspaceManager:
         with pytest.raises(ValueError, match="cannot be created in workspace root"):
             manager.validate_project_path(workspace_root, workspace_root)
 
-    def test_validate_project_path_blocks_outside_workspace(self, tmp_path: Path) -> None:
+    def test_validate_project_path_blocks_outside_workspace(
+        self, tmp_path: Path
+    ) -> None:
         """Test project must be within workspace."""
         workspace_root = tmp_path / "workspace"
         outside_path = tmp_path / "outside"
@@ -108,7 +114,9 @@ class TestWorkspaceManager:
         (parent_project / ".workatoenv").write_text('{"project_id": 123}')
 
         manager = WorkspaceManager()
-        with pytest.raises(ValueError, match="Cannot create project within another project"):
+        with pytest.raises(
+            ValueError, match="Cannot create project within another project"
+        ):
             manager.validate_project_path(nested_project, workspace_root)
 
     def test_validate_not_in_project_success(self, tmp_path: Path) -> None:
@@ -118,7 +126,9 @@ class TestWorkspaceManager:
         # Should not raise exception
         manager.validate_not_in_project()
 
-    def test_validate_not_in_project_exits_when_in_project(self, tmp_path: Path) -> None:
+    def test_validate_not_in_project_exits_when_in_project(
+        self, tmp_path: Path
+    ) -> None:
         """Test validate_not_in_project exits when in project directory."""
         # Create project config
         (tmp_path / ".workatoenv").write_text('{"project_id": 123}')
@@ -135,7 +145,9 @@ class TestWorkspaceManager:
         project_dir.mkdir(parents=True)
 
         # Create workspace and project configs
-        (workspace_root / ".workatoenv").write_text('{"project_path": "project", "project_id": 123}')
+        (workspace_root / ".workatoenv").write_text(
+            '{"project_path": "project", "project_id": 123}'
+        )
         (project_dir / ".workatoenv").write_text('{"project_id": 123}')
 
         manager = WorkspaceManager(project_dir)
@@ -150,7 +162,7 @@ class TestWorkspaceManager:
         project_dir.mkdir(parents=True)
 
         # Create invalid JSON file
-        (workspace_root / ".workatoenv").write_text('invalid json')
+        (workspace_root / ".workatoenv").write_text("invalid json")
 
         manager = WorkspaceManager(project_dir)
         result = manager.find_workspace_root()
@@ -181,7 +193,7 @@ class TestWorkspaceManager:
     def test_is_in_project_directory_handles_json_error(self, tmp_path: Path) -> None:
         """Test is_in_project_directory handles JSON decode errors."""
         # Create invalid JSON
-        (tmp_path / ".workatoenv").write_text('invalid json')
+        (tmp_path / ".workatoenv").write_text("invalid json")
 
         manager = WorkspaceManager(tmp_path)
         assert manager.is_in_project_directory() is False
@@ -197,7 +209,9 @@ class TestWorkspaceManager:
         with patch("builtins.open", side_effect=OSError("Permission denied")):
             assert manager.is_in_project_directory() is False
 
-    def test_validate_project_path_handles_json_error_in_nested_check(self, tmp_path: Path) -> None:
+    def test_validate_project_path_handles_json_error_in_nested_check(
+        self, tmp_path: Path
+    ) -> None:
         """Test validate_project_path handles JSON errors in nested project check."""
         workspace_root = tmp_path / "workspace"
         parent_project = workspace_root / "parent"
@@ -207,13 +221,15 @@ class TestWorkspaceManager:
         parent_project.mkdir(parents=True)
 
         # Create invalid JSON in parent
-        (parent_project / ".workatoenv").write_text('invalid json')
+        (parent_project / ".workatoenv").write_text("invalid json")
 
         manager = WorkspaceManager()
         # Should not raise exception (treats as non-project)
         manager.validate_project_path(nested_project, workspace_root)
 
-    def test_validate_project_path_handles_os_error_in_nested_check(self, tmp_path: Path) -> None:
+    def test_validate_project_path_handles_os_error_in_nested_check(
+        self, tmp_path: Path
+    ) -> None:
         """Test validate_project_path handles OS errors in nested project check."""
         workspace_root = tmp_path / "workspace"
         parent_project = workspace_root / "parent"

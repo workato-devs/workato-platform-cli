@@ -92,11 +92,15 @@ async def push(
     # Get project directory using simplified logic
     project_dir = config_manager.get_project_directory()
     if not project_dir:
-        click.echo("❌ Could not determine project directory. Please run 'workato init' first.")
+        click.echo(
+            "❌ Could not determine project directory. Please run 'workato init' first."
+        )
         return
 
     if not project_dir.exists():
-        click.echo("❌ Project directory does not exist. Please run 'workato pull' first.")
+        click.echo(
+            "❌ Project directory does not exist. Please run 'workato pull' first."
+        )
         return
 
     # Get workspace root to load ignore patterns

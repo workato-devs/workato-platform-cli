@@ -11,36 +11,22 @@ from workato_platform.client.workato_api.configuration import Configuration
 
 
 @click.command()
-@click.option(
-    "--profile",
-    help="Profile name to use (creates new if doesn't exist)"
-)
+@click.option("--profile", help="Profile name to use (creates new if doesn't exist)")
 @click.option(
     "--region",
     type=click.Choice(["us", "eu", "jp", "au", "sg", "custom"]),
-    help="Workato region"
+    help="Workato region",
 )
+@click.option("--api-token", help="Workato API token")
+@click.option("--api-url", help="Custom API URL (required when region=custom)")
 @click.option(
-    "--api-token",
-    help="Workato API token"
+    "--project-name", help="Project name (creates new project with this name)"
 )
-@click.option(
-    "--api-url",
-    help="Custom API URL (required when region=custom)"
-)
-@click.option(
-    "--project-name",
-    help="Project name (creates new project with this name)"
-)
-@click.option(
-    "--project-id",
-    type=int,
-    help="Existing project ID to use"
-)
+@click.option("--project-id", type=int, help="Existing project ID to use")
 @click.option(
     "--non-interactive",
     is_flag=True,
-    help="Run in non-interactive mode (requires all necessary options)"
+    help="Run in non-interactive mode (requires all necessary options)",
 )
 @handle_api_exceptions
 async def init(
@@ -66,10 +52,15 @@ async def init(
             click.echo("❌ --api-token is required in non-interactive mode")
             raise click.Abort()
         if region == "custom" and not api_url:
-            click.echo("❌ --api-url is required when region=custom in non-interactive mode")
+            click.echo(
+                "❌ --api-url is required when region=custom in non-interactive mode"
+            )
             raise click.Abort()
         if not project_name and not project_id:
-            click.echo("❌ Either --project-name or --project-id is required in non-interactive mode")
+            click.echo(
+                "❌ Either --project-name or --project-id is "
+                "required in non-interactive mode"
+            )
             raise click.Abort()
         if project_name and project_id:
             click.echo("❌ Cannot specify both --project-name and --project-id")
