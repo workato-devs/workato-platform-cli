@@ -621,7 +621,7 @@ class TestVersionChecker:
     @pytest.mark.asyncio
     @patch("workato_platform.cli.utils.version_checker.threading.Thread")
     async def test_check_updates_async_thread_timeout(
-        self, mock_thread, mock_config_manager: ConfigManager
+        self, mock_thread: Mock, mock_config_manager: ConfigManager
     ) -> None:
         """Test check_updates_async when thread times out."""
         thread_instance = Mock()

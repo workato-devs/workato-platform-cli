@@ -133,7 +133,7 @@ class TestShouldSkipFile:
     def test_should_skip_file_empty_patterns(self) -> None:
         """Test should_skip_file with empty pattern set."""
         file_path = Path("any/file.txt")
-        patterns = set()
+        patterns: set[str] = set()
 
         assert should_skip_file(file_path, patterns) is False
 

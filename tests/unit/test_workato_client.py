@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+import ssl
 
 
 # Import will be handled with try/except to avoid dependency issues
@@ -219,13 +220,13 @@ class TestWorkatoClient:
                 # Mock hasattr to return False (simulate older Python)
                 with patch("builtins.hasattr", return_value=False):
                     # Mock the SSL constants
-                    import ssl
-                    ssl.OP_NO_SSLv2 = 1
-                    ssl.OP_NO_SSLv3 = 2
-                    ssl.OP_NO_TLSv1 = 4
-                    ssl.OP_NO_TLSv1_1 = 8
+                    
+                    ssl.OP_NO_SSLv2 = 1  # type: ignore
+                    ssl.OP_NO_SSLv3 = 2  # type: ignore
+                    ssl.OP_NO_TLSv1 = 4  # type: ignore
+                    ssl.OP_NO_TLSv1_1 = 8  # type: ignore
 
-                    client = Workato(mock_configuration)
+                    Workato(mock_configuration)
 
                     # Should use options fallback for older Python
                     expected_options = 1 | 2 | 4 | 8  # All the disabled SSL versions

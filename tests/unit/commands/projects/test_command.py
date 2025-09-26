@@ -7,8 +7,8 @@ import sys
 
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
-from unittest.mock import AsyncMock, Mock, patch
+from typing import Any, Iterator
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -233,6 +233,7 @@ def test_project_group_exists() -> None:
     import asyncclick as click
 
     assert isinstance(command.projects, click.Group)
+    assert command.projects.callback is not None
     assert command.projects.callback() is None
 
 
@@ -542,7 +543,7 @@ async def test_switch_no_project_choices_after_iteration(
     """Guard clause should trigger when iteration yields nothing."""
 
     class TruthyEmpty:
-        def __iter__(self):  # type: ignore[override]
+        def __iter__(self) -> Iterator[tuple[Path, str]]:
             return iter(())
 
         def __bool__(self) -> bool:
@@ -698,7 +699,7 @@ async def test_switch_missing_project_path(
             self.entry = entry
             self.iterations = 0
 
-        def __iter__(self):  # type: ignore[override]
+        def __iter__(self) -> Iterator[tuple[Path, str]]:
             if self.iterations == 0:
                 self.iterations += 1
                 return iter([self.entry])

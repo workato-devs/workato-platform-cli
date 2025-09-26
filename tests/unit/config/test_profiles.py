@@ -590,7 +590,7 @@ class TestProfileManager:
             assert manager._is_keyring_enabled() is False
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_password")
-    def test_get_token_from_keyring_success(self, mock_get_password, tmp_path: Path) -> None:
+    def test_get_token_from_keyring_success(self, mock_get_password: Mock, tmp_path: Path) -> None:
         """Test successful token retrieval from keyring."""
         mock_get_password.return_value = "test-token"
 
@@ -602,7 +602,7 @@ class TestProfileManager:
                 assert result == "test-token"
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_password")
-    def test_get_token_from_keyring_disabled(self, mock_get_password, tmp_path: Path) -> None:
+    def test_get_token_from_keyring_disabled(self, mock_get_password: Mock, tmp_path: Path) -> None:
         """Test token retrieval when keyring is disabled."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -613,7 +613,7 @@ class TestProfileManager:
                 mock_get_password.assert_not_called()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_password")
-    def test_get_token_from_keyring_no_keyring_error(self, mock_get_password, tmp_path: Path) -> None:
+    def test_get_token_from_keyring_no_keyring_error(self, mock_get_password: Mock, tmp_path: Path) -> None:
         """Test token retrieval handles NoKeyringError."""
         mock_get_password.side_effect = NoKeyringError("No keyring")
 
@@ -628,7 +628,7 @@ class TestProfileManager:
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_password")
-    def test_get_token_from_keyring_keyring_error(self, mock_get_password, tmp_path: Path) -> None:
+    def test_get_token_from_keyring_keyring_error(self, mock_get_password: Mock, tmp_path: Path) -> None:
         """Test token retrieval handles KeyringError."""
         mock_get_password.side_effect = KeyringError("Keyring error")
 
@@ -643,7 +643,7 @@ class TestProfileManager:
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_password")
-    def test_get_token_from_keyring_general_exception(self, mock_get_password, tmp_path: Path) -> None:
+    def test_get_token_from_keyring_general_exception(self, mock_get_password: Mock, tmp_path: Path) -> None:
         """Test token retrieval handles general exceptions."""
         mock_get_password.side_effect = RuntimeError("Unexpected error")
 
@@ -655,7 +655,7 @@ class TestProfileManager:
                 assert result is None
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.set_password")
-    def test_store_token_in_keyring_success(self, mock_set_password, tmp_path: Path) -> None:
+    def test_store_token_in_keyring_success(self, mock_set_password: Mock, tmp_path: Path) -> None:
         """Test successful token storage in keyring."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -666,7 +666,7 @@ class TestProfileManager:
                 mock_set_password.assert_called_once_with(manager.keyring_service, "dev", "token123")
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.set_password")
-    def test_store_token_in_keyring_disabled(self, mock_set_password, tmp_path: Path) -> None:
+    def test_store_token_in_keyring_disabled(self, mock_set_password: Mock, tmp_path: Path) -> None:
         """Test token storage when keyring is disabled."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -698,7 +698,7 @@ class TestProfileManager:
             mock_set_keyring.assert_called()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_keyring")
-    def test_ensure_keyring_backend_no_backend(self, mock_get_keyring, tmp_path: Path) -> None:
+    def test_ensure_keyring_backend_no_backend(self, mock_get_keyring: Mock, tmp_path: Path) -> None:
         """Test _ensure_keyring_backend when no backend available."""
         mock_get_keyring.side_effect = Exception("No backend")
 
@@ -708,7 +708,7 @@ class TestProfileManager:
             assert manager._using_fallback_keyring is True
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_standard_region(self, mock_prompt, tmp_path: Path) -> None:
+    def test_select_region_interactive_standard_region(self, mock_prompt: Mock, tmp_path: Path) -> None:
         """Test interactive region selection for standard region."""
         mock_prompt.return_value = {"region": "US Data Center (https://www.workato.com)"}
 
@@ -721,7 +721,7 @@ class TestProfileManager:
             assert result.name == "US Data Center"
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_custom_region(self, mock_prompt, tmp_path: Path) -> None:
+    def test_select_region_interactive_custom_region(self, mock_prompt: Mock, tmp_path: Path) -> None:
         """Test interactive region selection for custom region."""
         mock_prompt.return_value = {"region": "Custom URL"}
 
@@ -737,7 +737,7 @@ class TestProfileManager:
             assert result.url == "https://custom.workato.com"
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_user_cancel(self, mock_prompt, tmp_path: Path) -> None:
+    def test_select_region_interactive_user_cancel(self, mock_prompt: Mock, tmp_path: Path) -> None:
         """Test interactive region selection when user cancels."""
         mock_prompt.return_value = None  # User cancelled
 
@@ -748,7 +748,7 @@ class TestProfileManager:
             assert result is None
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_custom_invalid_url(self, mock_prompt, tmp_path: Path) -> None:
+    def test_select_region_interactive_custom_invalid_url(self, mock_prompt: Mock, tmp_path: Path) -> None:
         """Test interactive region selection with invalid custom URL."""
         mock_prompt.return_value = {"region": "Custom URL"}
 
@@ -765,7 +765,7 @@ class TestProfileManager:
             mock_echo.assert_called()
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_custom_with_existing_profile(self, mock_prompt, tmp_path: Path) -> None:
+    def test_select_region_interactive_custom_with_existing_profile(self, mock_prompt: Mock, tmp_path: Path) -> None:
         """Test interactive region selection for custom region with existing profile."""
         mock_prompt.return_value = {"region": "Custom URL"}
 
@@ -801,7 +801,7 @@ class TestProfileManager:
             assert config_dir.exists()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.delete_password")
-    def test_delete_token_from_keyring_success(self, mock_delete_password, tmp_path: Path) -> None:
+    def test_delete_token_from_keyring_success(self, mock_delete_password: Mock, tmp_path: Path) -> None:
         """Test successful token deletion from keyring."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -812,7 +812,7 @@ class TestProfileManager:
                 mock_delete_password.assert_called_once()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.delete_password")
-    def test_delete_token_from_keyring_disabled(self, mock_delete_password, tmp_path: Path) -> None:
+    def test_delete_token_from_keyring_disabled(self, mock_delete_password: Mock, tmp_path: Path) -> None:
         """Test token deletion when keyring is disabled."""
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
@@ -823,7 +823,7 @@ class TestProfileManager:
                 mock_delete_password.assert_not_called()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.delete_password")
-    def test_delete_token_from_keyring_no_keyring_error(self, mock_delete_password, tmp_path: Path) -> None:
+    def test_delete_token_from_keyring_no_keyring_error(self, mock_delete_password: Mock, tmp_path: Path) -> None:
         """Test token deletion handles NoKeyringError."""
         mock_delete_password.side_effect = NoKeyringError("No keyring")
 
@@ -838,7 +838,7 @@ class TestProfileManager:
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.delete_password")
-    def test_delete_token_from_keyring_keyring_error(self, mock_delete_password, tmp_path: Path) -> None:
+    def test_delete_token_from_keyring_keyring_error(self, mock_delete_password: Mock, tmp_path: Path) -> None:
         """Test token deletion handles KeyringError."""
         mock_delete_password.side_effect = KeyringError("Keyring error")
 
@@ -853,7 +853,7 @@ class TestProfileManager:
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.delete_password")
-    def test_delete_token_from_keyring_general_exception(self, mock_delete_password, tmp_path: Path) -> None:
+    def test_delete_token_from_keyring_general_exception(self, mock_delete_password: Mock, tmp_path: Path) -> None:
         """Test token deletion handles general exceptions."""
         mock_delete_password.side_effect = RuntimeError("Unexpected error")
 
@@ -865,7 +865,7 @@ class TestProfileManager:
                 assert result is False
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.set_password")
-    def test_store_token_in_keyring_no_keyring_error(self, mock_set_password, tmp_path: Path) -> None:
+    def test_store_token_in_keyring_no_keyring_error(self, mock_set_password: Mock, tmp_path: Path) -> None:
         """Test token storage handles NoKeyringError."""
         mock_set_password.side_effect = NoKeyringError("No keyring")
 
@@ -880,7 +880,7 @@ class TestProfileManager:
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.set_password")
-    def test_store_token_in_keyring_keyring_error(self, mock_set_password, tmp_path: Path) -> None:
+    def test_store_token_in_keyring_keyring_error(self, mock_set_password: Mock, tmp_path: Path) -> None:
         """Test token storage handles KeyringError."""
         mock_set_password.side_effect = KeyringError("Keyring error")
 
@@ -895,7 +895,7 @@ class TestProfileManager:
                 mock_ensure.assert_called_with(force_fallback=True)
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.set_password")
-    def test_store_token_in_keyring_general_exception(self, mock_set_password, tmp_path: Path) -> None:
+    def test_store_token_in_keyring_general_exception(self, mock_set_password: Mock, tmp_path: Path) -> None:
         """Test token storage handles general exceptions."""
         mock_set_password.side_effect = RuntimeError("Unexpected error")
 
@@ -907,7 +907,7 @@ class TestProfileManager:
                 assert result is False
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_keyring")
-    def test_ensure_keyring_backend_successful_backend(self, mock_get_keyring, tmp_path: Path) -> None:
+    def test_ensure_keyring_backend_successful_backend(self, mock_get_keyring: Mock, tmp_path: Path) -> None:
         """Test _ensure_keyring_backend with successful backend."""
         # Create a mock backend with proper priority
         mock_backend = Mock()
@@ -927,7 +927,7 @@ class TestProfileManager:
             assert manager._using_fallback_keyring is False
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_keyring")
-    def test_ensure_keyring_backend_failed_backend(self, mock_get_keyring, tmp_path: Path) -> None:
+    def test_ensure_keyring_backend_failed_backend(self, mock_get_keyring: Mock, tmp_path: Path) -> None:
         """Test _ensure_keyring_backend with failed backend."""
         # Create a mock backend that fails health check
         mock_backend = Mock()
@@ -947,7 +947,7 @@ class TestProfileManager:
             mock_set_keyring.assert_called()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_keyring")
-    def test_ensure_keyring_backend_fail_module(self, mock_get_keyring, tmp_path: Path) -> None:
+    def test_ensure_keyring_backend_fail_module(self, mock_get_keyring: Mock, tmp_path: Path) -> None:
         """Test _ensure_keyring_backend with fail backend module."""
         # Create a mock backend from fail module
         mock_backend = Mock()
@@ -966,7 +966,7 @@ class TestProfileManager:
             mock_set_keyring.assert_called()
 
     @patch("workato_platform.cli.utils.config.profiles.keyring.get_keyring")
-    def test_ensure_keyring_backend_zero_priority(self, mock_get_keyring, tmp_path: Path) -> None:
+    def test_ensure_keyring_backend_zero_priority(self, mock_get_keyring: Mock, tmp_path: Path) -> None:
         """Test _ensure_keyring_backend with zero priority backend."""
         # Create a mock backend with zero priority
         mock_backend = Mock()

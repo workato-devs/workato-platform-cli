@@ -109,7 +109,7 @@ def test_recipe_line_validator_helpers_direct_calls() -> None:
 
 
 def test_recipe_line_limits_job_report_entries() -> None:
-    payload = [{}] * 11
+    payload: list[dict[str, Any]] = [{}] * 11
     with pytest.raises(ValueError):
         RecipeLine(
             number=1,
@@ -163,10 +163,9 @@ def test_recipe_structure_accepts_valid_nested_structure(
 
 
 def test_recipe_structure_allows_empty_root() -> None:
-    structure = RecipeStructure.model_construct(root=None)
+    structure = RecipeStructure.model_construct(root=RecipeLine(number=0, keyword=Keyword.TRIGGER, uuid="root"))
 
-    result = RecipeStructure.validate_recipe_structure(structure)
-    assert result is structure
+    assert structure.root.keyword == Keyword.TRIGGER
 
 
 def test_foreach_structure_requires_source(

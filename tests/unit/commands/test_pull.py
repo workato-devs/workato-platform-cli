@@ -199,7 +199,7 @@ class TestPullCommand:
             lambda *args, **kwargs: False,
         )
 
-        ignore_patterns = set()
+        ignore_patterns: set[str] = set()
         changes = merge_directories(remote_dir, local_dir, ignore_patterns)
 
         # No deletions should have been recorded or performed
@@ -233,7 +233,7 @@ class TestPullCommand:
             lambda *args, **kwargs: True,
         )
 
-        ignore_patterns = set()
+        ignore_patterns: set[str] = set()
         merge_directories(remote_dir, local_dir, ignore_patterns)
 
         assert any("... and 2 more" in msg for msg in captured)
@@ -604,7 +604,7 @@ class TestPullCommand:
         project_manager = MagicMock(spec=ProjectManager)
         project_manager.export_project = AsyncMock(side_effect=fake_export)
 
-        empty_changes = {"added": [], "modified": [], "removed": []}
+        empty_changes: dict[str, list[tuple[str, dict[str, int]]]] = {"added": [], "modified": [], "removed": []}
         monkeypatch.setattr(
             "workato_platform.cli.commands.pull.merge_directories",
             lambda *args, **kwargs: empty_changes,

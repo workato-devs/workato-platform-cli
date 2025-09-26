@@ -1,6 +1,7 @@
 """Tests for WorkspaceManager."""
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -156,7 +157,7 @@ class TestWorkspaceManager:
         # Should fall back to start_path
         assert result == project_dir
 
-    def test_find_workspace_root_with_os_error(self, tmp_path: Path, monkeypatch) -> None:
+    def test_find_workspace_root_with_os_error(self, tmp_path: Path) -> None:
         """Test find_workspace_root handles OS errors gracefully."""
         workspace_root = tmp_path / "workspace"
         project_dir = workspace_root / "project"
@@ -167,7 +168,7 @@ class TestWorkspaceManager:
         workatoenv_file.write_text('{"project_path": "project"}')
 
         # Mock open to raise OSError
-        def mock_open(*args, **kwargs):
+        def mock_open(*args: Any, **kwargs: Any) -> None:
             raise OSError("Permission denied")
 
         manager = WorkspaceManager(project_dir)
