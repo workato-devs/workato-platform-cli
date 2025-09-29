@@ -40,7 +40,7 @@ pip install workato-platform-cli
 
 ### From Source
 ```bash
-git clone https://github.com/workato/workato-platform-cli.git
+git clone https://github.com/workato-devs/workato-platform-cli.git
 cd workato-platform-cli
 pip install -e .
 ```
