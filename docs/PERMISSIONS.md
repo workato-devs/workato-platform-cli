@@ -28,7 +28,7 @@ Workato API tokens use a scope-based permission system. When creating an API cli
 ### Project Assets
 Define access to core recipe building features within projects.
 
-#### Projects & Folders (7/7)
+#### Projects & Folders
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -40,7 +40,7 @@ Define access to core recipe building features within projects.
 | Delete project | `DELETE` | `/api/projects/:id` | - |
 | Update project | `PUT` | `/api/projects/:id` | - |
 
-#### Connections (5/6)
+#### Connections
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -51,7 +51,7 @@ Define access to core recipe building features within projects.
 | Disconnect Connection | `POST` | `/api/connections/:id/disconnect` | - |
 | Get picklist values | `POST` | `/api/connections/:id/pick_list` | `workato connections picklist` |
 
-#### Recipes (12/12)
+#### Recipes
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -68,7 +68,7 @@ Define access to core recipe building features within projects.
 | Reset recipe trigger | `POST` | `/api/recipes/:recipe_id/reset_trigger` | - |
 | Update connection for recipe | `PUT` | `/api/recipes/:recipe_id/connect` | `workato recipes update-connection` |
 
-#### Genies (13/13)
+#### Genies
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -86,7 +86,7 @@ Define access to core recipe building features within projects.
 | Assign user groups to genie | `POST` | `/api/agentic/genies/:id/assign_user_groups` | - |
 | Remove user groups from genie | `POST` | `/api/agentic/genies/:id/remove_user_groups` | - |
 
-#### Knowledge Bases (7/7)
+#### Knowledge Bases
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -98,7 +98,7 @@ Define access to core recipe building features within projects.
 | Get knowledge base data sources | `GET` | `/api/agentic/knowledge_bases/:id/data_sources` | - |
 | Get knowledge base recipes | `GET` | `/api/agentic/knowledge_bases/:id/recipes` | - |
 
-#### Skills (3/3)
+#### Skills
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -106,7 +106,7 @@ Define access to core recipe building features within projects.
 | Get skill | `GET` | `/api/agentic/skills/:id` | - |
 | Create skill | `POST` | `/api/agentic/skills` | - |
 
-#### Recipe Versions (3/3)
+#### Recipe Versions
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -114,7 +114,7 @@ Define access to core recipe building features within projects.
 | Get details | `GET` | `/api/recipes/:recipe_id/versions/:id` | - |
 | Update | `PUT` | `/api/recipes/:recipe_id/versions/:id` | - |
 
-#### Jobs (3/3)
+#### Jobs
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -122,13 +122,13 @@ Define access to core recipe building features within projects.
 | Get job | `GET` | `/api/recipes/:recipe_id/jobs/:job_id` | - |
 | Resume suspended job | `POST` | `/api/job/resume` | - |
 
-#### Tag Assignments (1/1)
+#### Tag Assignments
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
 | Manage tag assignments | `POST` | `/api/tags_assignments` | - |
 
-#### Test Cases (3/3)
+#### Test Cases
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -141,7 +141,7 @@ Define access to core recipe building features within projects.
 ### Recipe Lifecycle Management
 Define access to assets transfer across workspaces.
 
-#### Recipe Lifecycle Management (4/4)
+#### Recipe Lifecycle Management
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -150,7 +150,7 @@ Define access to assets transfer across workspaces.
 | Export package | `POST` | `/api/packages/export/:id` | `workato pull` |
 | Import package | `POST` | `/api/packages/import/:id` | `workato push` |
 
-#### Export Manifests (5/5)
+#### Export Manifests
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -165,7 +165,7 @@ Define access to assets transfer across workspaces.
 ### Workspace Data
 Define access to data configured at the workspace-level.
 
-#### Lookup Tables (9/9)
+#### Lookup Tables
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -179,7 +179,7 @@ Define access to data configured at the workspace-level.
 | Delete row | `DELETE` | `/api/lookup_tables/:lookup_table_id/rows/:row_id` | - |
 | Batch delete tables | `POST` | `/api/lookup_tables/batch_delete` | - |
 
-#### Data Tables (6/6)
+#### Data Tables
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -190,7 +190,7 @@ Define access to data configured at the workspace-level.
 | Update a data table | `PUT` | `/api/data_tables/:data_table_id` | - |
 | Truncate a data table | `POST` | `/api/data_tables/:data_table_id/truncate` | `workato data-tables truncate` |
 
-#### Data Table Records (4/4)
+#### Data Table Records
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -199,14 +199,14 @@ Define access to data configured at the workspace-level.
 | Delete record | `DELETE` | `/api/v1/tables/:data_table_id/records/:record_id` | - |
 | Query records | `POST` | `/api/v1/tables/:data_table_id/records/query` | - |
 
-#### Event Streams (2/2)
+#### Event Streams
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
 | Publish message to event topic | `POST` | `/api/v1/topics/:topic_id/publish` | - |
 | Read messages from event topic | `POST` | `/api/v1/topics/:topic_id/consume` | - |
 
-#### Event Streams Topics (6/6)
+#### Event Streams Topics
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -217,7 +217,7 @@ Define access to data configured at the workspace-level.
 | Update a topic | `PUT` | `/api/event_streams/topics/:topic_id` | - |
 | Purge a topic | `PUT` | `/api/event_streams/topics/:topic_id/purge` | - |
 
-#### Environment Properties (2/2)
+#### Environment Properties
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -229,7 +229,7 @@ Define access to data configured at the workspace-level.
 ### API Platform
 Define access to manage and monitor API recipe endpoints and collections.
 
-#### Certificate Bundles (5/5)
+#### Certificate Bundles
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -239,13 +239,13 @@ Define access to manage and monitor API recipe endpoints and collections.
 | Delete certificate bundle | `DELETE` | `/api/cert_bundles/:cert_bundle_id` | - |
 | Download certificate bundle | `GET` | `/api/cert_bundles/:cert_bundle_id` | - |
 
-#### API Portal (1/1)
+#### API Portal
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
 | List API Portals | `GET` | `/api/v2/api_portals` | - |
 
-#### Collections & Endpoints (5/5)
+#### Collections & Endpoints
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -255,7 +255,7 @@ Define access to manage and monitor API recipe endpoints and collections.
 | Enable endpoint | `PUT` | `/api/api_endpoints/:api_endpoint_id/enable` | - |
 | Disable endpoint | `PUT` | `/api/api_endpoints/:api_endpoint_id/disable` | - |
 
-#### Clients & Access Profiles (12/12)
+#### Clients & Access Profiles
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -277,7 +277,7 @@ Define access to manage and monitor API recipe endpoints and collections.
 ### Connector SDKs
 Define access to managing custom connectors and their versions.
 
-#### Connector SDKs (7/7)
+#### Connector SDKs
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -289,7 +289,7 @@ Define access to managing custom connectors and their versions.
 | Search custom connectors | `GET` | `/api/custom_connectors/search` | - |
 | Get custom connector code | `GET` | `/api/custom_connectors/:id/code` | `workato connectors get-code` |
 
-#### SDK CLI (2/2)
+#### SDK CLI
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -301,7 +301,7 @@ Define access to managing custom connectors and their versions.
 ### Custom OAuth Profiles
 Define access to manage custom OAuth profiles.
 
-#### Custom OAuth Profiles (5/5)
+#### Custom OAuth Profiles
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -316,7 +316,7 @@ Define access to manage custom OAuth profiles.
 ### On-Prem Groups and Agents
 Define access to manage connectivity to authorized on-prem applications through groups and agents.
 
-#### On-Prem Groups (7/7)
+#### On-Prem Groups
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -328,7 +328,7 @@ Define access to manage connectivity to authorized on-prem applications through 
 | Delete | `DELETE` | `/api/on_prem_groups/:id` | - |
 | Get agents in group | `GET` | `/api/on_prem_groups/:id/agents` | - |
 
-#### On-Prem Agents (8/8)
+#### On-Prem Agents
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -346,7 +346,7 @@ Define access to manage connectivity to authorized on-prem applications through 
 ### Partner Marketplace
 Define access to endpoints that help in the creation of a connector marketplace for your customers.
 
-#### Connectors (2/2)
+#### Connectors
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -358,7 +358,7 @@ Define access to endpoints that help in the creation of a connector marketplace 
 ### Workspace Collaborators
 Define access to manage collaborators and their roles in your workspace.
 
-#### Collaborators (6/6)
+#### Collaborators
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -369,7 +369,7 @@ Define access to manage collaborators and their roles in your workspace.
 | Get collaborator privileges | `GET` | `/api/members/:id/privileges` | - |
 | Delete collaborator | `DELETE` | `/api/members/:id` | - |
 
-#### Collaborator Roles (3/3)
+#### Collaborator Roles
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -382,7 +382,7 @@ Define access to manage collaborators and their roles in your workspace.
 ### Workspace Details
 Define access to retrieval of workspace details.
 
-#### Workspace Details (1/1)
+#### Workspace Details
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -393,19 +393,19 @@ Define access to retrieval of workspace details.
 ### Environment Management
 Define access to environment management operations.
 
-#### Secrets Management (1/1)
+#### Secrets Management
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
 | Clear secrets cache | `POST` | `/api/secrets_management/clear_cache` | - |
 
-#### Audit Log (1/1)
+#### Audit Log
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
 | Get audit log | `GET` | `/api/activity_logs` | - |
 
-#### Tags (4/4)
+#### Tags
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -419,7 +419,7 @@ Define access to environment management operations.
 ### Developer API Clients
 Define access to manage API clients.
 
-#### API Clients (6/6)
+#### API Clients
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
@@ -430,7 +430,7 @@ Define access to manage API clients.
 | Delete API client | `DELETE` | `/api/developer_api_clients/:id` | - |
 | Regenerate API client token | `POST` | `/api/developer_api_clients/:id/regenerate` | - |
 
-#### API Client Roles (2/2)
+#### API Client Roles
 
 | Permission | HTTP Method | Endpoint | CLI Commands |
 |------------|-------------|----------|--------------|
