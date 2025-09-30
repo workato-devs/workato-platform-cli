@@ -370,10 +370,6 @@ async def test_init_non_interactive_with_region_and_token(
 @pytest.mark.asyncio
 async def test_init_json_mode_without_non_interactive() -> None:
     """Test that JSON output mode requires non-interactive flag."""
-    import json
-
-    from io import StringIO
-
     output = StringIO()
 
     with patch.object(init_module.click, "echo", lambda msg: output.write(msg)):
@@ -398,10 +394,6 @@ async def test_init_json_mode_without_non_interactive() -> None:
 @pytest.mark.asyncio
 async def test_init_json_mode_with_validation_errors() -> None:
     """Test that validation errors in JSON mode return proper JSON."""
-    import json
-
-    from io import StringIO
-
     output = StringIO()
 
     with patch.object(init_module.click, "echo", lambda msg: output.write(msg)):
@@ -637,10 +629,6 @@ async def test_init_json_output_mode_success(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test successful init with JSON output mode."""
-    import json
-
-    from io import StringIO
-
     mock_config_manager = Mock()
     mock_workato_client = Mock()
     workato_context = AsyncMock()
