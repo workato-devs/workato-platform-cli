@@ -28,6 +28,15 @@ Get the Workato CLI running in 5 minutes.
 1. Log into your Workato account
 1. Navigate to **Workspace Admin** → **API clients**
 1. Click **Create API client**
+1. **Grant the necessary permissions** - For standard development, you'll need:
+   - Workspace Details (Get details)
+   - Projects & Folders (List, Create)
+   - Recipes (List, Create, Update, Start, Stop)
+   - Connections (List, Create, Update)
+   - Recipe Lifecycle Management (all permissions)
+   - Export Manifests (Create, Show, Get folder assets)
+
+   See [PERMISSIONS.md](/docs/PERMISSIONS.md) for the complete list of available scopes and recommendations.
 1. Fill out information about the client, click **Create client**
 1. Copy the generated token (starts with `wrkatrial-` for trial accounts or `wrkprod-` for production)
 
@@ -89,6 +98,7 @@ workato workspace
 - **Need detailed commands?** → See [COMMAND_REFERENCE.md](/docs/COMMAND_REFERENCE.md)
 - **Want real-world examples?** → See [USE_CASES.md](/docs/USE_CASES.md)
 - **Looking for sample recipes?** → See [examples/](/docs/examples/)
+- **Setting up API token permissions?** → See [PERMISSIONS.md](/docs/PERMISSIONS.md)
 - **Installation issues?** → See [DEVELOPER_GUIDE.md](/docs/DEVELOPER_GUIDE.md)
 - **Looking for all documentation?** → See [INDEX.md](/docs/INDEX.md)
 
