@@ -446,3 +446,198 @@ class TestExceptionHandler:
         # Should handle non-string errors gracefully
         result = _extract_error_details(exc)
         assert "Validation error:" in result
+
+    # JSON output mode tests
+    @patch("workato_platform.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_bad_request(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for BadRequestException"""
+        from workato_platform.client.workato_api.exceptions import BadRequestException
+
+        # Mock Click context to return json output mode
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_api_exceptions
+        def bad_request_json() -> None:
+            raise BadRequestException(status=400, reason="Bad request")
+
+        bad_request_json()
+
+        # Should output JSON
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('{"status": "error"' in arg for arg in call_args)
+
+    @patch("workato_platform.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_unauthorized(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for UnauthorizedException"""
+        from workato_platform.client.workato_api.exceptions import UnauthorizedException
+
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_api_exceptions
+        def unauthorized_json() -> None:
+            raise UnauthorizedException(status=401, reason="Unauthorized")
+
+        unauthorized_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "UNAUTHORIZED"' in arg for arg in call_args)
+
+    @patch("workato_platform.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_forbidden(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for ForbiddenException"""
+        from workato_platform.client.workato_api.exceptions import ForbiddenException
+
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_api_exceptions
+        def forbidden_json() -> None:
+            raise ForbiddenException(status=403, reason="Forbidden")
+
+        forbidden_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "FORBIDDEN"' in arg for arg in call_args)
+
+    @patch("workato_platform.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_not_found(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for NotFoundException"""
+        from workato_platform.client.workato_api.exceptions import NotFoundException
+
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_api_exceptions
+        def not_found_json() -> None:
+            raise NotFoundException(status=404, reason="Not found")
+
+        not_found_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "NOT_FOUND"' in arg for arg in call_args)
+
+    @patch("workato_platform.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_conflict(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for ConflictException"""
+        from workato_platform.client.workato_api.exceptions import ConflictException
+
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_api_exceptions
+        def conflict_json() -> None:
+            raise ConflictException(status=409, reason="Conflict")
+
+        conflict_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "CONFLICT"' in arg for arg in call_args)
+
+    @patch("workato_platform.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_server_error(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for ServiceException"""
+        from workato_platform.client.workato_api.exceptions import ServiceException
+
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_api_exceptions
+        def server_error_json() -> None:
+            raise ServiceException(status=500, reason="Server error")
+
+        server_error_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "SERVER_ERROR"' in arg for arg in call_args)
+
+    @patch("workato_platform.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_generic_api_error(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for generic ApiException"""
+        from workato_platform.client.workato_api.exceptions import ApiException
+
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_api_exceptions
+        def generic_error_json() -> None:
+            raise ApiException(status=418, reason="I'm a teapot")
+
+        generic_error_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "API_ERROR"' in arg for arg in call_args)
+
+    @patch("workato_platform.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_with_error_details(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output includes error details from body"""
+        from workato_platform.client.workato_api.exceptions import BadRequestException
+
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_api_exceptions
+        def with_details_json() -> None:
+            raise BadRequestException(
+                status=400, body='{"message": "Field validation failed"}'
+            )
+
+        with_details_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any("Field validation failed" in arg for arg in call_args)
+
+    @patch("workato_platform.cli.utils.exception_handler.click.get_current_context")
+    def test_get_output_mode_no_context(self, mock_get_context: MagicMock) -> None:
+        """Test _get_output_mode returns 'table' when no context"""
+        from workato_platform.cli.utils.exception_handler import _get_output_mode
+
+        mock_get_context.return_value = None
+
+        result = _get_output_mode()
+        assert result == "table"
+
+    @patch("workato_platform.cli.utils.exception_handler.click.get_current_context")
+    def test_get_output_mode_no_params(self, mock_get_context: MagicMock) -> None:
+        """Test _get_output_mode returns 'table' when context has no params"""
+        from workato_platform.cli.utils.exception_handler import _get_output_mode
+
+        mock_ctx = MagicMock()
+        del mock_ctx.params  # Remove params attribute
+        mock_get_context.return_value = mock_ctx
+
+        result = _get_output_mode()
+        assert result == "table"

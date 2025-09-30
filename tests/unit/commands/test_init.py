@@ -1,5 +1,9 @@
 """Tests for the init command."""
 
+import json
+
+from io import StringIO
+from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import asyncclick as click
@@ -18,6 +22,11 @@ async def test_init_interactive_mode(monkeypatch: pytest.MonkeyPatch) -> None:
     with (
         patch.object(
             mock_config_manager, "load_config", return_value=Mock(profile="default")
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
         ),
         patch.object(
             mock_config_manager.profile_manager,
@@ -53,6 +62,8 @@ async def test_init_interactive_mode(monkeypatch: pytest.MonkeyPatch) -> None:
             api_url=None,
             project_name=None,
             project_id=None,
+            output_mode="table",
+            non_interactive=False,
         )
         mock_pull.assert_awaited_once()
 
@@ -69,6 +80,11 @@ async def test_init_non_interactive_success(monkeypatch: pytest.MonkeyPatch) -> 
             mock_config_manager,
             "load_config",
             return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
         ),
         patch.object(
             mock_config_manager.profile_manager,
@@ -114,6 +130,8 @@ async def test_init_non_interactive_success(monkeypatch: pytest.MonkeyPatch) -> 
             api_url=None,
             project_name="test-project",
             project_id=None,
+            output_mode="table",
+            non_interactive=True,
         )
         mock_pull.assert_awaited_once()
 
@@ -132,6 +150,11 @@ async def test_init_non_interactive_custom_region(
             mock_config_manager,
             "load_config",
             return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
         ),
         patch.object(
             mock_config_manager.profile_manager,
@@ -175,6 +198,8 @@ async def test_init_non_interactive_custom_region(
             api_url="https://custom.workato.com",
             project_name=None,
             project_id=123,
+            output_mode="table",
+            non_interactive=True,
         )
 
 
@@ -292,6 +317,11 @@ async def test_init_non_interactive_with_region_and_token(
             return_value=Mock(profile="default"),
         ),
         patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
+        ),
+        patch.object(
             mock_config_manager.profile_manager,
             "resolve_environment_variables",
             return_value=("test-token", "https://api.workato.com"),
@@ -332,4 +362,360 @@ async def test_init_non_interactive_with_region_and_token(
             api_url=None,
             project_name="test-project",
             project_id=None,
+            output_mode="table",
+            non_interactive=True,
         )
+
+
+@pytest.mark.asyncio
+async def test_init_json_mode_without_non_interactive() -> None:
+    """Test that JSON output mode requires non-interactive flag."""
+    import json
+
+    from io import StringIO
+
+    output = StringIO()
+
+    with patch.object(init_module.click, "echo", lambda msg: output.write(msg)):
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region="us",
+            api_token="test-token",
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=False,
+            output_mode="json",
+        )
+
+    result = json.loads(output.getvalue())
+    assert result["status"] == "error"
+    assert "non-interactive" in result["error"]
+    assert result["error_code"] == "INVALID_OPTIONS"
+
+
+@pytest.mark.asyncio
+async def test_init_json_mode_with_validation_errors() -> None:
+    """Test that validation errors in JSON mode return proper JSON."""
+    import json
+
+    from io import StringIO
+
+    output = StringIO()
+
+    with patch.object(init_module.click, "echo", lambda msg: output.write(msg)):
+        # Test missing profile and credentials
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile=None,
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=True,
+            output_mode="json",
+        )
+
+    result = json.loads(output.getvalue())
+    assert result["status"] == "error"
+    assert "profile" in result["error"] or "region" in result["error"]
+    assert result["error_code"] == "MISSING_REQUIRED_OPTIONS"
+
+
+@pytest.mark.asyncio
+async def test_init_non_empty_directory_non_interactive_json(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Test non-empty directory error in non-interactive JSON mode."""
+    mock_config_manager = Mock()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    (project_dir / "file.txt").write_text("content")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=project_dir,
+        ),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        output = StringIO()
+        monkeypatch.setattr(init_module.click, "echo", lambda msg: output.write(msg))
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=True,
+            output_mode="json",
+        )
+
+        result = json.loads(output.getvalue())
+        assert result["status"] == "error"
+        assert "not empty" in result["error"]
+        assert result["error_code"] == "DIRECTORY_NOT_EMPTY"
+
+
+@pytest.mark.asyncio
+async def test_init_non_empty_directory_non_interactive_table(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Test non-empty directory error in non-interactive table mode."""
+    mock_config_manager = Mock()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    (project_dir / "file.txt").write_text("content")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=project_dir,
+        ),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        monkeypatch.setattr(init_module.click, "echo", lambda _: None)
+
+        assert init_module.init.callback
+        with pytest.raises(click.Abort):
+            await init_module.init.callback(
+                profile="test-profile",
+                region=None,
+                api_token=None,
+                api_url=None,
+                project_name="test-project",
+                project_id=None,
+                non_interactive=True,
+                output_mode="table",
+            )
+
+
+@pytest.mark.asyncio
+async def test_init_non_empty_directory_interactive_cancelled(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Test user cancelling init when directory is non-empty."""
+    mock_config_manager = Mock()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    (project_dir / "file.txt").write_text("content")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=project_dir,
+        ),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        monkeypatch.setattr(init_module.click, "echo", lambda _: None)
+        monkeypatch.setattr(init_module.click, "confirm", lambda *args, **kwargs: False)
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=False,
+            output_mode="table",
+        )
+
+        # Should not call pull when user cancels
+        mock_pull.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_init_non_empty_directory_interactive_confirmed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Test user confirming init when directory is non-empty."""
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    (project_dir / "file.txt").write_text("content")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=project_dir,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("test-token", "https://api.workato.com"),
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        monkeypatch.setattr(init_module.click, "echo", lambda msg="": None)
+        monkeypatch.setattr(init_module.click, "confirm", lambda *args, **kwargs: True)
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=False,
+            output_mode="table",
+        )
+
+        # Should call pull when user confirms
+        mock_pull.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_init_json_output_mode_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test successful init with JSON output mode."""
+    import json
+
+    from io import StringIO
+
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(
+                profile="test-profile",
+                project_name="test-project",
+                project_id=123,
+                folder_id=456,
+            ),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("test-token", "https://api.workato.com"),
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "get_profile",
+            return_value=Mock(
+                region="us",
+                region_name="US",
+                region_url="https://api.workato.com",
+                workspace_id=789,
+            ),
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "get_current_profile_name",
+            return_value="test-profile",
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        output = StringIO()
+        monkeypatch.setattr(
+            init_module.click, "echo", lambda msg: output.write(str(msg))
+        )
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=True,
+            output_mode="json",
+        )
+
+        result = json.loads(output.getvalue())
+        assert result["status"] == "success"
+        assert result["profile"]["name"] == "test-profile"
+        assert result["profile"]["region"] == "us"
+        assert result["project"]["name"] == "test-project"
+        assert result["project"]["id"] == 123

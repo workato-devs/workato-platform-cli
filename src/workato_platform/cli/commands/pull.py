@@ -23,6 +23,7 @@ from workato_platform.cli.utils.ignore_patterns import (
 async def _pull_project(
     config_manager: ConfigManager,
     project_manager: ProjectManager,
+    non_interactive: bool = False,
 ) -> None:
     """Internal pull logic that can be called from other commands"""
 
@@ -80,7 +81,12 @@ async def _pull_project(
         ignore_patterns = load_ignore_patterns(workspace_root)
 
         # Merge changes between remote and local
-        changes = merge_directories(temp_project_path, project_dir, ignore_patterns)
+        changes = merge_directories(
+            temp_project_path,
+            project_dir,
+            ignore_patterns,
+            non_interactive,
+        )
 
         # Show summary of changes
         if changes["added"] or changes["modified"] or changes["removed"]:
@@ -214,7 +220,10 @@ def calculate_json_diff_stats(old_file: Path, new_file: Path) -> dict[str, int]:
 
 
 def merge_directories(
-    remote_dir: Path, local_dir: Path, ignore_patterns: set[str]
+    remote_dir: Path,
+    local_dir: Path,
+    ignore_patterns: set[str],
+    non_interactive: bool = False,
 ) -> dict[str, list[tuple[str, dict[str, int]]]]:
     """Merge remote directory into local directory, return summary of changes"""
     remote_path = Path(remote_dir)
@@ -270,8 +279,8 @@ def merge_directories(
             continue
         files_to_delete.append(rel_path)
 
-    # If there are files to delete, ask for confirmation
-    if files_to_delete:
+    # If there are files to delete, ask for confirmation (unless non-interactive)
+    if files_to_delete and not non_interactive:
         click.echo(
             f"\n⚠️  The following {len(files_to_delete)} file(s) will be deleted:"
         )

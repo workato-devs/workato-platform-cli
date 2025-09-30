@@ -2,6 +2,7 @@
 
 import asyncio
 import functools
+import json
 
 from collections.abc import Callable
 from json import JSONDecodeError
@@ -99,10 +100,35 @@ def handle_api_exceptions(func: F) -> F:
         return cast(F, sync_wrapper)
 
 
+def _get_output_mode() -> str:
+    """Get the output mode from Click context."""
+    ctx = click.get_current_context(silent=True)
+    if ctx and hasattr(ctx, "params"):
+        output_mode: str = ctx.params.get("output_mode", "table")
+        return output_mode
+    return "table"
+
+
 def _handle_client_error(
     e: BadRequestException | UnprocessableEntityException,
 ) -> None:
     """Handle 400 Bad Request and 422 Unprocessable Entity errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_details = _extract_error_details(e)
+        error_data = {
+            "status": "error",
+            "error": error_details
+            or e.reason
+            or "Bad request - check your input parameters",
+            "error_code": "BAD_REQUEST"
+            if isinstance(e, BadRequestException)
+            else "UNPROCESSABLE_ENTITY",
+        }
+        click.echo(json.dumps(error_data))
+        return
+
     click.echo("❌ Invalid request")
 
     # Try to extract error details from response body
@@ -115,8 +141,19 @@ def _handle_client_error(
     click.echo("💡 Please check your input and try again")
 
 
-def _handle_auth_error(_: UnauthorizedException) -> None:
+def _handle_auth_error(e: UnauthorizedException) -> None:
     """Handle 401 Unauthorized errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_data = {
+            "status": "error",
+            "error": "Authentication failed - invalid or missing API token",
+            "error_code": "UNAUTHORIZED",
+        }
+        click.echo(json.dumps(error_data))
+        return
+
     click.echo("❌ Authentication failed")
     click.echo("   Your API token may be invalid")
     click.echo("💡 Please check your authentication:")
@@ -127,6 +164,18 @@ def _handle_auth_error(_: UnauthorizedException) -> None:
 
 def _handle_forbidden_error(e: ForbiddenException) -> None:
     """Handle 403 Forbidden errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_details = _extract_error_details(e)
+        error_data = {
+            "status": "error",
+            "error": error_details or "Access forbidden - insufficient permissions",
+            "error_code": "FORBIDDEN",
+        }
+        click.echo(json.dumps(error_data))
+        return
+
     click.echo("❌ Access forbidden")
     click.echo("   You don't have permission to perform this action")
 
@@ -142,6 +191,18 @@ def _handle_forbidden_error(e: ForbiddenException) -> None:
 
 def _handle_not_found_error(e: NotFoundException) -> None:
     """Handle 404 Not Found errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_details = _extract_error_details(e)
+        error_data = {
+            "status": "error",
+            "error": error_details or "Resource not found",
+            "error_code": "NOT_FOUND",
+        }
+        click.echo(json.dumps(error_data))
+        return
+
     click.echo("❌ Resource not found")
     click.echo("   The requested resource could not be found")
 
@@ -157,6 +218,18 @@ def _handle_not_found_error(e: NotFoundException) -> None:
 
 def _handle_conflict_error(e: ConflictException) -> None:
     """Handle 409 Conflict errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_details = _extract_error_details(e)
+        error_data = {
+            "status": "error",
+            "error": error_details or "Request conflicts with current state",
+            "error_code": "CONFLICT",
+        }
+        click.echo(json.dumps(error_data))
+        return
+
     click.echo("❌ Conflict detected")
     click.echo("   The request conflicts with the current state")
 
@@ -172,6 +245,18 @@ def _handle_conflict_error(e: ConflictException) -> None:
 
 def _handle_server_error(e: ServiceException) -> None:
     """Handle 5xx Server errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_data = {
+            "status": "error",
+            "error": "Server error - Workato API is experiencing issues",
+            "error_code": "SERVER_ERROR",
+            "http_status": e.status,
+        }
+        click.echo(json.dumps(error_data))
+        return
+
     click.echo("❌ Server error")
     click.echo("   The Workato API is experiencing issues")
     click.echo(f"   Status: {e.status}")
@@ -184,6 +269,20 @@ def _handle_server_error(e: ServiceException) -> None:
 
 def _handle_generic_api_error(e: ApiException) -> None:
     """Handle other API errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_details = _extract_error_details(e)
+        error_data = {
+            "status": "error",
+            "error": error_details or e.reason or "API error occurred",
+            "error_code": "API_ERROR",
+        }
+        if e.status:
+            error_data["http_status"] = e.status
+        click.echo(json.dumps(error_data))
+        return
+
     click.echo("❌ API error occurred")
 
     if e.status:
