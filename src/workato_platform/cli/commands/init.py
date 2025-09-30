@@ -14,7 +14,7 @@ from workato_platform.client.workato_api.configuration import Configuration
 @click.option("--profile", help="Profile name to use (creates new if doesn't exist)")
 @click.option(
     "--region",
-    type=click.Choice(["us", "eu", "jp", "au", "sg", "custom"]),
+    type=click.Choice(["us", "eu", "jp", "au", "sg", "il", "trial", "custom"]),
     help="Workato region",
 )
 @click.option("--api-token", help="Workato API token")
