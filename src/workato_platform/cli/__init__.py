@@ -67,8 +67,11 @@ def cli(
 # Core setup and configuration commands
 cli.add_command(init.init)
 cli.add_command(projects.projects)
+cli.add_command(projects.projects, name="project")
 cli.add_command(profiles.profiles)
+cli.add_command(profiles.profiles, name="profiles")
 cli.add_command(properties.properties)
+cli.add_command(properties.properties, name="property")
 
 # Development commands
 cli.add_command(guide.guide)
@@ -77,12 +80,19 @@ cli.add_command(pull.pull)
 
 # API and resource management commands
 cli.add_command(api_collections.api_collections)
+cli.add_command(api_collections.api_collections, name="api-collection")
 cli.add_command(api_clients.api_clients)
+cli.add_command(api_clients.api_clients, name="api-client")
 cli.add_command(data_tables.data_tables)
+cli.add_command(data_tables.data_tables, name="data-table")
 cli.add_command(connections.connections)
+cli.add_command(connections.connections, name="connection")
 cli.add_command(connectors.connectors)
+cli.add_command(connectors.connectors, name="connector")
 cli.add_command(recipes.recipes)
+cli.add_command(recipes.recipes, name="recipe")
 
 # Information commands
 cli.add_command(assets.assets)
+cli.add_command(assets.assets, name="asset")
 cli.add_command(workspace.workspace)

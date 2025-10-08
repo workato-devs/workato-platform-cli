@@ -1,5 +1,7 @@
 """Focused tests for the profiles command module."""
 
+import json
+
 from collections.abc import Callable
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -667,8 +669,6 @@ async def test_list_profiles_json_output_mode(
     output = capsys.readouterr().out
 
     # Parse JSON output
-    import json
-
     parsed = json.loads(output)
 
     assert parsed["current_profile"] == "dev"
@@ -697,9 +697,259 @@ async def test_list_profiles_json_output_mode_empty(
     output = capsys.readouterr().out
 
     # Parse JSON output
-    import json
-
     parsed = json.loads(output)
 
     assert parsed["current_profile"] is None
     assert parsed["profiles"] == {}
+
+
+@pytest.mark.asyncio
+async def test_status_json_no_profile(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test status JSON output when no profile is configured."""
+    config_manager = make_config_manager(
+        get_current_profile_name=Mock(return_value=None),
+    )
+
+    assert status.callback
+    await status.callback(output_mode="json", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    parsed = json.loads(output)
+
+    assert parsed["profile"] is None
+    assert parsed["error"] == "No active profile configured"
+
+
+@pytest.mark.asyncio
+async def test_status_json_with_project_override(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+    tmp_path: Path,
+) -> None:
+    """Test status JSON output with project override."""
+    config_manager = make_config_manager(
+        load_config=Mock(
+            return_value=Mock(
+                profile="dev-profile",
+                project_id=123,
+                project_name="Test Project",
+                folder_id=456,
+            )
+        ),
+        get_current_profile_name=Mock(return_value="dev-profile"),
+        get_current_profile_data=Mock(
+            return_value=Mock(
+                region="us",
+                region_name="US Data Center",
+                region_url="https://www.workato.com",
+                workspace_id=789,
+            )
+        ),
+        resolve_environment_variables=Mock(
+            return_value=("test-token", "https://www.workato.com")
+        ),
+        get_workspace_root=Mock(return_value=tmp_path),
+        get_project_directory=Mock(return_value=tmp_path / "project"),
+    )
+
+    assert status.callback
+    await status.callback(output_mode="json", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    parsed = json.loads(output)
+
+    assert parsed["profile"]["name"] == "dev-profile"
+    assert parsed["profile"]["source"]["type"] == "project_override"
+    assert parsed["profile"]["source"]["location"] == ".workatoenv"
+    assert parsed["profile"]["configuration"]["region"]["code"] == "us"
+    assert parsed["profile"]["configuration"]["workspace_id"] == 789
+    assert parsed["authentication"]["configured"] is True
+    assert parsed["authentication"]["source"]["type"] == "keyring"
+    assert parsed["project"]["configured"] is True
+    assert "Test Project" in str(parsed["project"]["metadata"]["name"])
+
+
+@pytest.mark.asyncio
+async def test_status_json_with_env_profile(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test status JSON output with environment variable profile."""
+    monkeypatch.setenv("WORKATO_PROFILE", "env-profile")
+
+    config_manager = make_config_manager(
+        load_config=Mock(return_value=Mock(profile=None)),
+        get_current_profile_name=Mock(return_value="env-profile"),
+        get_current_profile_data=Mock(
+            return_value=Mock(
+                region="us",
+                region_name="US Data Center",
+                region_url="https://www.workato.com",
+                workspace_id=789,
+            )
+        ),
+        resolve_environment_variables=Mock(
+            return_value=("test-token", "https://www.workato.com")
+        ),
+        get_workspace_root=Mock(return_value=None),
+        get_project_directory=Mock(return_value=None),
+    )
+
+    assert status.callback
+    await status.callback(output_mode="json", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    parsed = json.loads(output)
+
+    assert parsed["profile"]["name"] == "env-profile"
+    assert parsed["profile"]["source"]["type"] == "environment_variable"
+    assert parsed["profile"]["source"]["location"] == "WORKATO_PROFILE"
+    assert parsed["project"]["configured"] is False
+
+
+@pytest.mark.asyncio
+async def test_status_json_with_env_token(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test status JSON output with environment variable token."""
+    monkeypatch.setenv("WORKATO_API_TOKEN", "env-token")
+
+    config_manager = make_config_manager(
+        load_config=Mock(return_value=Mock(profile=None)),
+        get_current_profile_name=Mock(return_value="default-profile"),
+        get_current_profile_data=Mock(
+            return_value=Mock(
+                region="us",
+                region_name="US Data Center",
+                region_url="https://www.workato.com",
+                workspace_id=789,
+            )
+        ),
+        resolve_environment_variables=Mock(
+            return_value=("env-token", "https://www.workato.com")
+        ),
+        get_workspace_root=Mock(return_value=None),
+        get_project_directory=Mock(return_value=None),
+    )
+
+    assert status.callback
+    await status.callback(output_mode="json", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    parsed = json.loads(output)
+
+    assert parsed["authentication"]["configured"] is True
+    assert parsed["authentication"]["source"]["type"] == "environment_variable"
+    assert parsed["authentication"]["source"]["location"] == "WORKATO_API_TOKEN"
+
+
+@pytest.mark.asyncio
+async def test_status_json_no_token(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test status JSON output with no authentication token."""
+    config_manager = make_config_manager(
+        load_config=Mock(return_value=Mock(profile=None)),
+        get_current_profile_name=Mock(return_value="default-profile"),
+        get_current_profile_data=Mock(
+            return_value=Mock(
+                region="us",
+                region_name="US Data Center",
+                region_url="https://www.workato.com",
+                workspace_id=789,
+            )
+        ),
+        resolve_environment_variables=Mock(
+            return_value=(None, "https://www.workato.com")
+        ),
+        get_workspace_root=Mock(return_value=None),
+        get_project_directory=Mock(return_value=None),
+    )
+
+    assert status.callback
+    await status.callback(output_mode="json", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    parsed = json.loads(output)
+
+    assert parsed["authentication"]["configured"] is False
+
+
+@pytest.mark.asyncio
+async def test_status_json_project_path_none(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+    tmp_path: Path,
+) -> None:
+    """Test status JSON output when project path doesn't exist."""
+    config_manager = make_config_manager(
+        load_config=Mock(
+            return_value=Mock(
+                profile=None,
+                project_id=123,
+                project_name="Test Project",
+                folder_id=456,
+            )
+        ),
+        get_current_profile_name=Mock(return_value="default-profile"),
+        get_current_profile_data=Mock(
+            return_value=Mock(
+                region="us",
+                region_name="US Data Center",
+                region_url="https://www.workato.com",
+                workspace_id=789,
+            )
+        ),
+        resolve_environment_variables=Mock(
+            return_value=("test-token", "https://www.workato.com")
+        ),
+        get_workspace_root=Mock(return_value=tmp_path),
+        get_project_directory=Mock(return_value=None),
+    )
+
+    assert status.callback
+    await status.callback(output_mode="json", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    parsed = json.loads(output)
+
+    assert parsed["project"]["configured"] is False
+
+
+@pytest.mark.asyncio
+async def test_status_json_exception_handling(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test status JSON output handles exceptions gracefully."""
+    config_manager = make_config_manager(
+        load_config=Mock(return_value=Mock(profile=None)),
+        get_current_profile_name=Mock(return_value="default-profile"),
+        get_current_profile_data=Mock(
+            return_value=Mock(
+                region="us",
+                region_name="US Data Center",
+                region_url="https://www.workato.com",
+                workspace_id=789,
+            )
+        ),
+        resolve_environment_variables=Mock(
+            return_value=("test-token", "https://www.workato.com")
+        ),
+        get_workspace_root=Mock(side_effect=Exception("Test exception")),
+    )
+
+    assert status.callback
+    await status.callback(output_mode="json", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    parsed = json.loads(output)
+
+    assert parsed["project"]["configured"] is False

@@ -8,6 +8,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 import asyncclick as click
+import certifi
 import inquirer
 
 from workato_platform import Workato
@@ -51,13 +52,16 @@ class ConfigManager:
         api_url: str | None = None,
         project_name: str | None = None,
         project_id: int | None = None,
+        output_mode: str = "table",
+        non_interactive: bool = False,
     ) -> "ConfigManager":
         """Initialize workspace with interactive or non-interactive setup"""
-        if profile_name or (region and api_token):
-            click.echo("🚀 Welcome to Workato CLI (Non-interactive mode)")
-        else:
-            click.echo("🚀 Welcome to Workato CLI")
-        click.echo()
+        if output_mode == "table":
+            if non_interactive:
+                click.echo("🚀 Welcome to Workato CLI (Non-interactive mode)")
+            else:
+                click.echo("🚀 Welcome to Workato CLI")
+            click.echo()
 
         # Create manager without validation for setup
         manager = cls(config_dir, skip_validation=True)
@@ -65,7 +69,7 @@ class ConfigManager:
         # Validate we're not in a project directory
         manager.workspace_manager.validate_not_in_project()
 
-        if profile_name or (region and api_token):
+        if non_interactive and (profile_name or (region and api_token)):
             # Non-interactive setup
             await manager._setup_non_interactive(
                 profile_name=profile_name,
@@ -138,8 +142,9 @@ class ConfigManager:
             region_info = AVAILABLE_REGIONS[region]
 
         # Test authentication and get workspace info
-        api_config = Configuration(access_token=api_token, host=region_info.url)
-        api_config.verify_ssl = False
+        api_config = Configuration(
+            access_token=api_token, host=region_info.url, ssl_ca_cert=certifi.where()
+        )
 
         async with Workato(configuration=api_config) as workato_api_client:
             user_info = await workato_api_client.users_api.get_workspace_details()
@@ -157,8 +162,9 @@ class ConfigManager:
         self.profile_manager.set_current_profile(current_profile_name)
 
         # Get API client for project operations
-        api_config = Configuration(access_token=api_token, host=region_info.url)
-        api_config.verify_ssl = False
+        api_config = Configuration(
+            access_token=api_token, host=region_info.url, ssl_ca_cert=certifi.where()
+        )
 
         async with Workato(configuration=api_config) as workato_api_client:
             project_manager = ProjectManager(workato_api_client=workato_api_client)
@@ -182,14 +188,9 @@ class ConfigManager:
             if not selected_project:
                 raise click.ClickException("No project selected")
 
-            # Determine project path
+            # Always create project subdirectory named after the project
             current_dir = Path.cwd().resolve()
-            if current_dir == workspace_root:
-                # Running from workspace root - create subdirectory
-                project_path = workspace_root / selected_project.name
-            else:
-                # Running from subdirectory - use current directory
-                project_path = current_dir
+            project_path = current_dir / selected_project.name
 
             # Create project directory
             project_path.mkdir(parents=True, exist_ok=True)
@@ -317,8 +318,9 @@ class ConfigManager:
             sys.exit(1)
 
         # Test authentication and get workspace info
-        api_config = Configuration(access_token=token, host=selected_region.url)
-        api_config.verify_ssl = False
+        api_config = Configuration(
+            access_token=token, host=selected_region.url, ssl_ca_cert=certifi.where()
+        )
 
         async with Workato(configuration=api_config) as workato_api_client:
             user_info = await workato_api_client.users_api.get_workspace_details()
@@ -375,21 +377,13 @@ class ConfigManager:
                 click.echo(f"✅ Project: {existing_config.project_name}")
                 return
 
-        # Determine project location from current directory
-        current_dir = Path.cwd().resolve()
-        if current_dir == workspace_root:
-            # Running from workspace root - need to create subdirectory
-            project_location_mode = "workspace_root"
-        else:
-            # Running from subdirectory - use current directory as project location
-            project_location_mode = "current_dir"
-
         # Get API client for project operations
         api_token, api_host = self.profile_manager.resolve_environment_variables(
             profile_name
         )
-        api_config = Configuration(access_token=api_token, host=api_host)
-        api_config.verify_ssl = False
+        api_config = Configuration(
+            access_token=api_token, host=api_host, ssl_ca_cert=certifi.where()
+        )
 
         async with Workato(configuration=api_config) as workato_api_client:
             project_manager = ProjectManager(workato_api_client=workato_api_client)
@@ -438,14 +432,8 @@ class ConfigManager:
                 sys.exit(1)
 
             # Always create project subdirectory named after the project
-            project_name = selected_project.name
-
-            if project_location_mode == "current_dir":
-                # Create project subdirectory within current directory
-                project_path = current_dir / project_name
-            else:
-                # Create project subdirectory in workspace root
-                project_path = workspace_root / project_name
+            current_dir = Path.cwd().resolve()
+            project_path = current_dir / selected_project.name
 
             # Validate project path
             try:

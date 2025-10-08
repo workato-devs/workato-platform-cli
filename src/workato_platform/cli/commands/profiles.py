@@ -136,7 +136,7 @@ async def use(
         config_data = config_manager.load_config()
     except Exception:
         workspace_root = None
-        config_data = ConfigData()
+        config_data = ConfigData.model_construct()
 
     # If we have a workspace config (project_id exists), update workspace profile
     if config_data.project_id and workspace_root:
@@ -162,8 +162,15 @@ async def use(
 
 
 @profiles.command()
+@click.option(
+    "--output-mode",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format: table (default) or json",
+)
 @inject
 async def status(
+    output_mode: str = "table",
     config_manager: ConfigManager = Provide[Container.config_manager],
 ) -> None:
     """Show current profile status and configuration"""
@@ -176,11 +183,107 @@ async def status(
         project_profile_override
     )
 
+    output_data: dict[str, Any] = {}
+
     if not current_profile_name:
-        click.echo("❌ No active profile configured")
-        click.echo("💡 Run 'workato init' to create and set a profile")
+        if output_mode == "json":
+            output_data = {"profile": None, "error": "No active profile configured"}
+            click.echo(json.dumps(output_data, indent=2))
+        else:
+            click.echo("❌ No active profile configured")
+            click.echo("💡 Run 'workato init' to create and set a profile")
         return
 
+    # JSON output mode
+    if output_mode == "json":
+        # Profile information
+        profile_source_type = None
+        profile_source_location = None
+        if project_profile_override:
+            profile_source_type = "project_override"
+            profile_source_location = ".workatoenv"
+        elif os.environ.get("WORKATO_PROFILE"):
+            profile_source_type = "environment_variable"
+            profile_source_location = "WORKATO_PROFILE"
+        else:
+            profile_source_type = "global_default"
+            profile_source_location = "~/.workato/profiles"
+
+        profile_data = config_manager.profile_manager.get_current_profile_data(
+            project_profile_override
+        )
+
+        output_data["profile"] = {
+            "name": current_profile_name,
+            "source": {
+                "type": profile_source_type,
+                "location": profile_source_location,
+            },
+        }
+
+        if profile_data:
+            output_data["profile"]["configuration"] = {
+                "region": {
+                    "code": profile_data.region,
+                    "name": profile_data.region_name,
+                    "url": profile_data.region_url,
+                },
+                "workspace_id": profile_data.workspace_id,
+            }
+
+        # Authentication information
+        api_token, _ = config_manager.profile_manager.resolve_environment_variables(
+            project_profile_override
+        )
+
+        if api_token:
+            auth_source_type = None
+            auth_source_location = None
+            if os.environ.get("WORKATO_API_TOKEN"):
+                auth_source_type = "environment_variable"
+                auth_source_location = "WORKATO_API_TOKEN"
+            else:
+                auth_source_type = "keyring"
+                auth_source_location = "~/.workato/profiles"
+
+            output_data["authentication"] = {
+                "configured": True,
+                "source": {"type": auth_source_type, "location": auth_source_location},
+            }
+        else:
+            output_data["authentication"] = {"configured": False}
+
+        # Project information
+        try:
+            workspace_root = config_manager.get_workspace_root()
+            if workspace_root and (config_data.project_id or config_data.project_name):
+                project_metadata: dict[str, Any] = {}
+                if config_data.project_name:
+                    project_metadata["name"] = config_data.project_name
+                if config_data.project_id:
+                    project_metadata["id"] = config_data.project_id
+                if config_data.folder_id:
+                    project_metadata["folder_id"] = config_data.folder_id
+
+                project_path = config_manager.get_project_directory()
+
+                if project_path:
+                    output_data["project"] = {
+                        "configured": True,
+                        "path": str(project_path),
+                        "metadata": project_metadata,
+                    }
+                else:
+                    output_data["project"] = {"configured": False}
+            else:
+                output_data["project"] = {"configured": False}
+        except Exception:
+            output_data["project"] = {"configured": False}
+
+        click.echo(json.dumps(output_data))
+        return
+
+    # Table output (existing code)
     click.echo("📊 Profile Status:")
     click.echo(f"   Current Profile: {current_profile_name}")
 

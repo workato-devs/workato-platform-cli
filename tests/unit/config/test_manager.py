@@ -211,7 +211,11 @@ class TestConfigManager:
         )
 
         manager = await ConfigManager.initialize(
-            tmp_path, profile_name="dev", region="us", api_token="token"
+            tmp_path,
+            profile_name="dev",
+            region="us",
+            api_token="token",
+            non_interactive=True,
         )
 
         assert isinstance(manager, ConfigManager)
@@ -379,7 +383,7 @@ class TestConfigManager:
         workspace_env = json.loads(
             (tmp_path / ".workatoenv").read_text(encoding="utf-8")
         )
-        assert workspace_env["project_path"] == "subdir"
+        assert workspace_env["project_path"] == "subdir/CustomProj"
         assert StubProjectManager.created_projects[-1].name == "CustomProj"
 
     @pytest.mark.asyncio
