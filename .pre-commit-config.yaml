@@ -49,6 +49,8 @@ repos:
     rev: v2.9.0
     hooks:
       - id: pip-audit
+        # Temporary workaround: ignoring pip vulnerability GHSA-4xh5-x5gv-qwph (pip 25.2).
+        # Remove this ignore once a patched version of pip is available.
         args: [--format=json, --ignore-vuln=GHSA-4xh5-x5gv-qwph]
 
   # Local hooks for project-specific tasks
