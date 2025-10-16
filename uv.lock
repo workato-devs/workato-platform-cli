@@ -1723,6 +1723,7 @@ dependencies = [
     { name = "python-dateutil" },
     { name = "ruff" },
     { name = "typing-extensions" },
+    { name = "urllib3" },
 ]
 
 [package.optional-dependencies]
@@ -1787,6 +1788,7 @@ requires-dist = [
     { name = "ruff", specifier = "==0.13.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "typing-extensions", specifier = ">=4.0.0" },
+    { name = "urllib3", specifier = ">=2.5.0" },
 ]
 provides-extras = ["dev", "test"]
 

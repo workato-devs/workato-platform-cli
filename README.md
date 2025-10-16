@@ -42,17 +42,7 @@ pip install workato-platform-cli
 ```bash
 git clone https://github.com/workato-devs/workato-platform-cli.git
 cd workato-platform-cli
-pip install -e .
-```
-
-### Alternative (if above fails)
-If you get an "externally-managed-environment" error:
-
-```bash
-# Virtual environment (recommended)
-python3 -m venv venv
-source venv/bin/activate  # Linux/Mac
-pip install -e .
+make install
 ```
 
 Having issues? See [DEVELOPER_GUIDE.md](/docs/DEVELOPER_GUIDE.md) for troubleshooting.

@@ -26,6 +26,9 @@ install:
 	fi
 	uv sync
 	uv pip install -e .
+	@echo "✅ Installation complete!"
+	@echo "💡 To activate the virtual environment, run: source .venv/bin/activate"
+	@echo "   Or use 'uv run workato' to run commands without activation"
 
 install-dev:
 	@if [ ! -d ".venv" ]; then \
