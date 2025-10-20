@@ -1316,7 +1316,7 @@ class TestConfigManager:
             lambda _questions: {"profile_choice": "Create new profile"},
         )
 
-        async def mock_prompt(message, **_):
+        async def mock_prompt(message: str, **_: Any) -> str:
             return " " if "profile name" in message else "value"
 
         monkeypatch.setattr(
@@ -1340,7 +1340,7 @@ class TestConfigManager:
             lambda _questions: None,
         )
 
-        async def mock_prompt2(message, **_):
+        async def mock_prompt2(message: str, **_: Any) -> str:
             return " " if "Enter profile name" in message else "value"
 
         monkeypatch.setattr(
@@ -1523,7 +1523,7 @@ class TestConfigManager:
             lambda _questions: {"profile_choice": "Create new profile"},
         )
 
-        async def mock_prompt3(message, **_):
+        async def mock_prompt3(message: str, **_: Any) -> str:
             return "newprofile" if "profile name" in message else "value"
 
         monkeypatch.setattr(
@@ -1735,7 +1735,7 @@ class TestConfigManager:
             lambda qs: answers[qs[0].message],
         )
 
-        async def mock_prompt4(message, **_):
+        async def mock_prompt4(message: str, **_: Any) -> str:
             return "NestedProj" if message == "Enter project name" else "token"
 
         monkeypatch.setattr(
@@ -2157,7 +2157,7 @@ class TestConfigManager:
             lambda qs: answers[qs[0].message],
         )
 
-        async def mock_prompt5(message, **_):
+        async def mock_prompt5(message: str, **_: Any) -> str:
             return "NewProj" if message == "Enter project name" else "token"
 
         monkeypatch.setattr(
@@ -2190,7 +2190,7 @@ class TestConfigManager:
             StubProjectManager,
         )
 
-        async def mock_prompt6(message, **_):
+        async def mock_prompt6(message: str, **_: Any) -> str:
             return "   " if message == "Enter project name" else "token"
 
         monkeypatch.setattr(
