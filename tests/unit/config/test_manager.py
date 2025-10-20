@@ -1318,7 +1318,7 @@ class TestConfigManager:
 
         async def mock_prompt(message, **_):
             return " " if "profile name" in message else "value"
-        
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
             mock_prompt,
@@ -1341,7 +1341,7 @@ class TestConfigManager:
         )
         async def mock_prompt2(message, **_):
             return " " if "Enter profile name" in message else "value"
-        
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
             mock_prompt2,
@@ -1523,7 +1523,7 @@ class TestConfigManager:
         )
         async def mock_prompt3(message, **_):
             return "newprofile" if "profile name" in message else "value"
-        
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
             mock_prompt3,
@@ -1734,7 +1734,7 @@ class TestConfigManager:
         )
         async def mock_prompt4(message, **_):
             return "NestedProj" if message == "Enter project name" else "token"
-        
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
             mock_prompt4,
@@ -2155,7 +2155,7 @@ class TestConfigManager:
         )
         async def mock_prompt5(message, **_):
             return "NewProj" if message == "Enter project name" else "token"
-        
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
             mock_prompt5,
@@ -2188,7 +2188,7 @@ class TestConfigManager:
 
         async def mock_prompt6(message, **_):
             return "   " if message == "Enter project name" else "token"
-        
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
             mock_prompt6,
