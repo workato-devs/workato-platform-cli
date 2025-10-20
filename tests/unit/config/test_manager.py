@@ -1224,7 +1224,7 @@ class TestConfigManager:
             "Enter project name": ["DemoProject"],
         }
 
-        def fake_prompt(message: str, **_: object) -> str:
+        async def fake_prompt(message: str, **_: object) -> str:
             values = prompt_answers.get(message)
             assert values, f"Unexpected prompt: {message}"
             return values.pop(0)
@@ -1316,9 +1316,12 @@ class TestConfigManager:
             lambda _questions: {"profile_choice": "Create new profile"},
         )
 
+        async def mock_prompt(message, **_):
+            return " " if "profile name" in message else "value"
+        
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: " " if "profile name" in message else "value",
+            mock_prompt,
         )
 
         with pytest.raises(SystemExit):
@@ -1336,9 +1339,12 @@ class TestConfigManager:
             ConfigManager.__module__ + ".inquirer.prompt",
             lambda _questions: None,
         )
+        async def mock_prompt2(message, **_):
+            return " " if "Enter profile name" in message else "value"
+        
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: " " if "Enter profile name" in message else "value",
+            mock_prompt2,
         )
 
         with pytest.raises(SystemExit):
@@ -1410,7 +1416,7 @@ class TestConfigManager:
             "Enter your Workato API token": ["custom-token"],
         }
 
-        def fake_prompt(message: str, **_: Any) -> str:
+        async def fake_prompt(message: str, **_: Any) -> str:
             values = prompt_answers.get(message)
             assert values, f"Unexpected prompt: {message}"
             return values.pop(0)
@@ -1479,7 +1485,7 @@ class TestConfigManager:
             lambda _questions: {"region": "US Data Center (https://www.workato.com)"},
         )
 
-        def fake_prompt(message: str, **_: Any) -> str:
+        async def fake_prompt(message: str, **_: Any) -> str:
             if "API token" in message:
                 return "   "
             return "unused"
@@ -1515,9 +1521,12 @@ class TestConfigManager:
             ConfigManager.__module__ + ".inquirer.prompt",
             lambda _questions: {"profile_choice": "Create new profile"},
         )
+        async def mock_prompt3(message, **_):
+            return "newprofile" if "profile name" in message else "value"
+        
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: "newprofile" if "profile name" in message else "value",
+            mock_prompt3,
         )
 
         create_mock = AsyncMock(return_value=None)
@@ -1723,11 +1732,12 @@ class TestConfigManager:
             ConfigManager.__module__ + ".inquirer.prompt",
             lambda qs: answers[qs[0].message],
         )
+        async def mock_prompt4(message, **_):
+            return "NestedProj" if message == "Enter project name" else "token"
+        
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: "NestedProj"
-            if message == "Enter project name"
-            else "token",
+            mock_prompt4,
         )
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
@@ -2066,7 +2076,7 @@ class TestConfigManager:
         def fake_prompt(questions: list[Any]) -> dict[str, str]:
             return answers[questions[0].message]
 
-        def fake_click_prompt(message: str, **_: object) -> str:
+        async def fake_click_prompt(message: str, **_: object) -> str:
             if message == "Enter project name":
                 return "NewProj"
             if "API token" in message:
@@ -2143,11 +2153,12 @@ class TestConfigManager:
             ConfigManager.__module__ + ".inquirer.prompt",
             lambda qs: answers[qs[0].message],
         )
+        async def mock_prompt5(message, **_):
+            return "NewProj" if message == "Enter project name" else "token"
+        
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: "NewProj"
-            if message == "Enter project name"
-            else "token",
+            mock_prompt5,
         )
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
@@ -2175,9 +2186,12 @@ class TestConfigManager:
             StubProjectManager,
         )
 
+        async def mock_prompt6(message, **_):
+            return "   " if message == "Enter project name" else "token"
+        
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: "   " if message == "Enter project name" else "token",
+            mock_prompt6,
         )
 
         def prompt_create_new(questions: list[Any]) -> dict[str, str]:
