@@ -245,7 +245,7 @@ class ConfigManager:
                 sys.exit(1)
 
             if answers["profile_choice"] == "Create new profile":
-                profile_name = click.prompt("Enter new profile name", type=str).strip()
+                profile_name = (await click.prompt("Enter new profile name", type=str)).strip()
                 if not profile_name:
                     click.echo("❌ Profile name cannot be empty")
                     sys.exit(1)
@@ -253,9 +253,9 @@ class ConfigManager:
             else:
                 profile_name = answers["profile_choice"]
         else:
-            profile_name = click.prompt(
+            profile_name = (await click.prompt(
                 "Enter profile name", default="default", type=str
-            ).strip()
+            )).strip()
             if not profile_name:
                 click.echo("❌ Profile name cannot be empty")
                 sys.exit(1)
@@ -301,7 +301,7 @@ class ConfigManager:
 
         # Handle custom URL
         if selected_region.region == "custom":
-            custom_url = click.prompt(
+            custom_url = await click.prompt(
                 "Enter your custom Workato base URL",
                 type=str,
                 default="https://www.workato.com",
@@ -312,7 +312,7 @@ class ConfigManager:
 
         # Get API token
         click.echo("🔐 Enter your API token")
-        token = click.prompt("Enter your Workato API token", hide_input=True)
+        token = await click.prompt("Enter your Workato API token", hide_input=True)
         if not token.strip():
             click.echo("❌ No token provided")
             sys.exit(1)
@@ -412,7 +412,7 @@ class ConfigManager:
             selected_project = None
 
             if answers["project"] == "Create new project":
-                project_name = click.prompt("Enter project name", type=str)
+                project_name = await click.prompt("Enter project name", type=str)
                 if not project_name or not project_name.strip():
                     click.echo("❌ Project name cannot be empty")
                     sys.exit(1)
