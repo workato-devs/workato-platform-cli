@@ -245,7 +245,9 @@ class ConfigManager:
                 sys.exit(1)
 
             if answers["profile_choice"] == "Create new profile":
-                profile_name = (await click.prompt("Enter new profile name", type=str)).strip()
+                profile_name = (
+                    await click.prompt("Enter new profile name", type=str)
+                ).strip()
                 if not profile_name:
                     click.echo("❌ Profile name cannot be empty")
                     sys.exit(1)
@@ -253,9 +255,9 @@ class ConfigManager:
             else:
                 profile_name = answers["profile_choice"]
         else:
-            profile_name = (await click.prompt(
-                "Enter profile name", default="default", type=str
-            )).strip()
+            profile_name = (
+                await click.prompt("Enter profile name", default="default", type=str)
+            ).strip()
             if not profile_name:
                 click.echo("❌ Profile name cannot be empty")
                 sys.exit(1)
