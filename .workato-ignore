@@ -1,0 +1,67 @@
+# Workato CLI ignore patterns
+# Files matching these patterns will be preserved during 'workato pull'
+# and excluded from 'workato push' operations
+
+# Configuration files
+.workatoenv
+
+# Git files
+.git
+.gitignore
+.gitattributes
+.gitmodules
+
+# Python files and virtual environments
+*.py
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Node.js files
+node_modules/
+package.json
+package-lock.json
+yarn.lock
+.npmrc
+
+# Development tools
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.tox/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+dist/
+build/
+*.egg
+
+# Documentation and project files
+*.md
+LICENSE
+.editorconfig
+pyproject.toml
+setup.py
+setup.cfg
+Makefile
+Dockerfile
+docker-compose.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Add your own patterns below

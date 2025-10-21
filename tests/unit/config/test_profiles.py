@@ -793,7 +793,8 @@ class TestProfileManager:
             assert manager._using_fallback_keyring is True
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_standard_region(
+    @pytest.mark.asyncio
+    async def test_select_region_interactive_standard_region(
         self, mock_prompt: Mock, tmp_path: Path
     ) -> None:
         """Test interactive region selection for standard region."""
@@ -803,14 +804,15 @@ class TestProfileManager:
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
-            result = manager.select_region_interactive()
+            result = await manager.select_region_interactive()
 
             assert result is not None
             assert result.region == "us"
             assert result.name == "US Data Center"
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_custom_region(
+    @pytest.mark.asyncio
+    async def test_select_region_interactive_custom_region(
         self, mock_prompt: Mock, tmp_path: Path
     ) -> None:
         """Test interactive region selection for custom region."""
@@ -821,14 +823,15 @@ class TestProfileManager:
             patch("asyncclick.prompt", return_value="https://custom.workato.com"),
         ):
             manager = ProfileManager()
-            result = manager.select_region_interactive()
+            result = await manager.select_region_interactive()
 
             assert result is not None
             assert result.region == "custom"
             assert result.url == "https://custom.workato.com"
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_user_cancel(
+    @pytest.mark.asyncio
+    async def test_select_region_interactive_user_cancel(
         self, mock_prompt: Mock, tmp_path: Path
     ) -> None:
         """Test interactive region selection when user cancels."""
@@ -836,12 +839,13 @@ class TestProfileManager:
 
         with patch("pathlib.Path.home", return_value=tmp_path):
             manager = ProfileManager()
-            result = manager.select_region_interactive()
+            result = await manager.select_region_interactive()
 
             assert result is None
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_custom_invalid_url(
+    @pytest.mark.asyncio
+    async def test_select_region_interactive_custom_invalid_url(
         self, mock_prompt: Mock, tmp_path: Path
     ) -> None:
         """Test interactive region selection with invalid custom URL."""
@@ -855,14 +859,15 @@ class TestProfileManager:
             patch("asyncclick.echo") as mock_echo,
         ):
             manager = ProfileManager()
-            result = manager.select_region_interactive()
+            result = await manager.select_region_interactive()
 
             assert result is None
             # Should have shown error message
             mock_echo.assert_called()
 
     @patch("inquirer.prompt")
-    def test_select_region_interactive_custom_with_existing_profile(
+    @pytest.mark.asyncio
+    async def test_select_region_interactive_custom_with_existing_profile(
         self, mock_prompt: Mock, tmp_path: Path
     ) -> None:
         """Test interactive region selection for custom region with existing profile."""
@@ -878,7 +883,7 @@ class TestProfileManager:
             patch.object(ProfileManager, "get_profile", return_value=existing_profile),
         ):
             manager = ProfileManager()
-            result = manager.select_region_interactive("existing-profile")
+            result = await manager.select_region_interactive("existing-profile")
 
             assert result is not None
             assert result.region == "custom"

@@ -132,7 +132,8 @@ def test_get_oauth_required_parameters_defaults(manager: ConnectorManager) -> No
     assert params == [param]
 
 
-def test_prompt_for_oauth_parameters_prompts(
+@pytest.mark.asyncio
+async def test_prompt_for_oauth_parameters_prompts(
     monkeypatch: pytest.MonkeyPatch, manager: ConnectorManager, capture_echo: list[str]
 ) -> None:
     manager._data_cache = {
@@ -152,12 +153,15 @@ def test_prompt_for_oauth_parameters_prompts(
         )
     }
 
+    async def mock_prompt(*_args, **_kwargs):
+        return "https://example.atlassian.net"
+
     monkeypatch.setattr(
         "workato_platform.cli.commands.connectors.connector_manager.click.prompt",
-        lambda *_args, **_kwargs: "https://example.atlassian.net",
+        mock_prompt,
     )
 
-    result = manager.prompt_for_oauth_parameters("jira", existing_input={})
+    result = await manager.prompt_for_oauth_parameters("jira", existing_input={})
 
     assert result["auth_type"] == "oauth"
     assert result["host_url"] == "https://example.atlassian.net"
@@ -425,15 +429,17 @@ def test_get_oauth_required_parameters_no_provider(manager: ConnectorManager) ->
     assert result == []
 
 
-def test_prompt_for_oauth_parameters_no_oauth_params(manager: ConnectorManager) -> None:
+@pytest.mark.asyncio
+async def test_prompt_for_oauth_parameters_no_oauth_params(manager: ConnectorManager) -> None:
     """Test prompt_for_oauth_parameters when no OAuth params needed."""
     manager._data_cache = {"simple": ProviderData(name="Simple", provider="simple")}
 
-    result = manager.prompt_for_oauth_parameters("simple", {"existing": "value"})
+    result = await manager.prompt_for_oauth_parameters("simple", {"existing": "value"})
     assert result == {"existing": "value"}
 
 
-def test_prompt_for_oauth_parameters_all_provided(manager: ConnectorManager) -> None:
+@pytest.mark.asyncio
+async def test_prompt_for_oauth_parameters_all_provided(manager: ConnectorManager) -> None:
     """Test prompt_for_oauth_parameters when all params already provided."""
     auth_param = ConnectionParameter(name="auth_type", label="Auth Type", type="string")
     provider = ProviderData(
@@ -442,7 +448,7 @@ def test_prompt_for_oauth_parameters_all_provided(manager: ConnectorManager) -> 
     manager._data_cache = {"jira": provider}
 
     existing_input = {"auth_type": "oauth"}
-    result = manager.prompt_for_oauth_parameters("jira", existing_input)
+    result = await manager.prompt_for_oauth_parameters("jira", existing_input)
     assert result == existing_input
 
 

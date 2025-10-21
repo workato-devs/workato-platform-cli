@@ -175,7 +175,7 @@ async def create(
 
     # For OAuth providers, prompt for missing OAuth parameters
     if (oauth_required or is_oauth_provider) and not shell_connection:
-        connection_input = connector_manager.prompt_for_oauth_parameters(
+        connection_input = await connector_manager.prompt_for_oauth_parameters(
             provider, connection_input
         )
         # Update oauth_required if we detected OAuth via connector manager

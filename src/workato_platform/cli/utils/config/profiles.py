@@ -420,7 +420,7 @@ class ProfileManager:
 
         return len(missing_items) == 0, missing_items
 
-    def select_region_interactive(
+    async def select_region_interactive(
         self, profile_name: str | None = None
     ) -> RegionInfo | None:
         """Interactive region selection"""
@@ -470,7 +470,7 @@ class ProfileManager:
             if profile_data and profile_data.region == "custom":
                 current_url = profile_data.region_url
 
-            custom_url = click.prompt(
+            custom_url = await click.prompt(
                 "Enter your custom Workato base URL",
                 type=str,
                 default=current_url,
