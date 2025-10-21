@@ -40,7 +40,8 @@ class AliasedGroup(click.Group):
             main_name = name or cmd.name
             if alias == main_name:
                 raise ValueError(
-                    f"Alias '{alias}' cannot be the same as the main command name '{main_name}'."
+                    f"Alias '{alias}' cannot be the same as "
+                    f"the main command name '{main_name}'."
                 )
             self.aliases[alias] = main_name
 
