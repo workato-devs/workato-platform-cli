@@ -19,7 +19,7 @@
 
 ### Standard Method
 ```bash
-pip install -e .
+make install
 ```
 
 ## Initial Setup
