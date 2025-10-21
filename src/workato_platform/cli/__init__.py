@@ -45,6 +45,8 @@ class AliasedGroup(click.Group):
         # Store alias mapping
         if alias:
             main_name = name or cmd.name
+            if not main_name:
+                raise ValueError("Command must have a name to create an alias")
             if alias == main_name:
                 raise ValueError(
                     f"Alias '{alias}' cannot be the same as "
@@ -55,9 +57,7 @@ class AliasedGroup(click.Group):
     def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
         # Check if it's an alias first
         if cmd_name in self.aliases:
-            aliased_name = self.aliases[cmd_name]
-            if aliased_name is not None:
-                cmd_name = aliased_name
+            cmd_name = self.aliases[cmd_name]
         return super().get_command(ctx, cmd_name)
 
 
