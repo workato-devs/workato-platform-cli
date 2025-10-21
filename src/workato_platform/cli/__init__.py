@@ -55,7 +55,9 @@ class AliasedGroup(click.Group):
     def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
         # Check if it's an alias first
         if cmd_name in self.aliases:
-            cmd_name = self.aliases[cmd_name]
+            aliased_name = self.aliases[cmd_name]
+            if aliased_name is not None:
+                cmd_name = aliased_name
         return super().get_command(ctx, cmd_name)
 
 
