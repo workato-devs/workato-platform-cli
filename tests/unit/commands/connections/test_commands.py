@@ -186,7 +186,9 @@ async def test_create_oauth_manual_fallback(
     )
     connector_manager = Mock(
         get_provider_data=Mock(return_value=provider_data),
-        prompt_for_oauth_parameters=AsyncMock(return_value={"host_url": "https://jira"}),
+        prompt_for_oauth_parameters=AsyncMock(
+            return_value={"host_url": "https://jira"}
+        ),
     )
 
     api = make_stub(

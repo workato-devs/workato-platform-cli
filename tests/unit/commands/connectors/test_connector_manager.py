@@ -153,7 +153,7 @@ async def test_prompt_for_oauth_parameters_prompts(
         )
     }
 
-    async def mock_prompt(*_args, **_kwargs):
+    async def mock_prompt(*_args: object, **_kwargs: object) -> str:
         return "https://example.atlassian.net"
 
     monkeypatch.setattr(
@@ -430,7 +430,9 @@ def test_get_oauth_required_parameters_no_provider(manager: ConnectorManager) ->
 
 
 @pytest.mark.asyncio
-async def test_prompt_for_oauth_parameters_no_oauth_params(manager: ConnectorManager) -> None:
+async def test_prompt_for_oauth_parameters_no_oauth_params(
+    manager: ConnectorManager,
+) -> None:
     """Test prompt_for_oauth_parameters when no OAuth params needed."""
     manager._data_cache = {"simple": ProviderData(name="Simple", provider="simple")}
 
@@ -439,7 +441,9 @@ async def test_prompt_for_oauth_parameters_no_oauth_params(manager: ConnectorMan
 
 
 @pytest.mark.asyncio
-async def test_prompt_for_oauth_parameters_all_provided(manager: ConnectorManager) -> None:
+async def test_prompt_for_oauth_parameters_all_provided(
+    manager: ConnectorManager,
+) -> None:
     """Test prompt_for_oauth_parameters when all params already provided."""
     auth_param = ConnectionParameter(name="auth_type", label="Auth Type", type="string")
     provider = ProviderData(
