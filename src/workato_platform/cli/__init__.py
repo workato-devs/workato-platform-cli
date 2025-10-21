@@ -1,5 +1,7 @@
 """CLI tool for the Workato API"""
 
+import typing as t
+
 import asyncclick as click
 
 from workato_platform.cli.commands import (
@@ -26,11 +28,16 @@ from workato_platform.cli.utils.version_checker import check_updates_async
 class AliasedGroup(click.Group):
     """A Click Group that supports command aliases without showing them in help"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         super().__init__(*args, **kwargs)
-        self.aliases = {}
+        self.aliases: dict[str, str] = {}
 
-    def add_command_with_alias(self, cmd, name=None, alias=None):
+    def add_command_with_alias(
+        self,
+        cmd: click.Command,
+        name: str | None = None,
+        alias: str | None = None,
+    ) -> None:
         """Add a command with an optional hidden alias"""
         # Add the main command
         self.add_command(cmd, name=name)
@@ -45,7 +52,7 @@ class AliasedGroup(click.Group):
                 )
             self.aliases[alias] = main_name
 
-    def get_command(self, ctx, cmd_name):
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
         # Check if it's an alias first
         if cmd_name in self.aliases:
             cmd_name = self.aliases[cmd_name]
