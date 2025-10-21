@@ -929,7 +929,7 @@ class TestConnectionCreationEdgeCases:
         provider_data = make_stub(oauth=True)
         connector_manager = make_stub(
             get_provider_data=Mock(return_value=provider_data),
-            prompt_for_oauth_parameters=Mock(return_value={"client_id": "abc"}),
+            prompt_for_oauth_parameters=AsyncMock(return_value={"client_id": "abc"}),
         )
         workato_client = make_stub(
             connections_api=make_stub(
@@ -985,7 +985,7 @@ class TestConnectionCreationEdgeCases:
         )
         connector_manager = make_stub(
             get_provider_data=Mock(return_value=None),
-            prompt_for_oauth_parameters=Mock(return_value={}),
+            prompt_for_oauth_parameters=AsyncMock(return_value={}),
         )
         workato_client = make_stub(
             connections_api=make_stub(

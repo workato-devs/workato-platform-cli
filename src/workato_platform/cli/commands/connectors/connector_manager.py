@@ -125,7 +125,7 @@ class ConnectorManager:
 
         return provider_data.get_oauth_parameters()
 
-    def prompt_for_oauth_parameters(
+    async def prompt_for_oauth_parameters(
         self, provider: str, existing_input: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Prompt user for OAuth-required parameters that are missing"""
@@ -169,11 +169,11 @@ class ConnectorManager:
                 click.echo(f"   ✓ Setting to: {value}")
             elif param_name == "host_url" and provider == "jira":
                 default_url = "https://your-domain.atlassian.net"
-                value = click.prompt(
+                value = await click.prompt(
                     f"   Enter {label}", default=default_url, show_default=True
                 )
             else:
-                value = click.prompt(f"   Enter {label}")
+                value = await click.prompt(f"   Enter {label}")
 
             updated_input[param_name] = value
             click.echo()
