@@ -4,7 +4,7 @@ import ssl
 
 from typing import Any
 
-import aiohttp_retry  # type: ignore[import-not-found]
+import aiohttp_retry
 
 
 try:
