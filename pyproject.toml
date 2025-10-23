@@ -41,6 +41,7 @@ dependencies = [
     "keyring>=25.6.0",
     "ruff==0.13.0",
     "urllib3>=2.5.0",
+    "lazy-imports>=0.3.1",
 ]
 
 [project.optional-dependencies]

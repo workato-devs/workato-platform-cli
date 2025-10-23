@@ -2454,7 +2454,6 @@ components:
       type: object
       required:
         - name
-        - title
         - deprecated
         - bulk
         - batch
@@ -2464,6 +2463,7 @@ components:
           example: "new_entry"
         title:
           type: string
+          nullable: true
           example: "New entry"
         deprecated:
           type: boolean
