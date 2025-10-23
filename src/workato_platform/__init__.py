@@ -4,6 +4,8 @@ import ssl
 
 from typing import Any
 
+import aiohttp_retry  # type: ignore[import-not-found]
+
 
 try:
     from workato_platform._version import __version__
@@ -25,6 +27,46 @@ from workato_platform.client.workato_api.api_client import ApiClient
 from workato_platform.client.workato_api.configuration import Configuration
 
 
+def _configure_retry_with_429_support(
+    rest_client: Any, configuration: Configuration
+) -> None:
+    """
+    Configure REST client to retry on 429 (Too Many Requests) errors.
+
+    This patches the auto-generated REST client to add 429 to the list of
+    retryable status codes with appropriate exponential backoff for rate limiting.
+
+    Args:
+        rest_client: The RESTClientObject instance to configure
+        configuration: The Configuration object containing retry settings
+    """
+    # Enable retries by default if not explicitly set
+    if configuration.retries is None:
+        configuration.retries = 3
+
+    # Update the retries setting on the REST client
+    rest_client.retries = configuration.retries
+
+    # Force recreation of retry_client with 429 support
+    if rest_client.retry_client is not None:
+        rest_client.retry_client = None
+
+    # The retry_client will be lazily created on first request with our patched settings
+    # We need to pre-create it here to ensure 429 support
+    if rest_client.retries is not None:
+        rest_client.retry_client = aiohttp_retry.RetryClient(
+            client_session=rest_client.pool_manager,
+            retry_options=aiohttp_retry.ExponentialRetry(
+                attempts=rest_client.retries,
+                factor=2.0,
+                start_timeout=1.0,  # Increased from default 0.1s for rate limiting
+                max_timeout=120.0,  # 2 minutes max
+                statuses={429},  # Add 429 Too Many Requests
+                retry_all_server_errors=True,  # Keep 5xx errors
+            ),
+        )
+
+
 class Workato:
     """Wrapper class that provides easy access to all Workato API endpoints."""
 
@@ -44,6 +86,9 @@ class Workato:
             rest_client.ssl_context.options |= (
                 ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
             )
+
+        # Configure retry logic with 429 (Too Many Requests) support
+        _configure_retry_with_429_support(rest_client, configuration)
 
         # Initialize all API endpoints
         self.projects_api = ProjectsApi(self._api_client)

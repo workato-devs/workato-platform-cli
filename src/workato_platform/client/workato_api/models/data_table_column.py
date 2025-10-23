@@ -19,6 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
+from uuid import UUID
 from workato_platform.client.workato_api.models.data_table_relation import DataTableRelation
 from typing import Optional, Set
 from typing_extensions import Self
@@ -30,7 +31,7 @@ class DataTableColumn(BaseModel):
     type: StrictStr
     name: StrictStr
     optional: StrictBool
-    field_id: StrictStr
+    field_id: UUID
     hint: Optional[StrictStr]
     default_value: Optional[Any] = Field(description="Default value matching the column type")
     metadata: Dict[str, Any]
