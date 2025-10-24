@@ -64,13 +64,23 @@ class TestWorkatoClient:
             # Create mock configuration with proper SSL attributes
             with (
                 patch("workato_platform.Configuration") as mock_config,
+                patch("workato_platform.ApiClient") as mock_api_client,
             ):
                 mock_configuration = Mock()
                 mock_configuration.connection_pool_maxsize = 10
                 mock_configuration.ssl_ca_cert = None
                 mock_configuration.ca_cert_data = None
                 mock_configuration.cert_file = None
+                mock_configuration.retries = None
                 mock_config.return_value = mock_configuration
+
+                mock_client_instance = Mock()
+                mock_rest_client = Mock()
+                mock_rest_client.pool_manager = Mock()
+                mock_rest_client.retry_client = None
+                mock_rest_client.ssl_context = Mock()
+                mock_api_client.return_value = mock_client_instance
+                mock_client_instance.rest_client = mock_rest_client
 
                 client = Workato(mock_configuration)
 
@@ -273,6 +283,39 @@ class TestWorkatoClient:
                 for endpoint in api_endpoints:
                     assert hasattr(client, endpoint)
                     assert getattr(client, endpoint) is not None
+
+        except ImportError:
+            pytest.skip("Workato class not available due to missing dependencies")
+
+    def test_workato_retry_429_configured(self) -> None:
+        """Test that retry logic with 429 support is configured."""
+        try:
+            from workato_platform import Workato
+
+            with (
+                patch("workato_platform.ApiClient") as mock_api_client,
+                patch("aiohttp_retry.RetryClient") as mock_retry_client,
+            ):
+                mock_configuration = Mock()
+                mock_configuration.retries = None  # Should default to 3
+
+                mock_client_instance = Mock()
+                mock_rest_client = Mock()
+                mock_rest_client.pool_manager = Mock()
+                mock_rest_client.retry_client = None
+                mock_rest_client.ssl_context = Mock()
+
+                mock_api_client.return_value = mock_client_instance
+                mock_client_instance.rest_client = mock_rest_client
+
+                Workato(mock_configuration)
+
+                # Verify retries were enabled
+                assert mock_configuration.retries == 3
+                assert mock_rest_client.retries == 3
+
+                # Verify RetryClient was created
+                mock_retry_client.assert_called_once()
 
         except ImportError:
             pytest.skip("Workato class not available due to missing dependencies")

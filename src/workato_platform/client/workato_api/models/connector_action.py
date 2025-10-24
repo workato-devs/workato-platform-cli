@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -27,7 +27,7 @@ class ConnectorAction(BaseModel):
     ConnectorAction
     """ # noqa: E501
     name: StrictStr
-    title: StrictStr
+    title: Optional[StrictStr] = None
     deprecated: StrictBool
     bulk: StrictBool
     batch: StrictBool
@@ -72,6 +72,11 @@ class ConnectorAction(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if title (nullable) is None
+        # and model_fields_set contains the field
+        if self.title is None and "title" in self.model_fields_set:
+            _dict['title'] = None
+
         return _dict
 
     @classmethod
