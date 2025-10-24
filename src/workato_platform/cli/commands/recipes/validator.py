@@ -601,11 +601,11 @@ class RecipeValidator:
             }
 
         # Fetch custom connectors
-        customer_connectores_response = (
+        custom_connectors_response = (
             await self.workato_api_client.connectors_api.list_custom_connectors()
         )
 
-        for custom_connector in customer_connectores_response.result:
+        for custom_connector in custom_connectors_response.result:
             provider_name = custom_connector.name.lower()
             code_response = (
                 await self.workato_api_client.connectors_api.get_custom_connector_code(
