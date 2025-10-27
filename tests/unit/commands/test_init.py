@@ -540,7 +540,7 @@ async def test_init_non_empty_directory_interactive_cancelled(
             mock_initialize,
         )
 
-        monkeypatch.setattr(init_module.click, "echo", lambda msg="": None)
+        monkeypatch.setattr(init_module.click, "echo", lambda *args, **kwargs: None)
         monkeypatch.setattr(init_module.click, "confirm", lambda *args, **kwargs: False)
 
         mock_pull = AsyncMock()
