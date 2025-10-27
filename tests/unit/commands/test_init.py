@@ -495,7 +495,7 @@ async def test_init_non_empty_directory_non_interactive_table(
             mock_initialize,
         )
 
-        monkeypatch.setattr(init_module.click, "echo", lambda msg="": None)
+        monkeypatch.setattr(init_module.click, "echo", lambda *args, **kwargs: None)
 
         assert init_module.init.callback
         with pytest.raises(click.Abort):
