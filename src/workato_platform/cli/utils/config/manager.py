@@ -188,7 +188,32 @@ class ConfigManager:
             if not selected_project:
                 raise click.ClickException("No project selected")
 
-            # Always create project subdirectory named after the project
+            # Check if this specific project already exists locally in the workspace
+            local_projects = self._find_all_projects(workspace_root)
+            existing_local_path = None
+
+            for project_path_candidate, _ in local_projects:
+                try:
+                    project_config_manager = ConfigManager(
+                        project_path_candidate, skip_validation=True
+                    )
+                    config_data = project_config_manager.load_config()
+                    if config_data.project_id == selected_project.id:
+                        existing_local_path = project_path_candidate
+                        break
+                except (json.JSONDecodeError, OSError):
+                    continue
+
+            # In non-interactive mode, fail if project already exists
+            if existing_local_path:
+                relative_path = existing_local_path.relative_to(workspace_root)
+                raise click.ClickException(
+                    f"Project '{selected_project.name}' (ID: {selected_project.id}) "
+                    f"already exists locally at: {relative_path}. "
+                    f"Cannot reinitialize in non-interactive mode."
+                )
+
+            # Project doesn't exist locally - create new directory
             current_dir = Path.cwd().resolve()
             project_path = current_dir / selected_project.name
 
@@ -343,42 +368,6 @@ class ConfigManager:
         """Setup project interactively"""
         click.echo("📁 Step 2: Setup project")
 
-        # Check for existing project
-        existing_config = self.load_config()
-        if existing_config.project_id:
-            if not existing_config.project_name:
-                raise click.ClickException("Project name is required")
-            click.echo(f"Found existing project: {existing_config.project_name}")
-            if click.confirm("Use this project?", default=True):
-                # Ensure project_path is set and create project directory
-                project_name = existing_config.project_name
-                if not existing_config.project_path:
-                    existing_config.project_path = project_name
-
-                project_path = workspace_root / existing_config.project_path
-                project_path.mkdir(parents=True, exist_ok=True)
-
-                # Update workspace config with profile
-                existing_config.profile = profile_name
-                self.save_config(existing_config)
-
-                # Create project config
-                project_config_manager = ConfigManager(
-                    project_path, skip_validation=True
-                )
-                project_config = ConfigData(
-                    project_id=existing_config.project_id,
-                    project_name=existing_config.project_name,
-                    project_path=None,  # No project_path in project directory
-                    folder_id=existing_config.folder_id,
-                    profile=profile_name,
-                )
-                project_config_manager.save_config(project_config)
-
-                click.echo(f"✅ Project directory: {existing_config.project_path}")
-                click.echo(f"✅ Project: {existing_config.project_name}")
-                return
-
         # Get API client for project operations
         api_token, api_host = self.profile_manager.resolve_environment_variables(
             profile_name
@@ -433,9 +422,42 @@ class ConfigManager:
                 click.echo("❌ No project selected")
                 sys.exit(1)
 
-            # Always create project subdirectory named after the project
-            current_dir = Path.cwd().resolve()
-            project_path = current_dir / selected_project.name
+            # Check if this specific project already exists locally in the workspace
+            local_projects = self._find_all_projects(workspace_root)
+            existing_local_path = None
+
+            for project_path_candidate, _ in local_projects:
+                try:
+                    project_config_manager = ConfigManager(
+                        project_path_candidate, skip_validation=True
+                    )
+                    config_data = project_config_manager.load_config()
+                    if config_data.project_id == selected_project.id:
+                        existing_local_path = project_path_candidate
+                        break
+                except (json.JSONDecodeError, OSError):
+                    continue
+
+            # If project exists locally, prompt for reinitialization
+            if existing_local_path:
+                relative_path = existing_local_path.relative_to(workspace_root)
+                click.echo(
+                    f"Project '{selected_project.name}' (ID: {selected_project.id}) "
+                    f"already exists locally at: {relative_path}"
+                )
+                if not click.confirm(
+                    "Reinitialize this project? "
+                    "This may overwrite or delete local files.",
+                    default=False,
+                ):
+                    click.echo("❌ Initialization cancelled")
+                    sys.exit(1)
+                # Use existing path instead of creating new one
+                project_path = existing_local_path
+            else:
+                # Project doesn't exist locally - create new directory
+                current_dir = Path.cwd().resolve()
+                project_path = current_dir / selected_project.name
 
             # Validate project path
             try:
