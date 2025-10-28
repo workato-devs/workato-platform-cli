@@ -126,8 +126,17 @@ async def init(
     )
 
     # Check if project directory exists and is non-empty
+    # Exclude CLI-managed files from the check
+    cli_managed_files = {".workatoenv", ".gitignore", ".workato-ignore"}
     project_dir = config_manager.get_project_directory()
-    if project_dir and project_dir.exists() and any(project_dir.iterdir()):
+    has_user_files = False
+    if project_dir and project_dir.exists():
+        # Check for files that are not CLI-managed
+        has_user_files = any(
+            item.name not in cli_managed_files for item in project_dir.iterdir()
+        )
+
+    if has_user_files:
         # Directory is non-empty
         if non_interactive:
             # In non-interactive mode, fail with error
