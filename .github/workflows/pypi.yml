@@ -59,6 +59,7 @@ jobs:
       - name: Get version and configure for environment
         id: version
         run: |
+          pip install hatch-vcs
           BASE_VERSION=$(python -c "from hatchling.metadata.core import ProjectMetadata; print(ProjectMetadata('.', None).version)")
           echo "Base version: $BASE_VERSION"
           
