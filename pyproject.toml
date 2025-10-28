@@ -226,22 +226,10 @@ exclude_lines = [
 
 [tool.hatch.version]
 source = "vcs"
-# Use the tag-based version directly, no local version
-raw-options = { local_scheme = "no-local-version" }
-
-[tool.hatch.build.hooks.vcs]
-version-file = "src/workato_platform/_version.py"
-
-# Optional: Configure version pattern matching
-# This ensures hatch-vcs recognizes your version tags correctly
-[tool.hatch.version.raw-options]
-# Match tags like 1.0.0, 1.0.0-alpha, 1.0.0-beta.1, etc.
-# No "v" prefix expected
-tag-regex = "^(?P<version>\\d+\\.\\d+\\.\\d+(?:[\\-\\.]\\w+(?:\\.\\d+)?)?)$"
+raw-options = { local_scheme = "no-local-version", tag_regex = "^(?P<version>\\d+\\.\\d+\\.\\d+(?:[\\-\\.]\\w+(?:\\.\\d+)?)?)$" }
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/workato_platform_cli/_version.py"
-
 
 [dependency-groups]
 dev = [
