@@ -430,6 +430,7 @@ class RecipeValidator:
 
             # Check cache age
             cache_age = time.time() - self._cache_file.stat().st_mtime
+
             if cache_age > (self._cache_ttl_hours * 3600):
                 return False  # Cache expired
 
@@ -581,21 +582,30 @@ class RecipeValidator:
             provider_name = platform_connector.name.lower()
             self.known_adapters.add(provider_name)
 
+            # Convert List[ConnectorAction] to dict for JSON serialization
+            # and validation. The validation logic expects dicts (calls .keys()),
+            # so we convert: List[ConnectorAction] -> {action.name: action.to_dict()}
             self.connector_metadata[provider_name] = {
                 "type": "platform",
                 "name": platform_connector.name,
                 "deprecated": platform_connector.deprecated,
                 "categories": platform_connector.categories,
-                "triggers": platform_connector.triggers,
-                "actions": platform_connector.actions,
+                "triggers": {
+                    trigger.name: trigger.to_dict()
+                    for trigger in platform_connector.triggers
+                },
+                "actions": {
+                    action.name: action.to_dict()
+                    for action in platform_connector.actions
+                },
             }
 
         # Fetch custom connectors
-        customer_connectores_response = (
+        custom_connectors_response = (
             await self.workato_api_client.connectors_api.list_custom_connectors()
         )
 
-        for custom_connector in customer_connectores_response.result:
+        for custom_connector in custom_connectors_response.result:
             provider_name = custom_connector.name.lower()
             code_response = (
                 await self.workato_api_client.connectors_api.get_custom_connector_code(
@@ -603,12 +613,15 @@ class RecipeValidator:
                 )
             )
             self.known_adapters.add(provider_name)
+            # Note: Custom connector trigger/action parsing is not implemented
+            # Using empty dicts for consistency with platform connector structure
             self.connector_metadata[provider_name] = {
                 "type": "custom",
                 "name": custom_connector.name,
                 "code": code_response.data.code,
-                "triggers": [],  # Not Implemented
-                "actions": [],  # Not Implemented
+                "categories": [],  # Custom connectors don't have categories
+                "triggers": {},  # Not Implemented - would need to parse code
+                "actions": {},  # Not Implemented - would need to parse code
             }
 
         # Save to cache for next time
@@ -1225,26 +1238,70 @@ class RecipeValidator:
                             # Parse the JSON structure
                             dp_data = json.loads(dp_json)
 
-                            # Validate required fields
-                            required_fields = ["pill_type", "provider", "line", "path"]
-                            for required_field in required_fields:
-                                if required_field not in dp_data:
-                                    errors.append(
-                                        ValidationError(
-                                            message=(
-                                                f"Data pill missing required field "
-                                                f"'{required_field}' in step "
-                                                f"{line_number}"
-                                            ),
-                                            error_type=ErrorType.INPUT_INVALID_BY_ADAPTER,
-                                            line_number=line_number,
-                                            field_path=field_path + ["_dp"],
-                                        )
-                                    )
+                            # Validate required fields based on pill_type
+                            pill_type = dp_data.get("pill_type")
 
-                            # Validate provider/line references exist
+                            # All data pills must have pill_type
+                            if not pill_type:
+                                errors.append(
+                                    ValidationError(
+                                        message=(
+                                            "Data pill missing required field "
+                                            f"'pill_type' in step {line_number}"
+                                        ),
+                                        error_type=ErrorType.INPUT_INVALID_BY_ADAPTER,
+                                        line_number=line_number,
+                                        field_path=field_path + ["_dp"],
+                                    )
+                                )
+                            else:
+                                # Validate based on pill_type
+                                if pill_type in ("output", "refs"):
+                                    # Output/refs pills need provider, line, path
+                                    required = ["provider", "line", "path"]
+                                    for field in required:
+                                        if field not in dp_data:
+                                            errors.append(
+                                                ValidationError(
+                                                    message=(
+                                                        f"Data pill with pill_type "
+                                                        f"'{pill_type}' missing "
+                                                        f"required field '{field}' "
+                                                        f"in step {line_number}"
+                                                    ),
+                                                    error_type=(
+                                                        ErrorType.INPUT_INVALID_BY_ADAPTER
+                                                    ),
+                                                    line_number=line_number,
+                                                    field_path=field_path + ["_dp"],
+                                                )
+                                            )
+                                elif pill_type == "project_property":
+                                    # Project property pills need property_name
+                                    if "property_name" not in dp_data:
+                                        errors.append(
+                                            ValidationError(
+                                                message=(
+                                                    "Data pill with pill_type "
+                                                    "'project_property' missing "
+                                                    f"required field 'property_name' "
+                                                    f"in step {line_number}"
+                                                ),
+                                                error_type=(
+                                                    ErrorType.INPUT_INVALID_BY_ADAPTER
+                                                ),
+                                                line_number=line_number,
+                                                field_path=field_path + ["_dp"],
+                                            )
+                                        )
+                                # Other pill types (e.g., "lookup", "variable")
+                                # can be added here as needed
+
+                            # Validate provider/line references exist (only for
+                            # output/refs pills)
                             if (
-                                "provider" in dp_data
+                                pill_type in ("output", "refs")
+                                and "provider" in dp_data
                                 and "line" in dp_data
                                 and not self._step_exists(
                                     dp_data["provider"], dp_data["line"]
@@ -1264,9 +1321,11 @@ class RecipeValidator:
                                     )
                                 )
 
-                            # Validate path is an array
-                            if "path" in dp_data and not isinstance(
-                                dp_data["path"], list
+                            # Validate path is an array (only for output/refs pills)
+                            if (
+                                pill_type in ("output", "refs")
+                                and "path" in dp_data
+                                and not isinstance(dp_data["path"], list)
                             ):
                                 errors.append(
                                     ValidationError(

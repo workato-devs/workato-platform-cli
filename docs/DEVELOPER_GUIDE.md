@@ -19,7 +19,7 @@
 
 ### Standard Method
 ```bash
-pip install -e .
+make install
 ```
 
 ## Initial Setup
@@ -101,8 +101,7 @@ If you want to contribute to the Workato CLI codebase itself, use these developm
 
 ### Development Commands
 ```bash
-python -m pytest      # Run tests
-flake8 src/workato_platform/   # Check code style
+make test      # Run tests and check code style
 ```
 
 These commands are for CLI maintainers and contributors, not for developers using the CLI to build Workato integrations.

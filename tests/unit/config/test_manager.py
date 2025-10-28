@@ -1224,7 +1224,7 @@ class TestConfigManager:
             "Enter project name": ["DemoProject"],
         }
 
-        def fake_prompt(message: str, **_: object) -> str:
+        async def fake_prompt(message: str, **_: object) -> str:
             values = prompt_answers.get(message)
             assert values, f"Unexpected prompt: {message}"
             return values.pop(0)
@@ -1316,9 +1316,12 @@ class TestConfigManager:
             lambda _questions: {"profile_choice": "Create new profile"},
         )
 
+        async def mock_prompt(message: str, **_: Any) -> str:
+            return " " if "profile name" in message else "value"
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: " " if "profile name" in message else "value",
+            mock_prompt,
         )
 
         with pytest.raises(SystemExit):
@@ -1336,9 +1339,13 @@ class TestConfigManager:
             ConfigManager.__module__ + ".inquirer.prompt",
             lambda _questions: None,
         )
+
+        async def mock_prompt2(message: str, **_: Any) -> str:
+            return " " if "Enter profile name" in message else "value"
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: " " if "Enter profile name" in message else "value",
+            mock_prompt2,
         )
 
         with pytest.raises(SystemExit):
@@ -1410,7 +1417,7 @@ class TestConfigManager:
             "Enter your Workato API token": ["custom-token"],
         }
 
-        def fake_prompt(message: str, **_: Any) -> str:
+        async def fake_prompt(message: str, **_: Any) -> str:
             values = prompt_answers.get(message)
             assert values, f"Unexpected prompt: {message}"
             return values.pop(0)
@@ -1479,7 +1486,7 @@ class TestConfigManager:
             lambda _questions: {"region": "US Data Center (https://www.workato.com)"},
         )
 
-        def fake_prompt(message: str, **_: Any) -> str:
+        async def fake_prompt(message: str, **_: Any) -> str:
             if "API token" in message:
                 return "   "
             return "unused"
@@ -1515,9 +1522,13 @@ class TestConfigManager:
             ConfigManager.__module__ + ".inquirer.prompt",
             lambda _questions: {"profile_choice": "Create new profile"},
         )
+
+        async def mock_prompt3(message: str, **_: Any) -> str:
+            return "newprofile" if "profile name" in message else "value"
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: "newprofile" if "profile name" in message else "value",
+            mock_prompt3,
         )
 
         create_mock = AsyncMock(return_value=None)
@@ -1525,98 +1536,6 @@ class TestConfigManager:
             profile_name = await manager._setup_profile()
             assert profile_name == "newprofile"
             create_mock.assert_awaited_once_with("newprofile")
-
-    @pytest.mark.asyncio
-    async def test_setup_project_reuses_existing_config(
-        self,
-        tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-        mock_profile_manager: Mock,
-    ) -> None:
-        """Existing config branch should copy metadata and skip API calls."""
-
-        workspace_root = tmp_path
-        project_dir = workspace_root / "Existing"
-        project_dir.mkdir()
-        workspace_config = {
-            "project_id": 1,
-            "project_name": "Existing",
-            "project_path": "Existing",
-            "folder_id": 9,
-        }
-        (workspace_root / ".workatoenv").write_text(
-            json.dumps(workspace_config), encoding="utf-8"
-        )
-
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".ProfileManager",
-            lambda: mock_profile_manager,
-        )
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".click.confirm",
-            lambda *a, **k: True,
-        )
-
-        outputs: list[str] = []
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".click.echo",
-            lambda msg="": outputs.append(str(msg)),
-        )
-
-        config_manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
-        await config_manager._setup_project("dev", workspace_root)
-
-        assert any("Project directory" in msg for msg in outputs)
-        assert (project_dir / ".workatoenv").exists()
-
-    @pytest.mark.asyncio
-    async def test_setup_project_existing_without_project_path(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Existing config without project_path should set it automatically."""
-
-        workspace_root = tmp_path
-        project_dir = workspace_root / "Existing"
-
-        project_info = {
-            "project_id": 1,
-            "project_name": "Existing",
-            "folder_id": 9,
-        }
-        (workspace_root / ".workatoenv").write_text(
-            json.dumps(project_info), encoding="utf-8"
-        )
-
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".ProfileManager",
-            lambda: mock_profile_manager,
-        )
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".click.confirm",
-            lambda *a, **k: True,
-        )
-
-        config_manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
-        await config_manager._setup_project("dev", workspace_root)
-
-        assert (project_dir / ".workatoenv").exists()
-
-    @pytest.mark.asyncio
-    async def test_setup_project_existing_missing_name(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """Existing configs without a name should raise an explicit error."""
-
-        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-        with (
-            patch.object(
-                manager,
-                "load_config",
-                return_value=ConfigData(project_id=1, project_name=None),
-            ),
-            pytest.raises(click.ClickException),
-        ):
-            await manager._setup_project("dev", tmp_path)
 
     @pytest.mark.asyncio
     async def test_setup_project_selects_existing_remote(
@@ -1723,11 +1642,13 @@ class TestConfigManager:
             ConfigManager.__module__ + ".inquirer.prompt",
             lambda qs: answers[qs[0].message],
         )
+
+        async def mock_prompt4(message: str, **_: Any) -> str:
+            return "NestedProj" if message == "Enter project name" else "token"
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: "NestedProj"
-            if message == "Enter project name"
-            else "token",
+            mock_prompt4,
         )
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
@@ -1776,6 +1697,12 @@ class TestConfigManager:
         monkeypatch.setattr(
             ConfigManager.__module__ + ".inquirer.prompt",
             lambda qs: {"project": "ExistingProj (ID: 42)"},
+        )
+
+        # User confirms reinitialization when project exists
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            lambda *args, **kwargs: True,
         )
 
         outputs: list[str] = []
@@ -2066,7 +1993,7 @@ class TestConfigManager:
         def fake_prompt(questions: list[Any]) -> dict[str, str]:
             return answers[questions[0].message]
 
-        def fake_click_prompt(message: str, **_: object) -> str:
+        async def fake_click_prompt(message: str, **_: object) -> str:
             if message == "Enter project name":
                 return "NewProj"
             if "API token" in message:
@@ -2143,11 +2070,13 @@ class TestConfigManager:
             ConfigManager.__module__ + ".inquirer.prompt",
             lambda qs: answers[qs[0].message],
         )
+
+        async def mock_prompt5(message: str, **_: Any) -> str:
+            return "NewProj" if message == "Enter project name" else "token"
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: "NewProj"
-            if message == "Enter project name"
-            else "token",
+            mock_prompt5,
         )
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
@@ -2175,9 +2104,12 @@ class TestConfigManager:
             StubProjectManager,
         )
 
+        async def mock_prompt6(message: str, **_: Any) -> str:
+            return "   " if message == "Enter project name" else "token"
+
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
-            lambda message, **_: "   " if message == "Enter project name" else "token",
+            mock_prompt6,
         )
 
         def prompt_create_new(questions: list[Any]) -> dict[str, str]:
@@ -2251,3 +2183,421 @@ class TestConfigManager:
         """Test validate_region with invalid region."""
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         assert config_manager.validate_region("invalid") is False
+
+    @pytest.mark.asyncio
+    async def test_setup_project_no_premature_prompt_with_old_workatoenv(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Old .workatoenv should NOT prompt before user selects project."""
+        workspace_root = tmp_path
+        monkeypatch.chdir(workspace_root)
+
+        # Create old .workatoenv with different project
+        # (use ID 888 to ensure it's different from StubProjectManager's ID 999)
+        old_config = {
+            "project_id": 888,
+            "project_name": "OldProject",
+            "folder_id": 1,
+        }
+        (workspace_root / ".workatoenv").write_text(
+            json.dumps(old_config), encoding="utf-8"
+        )
+
+        mock_profile_manager.set_profile(
+            "dev",
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
+            "token",
+        )
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: mock_profile_manager,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = []
+        StubProjectManager.created_projects = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        answers = {
+            "Select a project": {"project": "Create new project"},
+        }
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            lambda qs: answers[qs[0].message],
+        )
+
+        async def mock_prompt(message: str, **_: Any) -> str:
+            return "NewProject"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.prompt",
+            mock_prompt,
+        )
+
+        # Should not call confirm, but if it does, return True
+        # (which means detection found old project incorrectly)
+        confirm_called = []
+
+        def mock_confirm(*args: Any, **kwargs: Any) -> bool:
+            confirm_called.append(True)
+            return True
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            mock_confirm,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
+        await manager._setup_project("dev", workspace_root)
+
+        # Confirm should NOT have been called (no premature prompt)
+        assert len(confirm_called) == 0
+
+        # Should NOT see "Found existing project" or "Use this project"
+        assert not any("Found existing project" in msg for msg in outputs)
+        assert not any("Use this project" in msg for msg in outputs)
+
+        # Should create new project directory
+        new_project_dir = workspace_root / "NewProject"
+        assert new_project_dir.exists()
+
+    @pytest.mark.asyncio
+    async def test_setup_project_detects_existing_after_selection(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """After user selects project, detect if it exists locally."""
+        workspace_root = tmp_path
+        monkeypatch.chdir(workspace_root)
+
+        # Create existing project in subdirectory
+        existing_project_dir = workspace_root / "projects" / "ExistingProj"
+        existing_project_dir.mkdir(parents=True)
+        existing_config = {
+            "project_id": 42,
+            "project_name": "ExistingProj",
+            "folder_id": 5,
+        }
+        (existing_project_dir / ".workatoenv").write_text(
+            json.dumps(existing_config), encoding="utf-8"
+        )
+
+        mock_profile_manager.set_profile(
+            "dev",
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
+            "token",
+        )
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: mock_profile_manager,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = [StubProject(42, "ExistingProj", 5)]
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            lambda qs: {"project": "ExistingProj (ID: 42)"},
+        )
+
+        # User confirms reinitialization
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            lambda *args, **kwargs: True,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
+        await manager._setup_project("dev", workspace_root)
+
+        # Should see project exists message AFTER selection
+        assert any(
+            "already exists locally at" in msg and "projects/ExistingProj" in msg
+            for msg in outputs
+        )
+
+    @pytest.mark.asyncio
+    async def test_setup_project_user_declines_reinitialization(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """User declining reinitialization should cancel setup."""
+        workspace_root = tmp_path
+        monkeypatch.chdir(workspace_root)
+
+        # Create existing project
+        existing_project_dir = workspace_root / "ExistingProj"
+        existing_project_dir.mkdir()
+        existing_config = {
+            "project_id": 42,
+            "project_name": "ExistingProj",
+            "folder_id": 5,
+        }
+        (existing_project_dir / ".workatoenv").write_text(
+            json.dumps(existing_config), encoding="utf-8"
+        )
+
+        mock_profile_manager.set_profile(
+            "dev",
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
+            "token",
+        )
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: mock_profile_manager,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = [StubProject(42, "ExistingProj", 5)]
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            lambda qs: {"project": "ExistingProj (ID: 42)"},
+        )
+
+        # User declines reinitialization
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            lambda *args, **kwargs: False,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
+
+        with pytest.raises(SystemExit):
+            await manager._setup_project("dev", workspace_root)
+
+        # Should see cancellation message
+        assert any("Initialization cancelled" in msg for msg in outputs)
+
+    @pytest.mark.asyncio
+    async def test_setup_non_interactive_fails_when_project_exists(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Non-interactive mode should fail if project already exists locally."""
+        workspace_root = tmp_path
+        monkeypatch.chdir(workspace_root)
+
+        # Create existing project
+        existing_project_dir = workspace_root / "ExistingProj"
+        existing_project_dir.mkdir()
+        existing_config = {
+            "project_id": 42,
+            "project_name": "ExistingProj",
+            "folder_id": 5,
+        }
+        (existing_project_dir / ".workatoenv").write_text(
+            json.dumps(existing_config), encoding="utf-8"
+        )
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: mock_profile_manager,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = [StubProject(42, "ExistingProj", 5)]
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+        manager.workspace_manager = WorkspaceManager(start_path=workspace_root)
+
+        with pytest.raises(click.ClickException) as excinfo:
+            await manager._setup_non_interactive(
+                profile_name="dev",
+                region="us",
+                api_token="token",
+                project_id=42,
+            )
+
+        # Should see error about project existing
+        assert "already exists locally" in str(excinfo.value)
+        assert "ExistingProj" in str(excinfo.value)
+        assert "non-interactive" in str(excinfo.value)
+
+    @pytest.mark.asyncio
+    async def test_setup_project_skips_corrupted_configs(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Corrupted .workatoenv files should be skipped during detection."""
+        workspace_root = tmp_path
+        monkeypatch.chdir(workspace_root)
+
+        # Create directory with corrupted .workatoenv
+        corrupted_dir = workspace_root / "corrupted"
+        corrupted_dir.mkdir()
+        (corrupted_dir / ".workatoenv").write_text("invalid json{", encoding="utf-8")
+
+        mock_profile_manager.set_profile(
+            "dev",
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
+            "token",
+        )
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: mock_profile_manager,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = [StubProject(42, "TestProj", 5)]
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            lambda qs: {"project": "TestProj (ID: 42)"},
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
+
+        # Should not raise error, just skip corrupted config
+        await manager._setup_project("dev", workspace_root)
+
+        # Should create new project successfully
+        test_project_dir = workspace_root / "TestProj"
+        assert test_project_dir.exists()
+
+    @pytest.mark.asyncio
+    async def test_setup_project_matches_by_project_id(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Project detection should match by project_id, not by name."""
+        workspace_root = tmp_path
+        monkeypatch.chdir(workspace_root)
+
+        # Create existing project with different name but same ID
+        existing_project_dir = workspace_root / "OldName"
+        existing_project_dir.mkdir()
+        existing_config = {
+            "project_id": 42,
+            "project_name": "OldName",
+            "folder_id": 5,
+        }
+        (existing_project_dir / ".workatoenv").write_text(
+            json.dumps(existing_config), encoding="utf-8"
+        )
+
+        mock_profile_manager.set_profile(
+            "dev",
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
+            "token",
+        )
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: mock_profile_manager,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        # Project renamed on remote to "NewName"
+        StubProjectManager.available_projects = [StubProject(42, "NewName", 5)]
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            lambda qs: {"project": "NewName (ID: 42)"},
+        )
+
+        # User confirms reinitialization
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            lambda *args, **kwargs: True,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
+        await manager._setup_project("dev", workspace_root)
+
+        # Should detect existing project by ID even though name changed
+        assert any("already exists locally" in msg for msg in outputs)
+        assert any("OldName" in msg for msg in outputs)

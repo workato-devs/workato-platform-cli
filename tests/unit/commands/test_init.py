@@ -495,7 +495,7 @@ async def test_init_non_empty_directory_non_interactive_table(
             mock_initialize,
         )
 
-        monkeypatch.setattr(init_module.click, "echo", lambda _: None)
+        monkeypatch.setattr(init_module.click, "echo", lambda *args, **kwargs: None)
 
         assert init_module.init.callback
         with pytest.raises(click.Abort):
@@ -540,7 +540,7 @@ async def test_init_non_empty_directory_interactive_cancelled(
             mock_initialize,
         )
 
-        monkeypatch.setattr(init_module.click, "echo", lambda _: None)
+        monkeypatch.setattr(init_module.click, "echo", lambda *args, **kwargs: None)
         monkeypatch.setattr(init_module.click, "confirm", lambda *args, **kwargs: False)
 
         mock_pull = AsyncMock()
@@ -707,3 +707,245 @@ async def test_init_json_output_mode_success(
         assert result["profile"]["region"] == "us"
         assert result["project"]["name"] == "test-project"
         assert result["project"]["id"] == 123
+
+
+@pytest.mark.asyncio
+async def test_init_cli_managed_files_ignored_interactive(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Test that CLI-managed files are ignored in emptiness check (interactive mode)."""
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    # Create only CLI-managed files
+    (project_dir / ".workatoenv").write_text('{"project_id": 123}')
+    (project_dir / ".gitignore").write_text(".workatoenv\n")
+    (project_dir / ".workato-ignore").write_text("*.py\n")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=project_dir,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("test-token", "https://api.workato.com"),
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        echo_calls = []
+        monkeypatch.setattr(
+            init_module.click, "echo", lambda msg="": echo_calls.append(msg)
+        )
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=False,
+            output_mode="table",
+        )
+
+        # Should proceed without prompting user (no warning about non-empty directory)
+        mock_pull.assert_awaited_once()
+        # Check that no "not empty" warning was shown
+        assert not any("not empty" in str(call) for call in echo_calls)
+
+
+@pytest.mark.asyncio
+async def test_init_cli_managed_files_ignored_non_interactive(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Test that CLI-managed files are ignored in emptiness check (non-interactive)."""
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    # Create only CLI-managed files
+    (project_dir / ".workatoenv").write_text('{"project_id": 123}')
+    (project_dir / ".gitignore").write_text(".workatoenv\n")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=project_dir,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("test-token", "https://api.workato.com"),
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        monkeypatch.setattr(init_module.click, "echo", lambda msg="": None)
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=True,
+            output_mode="table",
+        )
+
+        # Should proceed without error
+        mock_pull.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_init_user_files_with_cli_files_triggers_warning(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Test that user files trigger warning even with CLI-managed files present."""
+    mock_config_manager = Mock()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    # Create both CLI-managed files AND user files
+    (project_dir / ".workatoenv").write_text('{"project_id": 123}')
+    (project_dir / ".gitignore").write_text(".workatoenv\n")
+    (project_dir / "user_file.txt").write_text("user content")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=project_dir,
+        ),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        monkeypatch.setattr(init_module.click, "echo", lambda msg="": None)
+
+        assert init_module.init.callback
+        with pytest.raises(click.Abort):
+            await init_module.init.callback(
+                profile="test-profile",
+                region=None,
+                api_token=None,
+                api_url=None,
+                project_name="test-project",
+                project_id=None,
+                non_interactive=True,
+                output_mode="table",
+            )
+
+
+@pytest.mark.asyncio
+async def test_init_only_workatoenv_file_ignored(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Test that directory with only .workatoenv file is not considered non-empty."""
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+    # Create only .workatoenv (most common case after ConfigManager.initialize)
+    (project_dir / ".workatoenv").write_text('{"project_id": 123}')
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=project_dir,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("test-token", "https://api.workato.com"),
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        monkeypatch.setattr(init_module.click, "echo", lambda msg="": None)
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=True,
+            output_mode="table",
+        )
+
+        # Should proceed without error
+        mock_pull.assert_awaited_once()

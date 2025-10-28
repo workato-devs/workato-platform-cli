@@ -1110,11 +1110,21 @@ async def test_load_builtin_connectors_from_api(validator: RecipeValidator) -> N
     """Test loading connectors from API when cache fails"""
     # Mock API responses
     mock_platform_response = MagicMock()
+
+    # Create mock ConnectorAction objects
+    mock_trigger = Mock()
+    mock_trigger.name = "webhook"
+    mock_trigger.to_dict = Mock(return_value={"name": "webhook", "title": "Webhook"})
+
+    mock_action = Mock()
+    mock_action.name = "get"
+    mock_action.to_dict = Mock(return_value={"name": "get", "title": "GET request"})
+
     platform_connector = Mock(
         deprecated=False,
         categories=["Data"],
-        triggers={"webhook": {}},
-        actions={"get": {}},
+        triggers=[mock_trigger],
+        actions=[mock_action],
     )
     platform_connector.name = "HTTP"
     mock_platform_response.items = [platform_connector]

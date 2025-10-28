@@ -6,7 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **name** | **str** |  | 
-**title** | **str** |  | 
+**title** | **str** |  | [optional] 
 **deprecated** | **bool** |  | 
 **bulk** | **bool** |  | 
 **batch** | **bool** |  | 

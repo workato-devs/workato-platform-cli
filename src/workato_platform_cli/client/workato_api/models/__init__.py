@@ -12,7 +12,6 @@
     Do not edit the class manually.
 """  # noqa: E501
 
-
 # import models into model package
 from workato_platform.client.workato_api.models.api_client import ApiClient
 from workato_platform.client.workato_api.models.api_client_api_collections_inner import ApiClientApiCollectionsInner
@@ -81,3 +80,4 @@ from workato_platform.client.workato_api.models.upsert_project_properties_reques
 from workato_platform.client.workato_api.models.user import User
 from workato_platform.client.workato_api.models.validation_error import ValidationError
 from workato_platform.client.workato_api.models.validation_error_errors_value import ValidationErrorErrorsValue
+

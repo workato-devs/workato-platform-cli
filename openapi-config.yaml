@@ -5,3 +5,4 @@ packageVersion: 1.0.0
 packageUrl: https://github.com/workato/workato-platform-cli
 hideGenerationTimestamp: true
 generateSourceCodeOnly: true
+lazyImports: false
