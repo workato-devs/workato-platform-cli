@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "workato-platform-cli"
-version = "1.0.0rc2.dev8"
+dynamic = ["version"]
 description = "CLI tool for the Workato Platform"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -226,7 +226,7 @@ exclude_lines = [
 
 [tool.hatch.version]
 source = "vcs"
-raw-options = { local_scheme = "no-local-version", tag_regex = "^(?P<version>\\d+\\.\\d+\\.\\d+(?:[\\-\\.]\\w+(?:\\.\\d+)?)?)$" }
+raw-options = { local_scheme = "no-local-version" }
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/workato_platform_cli/_version.py"

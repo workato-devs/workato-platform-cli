@@ -136,11 +136,11 @@ jobs:
           echo "Waiting for Test PyPI to process the package..."
           sleep 30
           
-          echo "Attempting to install workato-platform-cli==${{ needs.build.outputs.version }}"
+          echo "Attempting to install latest workato-platform-cli from TestPyPI"
           uv pip install --system \
             --index-url https://test.pypi.org/simple/ \
             --extra-index-url https://pypi.org/simple/ \
-            workato-platform-cli==${{ needs.build.outputs.version }} || echo "Package not yet available on Test PyPI"
+            workato-platform-cli || echo "Package not yet available on Test PyPI"
           
           # Verify CLI if installation succeeded
           workato --version || echo "CLI check skipped"
