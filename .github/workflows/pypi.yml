@@ -59,8 +59,15 @@ jobs:
       - name: Get version and configure for environment
         id: version
         run: |
-          pip install hatch-vcs
-          BASE_VERSION=$(python -c "from hatchling.metadata.core import ProjectMetadata; print(ProjectMetadata('.', None).version)")
+          # Get version from git tags
+          BASE_VERSION=$(git describe --tags --always --match="*.*.*" | sed 's/^v//')
+          if [[ -z "$BASE_VERSION" || "$BASE_VERSION" == *"-"* ]]; then
+            # Fallback: use the latest tag or default
+            BASE_VERSION=$(git tag --sort=-version:refname | head -n1 | sed 's/^v//')
+            if [[ -z "$BASE_VERSION" ]]; then
+              BASE_VERSION="1.0.0rc4"
+            fi
+          fi
           echo "Base version: $BASE_VERSION"
           
           if [[ "${{ steps.determine-env.outputs.environment }}" == "test" ]]; then
