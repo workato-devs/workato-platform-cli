@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, Mock, patch
 
-from workato_platform.cli.utils.spinner import Spinner
+from workato_platform_cli.cli.utils.spinner import Spinner
 
 
 class TestSpinner:
@@ -21,7 +21,7 @@ class TestSpinner:
     def test_spinner_start_stop_methods(self) -> None:
         """Test explicit start/stop methods."""
         with patch(
-            "workato_platform.cli.utils.spinner.threading.Thread"
+            "workato_platform_cli.cli.utils.spinner.threading.Thread"
         ) as mock_thread:
             mock_thread_instance = Mock()
             mock_thread.return_value = mock_thread_instance
@@ -52,7 +52,7 @@ class TestSpinner:
     def test_spinner_thread_safety(self) -> None:
         """Test that spinner handles threading correctly."""
         with patch(
-            "workato_platform.cli.utils.spinner.threading.Thread"
+            "workato_platform_cli.cli.utils.spinner.threading.Thread"
         ) as mock_thread:
             mock_thread_instance = Mock()
             mock_thread.return_value = mock_thread_instance
@@ -77,10 +77,10 @@ class TestSpinner:
         # Should have animation characters defined
         assert hasattr(spinner, "spinner_chars") or hasattr(spinner, "chars")
 
-    @patch("workato_platform.cli.utils.spinner.sys.stdout")
+    @patch("workato_platform_cli.cli.utils.spinner.sys.stdout")
     def test_spinner_output_handling(self, mock_stdout: MagicMock) -> None:
         """Test that spinner handles terminal output correctly."""
-        with patch("workato_platform.cli.utils.spinner.threading.Thread"):
+        with patch("workato_platform_cli.cli.utils.spinner.threading.Thread"):
             spinner = Spinner("Output test...")
 
             # Should not raise exception when dealing with stdout operations
@@ -91,7 +91,7 @@ class TestSpinner:
             assert mock_stdout.write.called
             assert mock_stdout.flush.called
 
-    @patch("workato_platform.cli.utils.spinner.sys.stdout")
+    @patch("workato_platform_cli.cli.utils.spinner.sys.stdout")
     def test_spinner_stop_without_start(self, mock_stdout: MagicMock) -> None:
         """Stop without starting should return zero elapsed time."""
         spinner = Spinner("No start")

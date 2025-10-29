@@ -6,7 +6,7 @@ import pytest
 
 from asyncclick.testing import CliRunner
 
-from workato_platform.cli import cli
+from workato_platform_cli.cli import cli
 
 
 class TestRecipeWorkflow:
@@ -17,7 +17,7 @@ class TestRecipeWorkflow:
         """Test end-to-end recipe validation workflow."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             # Mock the validator
             mock_validator = Mock()
             mock_validator.validate_recipe_structure.return_value = []
@@ -37,7 +37,7 @@ class TestRecipeWorkflow:
         """Test recipe start/stop lifecycle."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             mock_workato_client = Mock()
             mock_workato_client.recipes_api.start_recipe.return_value = Mock(
                 success=True
@@ -67,7 +67,7 @@ class TestRecipeWorkflow:
         """Test bulk recipe operations."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             mock_workato_client = Mock()
             mock_workato_client.recipes_api.list_recipes.return_value = Mock(
                 items=[
@@ -94,7 +94,7 @@ class TestRecipeWorkflow:
         """Test recipe connection update workflow."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             mock_project_manager = Mock()
             mock_project_manager.get_project_recipes.return_value = [
                 Mock(id=1, name="Recipe 1"),
@@ -130,7 +130,7 @@ class TestRecipeWorkflow:
         """Test async recipe operations."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             mock_workato_client = Mock()
 
             # Mock async methods

@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from workato_platform.cli.commands.workspace import workspace
-from workato_platform.cli.utils.config import ConfigData, ProfileData
+from workato_platform_cli.cli.commands.workspace import workspace
+from workato_platform_cli.cli.utils.config import ConfigData, ProfileData
 
 
 @pytest.mark.asyncio
@@ -42,7 +42,7 @@ async def test_workspace_command_outputs(monkeypatch: pytest.MonkeyPatch) -> Non
         captured.append(message)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.workspace.click.echo",
+        "workato_platform_cli.cli.commands.workspace.click.echo",
         fake_echo,
     )
 

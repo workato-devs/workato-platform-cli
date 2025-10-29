@@ -4,12 +4,12 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from workato_platform.cli.commands.properties import (
+from workato_platform_cli.cli.commands.properties import (
     list_properties,
     properties,
     upsert_properties,
 )
-from workato_platform.cli.utils.config import ConfigData
+from workato_platform_cli.cli.utils.config import ConfigData
 
 
 class DummySpinner:
@@ -29,7 +29,7 @@ class DummySpinner:
 @pytest.mark.asyncio
 async def test_list_properties_success(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.Spinner",
+        "workato_platform_cli.cli.commands.properties.Spinner",
         DummySpinner,
     )
 
@@ -39,7 +39,7 @@ async def test_list_properties_success(monkeypatch: pytest.MonkeyPatch) -> None:
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.click.echo",
+        "workato_platform_cli.cli.commands.properties.click.echo",
         lambda msg="": captured.append(msg),
     )
 
@@ -72,7 +72,7 @@ async def test_list_properties_success(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.asyncio
 async def test_list_properties_missing_project(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.Spinner",
+        "workato_platform_cli.cli.commands.properties.Spinner",
         DummySpinner,
     )
 
@@ -80,7 +80,7 @@ async def test_list_properties_missing_project(monkeypatch: pytest.MonkeyPatch) 
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.click.echo",
+        "workato_platform_cli.cli.commands.properties.click.echo",
         lambda msg="": captured.append(msg),
     )
 
@@ -102,14 +102,14 @@ async def test_upsert_properties_invalid_format(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.Spinner",
+        "workato_platform_cli.cli.commands.properties.Spinner",
         DummySpinner,
     )
     config_manager = Mock()
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.click.echo",
+        "workato_platform_cli.cli.commands.properties.click.echo",
         lambda msg="": captured.append(msg),
     )
 
@@ -130,7 +130,7 @@ async def test_upsert_properties_invalid_format(
 @pytest.mark.asyncio
 async def test_upsert_properties_success(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.Spinner",
+        "workato_platform_cli.cli.commands.properties.Spinner",
         DummySpinner,
     )
 
@@ -140,7 +140,7 @@ async def test_upsert_properties_success(monkeypatch: pytest.MonkeyPatch) -> Non
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.click.echo",
+        "workato_platform_cli.cli.commands.properties.click.echo",
         lambda msg="": captured.append(msg),
     )
 
@@ -171,7 +171,7 @@ async def test_upsert_properties_success(monkeypatch: pytest.MonkeyPatch) -> Non
 @pytest.mark.asyncio
 async def test_upsert_properties_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.Spinner",
+        "workato_platform_cli.cli.commands.properties.Spinner",
         DummySpinner,
     )
 
@@ -181,7 +181,7 @@ async def test_upsert_properties_failure(monkeypatch: pytest.MonkeyPatch) -> Non
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.click.echo",
+        "workato_platform_cli.cli.commands.properties.click.echo",
         lambda msg="": captured.append(msg),
     )
 
@@ -210,7 +210,7 @@ async def test_upsert_properties_failure(monkeypatch: pytest.MonkeyPatch) -> Non
 async def test_list_properties_empty_result(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test list properties when no properties are found."""
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.Spinner",
+        "workato_platform_cli.cli.commands.properties.Spinner",
         DummySpinner,
     )
 
@@ -221,7 +221,7 @@ async def test_list_properties_empty_result(monkeypatch: pytest.MonkeyPatch) -> 
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.click.echo",
+        "workato_platform_cli.cli.commands.properties.click.echo",
         lambda msg="": captured.append(msg),
     )
 
@@ -253,7 +253,7 @@ async def test_upsert_properties_missing_project(
 ) -> None:
     """Test upsert properties when no project ID is provided."""
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.Spinner",
+        "workato_platform_cli.cli.commands.properties.Spinner",
         DummySpinner,
     )
 
@@ -261,7 +261,7 @@ async def test_upsert_properties_missing_project(
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.click.echo",
+        "workato_platform_cli.cli.commands.properties.click.echo",
         lambda msg="": captured.append(msg),
     )
 
@@ -286,7 +286,7 @@ async def test_upsert_properties_missing_project(
 async def test_upsert_properties_no_properties(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test upsert properties when no properties are provided."""
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.Spinner",
+        "workato_platform_cli.cli.commands.properties.Spinner",
         DummySpinner,
     )
 
@@ -294,7 +294,7 @@ async def test_upsert_properties_no_properties(monkeypatch: pytest.MonkeyPatch) 
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.click.echo",
+        "workato_platform_cli.cli.commands.properties.click.echo",
         lambda msg="": captured.append(msg),
     )
 
@@ -317,7 +317,7 @@ async def test_upsert_properties_no_properties(monkeypatch: pytest.MonkeyPatch) 
 async def test_upsert_properties_name_too_long(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test upsert properties with property name that's too long."""
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.Spinner",
+        "workato_platform_cli.cli.commands.properties.Spinner",
         DummySpinner,
     )
 
@@ -325,7 +325,7 @@ async def test_upsert_properties_name_too_long(monkeypatch: pytest.MonkeyPatch) 
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.click.echo",
+        "workato_platform_cli.cli.commands.properties.click.echo",
         lambda msg="": captured.append(msg),
     )
 
@@ -353,7 +353,7 @@ async def test_upsert_properties_value_too_long(
 ) -> None:
     """Test upsert properties with property value that's too long."""
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.Spinner",
+        "workato_platform_cli.cli.commands.properties.Spinner",
         DummySpinner,
     )
 
@@ -361,7 +361,7 @@ async def test_upsert_properties_value_too_long(
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.properties.click.echo",
+        "workato_platform_cli.cli.commands.properties.click.echo",
         lambda msg="": captured.append(msg),
     )
 

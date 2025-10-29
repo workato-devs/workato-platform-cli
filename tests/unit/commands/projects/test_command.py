@@ -13,8 +13,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from workato_platform.cli.commands.projects import command
-from workato_platform.cli.utils.config import ConfigData
+from workato_platform_cli.cli.commands.projects import command
+from workato_platform_cli.cli.utils.config import ConfigData
 
 
 @pytest.fixture(autouse=True)
@@ -25,7 +25,7 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         captured.append(message)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.click.echo",
+        "workato_platform_cli.cli.commands.projects.command.click.echo",
         _capture,
     )
     return captured
@@ -79,7 +79,7 @@ async def test_list_projects_with_entries(
             return project_config
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         StubConfigManager,
     )
 
@@ -124,7 +124,7 @@ async def test_use_project_success(
             return project_config if self.path == project_dir else workspace_config
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         StubConfigManager,
     )
 
@@ -188,7 +188,7 @@ async def test_switch_interactive(
             return ConfigData(project_name="alpha")
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         StubConfigManager,
     )
 
@@ -229,7 +229,7 @@ async def test_switch_keeps_current_when_only_one(
             return ConfigData(project_name="alpha")
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         StubConfigManager,
     )
 
@@ -298,7 +298,7 @@ async def test_list_projects_config_error(
         return mock
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         failing_config_manager,
     )
 
@@ -329,7 +329,7 @@ async def test_list_projects_json_config_error(
         return mock
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         failing_config_manager,
     )
 
@@ -381,7 +381,7 @@ async def test_use_project_not_configured(
         return mock
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         failing_config_manager,
     )
 
@@ -479,7 +479,7 @@ async def test_switch_config_error(
         return mock
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         failing_config_manager,
     )
 
@@ -517,7 +517,7 @@ async def test_switch_config_error_current_project(
         return mock
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         failing_config_manager,
     )
 
@@ -604,7 +604,7 @@ async def test_switch_no_project_selected(
             return ConfigData(project_name="alpha")
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         StubConfigManager,
     )
 
@@ -643,7 +643,7 @@ async def test_switch_failed_to_identify_project(
             return ConfigData(project_name="alpha")
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         StubConfigManager,
     )
 
@@ -690,7 +690,7 @@ async def test_switch_already_current(
             return ConfigData(project_name="beta")
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         StubConfigManager,
     )
 
@@ -742,7 +742,7 @@ async def test_switch_missing_project_path(
             return ConfigData(project_name="Beta Display")
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         StubConfigManager,
     )
 
@@ -793,7 +793,7 @@ async def test_switch_exception_handling(
             return ConfigData(project_name="alpha")
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         StubConfigManager,
     )
 
@@ -830,7 +830,7 @@ async def test_list_projects_json_output_mode(
     mock_project_config_manager.load_config.return_value = project_config
 
     with patch(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         return_value=mock_project_config_manager,
     ):
         assert command.list_projects.callback
@@ -896,7 +896,7 @@ async def test_list_projects_remote_source(
     mock_project_manager = Mock()
 
     # Mock remote projects
-    from workato_platform.client.workato_api.models.project import Project
+    from workato_platform_cli.client.workato_api.models.project import Project
 
     remote_project = Project(
         id=123, name="Remote Project", folder_id=456, description="A remote project"
@@ -914,15 +914,15 @@ async def test_list_projects_remote_source(
     mock_workato_client.__aexit__ = mock_aexit
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.create_profile_aware_workato_config",
+        "workato_platform_cli.cli.commands.projects.command.create_profile_aware_workato_config",
         Mock(return_value=Mock()),
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.Workato",
+        "workato_platform_cli.cli.commands.projects.command.Workato",
         Mock(return_value=mock_workato_client),
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ProjectManager",
+        "workato_platform_cli.cli.commands.projects.command.ProjectManager",
         Mock(return_value=mock_project_manager),
     )
 
@@ -950,7 +950,7 @@ async def test_list_projects_remote_source_json(
     mock_project_manager = Mock()
 
     # Mock remote projects
-    from workato_platform.client.workato_api.models.project import Project
+    from workato_platform_cli.client.workato_api.models.project import Project
 
     remote_project = Project(
         id=123, name="Remote Project", folder_id=456, description="A remote project"
@@ -968,15 +968,15 @@ async def test_list_projects_remote_source_json(
     mock_workato_client.__aexit__ = mock_aexit
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.create_profile_aware_workato_config",
+        "workato_platform_cli.cli.commands.projects.command.create_profile_aware_workato_config",
         Mock(return_value=Mock()),
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.Workato",
+        "workato_platform_cli.cli.commands.projects.command.Workato",
         Mock(return_value=mock_workato_client),
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ProjectManager",
+        "workato_platform_cli.cli.commands.projects.command.ProjectManager",
         Mock(return_value=mock_project_manager),
     )
 
@@ -1031,7 +1031,7 @@ async def test_list_projects_both_source(
             return project_config
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ConfigManager",
+        "workato_platform_cli.cli.commands.projects.command.ConfigManager",
         StubConfigManager,
     )
 
@@ -1039,7 +1039,7 @@ async def test_list_projects_both_source(
     mock_workato_client = Mock()
     mock_project_manager = Mock()
 
-    from workato_platform.client.workato_api.models.project import Project
+    from workato_platform_cli.client.workato_api.models.project import Project
 
     remote_project1 = Project(
         id=123, name="Alpha", folder_id=456, description="Synced project"
@@ -1062,15 +1062,15 @@ async def test_list_projects_both_source(
     mock_workato_client.__aexit__ = mock_aexit
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.create_profile_aware_workato_config",
+        "workato_platform_cli.cli.commands.projects.command.create_profile_aware_workato_config",
         Mock(return_value=Mock()),
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.Workato",
+        "workato_platform_cli.cli.commands.projects.command.Workato",
         Mock(return_value=mock_workato_client),
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ProjectManager",
+        "workato_platform_cli.cli.commands.projects.command.ProjectManager",
         Mock(return_value=mock_project_manager),
     )
 
@@ -1117,15 +1117,15 @@ async def test_list_projects_with_profile(
     mock_workato_client.__aexit__ = mock_aexit
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.create_profile_aware_workato_config",
+        "workato_platform_cli.cli.commands.projects.command.create_profile_aware_workato_config",
         mock_create_config,
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.Workato",
+        "workato_platform_cli.cli.commands.projects.command.Workato",
         Mock(return_value=mock_workato_client),
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.command.ProjectManager",
+        "workato_platform_cli.cli.commands.projects.command.ProjectManager",
         Mock(return_value=mock_project_manager),
     )
 

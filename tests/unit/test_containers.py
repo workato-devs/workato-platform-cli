@@ -2,7 +2,7 @@
 
 from unittest.mock import Mock
 
-from workato_platform.cli.containers import (
+from workato_platform_cli.cli.containers import (
     Container,
     create_profile_aware_workato_config,
     create_workato_config,

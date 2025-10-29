@@ -8,13 +8,13 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-import workato_platform.cli.commands.connections as connections_module
+import workato_platform_cli.cli.commands.connections as connections_module
 
-from workato_platform.cli.commands.connectors.connector_manager import (
+from workato_platform_cli.cli.commands.connectors.connector_manager import (
     ConnectionParameter,
     ProviderData,
 )
-from workato_platform.cli.utils.config import ConfigData
+from workato_platform_cli.cli.utils.config import ConfigData
 
 
 class DummySpinner:

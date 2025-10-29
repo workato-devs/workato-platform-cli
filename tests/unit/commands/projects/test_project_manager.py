@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, Mock, call, patch
 
 import pytest
 
-from workato_platform.cli.commands.projects.project_manager import ProjectManager
-from workato_platform.client.workato_api.models.project import Project
+from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
+from workato_platform_cli.client.workato_api.models.project import Project
 
 
 class DummySpinner:
@@ -37,7 +37,7 @@ def patch_spinner(monkeypatch: pytest.MonkeyPatch) -> None:
     """Patch spinner globally for deterministic tests."""
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.project_manager.Spinner",
+        "workato_platform_cli.cli.commands.projects.project_manager.Spinner",
         DummySpinner,
     )
 
@@ -50,7 +50,7 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         captured.append(message)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.project_manager.click.echo",
+        "workato_platform_cli.cli.commands.projects.project_manager.click.echo",
         _capture,
     )
     return captured
@@ -328,7 +328,7 @@ async def test_handle_post_api_sync_success(
     client = Mock()
     manager = ProjectManager(client)
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.project_manager.subprocess.run",
+        "workato_platform_cli.cli.commands.projects.project_manager.subprocess.run",
         Mock(return_value=Mock(returncode=0, stderr="")),
     )
 
@@ -344,7 +344,7 @@ async def test_handle_post_api_sync_timeout(
     client = Mock()
     manager = ProjectManager(client)
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.project_manager.subprocess.run",
+        "workato_platform_cli.cli.commands.projects.project_manager.subprocess.run",
         Mock(side_effect=subprocess.TimeoutExpired(cmd="workato", timeout=30)),
     )
 
@@ -372,7 +372,7 @@ def test_save_project_to_config(monkeypatch: pytest.MonkeyPatch) -> None:
     config_manager.load_config.return_value = Mock()
 
     monkeypatch.setattr(
-        "workato_platform.cli.utils.config.ConfigManager",
+        "workato_platform_cli.cli.utils.config.ConfigManager",
         Mock(return_value=config_manager),
     )
 
@@ -397,7 +397,7 @@ async def test_import_existing_project_workflow(
     manager = ProjectManager(client)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.projects.project_manager.inquirer.prompt",
+        "workato_platform_cli.cli.commands.projects.project_manager.inquirer.prompt",
         lambda *_: {"project": manager._format_project_display(projects[0])},
     )
 

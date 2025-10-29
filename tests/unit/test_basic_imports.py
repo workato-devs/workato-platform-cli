@@ -19,18 +19,18 @@ class TestBasicImports:
     def test_workato_cli_package_exists(self) -> None:
         """Test that the main package exists."""
         try:
-            import workato_platform.cli
+            import workato_platform_cli.cli
 
-            assert workato_platform.cli is not None
+            assert workato_platform_cli.cli is not None
         except ImportError:
-            pytest.fail("workato_platform.cli package could not be imported")
+            pytest.fail("workato_platform_cli.cli package could not be imported")
 
     def test_version_is_available(self) -> None:
         """Test that version is available."""
         try:
-            import workato_platform
+            import workato_platform_cli
 
-            version = getattr(workato_platform, "__version__", None)
+            version = getattr(workato_platform_cli, "__version__", None)
             assert version is not None
             assert isinstance(version, str)
         except ImportError:
@@ -39,7 +39,7 @@ class TestBasicImports:
     def test_utils_package_structure(self) -> None:
         """Test that utils package has expected structure."""
         try:
-            from workato_platform.cli.utils import version_checker
+            from workato_platform_cli.cli.utils import version_checker
 
             assert hasattr(version_checker, "VersionChecker")
         except ImportError:
@@ -48,7 +48,7 @@ class TestBasicImports:
     def test_version_checker_class_structure(self) -> None:
         """Test version checker class structure."""
         try:
-            from workato_platform.cli.utils.version_checker import VersionChecker
+            from workato_platform_cli.cli.utils.version_checker import VersionChecker
 
             # Check that class has expected methods
             assert hasattr(VersionChecker, "check_for_updates")
@@ -60,7 +60,7 @@ class TestBasicImports:
 
     def test_commands_package_exists(self) -> None:
         """Test that commands package structure exists."""
-        commands_path = src_path / "workato_platform" / "cli" / "commands"
+        commands_path = src_path / "workato_platform_cli" / "cli" / "commands"
         assert commands_path.exists()
         assert commands_path.is_dir()
 
@@ -79,7 +79,7 @@ class TestBasicImports:
     def test_basic_configuration_can_be_created(self) -> None:
         """Test basic configuration without heavy dependencies."""
         try:
-            from workato_platform.cli.utils.config import ConfigManager
+            from workato_platform_cli.cli.utils.config import ConfigManager
 
             # Should be able to import the class
             assert ConfigManager is not None
@@ -90,7 +90,7 @@ class TestBasicImports:
     def test_container_module_exists(self) -> None:
         """Test container module exists."""
         try:
-            from workato_platform.cli import containers
+            from workato_platform_cli.cli import containers
 
             assert hasattr(containers, "Container")
 
@@ -108,7 +108,7 @@ class TestProjectStructure:
         required_files = [
             "pyproject.toml",
             "README.md",
-            "src/workato_platform/cli/__init__.py",
+            "src/workato_platform_cli/cli/__init__.py",
         ]
 
         for file_path in required_files:
@@ -127,7 +127,7 @@ class TestProjectStructure:
     def test_source_code_structure(self) -> None:
         """Test source code directory structure."""
         src_path = (
-            Path(__file__).parent.parent.parent / "src" / "workato_platform" / "cli"
+            Path(__file__).parent.parent.parent / "src" / "workato_platform_cli" / "cli"
         )
 
         expected_dirs = ["commands", "utils"]

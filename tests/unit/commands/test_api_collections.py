@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from workato_platform.cli.commands.api_collections import (
+from workato_platform_cli.cli.commands.api_collections import (
     api_collections,
     create,
     display_collection_summary,
@@ -19,9 +19,9 @@ from workato_platform.cli.commands.api_collections import (
     list_collections,
     list_endpoints,
 )
-from workato_platform.client.workato_api.models.api_collection import ApiCollection
-from workato_platform.client.workato_api.models.api_endpoint import ApiEndpoint
-from workato_platform.client.workato_api.models.open_api_spec import OpenApiSpec
+from workato_platform_cli.client.workato_api.models.api_collection import ApiCollection
+from workato_platform_cli.client.workato_api.models.api_endpoint import ApiEndpoint
+from workato_platform_cli.client.workato_api.models.open_api_spec import OpenApiSpec
 
 
 class TestApiCollectionsGroup:
@@ -95,7 +95,7 @@ class TestCreateCommand:
 
         try:
             with patch(
-                "workato_platform.cli.commands.api_collections.Spinner"
+                "workato_platform_cli.cli.commands.api_collections.Spinner"
             ) as mock_spinner:
                 mock_spinner_instance = MagicMock()
                 mock_spinner_instance.stop.return_value = 1.5
@@ -151,7 +151,7 @@ class TestCreateCommand:
 
         try:
             with patch(
-                "workato_platform.cli.commands.api_collections.Spinner"
+                "workato_platform_cli.cli.commands.api_collections.Spinner"
             ) as mock_spinner:
                 mock_spinner_instance = MagicMock()
                 mock_spinner_instance.stop.return_value = 1.2
@@ -198,14 +198,14 @@ class TestCreateCommand:
         )
 
         with patch(
-            "workato_platform.cli.commands.api_collections.aiohttp.ClientSession"
+            "workato_platform_cli.cli.commands.api_collections.aiohttp.ClientSession"
         ) as mock_session:
             mock_session.return_value.__aenter__.return_value.get.return_value = (
                 mock_response
             )
 
             with patch(
-                "workato_platform.cli.commands.api_collections.Spinner"
+                "workato_platform_cli.cli.commands.api_collections.Spinner"
             ) as mock_spinner:
                 mock_spinner_instance = MagicMock()
                 mock_spinner_instance.stop.return_value = 2.0
@@ -241,7 +241,7 @@ class TestCreateCommand:
         mock_config_manager.load_config.return_value = MagicMock(project_id=None)
 
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             assert create.callback
             await create.callback(
@@ -268,7 +268,7 @@ class TestCreateCommand:
     ) -> None:
         """Test create when file doesn't exist."""
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             assert create.callback
             await create.callback(
@@ -303,7 +303,7 @@ class TestCreateCommand:
             os.chmod(temp_file_path, 0o000)
 
             with patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo:
                 assert create.callback
                 await create.callback(
@@ -347,7 +347,7 @@ class TestCreateCommand:
 
         try:
             with patch(
-                "workato_platform.cli.commands.api_collections.Spinner"
+                "workato_platform_cli.cli.commands.api_collections.Spinner"
             ) as mock_spinner:
                 mock_spinner_instance = MagicMock()
                 mock_spinner_instance.stop.return_value = 1.0
@@ -398,7 +398,7 @@ class TestCreateCommand:
 
         try:
             with patch(
-                "workato_platform.cli.commands.api_collections.Spinner"
+                "workato_platform_cli.cli.commands.api_collections.Spinner"
             ) as mock_spinner:
                 mock_spinner_instance = MagicMock()
                 mock_spinner_instance.stop.return_value = 1.0
@@ -475,14 +475,14 @@ class TestListCollectionsCommand:
         )
 
         with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
+            "workato_platform_cli.cli.commands.api_collections.Spinner"
         ) as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.2
             mock_spinner.return_value = mock_spinner_instance
 
             with patch(
-                "workato_platform.cli.commands.api_collections.display_collection_summary"
+                "workato_platform_cli.cli.commands.api_collections.display_collection_summary"
             ) as mock_display:
                 assert list_collections.callback
                 await list_collections.callback(
@@ -500,14 +500,14 @@ class TestListCollectionsCommand:
         mock_workato_client.api_platform_api.list_api_collections.return_value = []
 
         with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
+            "workato_platform_cli.cli.commands.api_collections.Spinner"
         ) as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 0.8
             mock_spinner.return_value = mock_spinner_instance
 
             with patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo:
                 assert list_collections.callback
                 await list_collections.callback(
@@ -522,7 +522,7 @@ class TestListCollectionsCommand:
     ) -> None:
         """Test listing with per_page limit exceeded."""
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             assert list_collections.callback
             await list_collections.callback(
@@ -560,7 +560,7 @@ class TestListCollectionsCommand:
         )
 
         with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
+            "workato_platform_cli.cli.commands.api_collections.Spinner"
         ) as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.0
@@ -568,10 +568,10 @@ class TestListCollectionsCommand:
 
             with (
                 patch(
-                    "workato_platform.cli.commands.api_collections.display_collection_summary"
+                    "workato_platform_cli.cli.commands.api_collections.display_collection_summary"
                 ),
                 patch(
-                    "workato_platform.cli.commands.api_collections.click.echo"
+                    "workato_platform_cli.cli.commands.api_collections.click.echo"
                 ) as mock_echo,
             ):
                 assert list_collections.callback
@@ -644,14 +644,14 @@ class TestListEndpointsCommand:
         )
 
         with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
+            "workato_platform_cli.cli.commands.api_collections.Spinner"
         ) as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.5
             mock_spinner.return_value = mock_spinner_instance
 
             with patch(
-                "workato_platform.cli.commands.api_collections.display_endpoint_summary"
+                "workato_platform_cli.cli.commands.api_collections.display_endpoint_summary"
             ) as mock_display:
                 assert list_endpoints.callback
                 await list_endpoints.callback(
@@ -668,14 +668,14 @@ class TestListEndpointsCommand:
         mock_workato_client.api_platform_api.list_api_endpoints.return_value = []
 
         with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
+            "workato_platform_cli.cli.commands.api_collections.Spinner"
         ) as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 0.5
             mock_spinner.return_value = mock_spinner_instance
 
             with patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo:
                 assert list_endpoints.callback
                 await list_endpoints.callback(
@@ -733,14 +733,14 @@ class TestListEndpointsCommand:
         ]
 
         with patch(
-            "workato_platform.cli.commands.api_collections.Spinner"
+            "workato_platform_cli.cli.commands.api_collections.Spinner"
         ) as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 2.0
             mock_spinner.return_value = mock_spinner_instance
 
             with patch(
-                "workato_platform.cli.commands.api_collections.display_endpoint_summary"
+                "workato_platform_cli.cli.commands.api_collections.display_endpoint_summary"
             ):
                 assert list_endpoints.callback
                 await list_endpoints.callback(
@@ -778,7 +778,7 @@ class TestEnableEndpointCommand:
     ) -> None:
         """Test enabling a single endpoint successfully."""
         with patch(
-            "workato_platform.cli.commands.api_collections.enable_api_endpoint"
+            "workato_platform_cli.cli.commands.api_collections.enable_api_endpoint"
         ) as mock_enable:
             assert enable_endpoint.callback
             await enable_endpoint.callback(
@@ -793,7 +793,7 @@ class TestEnableEndpointCommand:
     ) -> None:
         """Test enabling all endpoints in collection successfully."""
         with patch(
-            "workato_platform.cli.commands.api_collections.enable_all_endpoints_in_collection"
+            "workato_platform_cli.cli.commands.api_collections.enable_all_endpoints_in_collection"
         ) as mock_enable_all:
             assert enable_endpoint.callback
             await enable_endpoint.callback(
@@ -806,7 +806,7 @@ class TestEnableEndpointCommand:
     async def test_enable_endpoint_all_without_collection_id(self) -> None:
         """Test enabling all endpoints without collection ID fails."""
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             assert enable_endpoint.callback
             await enable_endpoint.callback(
@@ -819,7 +819,7 @@ class TestEnableEndpointCommand:
     async def test_enable_endpoint_all_with_endpoint_id(self) -> None:
         """Test enabling all endpoints with endpoint ID fails."""
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             assert enable_endpoint.callback
             await enable_endpoint.callback(
@@ -834,7 +834,7 @@ class TestEnableEndpointCommand:
     async def test_enable_endpoint_no_parameters(self) -> None:
         """Test enabling endpoint with no parameters fails."""
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             assert enable_endpoint.callback
             await enable_endpoint.callback(
@@ -918,10 +918,10 @@ class TestEnableAllEndpointsInCollection:
 
         with (
             patch(
-                "workato_platform.cli.commands.api_collections.Spinner"
+                "workato_platform_cli.cli.commands.api_collections.Spinner"
             ) as mock_spinner,
             patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo,
         ):
             mock_spinner_instance = MagicMock()
@@ -953,10 +953,10 @@ class TestEnableAllEndpointsInCollection:
 
         with (
             patch(
-                "workato_platform.cli.commands.api_collections.Spinner"
+                "workato_platform_cli.cli.commands.api_collections.Spinner"
             ) as mock_spinner,
             patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo,
         ):
             mock_spinner_instance = MagicMock()
@@ -1011,10 +1011,10 @@ class TestEnableAllEndpointsInCollection:
 
         with (
             patch(
-                "workato_platform.cli.commands.api_collections.Spinner"
+                "workato_platform_cli.cli.commands.api_collections.Spinner"
             ) as mock_spinner,
             patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo,
         ):
             mock_spinner_instance = MagicMock()
@@ -1053,10 +1053,10 @@ class TestEnableAllEndpointsInCollection:
 
         with (
             patch(
-                "workato_platform.cli.commands.api_collections.Spinner"
+                "workato_platform_cli.cli.commands.api_collections.Spinner"
             ) as mock_spinner,
             patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo,
         ):
             mock_spinner_instance = MagicMock()
@@ -1093,10 +1093,10 @@ class TestEnableApiEndpoint:
         """Test successfully enabling a single API endpoint."""
         with (
             patch(
-                "workato_platform.cli.commands.api_collections.Spinner"
+                "workato_platform_cli.cli.commands.api_collections.Spinner"
             ) as mock_spinner,
             patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo,
         ):
             mock_spinner_instance = MagicMock()
@@ -1134,7 +1134,7 @@ class TestDisplayFunctions:
         )
 
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             display_endpoint_summary(endpoint)
 
@@ -1166,7 +1166,7 @@ class TestDisplayFunctions:
         )
 
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             display_endpoint_summary(endpoint)
 
@@ -1188,7 +1188,7 @@ class TestDisplayFunctions:
         )
 
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             display_collection_summary(collection)
 
@@ -1218,7 +1218,7 @@ class TestDisplayFunctions:
         )
 
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             display_collection_summary(collection)
 
@@ -1244,7 +1244,7 @@ class TestDisplayFunctions:
         )
 
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             display_collection_summary(collection)
 
@@ -1294,7 +1294,7 @@ class TestCommandsWithCallbackApproach:
 
         try:
             with patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo:
                 assert create.callback
                 await create.callback(
@@ -1334,7 +1334,7 @@ class TestCommandsWithCallbackApproach:
         mock_workato_client = AsyncMock()
 
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             assert create.callback
             await create.callback(
@@ -1385,10 +1385,10 @@ class TestCommandsWithCallbackApproach:
 
         with (
             patch(
-                "workato_platform.cli.commands.api_collections.display_collection_summary"
+                "workato_platform_cli.cli.commands.api_collections.display_collection_summary"
             ) as mock_display,
             patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo,
         ):
             assert list_collections.callback
@@ -1415,7 +1415,7 @@ class TestCommandsWithCallbackApproach:
         mock_workato_client = AsyncMock()
 
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             assert list_collections.callback
             await list_collections.callback(
@@ -1454,10 +1454,10 @@ class TestCommandsWithCallbackApproach:
 
         with (
             patch(
-                "workato_platform.cli.commands.api_collections.display_endpoint_summary"
+                "workato_platform_cli.cli.commands.api_collections.display_endpoint_summary"
             ) as mock_display,
             patch(
-                "workato_platform.cli.commands.api_collections.click.echo"
+                "workato_platform_cli.cli.commands.api_collections.click.echo"
             ) as mock_echo,
         ):
             assert list_endpoints.callback
@@ -1487,7 +1487,7 @@ class TestCommandsWithCallbackApproach:
         mock_workato_client = AsyncMock()
 
         with patch(
-            "workato_platform.cli.commands.api_collections.click.echo"
+            "workato_platform_cli.cli.commands.api_collections.click.echo"
         ) as mock_echo:
             assert create.callback
             await create.callback(

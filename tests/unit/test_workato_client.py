@@ -16,7 +16,7 @@ class TestWorkatoClient:
     def test_workato_class_can_be_imported(self) -> None:
         """Test that Workato class can be imported."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
             assert Workato is not None
         except ImportError:
@@ -25,11 +25,11 @@ class TestWorkatoClient:
     def test_workato_initialization_mocked(self) -> None:
         """Test Workato can be initialized with mocked dependencies."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
             with (
-                patch("workato_platform.Configuration") as mock_config,
-                patch("workato_platform.ApiClient") as mock_api_client,
+                patch("workato_platform_cli.Configuration") as mock_config,
+                patch("workato_platform_cli.ApiClient") as mock_api_client,
             ):
                 mock_configuration = Mock()
                 mock_config.return_value = mock_configuration
@@ -45,7 +45,7 @@ class TestWorkatoClient:
     def test_workato_api_endpoints_structure(self) -> None:
         """Test that Workato class structure can be analyzed."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
             # Check expected API endpoint attributes
             expected_apis = [
@@ -63,8 +63,8 @@ class TestWorkatoClient:
 
             # Create mock configuration with proper SSL attributes
             with (
-                patch("workato_platform.Configuration") as mock_config,
-                patch("workato_platform.ApiClient") as mock_api_client,
+                patch("workato_platform_cli.Configuration") as mock_config,
+                patch("workato_platform_cli.ApiClient") as mock_api_client,
             ):
                 mock_configuration = Mock()
                 mock_configuration.connection_pool_maxsize = 10
@@ -94,9 +94,9 @@ class TestWorkatoClient:
     def test_workato_configuration_property(self) -> None:
         """Test configuration property access."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
-            with patch("workato_platform.ApiClient"):
+            with patch("workato_platform_cli.ApiClient"):
                 mock_configuration = Mock()
                 client = Workato(mock_configuration)
 
@@ -108,9 +108,9 @@ class TestWorkatoClient:
     def test_workato_api_client_property(self) -> None:
         """Test api_client property access."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
-            with patch("workato_platform.ApiClient") as mock_api_client:
+            with patch("workato_platform_cli.ApiClient") as mock_api_client:
                 mock_configuration = Mock()
                 mock_client_instance = Mock()
                 mock_api_client.return_value = mock_client_instance
@@ -125,9 +125,9 @@ class TestWorkatoClient:
     def test_workato_ssl_context_with_tls_version(self) -> None:
         """Test SSL context configuration with TLSVersion available."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
-            with patch("workato_platform.ApiClient") as mock_api_client:
+            with patch("workato_platform_cli.ApiClient") as mock_api_client:
                 mock_configuration = Mock()
                 mock_client_instance = Mock()
                 mock_rest_client = Mock()
@@ -150,9 +150,9 @@ class TestWorkatoClient:
     async def test_workato_async_context_manager(self) -> None:
         """Test Workato async context manager."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
-            with patch("workato_platform.ApiClient") as mock_api_client:
+            with patch("workato_platform_cli.ApiClient") as mock_api_client:
                 mock_configuration = Mock()
                 mock_client_instance = Mock()
                 mock_client_instance.close = (
@@ -173,9 +173,9 @@ class TestWorkatoClient:
     async def test_workato_close_method(self) -> None:
         """Test Workato close method."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
-            with patch("workato_platform.ApiClient") as mock_api_client:
+            with patch("workato_platform_cli.ApiClient") as mock_api_client:
                 mock_configuration = Mock()
                 mock_client_instance = Mock()
                 mock_client_instance.close = (
@@ -193,11 +193,11 @@ class TestWorkatoClient:
 
     def test_workato_version_attribute_exists(self) -> None:
         """Test that __version__ attribute is accessible."""
-        import workato_platform
+        import workato_platform_cli
 
         # __version__ should be a string
-        assert isinstance(workato_platform.__version__, str)
-        assert len(workato_platform.__version__) > 0
+        assert isinstance(workato_platform_cli.__version__, str)
+        assert len(workato_platform_cli.__version__) > 0
 
     def test_workato_version_import_fallback(self) -> None:
         """Test __version__ fallback when _version import fails."""
@@ -205,24 +205,24 @@ class TestWorkatoClient:
         # We can't easily reload the module, so let's test the behavior directly
 
         # Mock the import to fail and test the fallback logic
-        import workato_platform
+        import workato_platform_cli
 
-        original_version = workato_platform.__version__
+        original_version = workato_platform_cli.__version__
 
         try:
             # Simulate the fallback scenario
-            workato_platform.__version__ = "unknown"
-            assert workato_platform.__version__ == "unknown"
+            workato_platform_cli.__version__ = "unknown"
+            assert workato_platform_cli.__version__ == "unknown"
         finally:
             # Restore original version
-            workato_platform.__version__ = original_version
+            workato_platform_cli.__version__ = original_version
 
     def test_workato_ssl_context_older_python_fallback(self) -> None:
         """Test SSL context fallback for older Python versions."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
-            with patch("workato_platform.ApiClient") as mock_api_client:
+            with patch("workato_platform_cli.ApiClient") as mock_api_client:
                 mock_configuration = Mock()
                 mock_client_instance = Mock()
                 mock_rest_client = Mock()
@@ -254,9 +254,9 @@ class TestWorkatoClient:
     def test_workato_all_api_endpoints_initialized(self) -> None:
         """Test that all API endpoints are properly initialized."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
-            with patch("workato_platform.ApiClient") as mock_api_client:
+            with patch("workato_platform_cli.ApiClient") as mock_api_client:
                 mock_configuration = Mock()
                 mock_client_instance = Mock()
                 mock_client_instance.rest_client = Mock()
@@ -290,10 +290,10 @@ class TestWorkatoClient:
     def test_workato_retry_429_configured(self) -> None:
         """Test that retry logic with 429 support is configured."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
             with (
-                patch("workato_platform.ApiClient") as mock_api_client,
+                patch("workato_platform_cli.ApiClient") as mock_api_client,
                 patch("aiohttp_retry.RetryClient") as mock_retry_client,
             ):
                 mock_configuration = Mock()

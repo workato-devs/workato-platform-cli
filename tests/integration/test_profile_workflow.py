@@ -6,7 +6,7 @@ import pytest
 
 from asyncclick.testing import CliRunner
 
-from workato_platform.cli import cli
+from workato_platform_cli.cli import cli
 
 
 class TestProfileWorkflow:
@@ -48,7 +48,7 @@ class TestProfileWorkflow:
         # This test would require more complex mocking of the API client
         # For now, just test that commands don't fail with basic setup
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             mock_instance = mock_container.return_value
             mock_instance.workato_api_client.return_value = mock_workato_client
 

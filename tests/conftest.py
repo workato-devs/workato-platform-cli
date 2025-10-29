@@ -71,7 +71,7 @@ def mock_webbrowser() -> Generator[dict[str, MagicMock], None, None]:
     with (
         patch("webbrowser.open", return_value=None) as mock_open_global,
         patch(
-            "workato_platform.cli.commands.connections.webbrowser.open",
+            "workato_platform_cli.cli.commands.connections.webbrowser.open",
             return_value=None,
         ) as mock_open_connections,
     ):

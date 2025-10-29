@@ -4,7 +4,7 @@ import tempfile
 
 from pathlib import Path
 
-from workato_platform.cli.utils.gitignore import (
+from workato_platform_cli.cli.utils.gitignore import (
     ensure_gitignore_entry,
     ensure_stubs_in_gitignore,
 )

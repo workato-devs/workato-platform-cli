@@ -4,7 +4,7 @@ import pytest
 
 from pydantic import ValidationError
 
-from workato_platform.cli.utils.config.models import (
+from workato_platform_cli.cli.utils.config.models import (
     AVAILABLE_REGIONS,
     ConfigData,
     ProfileData,

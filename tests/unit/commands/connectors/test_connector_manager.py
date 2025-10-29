@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from workato_platform.cli.commands.connectors import connector_manager
-from workato_platform.cli.commands.connectors.connector_manager import (
+from workato_platform_cli.cli.commands.connectors import connector_manager
+from workato_platform_cli.cli.commands.connectors.connector_manager import (
     ConnectionParameter,
     ConnectorManager,
     ProviderData,
@@ -38,7 +38,7 @@ class DummySpinner:
 @pytest.fixture(autouse=True)
 def patch_spinner(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "workato_platform.cli.commands.connectors.connector_manager.Spinner",
+        "workato_platform_cli.cli.commands.connectors.connector_manager.Spinner",
         DummySpinner,
     )
 
@@ -51,7 +51,7 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         captured.append(message)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.connectors.connector_manager.click.echo",
+        "workato_platform_cli.cli.commands.connectors.connector_manager.click.echo",
         _capture,
     )
     return captured
@@ -157,7 +157,7 @@ async def test_prompt_for_oauth_parameters_prompts(
         return "https://example.atlassian.net"
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.connectors.connector_manager.click.prompt",
+        "workato_platform_cli.cli.commands.connectors.connector_manager.click.prompt",
         mock_prompt,
     )
 

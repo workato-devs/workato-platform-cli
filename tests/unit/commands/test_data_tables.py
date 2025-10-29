@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from workato_platform.cli.commands.data_tables import (
+from workato_platform_cli.cli.commands.data_tables import (
     create_data_table,
     create_table,
     list_data_tables,
     validate_schema,
 )
-from workato_platform.client.workato_api.models.data_table_column_request import (
+from workato_platform_cli.client.workato_api.models.data_table_column_request import (
     DataTableColumnRequest,
 )
 
@@ -96,13 +96,13 @@ class TestListDataTablesCommand:
             mock_response
         )
 
-        with patch("workato_platform.cli.commands.data_tables.Spinner") as mock_spinner:
+        with patch("workato_platform_cli.cli.commands.data_tables.Spinner") as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.2
             mock_spinner.return_value = mock_spinner_instance
 
             with patch(
-                "workato_platform.cli.commands.data_tables.display_table_summary"
+                "workato_platform_cli.cli.commands.data_tables.display_table_summary"
             ) as mock_display:
                 assert list_data_tables.callback
                 await list_data_tables.callback(workato_api_client=mock_workato_client)
@@ -119,13 +119,13 @@ class TestListDataTablesCommand:
             mock_response
         )
 
-        with patch("workato_platform.cli.commands.data_tables.Spinner") as mock_spinner:
+        with patch("workato_platform_cli.cli.commands.data_tables.Spinner") as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 0.8
             mock_spinner.return_value = mock_spinner_instance
 
             with patch(
-                "workato_platform.cli.commands.data_tables.click.echo"
+                "workato_platform_cli.cli.commands.data_tables.click.echo"
             ) as mock_echo:
                 assert list_data_tables.callback
                 await list_data_tables.callback(workato_api_client=mock_workato_client)
@@ -219,7 +219,7 @@ class TestCreateDataTableCommand:
     ) -> None:
         """Test successful data table creation."""
         with patch(
-            "workato_platform.cli.commands.data_tables.create_table"
+            "workato_platform_cli.cli.commands.data_tables.create_table"
         ) as mock_create:
             assert create_data_table.callback
             await create_data_table.callback(
@@ -247,7 +247,7 @@ class TestCreateDataTableCommand:
     ) -> None:
         """Test data table creation with explicit folder ID."""
         with patch(
-            "workato_platform.cli.commands.data_tables.create_table"
+            "workato_platform_cli.cli.commands.data_tables.create_table"
         ) as mock_create:
             assert create_data_table.callback
             await create_data_table.callback(
@@ -271,7 +271,7 @@ class TestCreateDataTableCommand:
         mock_config_manager: MagicMock,
     ) -> None:
         """Test data table creation with invalid JSON."""
-        with patch("workato_platform.cli.commands.data_tables.click.echo") as mock_echo:
+        with patch("workato_platform_cli.cli.commands.data_tables.click.echo") as mock_echo:
             assert create_data_table.callback
             await create_data_table.callback(
                 name="Test Table",
@@ -290,7 +290,7 @@ class TestCreateDataTableCommand:
         mock_config_manager: MagicMock,
     ) -> None:
         """Test data table creation with non-list schema."""
-        with patch("workato_platform.cli.commands.data_tables.click.echo") as mock_echo:
+        with patch("workato_platform_cli.cli.commands.data_tables.click.echo") as mock_echo:
             assert create_data_table.callback
             await create_data_table.callback(
                 name="Test Table",
@@ -311,7 +311,7 @@ class TestCreateDataTableCommand:
         mock_config.folder_id = None
         mock_config_manager.load_config.return_value = mock_config
 
-        with patch("workato_platform.cli.commands.data_tables.click.echo") as mock_echo:
+        with patch("workato_platform_cli.cli.commands.data_tables.click.echo") as mock_echo:
             assert create_data_table.callback
             await create_data_table.callback(
                 name="Test Table",
@@ -345,7 +345,7 @@ class TestCreateDataTableCommand:
             )
         ]
 
-        with patch("workato_platform.cli.commands.data_tables.Spinner") as mock_spinner:
+        with patch("workato_platform_cli.cli.commands.data_tables.Spinner") as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.5
             mock_spinner.return_value = mock_spinner_instance

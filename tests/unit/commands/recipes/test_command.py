@@ -10,12 +10,12 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from workato_platform.cli.commands.recipes import command
+from workato_platform_cli.cli.commands.recipes import command
 
 
 if TYPE_CHECKING:
-    from workato_platform import Workato
-    from workato_platform.client.workato_api.models.recipe_start_response import (
+    from workato_platform_cli import Workato
+    from workato_platform_cli.client.workato_api.models.recipe_start_response import (
         RecipeStartResponse,
     )
 
@@ -33,7 +33,7 @@ def _make_stub(**attrs: Any) -> Mock:
 
 
 def _workato_stub(**kwargs: Any) -> Workato:
-    from workato_platform import Workato
+    from workato_platform_cli import Workato
 
     stub = cast(Any, Mock(spec=Workato))
     for key, value in kwargs.items():
@@ -60,7 +60,7 @@ def patch_spinner(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure spinner interactions are deterministic in tests."""
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.Spinner",
+        "workato_platform_cli.cli.commands.recipes.command.Spinner",
         DummySpinner,
     )
 
@@ -75,7 +75,7 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         captured.append(message)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.click.echo",
+        "workato_platform_cli.cli.commands.recipes.command.click.echo",
         _capture,
     )
 
@@ -110,7 +110,7 @@ async def test_list_recipes_recursive_filters_running(
 
     mock_recursive = AsyncMock(return_value=[running_recipe, stopped_recipe])
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_recipes_recursive",
+        "workato_platform_cli.cli.commands.recipes.command.get_recipes_recursive",
         mock_recursive,
     )
 
@@ -120,7 +120,7 @@ async def test_list_recipes_recursive_filters_running(
         seen.append(recipe)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.display_recipe_summary",
+        "workato_platform_cli.cli.commands.recipes.command.display_recipe_summary",
         fake_display,
     )
 
@@ -152,7 +152,7 @@ async def test_list_recipes_non_recursive_with_filters(
 
     mock_paginated = AsyncMock(return_value=[recipe_stub])
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_all_recipes_paginated",
+        "workato_platform_cli.cli.commands.recipes.command.get_all_recipes_paginated",
         mock_paginated,
     )
 
@@ -162,7 +162,7 @@ async def test_list_recipes_non_recursive_with_filters(
         recorded.append(recipe)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.display_recipe_summary",
+        "workato_platform_cli.cli.commands.recipes.command.display_recipe_summary",
         fake_display,
     )
 
@@ -333,15 +333,15 @@ async def test_start_dispatches_correct_handler(
     folder = AsyncMock()
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.start_single_recipe",
+        "workato_platform_cli.cli.commands.recipes.command.start_single_recipe",
         single,
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.start_project_recipes",
+        "workato_platform_cli.cli.commands.recipes.command.start_project_recipes",
         project,
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.start_folder_recipes",
+        "workato_platform_cli.cli.commands.recipes.command.start_folder_recipes",
         folder,
     )
 
@@ -379,15 +379,15 @@ async def test_stop_dispatches_correct_handler(monkeypatch: pytest.MonkeyPatch) 
     folder = AsyncMock()
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.stop_single_recipe",
+        "workato_platform_cli.cli.commands.recipes.command.stop_single_recipe",
         single,
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.stop_project_recipes",
+        "workato_platform_cli.cli.commands.recipes.command.stop_project_recipes",
         project,
     )
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.stop_folder_recipes",
+        "workato_platform_cli.cli.commands.recipes.command.stop_folder_recipes",
         folder,
     )
 
@@ -469,7 +469,7 @@ async def test_start_project_recipes_delegates_to_folder(
 
     start_folder = AsyncMock()
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.start_folder_recipes",
+        "workato_platform_cli.cli.commands.recipes.command.start_folder_recipes",
         start_folder,
     )
 
@@ -490,7 +490,7 @@ async def test_start_folder_recipes_handles_success_and_failure(
         _make_stub(id=2, name="Recipe Two"),
     ]
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_folder_recipe_assets",
+        "workato_platform_cli.cli.commands.recipes.command.get_folder_recipe_assets",
         AsyncMock(return_value=assets),
     )
 
@@ -529,7 +529,7 @@ async def test_start_folder_recipes_handles_empty_folder(
     """No assets produces an informational message."""
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_folder_recipe_assets",
+        "workato_platform_cli.cli.commands.recipes.command.get_folder_recipe_assets",
         AsyncMock(return_value=[]),
     )
 
@@ -578,7 +578,7 @@ async def test_stop_project_recipes_delegates(monkeypatch: pytest.MonkeyPatch) -
 
     stop_folder = AsyncMock()
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.stop_folder_recipes",
+        "workato_platform_cli.cli.commands.recipes.command.stop_folder_recipes",
         stop_folder,
     )
 
@@ -599,7 +599,7 @@ async def test_stop_folder_recipes_iterates_assets(
         _make_stub(id=2, name="Recipe Two"),
     ]
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_folder_recipe_assets",
+        "workato_platform_cli.cli.commands.recipes.command.get_folder_recipe_assets",
         AsyncMock(return_value=assets),
     )
 
@@ -621,7 +621,7 @@ async def test_stop_folder_recipes_no_assets(
     """No assets triggers informational output."""
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_folder_recipe_assets",
+        "workato_platform_cli.cli.commands.recipes.command.get_folder_recipe_assets",
         AsyncMock(return_value=[]),
     )
 
@@ -707,7 +707,7 @@ async def test_get_recipes_recursive_traverses_subfolders(
 
     mock_get_all = AsyncMock(side_effect=_get_all_recipes_paginated)
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_all_recipes_paginated",
+        "workato_platform_cli.cli.commands.recipes.command.get_all_recipes_paginated",
         mock_get_all,
     )
 
@@ -725,7 +725,7 @@ async def test_get_recipes_recursive_traverses_subfolders(
 
     raw_recursive = cast(Any, command.get_recipes_recursive).__wrapped__
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_recipes_recursive",
+        "workato_platform_cli.cli.commands.recipes.command.get_recipes_recursive",
         raw_recursive,
     )
 
@@ -746,7 +746,7 @@ async def test_get_recipes_recursive_skips_visited(
 
     mock_get_all = AsyncMock()
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_all_recipes_paginated",
+        "workato_platform_cli.cli.commands.recipes.command.get_all_recipes_paginated",
         mock_get_all,
     )
 
@@ -754,7 +754,7 @@ async def test_get_recipes_recursive_skips_visited(
 
     raw_recursive = cast(Any, command.get_recipes_recursive).__wrapped__
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_recipes_recursive",
+        "workato_platform_cli.cli.commands.recipes.command.get_recipes_recursive",
         raw_recursive,
     )
 
@@ -852,7 +852,7 @@ async def test_list_recipes_no_results(
     config_manager.load_config.return_value = _make_stub(folder_id=50)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.recipes.command.get_all_recipes_paginated",
+        "workato_platform_cli.cli.commands.recipes.command.get_all_recipes_paginated",
         AsyncMock(return_value=[]),
     )
 

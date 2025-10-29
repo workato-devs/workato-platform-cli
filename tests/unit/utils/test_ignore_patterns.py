@@ -3,7 +3,7 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from workato_platform.cli.utils.ignore_patterns import (
+from workato_platform_cli.cli.utils.ignore_patterns import (
     load_ignore_patterns,
     should_skip_file,
 )

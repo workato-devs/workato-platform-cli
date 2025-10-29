@@ -14,7 +14,7 @@ def test_webbrowser_is_mocked() -> None:
 
 def test_connections_webbrowser_is_mocked() -> None:
     """Test that connections module webbrowser is also mocked."""
-    from workato_platform.cli.commands.connections import (
+    from workato_platform_cli.cli.commands.connections import (
         webbrowser as connections_webbrowser,
     )
 

@@ -10,9 +10,9 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from workato_platform.cli.containers import Container
-from workato_platform.cli.utils.config import ConfigManager
-from workato_platform.cli.utils.version_checker import (
+from workato_platform_cli.cli.containers import Container
+from workato_platform_cli.cli.utils.config import ConfigManager
+from workato_platform_cli.cli.utils.version_checker import (
     CHECK_INTERVAL,
     VersionChecker,
     check_updates_async,
@@ -50,7 +50,7 @@ class TestVersionChecker:
 
         assert checker.is_update_check_disabled() is False
 
-    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    @patch("workato_platform_cli.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_success(
         self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
@@ -68,7 +68,7 @@ class TestVersionChecker:
 
         assert version == "1.2.3"
 
-    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    @patch("workato_platform_cli.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_http_error(
         self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
@@ -80,7 +80,7 @@ class TestVersionChecker:
 
         assert version is None
 
-    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    @patch("workato_platform_cli.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_non_https_url(
         self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
@@ -90,7 +90,7 @@ class TestVersionChecker:
 
         # Patch the PYPI_API_URL to use HTTP (should be rejected)
         with patch(
-            "workato_platform.cli.utils.version_checker.PYPI_API_URL",
+            "workato_platform_cli.cli.utils.version_checker.PYPI_API_URL",
             "http://pypi.org/test",
         ):
             version = checker.get_latest_version()
@@ -98,7 +98,7 @@ class TestVersionChecker:
             # URL should not be called due to HTTPS validation
             mock_urlopen.assert_not_called()
 
-    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    @patch("workato_platform_cli.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_non_200_status(
         self,
         mock_urlopen: MagicMock,
@@ -151,7 +151,7 @@ class TestVersionChecker:
 
         assert checker.should_check_for_updates() is False
 
-    @patch("workato_platform.cli.utils.version_checker.HAS_DEPENDENCIES", True)
+    @patch("workato_platform_cli.cli.utils.version_checker.HAS_DEPENDENCIES", True)
     def test_should_check_for_updates_no_cache_file(
         self,
         mock_config_manager: ConfigManager,
@@ -293,7 +293,7 @@ class TestVersionChecker:
 
         check_for_updates_mock.assert_not_called()
 
-    @patch("workato_platform.cli.utils.version_checker.click.echo")
+    @patch("workato_platform_cli.cli.utils.version_checker.click.echo")
     def test_check_for_updates_handles_parse_error(
         self,
         mock_echo: MagicMock,
@@ -306,7 +306,7 @@ class TestVersionChecker:
             raise ValueError("bad version")
 
         monkeypatch.setattr(
-            "workato_platform.cli.utils.version_checker.version.parse",
+            "workato_platform_cli.cli.utils.version_checker.version.parse",
             raising_parse,
         )
 
@@ -321,13 +321,13 @@ class TestVersionChecker:
     ) -> None:
         checker = VersionChecker(mock_config_manager)
         with patch(
-            "workato_platform.cli.utils.version_checker.HAS_DEPENDENCIES", False
+            "workato_platform_cli.cli.utils.version_checker.HAS_DEPENDENCIES", False
         ):
             assert checker.should_check_for_updates() is False
             assert checker.get_latest_version() is None
             assert checker.check_for_updates("1.0.0") is None
 
-    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    @patch("workato_platform_cli.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_without_tls_version(
         self,
         mock_urlopen: MagicMock,
@@ -349,12 +349,12 @@ class TestVersionChecker:
         )
         mock_urlopen.return_value.__enter__.return_value = mock_response
 
-        with patch("workato_platform.cli.utils.version_checker.ssl", fake_ssl):
+        with patch("workato_platform_cli.cli.utils.version_checker.ssl", fake_ssl):
             checker = VersionChecker(mock_config_manager)
             assert checker.get_latest_version() == "9.9.9"
             fake_ssl.create_default_context.assert_called_once()
 
-    @patch("workato_platform.cli.utils.version_checker.click.echo")
+    @patch("workato_platform_cli.cli.utils.version_checker.click.echo")
     def test_show_update_notification_outputs(
         self, mock_echo: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
@@ -395,11 +395,11 @@ class TestVersionChecker:
         thread_instance = Mock()
         with (
             patch(
-                "workato_platform.cli.utils.version_checker.VersionChecker",
+                "workato_platform_cli.cli.utils.version_checker.VersionChecker",
                 Mock(return_value=checker_instance),
             ),
             patch(
-                "workato_platform.cli.utils.version_checker.threading.Thread",
+                "workato_platform_cli.cli.utils.version_checker.threading.Thread",
                 Mock(return_value=thread_instance),
             ),
             patch.object(
@@ -428,11 +428,11 @@ class TestVersionChecker:
         thread_mock = Mock()
         with (
             patch(
-                "workato_platform.cli.utils.version_checker.VersionChecker",
+                "workato_platform_cli.cli.utils.version_checker.VersionChecker",
                 Mock(return_value=checker_instance),
             ),
             patch(
-                "workato_platform.cli.utils.version_checker.threading.Thread",
+                "workato_platform_cli.cli.utils.version_checker.threading.Thread",
                 thread_mock,
             ),
             patch.object(
@@ -485,7 +485,7 @@ class TestVersionChecker:
             with pytest.raises(RuntimeError):
                 await async_sample()
 
-    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    @patch("workato_platform_cli.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_json_error(
         self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
@@ -500,7 +500,7 @@ class TestVersionChecker:
 
         assert version is None
 
-    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    @patch("workato_platform_cli.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_missing_version_key(
         self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
@@ -574,7 +574,7 @@ class TestVersionChecker:
             monkeypatch.setenv("WORKATO_DISABLE_UPDATE_CHECK", value)
             assert checker.is_update_check_disabled() is False
 
-    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    @patch("workato_platform_cli.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_handles_value_error(
         self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
@@ -609,10 +609,10 @@ class TestVersionChecker:
         old_time = time.time() - (CHECK_INTERVAL + 100)
         os.utime(checker.cache_file, (old_time, old_time))
 
-        with patch("workato_platform.cli.utils.version_checker.HAS_DEPENDENCIES", True):
+        with patch("workato_platform_cli.cli.utils.version_checker.HAS_DEPENDENCIES", True):
             assert checker.should_check_for_updates() is True
 
-    @patch("workato_platform.cli.utils.version_checker.urllib.request.urlopen")
+    @patch("workato_platform_cli.cli.utils.version_checker.urllib.request.urlopen")
     def test_get_latest_version_invalid_scheme_validation(
         self, mock_urlopen: MagicMock, mock_config_manager: ConfigManager
     ) -> None:
@@ -621,7 +621,7 @@ class TestVersionChecker:
 
         # Test with non-https scheme in parsed URL
         with patch(
-            "workato_platform.cli.utils.version_checker.urlparse"
+            "workato_platform_cli.cli.utils.version_checker.urlparse"
         ) as mock_urlparse:
             mock_urlparse.return_value.scheme = "http"  # Not https
             result = checker.get_latest_version()
@@ -629,7 +629,7 @@ class TestVersionChecker:
             mock_urlopen.assert_not_called()
 
     @pytest.mark.asyncio
-    @patch("workato_platform.cli.utils.version_checker.threading.Thread")
+    @patch("workato_platform_cli.cli.utils.version_checker.threading.Thread")
     async def test_check_updates_async_thread_timeout(
         self, mock_thread: Mock, mock_config_manager: ConfigManager
     ) -> None:
@@ -642,7 +642,7 @@ class TestVersionChecker:
 
         with (
             patch(
-                "workato_platform.cli.utils.version_checker.VersionChecker",
+                "workato_platform_cli.cli.utils.version_checker.VersionChecker",
                 Mock(return_value=checker_instance),
             ),
             patch.object(
