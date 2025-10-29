@@ -14,7 +14,7 @@ Build and validate integration recipes locally before deployment to avoid produc
 #### Commands
 ```bash
 workato recipes validate --path ./recipes/salesforce-sync.json
-workato push --restart-recipes
+workato push --restart-recipes  # Only restarts running recipes that were updated
 ```
 
 ### Multi-Environment Management
@@ -35,7 +35,7 @@ workato push
 # Staging
 workato profiles use staging
 workato pull
-workato push --restart-recipes
+workato push --restart-recipes  # Only restarts running recipes that were updated
 
 # Production
 workato profiles use production
@@ -75,7 +75,7 @@ Automate recipe deployment as part of build and release pipelines.
 ```bash
 # In CI pipeline
 workato recipes validate --path ./recipes/*.json
-workato push --restart-recipes --include-tags
+workato push --restart-recipes --include-tags  # Only restarts running recipes that were updated
 ```
 
 ### Recipe Lifecycle Management

@@ -22,7 +22,7 @@ workato workspace
 workato init                        # Initialize CLI configuration
 workato workspace                   # Show current workspace info
 workato pull                       # Pull latest from remote
-workato push [--restart-recipes]   # Push local changes
+workato push [--restart-recipes]   # Push local changes (recipes won't restart by default)
 ```
 
 ### Recipe Management
@@ -86,7 +86,7 @@ workato init  # Creates profile interactively
 
 # Development
 workato recipes validate --path ./recipe.json
-workato push --restart-recipes
+workato push --restart-recipes  # Only restarts running recipes that were updated
 workato recipes list --running
 
 # Switch environments
@@ -117,7 +117,7 @@ workato connections get-oauth-url --id 789
 
 ## Environment Support
 
-**Trial Accounts:** Use `wrkatrial-` tokens with `https://app.trial.workato.com/api` 
+**Trial Accounts:** Use `wrkatrial-` tokens with `https://app.trial.workato.com/api`
 
 **Production Accounts:** Use `wrkprod-` tokens with `https://www.workato.com/api`
 
