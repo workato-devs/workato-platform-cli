@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from workato_platform.cli.utils.config.workspace import WorkspaceManager
+from workato_platform_cli.cli.utils.config.workspace import WorkspaceManager
 
 
 class TestWorkspaceManager:

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from workato_platform.cli.commands import guide
+from workato_platform_cli.cli.commands import guide
 
 
 @pytest.fixture

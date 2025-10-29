@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from workato_platform.cli.commands.connectors import command
-from workato_platform.cli.commands.connectors.connector_manager import ProviderData
+from workato_platform_cli.cli.commands.connectors import command
+from workato_platform_cli.cli.commands.connectors.connector_manager import ProviderData
 
 
 @pytest.fixture(autouse=True)
@@ -18,7 +18,7 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         captured.append(message)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.connectors.command.click.echo",
+        "workato_platform_cli.cli.commands.connectors.command.click.echo",
         _record,
     )
     return captured

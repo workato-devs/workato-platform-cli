@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 
-from workato_platform.cli.commands.projects.project_manager import ProjectManager
-from workato_platform.cli.commands.pull import (
+from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
+from workato_platform_cli.cli.commands.pull import (
     _pull_project,
     calculate_diff_stats,
     calculate_json_diff_stats,
@@ -17,7 +17,7 @@ from workato_platform.cli.commands.pull import (
     merge_directories,
     pull,
 )
-from workato_platform.cli.utils.config import ConfigData, ConfigManager
+from workato_platform_cli.cli.utils.config import ConfigData, ConfigManager
 
 
 class TestPullCommand:
@@ -150,7 +150,7 @@ class TestPullCommand:
 
         # Avoid interactive confirmation during test
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.confirm",
+            "workato_platform_cli.cli.commands.pull.click.confirm",
             lambda *args, **kwargs: True,
         )
 
@@ -189,11 +189,11 @@ class TestPullCommand:
 
         captured: list[str] = []
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.echo",
+            "workato_platform_cli.cli.commands.pull.click.echo",
             lambda msg="": captured.append(msg),
         )
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.confirm",
+            "workato_platform_cli.cli.commands.pull.click.confirm",
             lambda *args, **kwargs: False,
         )
 
@@ -223,11 +223,11 @@ class TestPullCommand:
 
         captured: list[str] = []
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.echo",
+            "workato_platform_cli.cli.commands.pull.click.echo",
             lambda msg="": captured.append(msg),
         )
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.confirm",
+            "workato_platform_cli.cli.commands.pull.click.confirm",
             lambda *args, **kwargs: True,
         )
 
@@ -237,7 +237,7 @@ class TestPullCommand:
         assert any("... and 2 more" in msg for msg in captured)
 
     @pytest.mark.asyncio
-    @patch("workato_platform.cli.commands.pull.click.echo")
+    @patch("workato_platform_cli.cli.commands.pull.click.echo")
     async def test_pull_project_no_api_token(self, mock_echo: MagicMock) -> None:
         """Test _pull_project with no API token."""
         mock_config_manager = MagicMock()
@@ -251,7 +251,7 @@ class TestPullCommand:
         )
 
     @pytest.mark.asyncio
-    @patch("workato_platform.cli.commands.pull.click.echo")
+    @patch("workato_platform_cli.cli.commands.pull.click.echo")
     async def test_pull_project_no_folder_id(self, mock_echo: MagicMock) -> None:
         """Test _pull_project with no folder ID."""
         mock_config_manager = MagicMock()
@@ -273,7 +273,7 @@ class TestPullCommand:
         mock_config_manager = MagicMock()
         mock_project_manager = MagicMock()
 
-        with patch("workato_platform.cli.commands.pull._pull_project") as mock_pull:
+        with patch("workato_platform_cli.cli.commands.pull._pull_project") as mock_pull:
             assert pull.callback
             await pull.callback(
                 config_manager=mock_config_manager,
@@ -308,7 +308,7 @@ class TestPullCommand:
             project_manager = AsyncMock()
             captured: list[str] = []
             monkeypatch.setattr(
-                "workato_platform.cli.commands.pull.click.echo",
+                "workato_platform_cli.cli.commands.pull.click.echo",
                 lambda msg="": captured.append(msg),
             )
 
@@ -350,13 +350,13 @@ class TestPullCommand:
         }
 
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.merge_directories",
+            "workato_platform_cli.cli.commands.pull.merge_directories",
             lambda *args, **kwargs: fake_changes,
         )
 
         captured: list[str] = []
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.echo",
+            "workato_platform_cli.cli.commands.pull.click.echo",
             lambda msg="": captured.append(msg),
         )
 
@@ -414,13 +414,13 @@ class TestPullCommand:
         }
 
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.merge_directories",
+            "workato_platform_cli.cli.commands.pull.merge_directories",
             lambda *args, **kwargs: simple_changes,
         )
 
         captured: list[str] = []
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.echo",
+            "workato_platform_cli.cli.commands.pull.click.echo",
             lambda msg="": captured.append(msg),
         )
 
@@ -471,7 +471,7 @@ class TestPullCommand:
 
         captured: list[str] = []
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.echo",
+            "workato_platform_cli.cli.commands.pull.click.echo",
             lambda msg="": captured.append(msg),
         )
 
@@ -529,7 +529,7 @@ class TestPullCommand:
 
         captured: list[str] = []
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.echo",
+            "workato_platform_cli.cli.commands.pull.click.echo",
             lambda msg="": captured.append(msg),
         )
 
@@ -571,7 +571,7 @@ class TestPullCommand:
 
         captured: list[str] = []
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.echo",
+            "workato_platform_cli.cli.commands.pull.click.echo",
             lambda msg="": captured.append(msg),
         )
 
@@ -624,13 +624,13 @@ class TestPullCommand:
             "removed": [],
         }
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.merge_directories",
+            "workato_platform_cli.cli.commands.pull.merge_directories",
             lambda *args, **kwargs: empty_changes,
         )
 
         captured: list[str] = []
         monkeypatch.setattr(
-            "workato_platform.cli.commands.pull.click.echo",
+            "workato_platform_cli.cli.commands.pull.click.echo",
             lambda msg="": captured.append(msg),
         )
 

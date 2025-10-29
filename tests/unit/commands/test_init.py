@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import asyncclick as click
 import pytest
 
-from workato_platform.cli.commands import init as init_module
+from workato_platform_cli.cli.commands import init as init_module
 
 
 @pytest.mark.asyncio

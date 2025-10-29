@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 
-from workato_platform import Workato
-from workato_platform.cli.commands.push.command import (
+from workato_platform_cli import Workato
+from workato_platform_cli.cli.commands.push.command import (
     poll_import_status,
     push,
     upload_package,
@@ -40,7 +40,7 @@ def patch_spinner(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure spinner usage is deterministic across tests."""
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.push.command.Spinner",
+        "workato_platform_cli.cli.commands.push.command.Spinner",
         DummySpinner,
     )
 
@@ -55,7 +55,7 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         captured.append(message)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.push.command.click.echo",
+        "workato_platform_cli.cli.commands.push.command.click.echo",
         _capture,
     )
 
@@ -174,7 +174,7 @@ async def test_push_creates_zip_and_invokes_upload(
 
     upload_mock = AsyncMock(side_effect=fake_upload)
     monkeypatch.setattr(
-        "workato_platform.cli.commands.push.command.upload_package",
+        "workato_platform_cli.cli.commands.push.command.upload_package",
         upload_mock,
     )
 
@@ -208,7 +208,7 @@ async def test_upload_package_handles_completed_status(
 
     poll_mock = AsyncMock()
     monkeypatch.setattr(
-        "workato_platform.cli.commands.push.command.poll_import_status",
+        "workato_platform_cli.cli.commands.push.command.poll_import_status",
         poll_mock,
     )
 
@@ -242,7 +242,7 @@ async def test_upload_package_triggers_poll_when_pending(
 
     poll_mock = AsyncMock()
     monkeypatch.setattr(
-        "workato_platform.cli.commands.push.command.poll_import_status",
+        "workato_platform_cli.cli.commands.push.command.poll_import_status",
         poll_mock,
     )
 

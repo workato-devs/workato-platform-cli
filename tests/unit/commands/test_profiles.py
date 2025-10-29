@@ -8,14 +8,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from workato_platform.cli.commands.profiles import (
+from workato_platform_cli.cli.commands.profiles import (
     delete,
     list_profiles,
     show,
     status,
     use,
 )
-from workato_platform.cli.utils.config import ConfigData, ProfileData
+from workato_platform_cli.cli.utils.config import ConfigData, ProfileData
 
 
 @pytest.fixture
@@ -416,7 +416,7 @@ async def test_delete_handles_failure(
 
 def test_profiles_group_exists() -> None:
     """Test that the profiles group command exists."""
-    from workato_platform.cli.commands.profiles import profiles
+    from workato_platform_cli.cli.commands.profiles import profiles
 
     # Test that the profiles group function exists and is callable
     assert callable(profiles)
@@ -482,7 +482,7 @@ async def test_use_updates_both_workspace_and_project_configs(
 
     # Mock ConfigManager constructor for project config
     with patch(
-        "workato_platform.cli.commands.profiles.ConfigManager",
+        "workato_platform_cli.cli.commands.profiles.ConfigManager",
         return_value=project_config_manager,
     ):
         assert use.callback

@@ -48,10 +48,10 @@ test-integration:
 	uv run pytest tests/integration/ -v
 
 test-client:
-	uv run pytest src/workato_platform/client/workato_api/test/ -v
+	uv run pytest src/workato_platform_cli/client/workato_api/test/ -v
 
 test-cov:
-	uv run pytest tests/ --cov=src/workato_platform --cov-report=html --cov-report=term --cov-report=xml
+	uv run pytest tests/ --cov=src/workato_platform_cli --cov-report=html --cov-report=term --cov-report=xml
 
 test-watch:
 	uv run pytest tests/ -v --tb=short -x --lf

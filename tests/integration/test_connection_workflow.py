@@ -6,7 +6,7 @@ import pytest
 
 from asyncclick.testing import CliRunner
 
-from workato_platform.cli import cli
+from workato_platform_cli.cli import cli
 
 
 class TestConnectionWorkflow:
@@ -17,7 +17,7 @@ class TestConnectionWorkflow:
         """Test end-to-end OAuth connection creation."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             mock_workato_client = Mock()
             get_connection_oauth_url = (
                 mock_workato_client.connections_api.get_connection_oauth_url
@@ -48,7 +48,7 @@ class TestConnectionWorkflow:
         """Test connection discovery and exploration workflow."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             # Mock connector manager
             mock_connector_manager = Mock()
             mock_connector_manager.get_available_connectors.return_value = [
@@ -76,7 +76,7 @@ class TestConnectionWorkflow:
         """Test connection listing and management."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             mock_workato_client = Mock()
             mock_workato_client.connections_api.list_connections.return_value = Mock(
                 items=[
@@ -130,7 +130,7 @@ class TestConnectionWorkflow:
         """Test connection pick-list functionality."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             mock_workato_client = Mock()
             get_connection_pick_list = (
                 mock_workato_client.connections_api.get_connection_pick_list
@@ -183,9 +183,9 @@ class TestConnectionWorkflow:
         runner = CliRunner()
 
         with (
-            patch("workato_platform.cli.containers.Container") as mock_container,
+            patch("workato_platform_cli.cli.containers.Container") as mock_container,
             patch(
-                "workato_platform.cli.commands.connections.click.prompt"
+                "workato_platform_cli.cli.commands.connections.click.prompt"
             ) as mock_prompt,
         ):
             mock_prompt.return_value = "authorization_code_12345"
@@ -232,7 +232,7 @@ class TestConnectionWorkflow:
         """Test connection workflow error handling."""
         runner = CliRunner()
 
-        with patch("workato_platform.cli.containers.Container") as mock_container:
+        with patch("workato_platform_cli.cli.containers.Container") as mock_container:
             mock_workato_client = Mock()
 
             # Simulate API errors
@@ -276,8 +276,8 @@ class TestConnectionWorkflow:
         """Test OAuth connection polling workflow."""
 
         with (
-            patch("workato_platform.cli.containers.Container") as mock_container,
-            patch("workato_platform.cli.commands.connections.time.sleep"),
+            patch("workato_platform_cli.cli.containers.Container") as mock_container,
+            patch("workato_platform_cli.cli.commands.connections.time.sleep"),
         ):  # Speed up polling
             mock_workato_client = Mock()
 
@@ -296,7 +296,7 @@ class TestConnectionWorkflow:
 
             # Test connection polling (if function exists)
             try:
-                from workato_platform.cli.commands.connections import (
+                from workato_platform_cli.cli.commands.connections import (
                     poll_oauth_connection_status,
                 )
 

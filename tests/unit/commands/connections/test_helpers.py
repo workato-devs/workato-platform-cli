@@ -9,16 +9,16 @@ from pathlib import Path
 
 import pytest
 
-import workato_platform.cli.commands.connections as connections_module
+import workato_platform_cli.cli.commands.connections as connections_module
 
-from workato_platform.cli.commands.connections import (
+from workato_platform_cli.cli.commands.connections import (
     _get_callback_url_from_api_host,
     display_connection_summary,
     group_connections_by_provider,
     parse_connection_input,
     show_connection_statistics,
 )
-from workato_platform.client.workato_api.models.connection import Connection
+from workato_platform_cli.client.workato_api.models.connection import Connection
 
 
 @pytest.fixture(autouse=True)
@@ -29,7 +29,7 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         captured.append(message)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.connections.click.echo",
+        "workato_platform_cli.cli.commands.connections.click.echo",
         _record,
     )
     return captured

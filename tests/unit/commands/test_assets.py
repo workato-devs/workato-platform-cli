@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from workato_platform.cli.commands.assets import assets
-from workato_platform.cli.utils.config import ConfigData
+from workato_platform_cli.cli.commands.assets import assets
+from workato_platform_cli.cli.utils.config import ConfigData
 
 
 class DummySpinner:
@@ -22,7 +22,7 @@ class DummySpinner:
 @pytest.mark.asyncio
 async def test_assets_lists_grouped_results(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "workato_platform.cli.commands.assets.Spinner",
+        "workato_platform_cli.cli.commands.assets.Spinner",
         DummySpinner,
     )
 
@@ -37,7 +37,7 @@ async def test_assets_lists_grouped_results(monkeypatch: pytest.MonkeyPatch) -> 
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.assets.click.echo",
+        "workato_platform_cli.cli.commands.assets.click.echo",
         lambda msg="": captured.append(msg),
     )
 
@@ -72,7 +72,7 @@ async def test_assets_missing_folder(monkeypatch: pytest.MonkeyPatch) -> None:
 
     captured: list[str] = []
     monkeypatch.setattr(
-        "workato_platform.cli.commands.assets.click.echo",
+        "workato_platform_cli.cli.commands.assets.click.echo",
         lambda msg="": captured.append(msg),
     )
 

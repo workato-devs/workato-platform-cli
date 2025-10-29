@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 # Tests cover a wide set of validator helpers; keep imports explicit for clarity.
-from workato_platform.cli.commands.recipes.validator import (
+from workato_platform_cli.cli.commands.recipes.validator import (
     ErrorType,
     Keyword,
     RecipeLine,
@@ -27,7 +27,7 @@ from workato_platform.cli.commands.recipes.validator import (
 
 
 if TYPE_CHECKING:
-    from workato_platform import Workato
+    from workato_platform_cli import Workato
 
 
 @pytest.fixture

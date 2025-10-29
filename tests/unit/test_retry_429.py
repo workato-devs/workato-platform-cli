@@ -11,9 +11,9 @@ class TestRetry429Configuration:
     def test_retries_enabled_by_default(self) -> None:
         """Test that retries are enabled by default when not explicitly set."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
-            with patch("workato_platform.ApiClient") as mock_api_client:
+            with patch("workato_platform_cli.ApiClient") as mock_api_client:
                 mock_configuration = Mock()
                 mock_configuration.retries = None  # Not explicitly set
 
@@ -38,9 +38,9 @@ class TestRetry429Configuration:
     def test_custom_retry_count_preserved(self) -> None:
         """Test that explicitly set retry count is preserved."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
-            with patch("workato_platform.ApiClient") as mock_api_client:
+            with patch("workato_platform_cli.ApiClient") as mock_api_client:
                 mock_configuration = Mock()
                 mock_configuration.retries = 5  # Custom value
 
@@ -65,10 +65,10 @@ class TestRetry429Configuration:
     def test_retry_client_created_with_429_support(self) -> None:
         """Test that retry client is created with 429 status code support."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
             with (
-                patch("workato_platform.ApiClient") as mock_api_client,
+                patch("workato_platform_cli.ApiClient") as mock_api_client,
                 patch("aiohttp_retry.RetryClient"),
                 patch("aiohttp_retry.ExponentialRetry") as mock_exponential_retry,
             ):
@@ -103,10 +103,10 @@ class TestRetry429Configuration:
     def test_exponential_backoff_timing(self) -> None:
         """Test that exponential backoff uses correct timing for rate limiting."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
             with (
-                patch("workato_platform.ApiClient") as mock_api_client,
+                patch("workato_platform_cli.ApiClient") as mock_api_client,
                 patch("aiohttp_retry.ExponentialRetry") as mock_exponential_retry,
             ):
                 mock_configuration = Mock()
@@ -135,7 +135,7 @@ class TestRetry429Configuration:
     def test_configure_retry_helper_function(self) -> None:
         """Test the _configure_retry_with_429_support helper function directly."""
         try:
-            from workato_platform import _configure_retry_with_429_support
+            from workato_platform_cli import _configure_retry_with_429_support
 
             with (
                 patch("aiohttp_retry.RetryClient") as mock_retry_client,
@@ -163,7 +163,7 @@ class TestRetry429Configuration:
     def test_retry_client_recreated_if_exists(self) -> None:
         """Test that existing retry_client is recreated with new config."""
         try:
-            from workato_platform import _configure_retry_with_429_support
+            from workato_platform_cli import _configure_retry_with_429_support
 
             with (
                 patch("aiohttp_retry.RetryClient") as mock_retry_client,
@@ -187,10 +187,10 @@ class TestRetry429Configuration:
     def test_server_errors_still_retried(self) -> None:
         """Test that 5xx server errors are still retried alongside 429."""
         try:
-            from workato_platform import Workato
+            from workato_platform_cli import Workato
 
             with (
-                patch("workato_platform.ApiClient") as mock_api_client,
+                patch("workato_platform_cli.ApiClient") as mock_api_client,
                 patch("aiohttp_retry.ExponentialRetry") as mock_exponential_retry,
             ):
                 mock_configuration = Mock()

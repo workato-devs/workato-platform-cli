@@ -9,21 +9,21 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from workato_platform.cli.commands.data_tables import (
+from workato_platform_cli.cli.commands.data_tables import (
     create_data_table,
     create_table,
     display_table_summary,
     list_data_tables,
     validate_schema,
 )
-from workato_platform.client.workato_api.models.data_table_column_request import (
+from workato_platform_cli.client.workato_api.models.data_table_column_request import (
     DataTableColumnRequest,
 )
 
 
 if TYPE_CHECKING:
-    from workato_platform import Workato
-    from workato_platform.client.workato_api.models.data_table import DataTable
+    from workato_platform_cli import Workato
+    from workato_platform_cli.client.workato_api.models.data_table import DataTable
 
 
 def _get_callback(cmd: Any) -> Callable[..., Any]:
@@ -55,7 +55,7 @@ class DummySpinner:
 @pytest.fixture(autouse=True)
 def patch_spinner(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "workato_platform.cli.commands.data_tables.Spinner",
+        "workato_platform_cli.cli.commands.data_tables.Spinner",
         DummySpinner,
     )
 
@@ -68,7 +68,7 @@ def capture_echo(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         captured.append(message)
 
     monkeypatch.setattr(
-        "workato_platform.cli.commands.data_tables.click.echo",
+        "workato_platform_cli.cli.commands.data_tables.click.echo",
         _capture,
     )
     return captured
@@ -173,7 +173,7 @@ async def test_create_data_table_validation_errors(
 
     with patch.object(config_manager, "load_config", return_value=Mock(folder_id=1)):
         monkeypatch.setattr(
-            "workato_platform.cli.commands.data_tables.validate_schema",
+            "workato_platform_cli.cli.commands.data_tables.validate_schema",
             lambda schema: ["Error"],
         )
 
@@ -189,12 +189,12 @@ async def test_create_data_table_success(monkeypatch: pytest.MonkeyPatch) -> Non
 
     with patch.object(config_manager, "load_config", return_value=Mock(folder_id=1)):
         monkeypatch.setattr(
-            "workato_platform.cli.commands.data_tables.validate_schema",
+            "workato_platform_cli.cli.commands.data_tables.validate_schema",
             lambda schema: [],
         )
         create_table_mock = AsyncMock()
         monkeypatch.setattr(
-            "workato_platform.cli.commands.data_tables.create_table",
+            "workato_platform_cli.cli.commands.data_tables.create_table",
             create_table_mock,
         )
 
