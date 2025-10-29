@@ -6,7 +6,10 @@ from dependency_injector.wiring import Provide, inject
 
 from workato_platform_cli import Workato
 from workato_platform_cli.cli.containers import Container
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 from workato_platform_cli.cli.utils.spinner import Spinner
 from workato_platform_cli.client.workato_api.models.api_client import ApiClient
 from workato_platform_cli.client.workato_api.models.api_client_create_request import (
@@ -452,6 +455,7 @@ async def refresh_api_key_secret(
 
 @api_clients.command(name="list")
 @click.option("--project-id", type=int, help="Filter API clients by project ID")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_api_clients(

@@ -12,7 +12,10 @@ from workato_platform_cli.cli.commands.recipes.validator import RecipeValidator
 from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils import Spinner
 from workato_platform_cli.cli.utils.config import ConfigManager
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 from workato_platform_cli.client.workato_api.models.asset import Asset
 from workato_platform_cli.client.workato_api.models.recipe import Recipe
 from workato_platform_cli.client.workato_api.models.recipe_connection_update_request import (  # noqa: E501
@@ -201,6 +204,7 @@ async def list_recipes(
 
 @recipes.command()
 @click.option("--path", required=True, help="Path to the recipe JSON file")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def validate(

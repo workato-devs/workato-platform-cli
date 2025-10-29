@@ -6,7 +6,10 @@ from workato_platform_cli import Workato
 from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils import Spinner
 from workato_platform_cli.cli.utils.config import ConfigManager
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 from workato_platform_cli.client.workato_api.models.upsert_project_properties_request import (  # noqa: E501
     UpsertProjectPropertiesRequest,
 )
@@ -25,6 +28,7 @@ def properties() -> None:
     type=int,
     help="Project ID to get properties for. Defaults to current project.",
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_properties(
@@ -86,6 +90,7 @@ async def list_properties(
     multiple=True,
     help="Property in key=value format (can be used multiple times)",
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def upsert_properties(

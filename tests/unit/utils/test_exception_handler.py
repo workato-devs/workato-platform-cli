@@ -7,6 +7,7 @@ import pytest
 from workato_platform_cli.cli.utils.exception_handler import (
     _extract_error_details,
     handle_api_exceptions,
+    handle_cli_exceptions,
 )
 from workato_platform_cli.client.workato_api.exceptions import (
     ApiException,
@@ -679,3 +680,277 @@ class TestExceptionHandler:
 
         result = _get_output_mode()
         assert result == "table"
+
+
+class TestCLIExceptionHandler:
+    """Test the handle_cli_exceptions decorator for initialization and CLI errors."""
+
+    def test_handle_cli_exceptions_decorator_exists(self) -> None:
+        """Test that handle_cli_exceptions decorator can be imported."""
+        assert handle_cli_exceptions is not None
+        assert callable(handle_cli_exceptions)
+
+    def test_handle_cli_exceptions_with_successful_function(self) -> None:
+        """Test decorator with function that succeeds."""
+
+        @handle_cli_exceptions
+        def successful_function() -> str:
+            return "success"
+
+        result = successful_function()
+        assert result == "success"
+
+    def test_handle_cli_exceptions_preserves_function_metadata(self) -> None:
+        """Test that decorator preserves original function metadata."""
+
+        @handle_cli_exceptions
+        def documented_function() -> str:
+            """This function has documentation."""
+            return "result"
+
+        assert documented_function.__name__ == "documented_function"
+        assert documented_function.__doc__ is not None
+        assert "documentation" in documented_function.__doc__
+
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    def test_handle_cli_exceptions_with_value_error(self, mock_echo: MagicMock) -> None:
+        """Test that decorator handles ValueError with generic handler."""
+
+        @handle_cli_exceptions
+        def failing_function() -> None:
+            raise ValueError(
+                "Could not resolve API credentials. Please run 'workato init'"
+            )
+
+        result = failing_function()
+        assert result is None
+
+        # Should display the error with the message from the exception
+        call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
+        assert any("ValueError" in arg for arg in call_args)
+        assert any("workato init" in arg for arg in call_args)
+
+    @pytest.mark.asyncio
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    async def test_async_handle_cli_exceptions_with_value_error(
+        self, mock_echo: MagicMock
+    ) -> None:
+        """Test async decorator handles ValueError with generic handler."""
+
+        @handle_cli_exceptions
+        async def async_failing() -> None:
+            raise ValueError("API credentials not found")
+
+        await async_failing()
+
+        call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
+        assert any("ValueError" in arg for arg in call_args)
+
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    def test_handle_cli_exceptions_with_network_error(
+        self, mock_echo: MagicMock
+    ) -> None:
+        """Test that decorator handles network connection errors."""
+        import aiohttp
+
+        @handle_cli_exceptions
+        def network_error_function() -> None:
+            raise aiohttp.ClientConnectorError(
+                connection_key=MagicMock(), os_error=OSError("Connection refused")
+            )
+
+        result = network_error_function()
+        assert result is None
+
+        call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
+        assert any("Cannot connect to Workato API" in arg for arg in call_args)
+
+    @pytest.mark.asyncio
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    async def test_async_handle_cli_exceptions_with_timeout(
+        self, mock_echo: MagicMock
+    ) -> None:
+        """Test async decorator handles timeout errors."""
+
+        @handle_cli_exceptions
+        async def timeout_function() -> None:
+            raise TimeoutError()
+
+        await timeout_function()
+
+        call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
+        assert any("Request timed out" in arg for arg in call_args)
+
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    def test_handle_cli_exceptions_with_ssl_error(self, mock_echo: MagicMock) -> None:
+        """Test that decorator handles SSL certificate errors."""
+        import ssl
+
+        @handle_cli_exceptions
+        def ssl_error_function() -> None:
+            raise ssl.SSLError("certificate verify failed")
+
+        result = ssl_error_function()
+        assert result is None
+
+        call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
+        assert any("SSL certificate error" in arg for arg in call_args)
+
+    # JSON output mode tests for CLI exceptions
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_initialization_error(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for ValueError with generic handler."""
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_cli_exceptions
+        def init_error_json() -> None:
+            raise ValueError("Could not resolve API credentials")
+
+        init_error_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "CLI_ERROR"' in arg for arg in call_args)
+        assert any('"error_type": "ValueError"' in arg for arg in call_args)
+
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_network_error(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for network connection errors."""
+        import aiohttp
+
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_cli_exceptions
+        def network_error_json() -> None:
+            raise aiohttp.ClientConnectorError(
+                connection_key=MagicMock(), os_error=OSError("Connection refused")
+            )
+
+        network_error_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "NETWORK_ERROR"' in arg for arg in call_args)
+
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_timeout_error(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for timeout errors."""
+
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_cli_exceptions
+        def timeout_error_json() -> None:
+            raise TimeoutError()
+
+        timeout_error_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "TIMEOUT_ERROR"' in arg for arg in call_args)
+
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_ssl_error(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for SSL errors."""
+        import ssl
+
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_cli_exceptions
+        def ssl_error_json() -> None:
+            raise ssl.SSLError("certificate verify failed")
+
+        ssl_error_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "SSL_ERROR"' in arg for arg in call_args)
+
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    def test_handle_cli_exceptions_catches_non_init_value_error_generically(
+        self, mock_echo: MagicMock
+    ) -> None:
+        """Test decorator catches non-init ValueError with generic handler."""
+
+        @handle_cli_exceptions
+        def non_init_value_error() -> None:
+            raise ValueError("Some other validation error")
+
+        result = non_init_value_error()
+        assert result is None
+
+        # Should be handled by generic error handler
+        call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
+        assert any("ValueError" in arg for arg in call_args)
+        assert any("Some other validation error" in arg for arg in call_args)
+
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    def test_handle_cli_exceptions_catches_unexpected_exception(
+        self, mock_echo: MagicMock
+    ) -> None:
+        """Test that decorator catches unexpected exceptions with generic handler."""
+
+        @handle_cli_exceptions
+        def unexpected_error() -> None:
+            raise RuntimeError("Something unexpected happened")
+
+        result = unexpected_error()
+        assert result is None
+
+        # Should be handled by generic error handler
+        call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
+        assert any("RuntimeError" in arg for arg in call_args)
+        assert any("Something unexpected happened" in arg for arg in call_args)
+
+    @pytest.mark.asyncio
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    async def test_async_handle_cli_exceptions_catches_unexpected_exception(
+        self, mock_echo: MagicMock
+    ) -> None:
+        """Test async decorator catches unexpected exceptions with generic handler."""
+
+        @handle_cli_exceptions
+        async def async_unexpected_error() -> None:
+            raise KeyError("Missing key")
+
+        await async_unexpected_error()
+
+        # Should be handled by generic error handler
+        call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
+        assert any("KeyError" in arg for arg in call_args)
+        assert any("Missing key" in arg for arg in call_args)
+
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
+    @patch("workato_platform_cli.cli.utils.exception_handler.click.get_current_context")
+    def test_json_output_generic_cli_error(
+        self, mock_get_context: MagicMock, mock_echo: MagicMock
+    ) -> None:
+        """Test JSON output for generic CLI errors."""
+        mock_ctx = MagicMock()
+        mock_ctx.params = {"output_mode": "json"}
+        mock_get_context.return_value = mock_ctx
+
+        @handle_cli_exceptions
+        def generic_error_json() -> None:
+            raise RuntimeError("Unexpected error")
+
+        generic_error_json()
+
+        call_args = [call[0][0] for call in mock_echo.call_args_list]
+        assert any('"error_code": "CLI_ERROR"' in arg for arg in call_args)
+        assert any('"error_type": "RuntimeError"' in arg for arg in call_args)
