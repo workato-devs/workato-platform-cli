@@ -22,7 +22,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.api_endpoint import ApiEndpoint
+from workato_platform_cli.client.workato_api.models.api_endpoint import ApiEndpoint
 
 # TODO update the JSON string below
 json = "{}"

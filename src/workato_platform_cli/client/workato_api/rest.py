@@ -21,7 +21,7 @@ from typing import Optional, Union
 import aiohttp
 import aiohttp_retry
 
-from workato_platform.client.workato_api.exceptions import ApiException, ApiValueError
+from workato_platform_cli.client.workato_api.exceptions import ApiException, ApiValueError
 
 RESTResponseType = aiohttp.ClientResponse
 

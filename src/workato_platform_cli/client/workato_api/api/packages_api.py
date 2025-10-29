@@ -19,12 +19,12 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictBytes, StrictInt, StrictStr
 from typing import Optional, Tuple, Union
 from typing_extensions import Annotated
-from workato_platform.client.workato_api.models.package_details_response import PackageDetailsResponse
-from workato_platform.client.workato_api.models.package_response import PackageResponse
+from workato_platform_cli.client.workato_api.models.package_details_response import PackageDetailsResponse
+from workato_platform_cli.client.workato_api.models.package_response import PackageResponse
 
-from workato_platform.client.workato_api.api_client import ApiClient, RequestSerialized
-from workato_platform.client.workato_api.api_response import ApiResponse
-from workato_platform.client.workato_api.rest import RESTResponseType
+from workato_platform_cli.client.workato_api.api_client import ApiClient, RequestSerialized
+from workato_platform_cli.client.workato_api.api_response import ApiResponse
+from workato_platform_cli.client.workato_api.rest import RESTResponseType
 
 
 class PackagesApi:

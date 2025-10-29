@@ -1,4 +1,4 @@
-# workato_platform.client.workato_api.ProjectsApi
+# workato_platform_cli.client.workato_api.ProjectsApi
 
 All URIs are relative to *https://www.workato.com*
 
@@ -22,14 +22,14 @@ recipes, connections, and Workflow apps assets inside the project.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.success_response import SuccessResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.success_response import SuccessResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -39,14 +39,14 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.ProjectsApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.ProjectsApi(api_client)
     project_id = 56 # int | The ID of the project to delete
 
     try:
@@ -102,14 +102,14 @@ Returns a list of projects belonging to the authenticated user with pagination s
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.project import Project
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.project import Project
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -119,14 +119,14 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.ProjectsApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.ProjectsApi(api_client)
     page = 1 # int | Page number (optional) (default to 1)
     per_page = 100 # int | Number of projects per page (optional) (default to 100)
 

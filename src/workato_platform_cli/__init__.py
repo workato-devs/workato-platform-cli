@@ -4,32 +4,28 @@ import ssl
 
 from typing import Any
 
-import aiohttp_retry
-
 
 try:
-    from workato_platform._version import __version__
+    from workato_platform_cli._version import __version__
 except ImportError:
     __version__ = "unknown"
 
-from workato_platform.client.workato_api.api.api_platform_api import APIPlatformApi
-from workato_platform.client.workato_api.api.connections_api import ConnectionsApi
-from workato_platform.client.workato_api.api.connectors_api import ConnectorsApi
-from workato_platform.client.workato_api.api.data_tables_api import DataTablesApi
-from workato_platform.client.workato_api.api.export_api import ExportApi
-from workato_platform.client.workato_api.api.folders_api import FoldersApi
-from workato_platform.client.workato_api.api.packages_api import PackagesApi
-from workato_platform.client.workato_api.api.projects_api import ProjectsApi
-from workato_platform.client.workato_api.api.properties_api import PropertiesApi
-from workato_platform.client.workato_api.api.recipes_api import RecipesApi
-from workato_platform.client.workato_api.api.users_api import UsersApi
-from workato_platform.client.workato_api.api_client import ApiClient
-from workato_platform.client.workato_api.configuration import Configuration
+from workato_platform_cli.client.workato_api.api.api_platform_api import APIPlatformApi
+from workato_platform_cli.client.workato_api.api.connections_api import ConnectionsApi
+from workato_platform_cli.client.workato_api.api.connectors_api import ConnectorsApi
+from workato_platform_cli.client.workato_api.api.data_tables_api import DataTablesApi
+from workato_platform_cli.client.workato_api.api.export_api import ExportApi
+from workato_platform_cli.client.workato_api.api.folders_api import FoldersApi
+from workato_platform_cli.client.workato_api.api.packages_api import PackagesApi
+from workato_platform_cli.client.workato_api.api.projects_api import ProjectsApi
+from workato_platform_cli.client.workato_api.api.properties_api import PropertiesApi
+from workato_platform_cli.client.workato_api.api.recipes_api import RecipesApi
+from workato_platform_cli.client.workato_api.api.users_api import UsersApi
+from workato_platform_cli.client.workato_api.api_client import ApiClient
+from workato_platform_cli.client.workato_api.configuration import Configuration
 
 
-def _configure_retry_with_429_support(
-    rest_client: Any, configuration: Configuration
-) -> None:
+def _configure_retry_with_429_support(rest_client: Any, configuration: Configuration) -> None:
     """
     Configure REST client to retry on 429 (Too Many Requests) errors.
 
@@ -54,17 +50,21 @@ def _configure_retry_with_429_support(
     # The retry_client will be lazily created on first request with our patched settings
     # We need to pre-create it here to ensure 429 support
     if rest_client.retries is not None:
-        rest_client.retry_client = aiohttp_retry.RetryClient(
-            client_session=rest_client.pool_manager,
-            retry_options=aiohttp_retry.ExponentialRetry(
-                attempts=rest_client.retries,
-                factor=2.0,
-                start_timeout=1.0,  # Increased from default 0.1s for rate limiting
-                max_timeout=120.0,  # 2 minutes max
-                statuses={429},  # Add 429 Too Many Requests
-                retry_all_server_errors=True,  # Keep 5xx errors
-            ),
-        )
+        try:
+            import aiohttp_retry
+            rest_client.retry_client = aiohttp_retry.RetryClient(
+                client_session=rest_client.pool_manager,
+                retry_options=aiohttp_retry.ExponentialRetry(
+                    attempts=rest_client.retries,
+                    factor=2.0,
+                    start_timeout=1.0,
+                    max_timeout=120.0,
+                    retry_all_server_errors=True,
+                    statuses={429}
+                )
+            )
+        except ImportError:
+            pass
 
 
 class Workato:
@@ -72,11 +72,20 @@ class Workato:
 
     def __init__(self, configuration: Configuration):
         self._configuration = configuration
+        
+        # Set default retries if not configured
+        if configuration.retries is None:
+            configuration.retries = 3
+            
         self._api_client = ApiClient(configuration)
 
         # Set User-Agent header with CLI version
         user_agent = f"workato-platform-cli/{__version__}"
         self._api_client.user_agent = user_agent
+        
+        # Configure retries with 429 support
+        rest_client = self._api_client.rest_client
+        _configure_retry_with_429_support(rest_client, configuration)
 
         # Enforce TLS 1.2 minimum on the REST client's SSL context
         rest_client = self._api_client.rest_client
@@ -86,9 +95,6 @@ class Workato:
             rest_client.ssl_context.options |= (
                 ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
             )
-
-        # Configure retry logic with 429 (Too Many Requests) support
-        _configure_retry_with_429_support(rest_client, configuration)
 
         # Initialize all API endpoints
         self.projects_api = ProjectsApi(self._api_client)

@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.runtime_user_connection_response_data import RuntimeUserConnectionResponseData
+from workato_platform_cli.client.workato_api.models.runtime_user_connection_response_data import RuntimeUserConnectionResponseData
 
 # TODO update the JSON string below
 json = "{}"

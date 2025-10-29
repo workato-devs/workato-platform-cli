@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.open_api_spec import OpenApiSpec
+from workato_platform_cli.client.workato_api.models.open_api_spec import OpenApiSpec
 
 class TestOpenApiSpec(unittest.TestCase):
     """OpenApiSpec unit test stubs"""

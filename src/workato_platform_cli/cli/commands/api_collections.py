@@ -5,18 +5,18 @@ import asyncclick as click
 
 from dependency_injector.wiring import Provide, inject
 
-from workato_platform import Workato
-from workato_platform.cli.commands.projects.project_manager import ProjectManager
-from workato_platform.cli.containers import Container
-from workato_platform.cli.utils import Spinner
-from workato_platform.cli.utils.config import ConfigManager
-from workato_platform.cli.utils.exception_handler import handle_api_exceptions
-from workato_platform.client.workato_api.models.api_collection import ApiCollection
-from workato_platform.client.workato_api.models.api_collection_create_request import (
+from workato_platform_cli import Workato
+from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
+from workato_platform_cli.cli.containers import Container
+from workato_platform_cli.cli.utils import Spinner
+from workato_platform_cli.cli.utils.config import ConfigManager
+from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.client.workato_api.models.api_collection import ApiCollection
+from workato_platform_cli.client.workato_api.models.api_collection_create_request import (
     ApiCollectionCreateRequest,
 )
-from workato_platform.client.workato_api.models.api_endpoint import ApiEndpoint
-from workato_platform.client.workato_api.models.open_api_spec import OpenApiSpec
+from workato_platform_cli.client.workato_api.models.api_endpoint import ApiEndpoint
+from workato_platform_cli.client.workato_api.models.open_api_spec import OpenApiSpec
 
 
 @click.group()

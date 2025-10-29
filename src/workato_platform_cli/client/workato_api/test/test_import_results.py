@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.import_results import ImportResults
+from workato_platform_cli.client.workato_api.models.import_results import ImportResults
 
 class TestImportResults(unittest.TestCase):
     """ImportResults unit test stubs"""

@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.recipe import Recipe
+from workato_platform_cli.client.workato_api.models.recipe import Recipe
 
 class TestRecipe(unittest.TestCase):
     """Recipe unit test stubs"""
@@ -60,7 +60,7 @@ class TestRecipe(unittest.TestCase):
                 version_no = 3,
                 stop_cause = '',
                 config = [
-                    workato_platform.client.workato_api.models.recipe_config_inner.Recipe_config_inner(
+                    workato_platform_cli.client.workato_api.models.recipe_config_inner.Recipe_config_inner(
                         keyword = 'application', 
                         name = 'workato_service', 
                         provider = 'workato_service', 
@@ -99,7 +99,7 @@ class TestRecipe(unittest.TestCase):
                 version_no = 3,
                 stop_cause = '',
                 config = [
-                    workato_platform.client.workato_api.models.recipe_config_inner.Recipe_config_inner(
+                    workato_platform_cli.client.workato_api.models.recipe_config_inner.Recipe_config_inner(
                         keyword = 'application', 
                         name = 'workato_service', 
                         provider = 'workato_service', 

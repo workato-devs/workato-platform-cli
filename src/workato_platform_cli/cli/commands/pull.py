@@ -10,11 +10,11 @@ import asyncclick as click
 
 from dependency_injector.wiring import Provide, inject
 
-from workato_platform.cli.commands.projects.project_manager import ProjectManager
-from workato_platform.cli.containers import Container
-from workato_platform.cli.utils.config import ConfigManager
-from workato_platform.cli.utils.exception_handler import handle_api_exceptions
-from workato_platform.cli.utils.ignore_patterns import (
+from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
+from workato_platform_cli.cli.containers import Container
+from workato_platform_cli.cli.utils.config import ConfigManager
+from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.ignore_patterns import (
     load_ignore_patterns,
     should_skip_file,
 )

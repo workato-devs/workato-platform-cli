@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.custom_connector import CustomConnector
+from workato_platform_cli.client.workato_api.models.custom_connector import CustomConnector
 
 class TestCustomConnector(unittest.TestCase):
     """CustomConnector unit test stubs"""
@@ -41,7 +41,7 @@ class TestCustomConnector(unittest.TestCase):
                 latest_released_version = 2,
                 latest_released_version_note = 'Connector Version',
                 released_versions = [
-                    workato_platform.client.workato_api.models.connector_version.ConnectorVersion(
+                    workato_platform_cli.client.workato_api.models.connector_version.ConnectorVersion(
                         version = 2, 
                         version_note = '', 
                         created_at = '2024-06-24T11:17:52.516-04:00', 
@@ -57,7 +57,7 @@ class TestCustomConnector(unittest.TestCase):
                 latest_released_version = 2,
                 latest_released_version_note = 'Connector Version',
                 released_versions = [
-                    workato_platform.client.workato_api.models.connector_version.ConnectorVersion(
+                    workato_platform_cli.client.workato_api.models.connector_version.ConnectorVersion(
                         version = 2, 
                         version_note = '', 
                         created_at = '2024-06-24T11:17:52.516-04:00', 

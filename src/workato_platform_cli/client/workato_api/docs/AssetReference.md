@@ -18,7 +18,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.asset_reference import AssetReference
+from workato_platform_cli.client.workato_api.models.asset_reference import AssetReference
 
 # TODO update the JSON string below
 json = "{}"

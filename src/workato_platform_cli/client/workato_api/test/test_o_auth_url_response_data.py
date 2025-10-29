@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.o_auth_url_response_data import OAuthUrlResponseData
+from workato_platform_cli.client.workato_api.models.o_auth_url_response_data import OAuthUrlResponseData
 
 class TestOAuthUrlResponseData(unittest.TestCase):
     """OAuthUrlResponseData unit test stubs"""

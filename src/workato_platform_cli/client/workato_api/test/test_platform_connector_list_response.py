@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.platform_connector_list_response import PlatformConnectorListResponse
+from workato_platform_cli.client.workato_api.models.platform_connector_list_response import PlatformConnectorListResponse
 
 class TestPlatformConnectorListResponse(unittest.TestCase):
     """PlatformConnectorListResponse unit test stubs"""
@@ -36,7 +36,7 @@ class TestPlatformConnectorListResponse(unittest.TestCase):
         if include_optional:
             return PlatformConnectorListResponse(
                 items = [
-                    workato_platform.client.workato_api.models.platform_connector.PlatformConnector(
+                    workato_platform_cli.client.workato_api.models.platform_connector.PlatformConnector(
                         name = 'active_directory', 
                         title = 'Active Directory', 
                         categories = ["Directory Services","Marketing"], 
@@ -44,7 +44,7 @@ class TestPlatformConnectorListResponse(unittest.TestCase):
                         deprecated = False, 
                         secondary = False, 
                         triggers = [
-                            workato_platform.client.workato_api.models.connector_action.ConnectorAction(
+                            workato_platform_cli.client.workato_api.models.connector_action.ConnectorAction(
                                 name = 'new_entry', 
                                 title = 'New entry', 
                                 deprecated = False, 
@@ -52,7 +52,7 @@ class TestPlatformConnectorListResponse(unittest.TestCase):
                                 batch = False, )
                             ], 
                         actions = [
-                            workato_platform.client.workato_api.models.connector_action.ConnectorAction(
+                            workato_platform_cli.client.workato_api.models.connector_action.ConnectorAction(
                                 name = 'new_entry', 
                                 title = 'New entry', 
                                 deprecated = False, 
@@ -67,7 +67,7 @@ class TestPlatformConnectorListResponse(unittest.TestCase):
         else:
             return PlatformConnectorListResponse(
                 items = [
-                    workato_platform.client.workato_api.models.platform_connector.PlatformConnector(
+                    workato_platform_cli.client.workato_api.models.platform_connector.PlatformConnector(
                         name = 'active_directory', 
                         title = 'Active Directory', 
                         categories = ["Directory Services","Marketing"], 
@@ -75,7 +75,7 @@ class TestPlatformConnectorListResponse(unittest.TestCase):
                         deprecated = False, 
                         secondary = False, 
                         triggers = [
-                            workato_platform.client.workato_api.models.connector_action.ConnectorAction(
+                            workato_platform_cli.client.workato_api.models.connector_action.ConnectorAction(
                                 name = 'new_entry', 
                                 title = 'New entry', 
                                 deprecated = False, 
@@ -83,7 +83,7 @@ class TestPlatformConnectorListResponse(unittest.TestCase):
                                 batch = False, )
                             ], 
                         actions = [
-                            workato_platform.client.workato_api.models.connector_action.ConnectorAction(
+                            workato_platform_cli.client.workato_api.models.connector_action.ConnectorAction(
                                 name = 'new_entry', 
                                 title = 'New entry', 
                                 deprecated = False, 

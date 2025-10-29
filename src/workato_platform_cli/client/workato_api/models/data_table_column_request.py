@@ -20,7 +20,7 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
-from workato_platform.client.workato_api.models.data_table_relation import DataTableRelation
+from workato_platform_cli.client.workato_api.models.data_table_relation import DataTableRelation
 from typing import Optional, Set
 from typing_extensions import Self
 

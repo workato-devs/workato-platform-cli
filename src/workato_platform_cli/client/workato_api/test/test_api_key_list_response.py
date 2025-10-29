@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.api_key_list_response import ApiKeyListResponse
+from workato_platform_cli.client.workato_api.models.api_key_list_response import ApiKeyListResponse
 
 class TestApiKeyListResponse(unittest.TestCase):
     """ApiKeyListResponse unit test stubs"""
@@ -36,7 +36,7 @@ class TestApiKeyListResponse(unittest.TestCase):
         if include_optional:
             return ApiKeyListResponse(
                 data = [
-                    workato_platform.client.workato_api.models.api_key.ApiKey(
+                    workato_platform_cli.client.workato_api.models.api_key.ApiKey(
                         id = 37326, 
                         name = 'Automation Inc.', 
                         auth_type = 'token', 
@@ -53,7 +53,7 @@ class TestApiKeyListResponse(unittest.TestCase):
         else:
             return ApiKeyListResponse(
                 data = [
-                    workato_platform.client.workato_api.models.api_key.ApiKey(
+                    workato_platform_cli.client.workato_api.models.api_key.ApiKey(
                         id = 37326, 
                         name = 'Automation Inc.', 
                         auth_type = 'token', 

@@ -4,16 +4,16 @@ import asyncclick as click
 
 from dependency_injector.wiring import Provide, inject
 
-from workato_platform import Workato
-from workato_platform.cli.containers import Container
-from workato_platform.cli.utils.exception_handler import handle_api_exceptions
-from workato_platform.cli.utils.spinner import Spinner
-from workato_platform.client.workato_api.models.api_client import ApiClient
-from workato_platform.client.workato_api.models.api_client_create_request import (
+from workato_platform_cli import Workato
+from workato_platform_cli.cli.containers import Container
+from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.spinner import Spinner
+from workato_platform_cli.client.workato_api.models.api_client import ApiClient
+from workato_platform_cli.client.workato_api.models.api_client_create_request import (
     ApiClientCreateRequest,
 )
-from workato_platform.client.workato_api.models.api_key import ApiKey
-from workato_platform.client.workato_api.models.api_key_create_request import (
+from workato_platform_cli.client.workato_api.models.api_key import ApiKey
+from workato_platform_cli.client.workato_api.models.api_key_create_request import (
     ApiKeyCreateRequest,
 )
 

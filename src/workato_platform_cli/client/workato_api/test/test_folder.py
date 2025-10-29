@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.folder import Folder
+from workato_platform_cli.client.workato_api.models.folder import Folder
 
 class TestFolder(unittest.TestCase):
     """Folder unit test stubs"""

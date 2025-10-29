@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.connection_update_request import ConnectionUpdateRequest
+from workato_platform_cli.client.workato_api.models.connection_update_request import ConnectionUpdateRequest
 
 class TestConnectionUpdateRequest(unittest.TestCase):
     """ConnectionUpdateRequest unit test stubs"""

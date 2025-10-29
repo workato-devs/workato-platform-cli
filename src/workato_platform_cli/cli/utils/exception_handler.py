@@ -10,7 +10,7 @@ from typing import Any, TypeVar, cast
 
 import asyncclick as click
 
-from workato_platform.client.workato_api.exceptions import (
+from workato_platform_cli.client.workato_api.exceptions import (
     ApiException,
     BadRequestException,
     ConflictException,

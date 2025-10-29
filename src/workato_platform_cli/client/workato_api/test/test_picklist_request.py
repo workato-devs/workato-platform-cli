@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.picklist_request import PicklistRequest
+from workato_platform_cli.client.workato_api.models.picklist_request import PicklistRequest
 
 class TestPicklistRequest(unittest.TestCase):
     """PicklistRequest unit test stubs"""

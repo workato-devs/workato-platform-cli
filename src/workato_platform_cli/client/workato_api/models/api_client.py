@@ -20,8 +20,8 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from workato_platform.client.workato_api.models.api_client_api_collections_inner import ApiClientApiCollectionsInner
-from workato_platform.client.workato_api.models.api_client_api_policies_inner import ApiClientApiPoliciesInner
+from workato_platform_cli.client.workato_api.models.api_client_api_collections_inner import ApiClientApiCollectionsInner
+from workato_platform_cli.client.workato_api.models.api_client_api_policies_inner import ApiClientApiPoliciesInner
 from typing import Optional, Set
 from typing_extensions import Self
 

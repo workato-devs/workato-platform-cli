@@ -4,7 +4,7 @@ import typing as t
 
 import asyncclick as click
 
-from workato_platform.cli.commands import (
+from workato_platform_cli.cli.commands import (
     api_clients,
     api_collections,
     assets,
@@ -17,12 +17,12 @@ from workato_platform.cli.commands import (
     pull,
     workspace,
 )
-from workato_platform.cli.commands.connectors import command as connectors
-from workato_platform.cli.commands.projects import command as projects
-from workato_platform.cli.commands.push import command as push
-from workato_platform.cli.commands.recipes import command as recipes
-from workato_platform.cli.containers import Container
-from workato_platform.cli.utils.version_checker import check_updates_async
+from workato_platform_cli.cli.commands.connectors import command as connectors
+from workato_platform_cli.cli.commands.projects import command as projects
+from workato_platform_cli.cli.commands.push import command as push
+from workato_platform_cli.cli.commands.recipes import command as recipes
+from workato_platform_cli.cli.containers import Container
+from workato_platform_cli.cli.utils.version_checker import check_updates_async
 
 
 class AliasedGroup(click.Group):

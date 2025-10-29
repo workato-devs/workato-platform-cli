@@ -8,8 +8,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from workato_platform import Workato
-from workato_platform.client.workato_api.models.platform_connector import (
+from workato_platform_cli import Workato
+from workato_platform_cli.client.workato_api.models.platform_connector import (
     PlatformConnector,
 )
 

@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.export_manifest_response import ExportManifestResponse
+from workato_platform_cli.client.workato_api.models.export_manifest_response import ExportManifestResponse
 
 # TODO update the JSON string below
 json = "{}"

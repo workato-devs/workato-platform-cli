@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, StrictInt
 from typing import Any, ClassVar, Dict, List
-from workato_platform.client.workato_api.models.platform_connector import PlatformConnector
+from workato_platform_cli.client.workato_api.models.platform_connector import PlatformConnector
 from typing import Optional, Set
 from typing_extensions import Self
 

@@ -16,11 +16,11 @@ from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
-from workato_platform.client.workato_api.models.user import User
+from workato_platform_cli.client.workato_api.models.user import User
 
-from workato_platform.client.workato_api.api_client import ApiClient, RequestSerialized
-from workato_platform.client.workato_api.api_response import ApiResponse
-from workato_platform.client.workato_api.rest import RESTResponseType
+from workato_platform_cli.client.workato_api.api_client import ApiClient, RequestSerialized
+from workato_platform_cli.client.workato_api.api_response import ApiResponse
+from workato_platform_cli.client.workato_api.rest import RESTResponseType
 
 
 class UsersApi:

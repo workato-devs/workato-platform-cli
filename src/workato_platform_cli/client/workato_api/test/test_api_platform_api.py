@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.api.api_platform_api import APIPlatformApi
+from workato_platform_cli.client.workato_api.api.api_platform_api import APIPlatformApi
 
 
 class TestAPIPlatformApi(unittest.IsolatedAsyncioTestCase):

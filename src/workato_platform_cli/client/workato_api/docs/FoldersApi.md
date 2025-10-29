@@ -1,4 +1,4 @@
-# workato_platform.client.workato_api.FoldersApi
+# workato_platform_cli.client.workato_api.FoldersApi
 
 All URIs are relative to *https://www.workato.com*
 
@@ -22,15 +22,15 @@ is specified, creates the folder as a top-level folder in the home folder.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.create_folder_request import CreateFolderRequest
-from workato_platform.client.workato_api.models.folder_creation_response import FolderCreationResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.create_folder_request import CreateFolderRequest
+from workato_platform_cli.client.workato_api.models.folder_creation_response import FolderCreationResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -40,15 +40,15 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.FoldersApi(api_client)
-    create_folder_request = workato_platform.client.workato_api.CreateFolderRequest() # CreateFolderRequest | 
+    api_instance = workato_platform_cli.client.workato_api.FoldersApi(api_client)
+    create_folder_request = workato_platform_cli.client.workato_api.CreateFolderRequest() # CreateFolderRequest | 
 
     try:
         # Create a folder
@@ -103,14 +103,14 @@ Lists all folders.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.folder import Folder
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.folder import Folder
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -120,14 +120,14 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.FoldersApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.FoldersApi(api_client)
     parent_id = 56 # int | Parent folder ID. Defaults to Home folder. (optional)
     page = 1 # int | Page number. Defaults to 1. (optional) (default to 1)
     per_page = 100 # int | Page size. Defaults to 100 (maximum is 100). (optional) (default to 100)

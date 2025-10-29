@@ -19,13 +19,13 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictInt
 from typing import Optional
 from typing_extensions import Annotated
-from workato_platform.client.workato_api.models.create_export_manifest_request import CreateExportManifestRequest
-from workato_platform.client.workato_api.models.export_manifest_response import ExportManifestResponse
-from workato_platform.client.workato_api.models.folder_assets_response import FolderAssetsResponse
+from workato_platform_cli.client.workato_api.models.create_export_manifest_request import CreateExportManifestRequest
+from workato_platform_cli.client.workato_api.models.export_manifest_response import ExportManifestResponse
+from workato_platform_cli.client.workato_api.models.folder_assets_response import FolderAssetsResponse
 
-from workato_platform.client.workato_api.api_client import ApiClient, RequestSerialized
-from workato_platform.client.workato_api.api_response import ApiResponse
-from workato_platform.client.workato_api.rest import RESTResponseType
+from workato_platform_cli.client.workato_api.api_client import ApiClient, RequestSerialized
+from workato_platform_cli.client.workato_api.api_response import ApiResponse
+from workato_platform_cli.client.workato_api.rest import RESTResponseType
 
 
 class ExportApi:

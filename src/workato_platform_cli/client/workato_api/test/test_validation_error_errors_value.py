@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.validation_error_errors_value import ValidationErrorErrorsValue
+from workato_platform_cli.client.workato_api.models.validation_error_errors_value import ValidationErrorErrorsValue
 
 class TestValidationErrorErrorsValue(unittest.TestCase):
     """ValidationErrorErrorsValue unit test stubs"""

@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.platform_connector_list_response import PlatformConnectorListResponse
+from workato_platform_cli.client.workato_api.models.platform_connector_list_response import PlatformConnectorListResponse
 
 # TODO update the JSON string below
 json = "{}"

@@ -21,7 +21,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List
 from uuid import UUID
-from workato_platform.client.workato_api.models.data_table_column import DataTableColumn
+from workato_platform_cli.client.workato_api.models.data_table_column import DataTableColumn
 from typing import Optional, Set
 from typing_extensions import Self
 

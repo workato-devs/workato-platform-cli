@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.api.export_api import ExportApi
+from workato_platform_cli.client.workato_api.api.export_api import ExportApi
 
 
 class TestExportApi(unittest.IsolatedAsyncioTestCase):

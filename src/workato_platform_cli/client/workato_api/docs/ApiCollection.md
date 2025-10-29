@@ -19,7 +19,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.api_collection import ApiCollection
+from workato_platform_cli.client.workato_api.models.api_collection import ApiCollection
 
 # TODO update the JSON string below
 json = "{}"

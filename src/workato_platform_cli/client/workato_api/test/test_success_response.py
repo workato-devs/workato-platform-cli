@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.success_response import SuccessResponse
+from workato_platform_cli.client.workato_api.models.success_response import SuccessResponse
 
 class TestSuccessResponse(unittest.TestCase):
     """SuccessResponse unit test stubs"""

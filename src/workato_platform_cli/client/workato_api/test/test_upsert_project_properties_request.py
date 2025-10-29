@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.upsert_project_properties_request import UpsertProjectPropertiesRequest
+from workato_platform_cli.client.workato_api.models.upsert_project_properties_request import UpsertProjectPropertiesRequest
 
 class TestUpsertProjectPropertiesRequest(unittest.TestCase):
     """UpsertProjectPropertiesRequest unit test stubs"""

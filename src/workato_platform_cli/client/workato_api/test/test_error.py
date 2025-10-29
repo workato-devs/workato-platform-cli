@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.error import Error
+from workato_platform_cli.client.workato_api.models.error import Error
 
 class TestError(unittest.TestCase):
     """Error unit test stubs"""

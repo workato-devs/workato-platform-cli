@@ -1,4 +1,4 @@
-# workato_platform.client.workato_api.PropertiesApi
+# workato_platform_cli.client.workato_api.PropertiesApi
 
 All URIs are relative to *https://www.workato.com*
 
@@ -25,13 +25,13 @@ salesforce_sync.admin_email, with the project_id you provided is returned.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -41,14 +41,14 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.PropertiesApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.PropertiesApi(api_client)
     prefix = 'salesforce_sync.' # str | Returns properties that contain the prefix you provided. For example, if the prefix is salesforce_sync. the property salesforce_sync.admin_email is returned. 
     project_id = 523144 # int | Returns project-level properties that match the project_id you specify. If this parameter is not present, this call returns environment properties. 
 
@@ -113,15 +113,15 @@ the names you provide in the request.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.success_response import SuccessResponse
-from workato_platform.client.workato_api.models.upsert_project_properties_request import UpsertProjectPropertiesRequest
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.success_response import SuccessResponse
+from workato_platform_cli.client.workato_api.models.upsert_project_properties_request import UpsertProjectPropertiesRequest
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -131,16 +131,16 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.PropertiesApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.PropertiesApi(api_client)
     project_id = 523144 # int | Provide the project ID that contains the project properties you plan to upsert. If this parameter is not present, this call upserts environment properties. 
-    upsert_project_properties_request = workato_platform.client.workato_api.UpsertProjectPropertiesRequest() # UpsertProjectPropertiesRequest | 
+    upsert_project_properties_request = workato_platform_cli.client.workato_api.UpsertProjectPropertiesRequest() # UpsertProjectPropertiesRequest | 
 
     try:
         # Upsert project properties

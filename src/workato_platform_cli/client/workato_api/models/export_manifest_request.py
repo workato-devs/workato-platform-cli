@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from workato_platform.client.workato_api.models.asset_reference import AssetReference
+from workato_platform_cli.client.workato_api.models.asset_reference import AssetReference
 from typing import Optional, Set
 from typing_extensions import Self
 

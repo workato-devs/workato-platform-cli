@@ -19,13 +19,13 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictInt
 from typing import Optional
 from typing_extensions import Annotated
-from workato_platform.client.workato_api.models.data_table_create_request import DataTableCreateRequest
-from workato_platform.client.workato_api.models.data_table_create_response import DataTableCreateResponse
-from workato_platform.client.workato_api.models.data_table_list_response import DataTableListResponse
+from workato_platform_cli.client.workato_api.models.data_table_create_request import DataTableCreateRequest
+from workato_platform_cli.client.workato_api.models.data_table_create_response import DataTableCreateResponse
+from workato_platform_cli.client.workato_api.models.data_table_list_response import DataTableListResponse
 
-from workato_platform.client.workato_api.api_client import ApiClient, RequestSerialized
-from workato_platform.client.workato_api.api_response import ApiResponse
-from workato_platform.client.workato_api.rest import RESTResponseType
+from workato_platform_cli.client.workato_api.api_client import ApiClient, RequestSerialized
+from workato_platform_cli.client.workato_api.api_response import ApiResponse
+from workato_platform_cli.client.workato_api.rest import RESTResponseType
 
 
 class DataTablesApi:

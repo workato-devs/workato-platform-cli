@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.api_endpoint import ApiEndpoint
+from workato_platform_cli.client.workato_api.models.api_endpoint import ApiEndpoint
 
 class TestApiEndpoint(unittest.TestCase):
     """ApiEndpoint unit test stubs"""

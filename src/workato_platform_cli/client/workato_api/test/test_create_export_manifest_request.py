@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.create_export_manifest_request import CreateExportManifestRequest
+from workato_platform_cli.client.workato_api.models.create_export_manifest_request import CreateExportManifestRequest
 
 class TestCreateExportManifestRequest(unittest.TestCase):
     """CreateExportManifestRequest unit test stubs"""
@@ -35,10 +35,10 @@ class TestCreateExportManifestRequest(unittest.TestCase):
         model = CreateExportManifestRequest()
         if include_optional:
             return CreateExportManifestRequest(
-                export_manifest = workato_platform.client.workato_api.models.export_manifest_request.ExportManifestRequest(
+                export_manifest = workato_platform_cli.client.workato_api.models.export_manifest_request.ExportManifestRequest(
                     name = 'Test Manifest', 
                     assets = [
-                        workato_platform.client.workato_api.models.asset_reference.AssetReference(
+                        workato_platform_cli.client.workato_api.models.asset_reference.AssetReference(
                             id = 56, 
                             type = 'recipe', 
                             checked = True, 
@@ -57,10 +57,10 @@ class TestCreateExportManifestRequest(unittest.TestCase):
             )
         else:
             return CreateExportManifestRequest(
-                export_manifest = workato_platform.client.workato_api.models.export_manifest_request.ExportManifestRequest(
+                export_manifest = workato_platform_cli.client.workato_api.models.export_manifest_request.ExportManifestRequest(
                     name = 'Test Manifest', 
                     assets = [
-                        workato_platform.client.workato_api.models.asset_reference.AssetReference(
+                        workato_platform_cli.client.workato_api.models.asset_reference.AssetReference(
                             id = 56, 
                             type = 'recipe', 
                             checked = True, 

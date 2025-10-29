@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.recipe_config_inner import RecipeConfigInner
+from workato_platform_cli.client.workato_api.models.recipe_config_inner import RecipeConfigInner
 
 class TestRecipeConfigInner(unittest.TestCase):
     """RecipeConfigInner unit test stubs"""

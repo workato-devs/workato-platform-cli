@@ -1,4 +1,4 @@
-# workato_platform.client.workato_api.ExportApi
+# workato_platform_cli.client.workato_api.ExportApi
 
 All URIs are relative to *https://www.workato.com*
 
@@ -20,15 +20,15 @@ Create an export manifest for exporting assets
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.create_export_manifest_request import CreateExportManifestRequest
-from workato_platform.client.workato_api.models.export_manifest_response import ExportManifestResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.create_export_manifest_request import CreateExportManifestRequest
+from workato_platform_cli.client.workato_api.models.export_manifest_response import ExportManifestResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -38,15 +38,15 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.ExportApi(api_client)
-    create_export_manifest_request = workato_platform.client.workato_api.CreateExportManifestRequest() # CreateExportManifestRequest | 
+    api_instance = workato_platform_cli.client.workato_api.ExportApi(api_client)
+    create_export_manifest_request = workato_platform_cli.client.workato_api.CreateExportManifestRequest() # CreateExportManifestRequest | 
 
     try:
         # Create an export manifest
@@ -102,14 +102,14 @@ View assets in a folder. Useful for creating or updating export manifests.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.folder_assets_response import FolderAssetsResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.folder_assets_response import FolderAssetsResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -119,14 +119,14 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.ExportApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.ExportApi(api_client)
     folder_id = 56 # int | The ID of the folder containing the assets (optional)
     include_test_cases = False # bool | Include test cases (currently not supported) (optional) (default to False)
     include_data = False # bool | Include data from the list of assets (optional) (default to False)

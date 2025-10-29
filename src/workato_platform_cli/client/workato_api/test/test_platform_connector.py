@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.platform_connector import PlatformConnector
+from workato_platform_cli.client.workato_api.models.platform_connector import PlatformConnector
 
 class TestPlatformConnector(unittest.TestCase):
     """PlatformConnector unit test stubs"""
@@ -42,7 +42,7 @@ class TestPlatformConnector(unittest.TestCase):
                 deprecated = False,
                 secondary = False,
                 triggers = [
-                    workato_platform.client.workato_api.models.connector_action.ConnectorAction(
+                    workato_platform_cli.client.workato_api.models.connector_action.ConnectorAction(
                         name = 'new_entry', 
                         title = 'New entry', 
                         deprecated = False, 
@@ -50,7 +50,7 @@ class TestPlatformConnector(unittest.TestCase):
                         batch = False, )
                     ],
                 actions = [
-                    workato_platform.client.workato_api.models.connector_action.ConnectorAction(
+                    workato_platform_cli.client.workato_api.models.connector_action.ConnectorAction(
                         name = 'new_entry', 
                         title = 'New entry', 
                         deprecated = False, 
@@ -67,7 +67,7 @@ class TestPlatformConnector(unittest.TestCase):
                 deprecated = False,
                 secondary = False,
                 triggers = [
-                    workato_platform.client.workato_api.models.connector_action.ConnectorAction(
+                    workato_platform_cli.client.workato_api.models.connector_action.ConnectorAction(
                         name = 'new_entry', 
                         title = 'New entry', 
                         deprecated = False, 
@@ -75,7 +75,7 @@ class TestPlatformConnector(unittest.TestCase):
                         batch = False, )
                     ],
                 actions = [
-                    workato_platform.client.workato_api.models.connector_action.ConnectorAction(
+                    workato_platform_cli.client.workato_api.models.connector_action.ConnectorAction(
                         name = 'new_entry', 
                         title = 'New entry', 
                         deprecated = False, 

@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from workato_platform.client.workato_api.models.package_details_response_recipe_status_inner import PackageDetailsResponseRecipeStatusInner
+from workato_platform_cli.client.workato_api.models.package_details_response_recipe_status_inner import PackageDetailsResponseRecipeStatusInner
 from typing import Optional, Set
 from typing_extensions import Self
 

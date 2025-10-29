@@ -20,7 +20,7 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from workato_platform.client.workato_api.models.import_results import ImportResults
+from workato_platform_cli.client.workato_api.models.import_results import ImportResults
 from typing import Optional, Set
 from typing_extensions import Self
 

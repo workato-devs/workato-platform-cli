@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.delete_project403_response import DeleteProject403Response
+from workato_platform_cli.client.workato_api.models.delete_project403_response import DeleteProject403Response
 
 class TestDeleteProject403Response(unittest.TestCase):
     """DeleteProject403Response unit test stubs"""

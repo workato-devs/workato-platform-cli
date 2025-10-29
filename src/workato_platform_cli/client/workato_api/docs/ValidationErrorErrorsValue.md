@@ -9,7 +9,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.validation_error_errors_value import ValidationErrorErrorsValue
+from workato_platform_cli.client.workato_api.models.validation_error_errors_value import ValidationErrorErrorsValue
 
 # TODO update the JSON string below
 json = "{}"

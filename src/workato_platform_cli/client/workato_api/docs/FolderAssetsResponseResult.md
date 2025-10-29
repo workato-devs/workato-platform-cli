@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.folder_assets_response_result import FolderAssetsResponseResult
+from workato_platform_cli.client.workato_api.models.folder_assets_response_result import FolderAssetsResponseResult
 
 # TODO update the JSON string below
 json = "{}"

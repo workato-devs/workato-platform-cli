@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.data_table_column_request import DataTableColumnRequest
+from workato_platform_cli.client.workato_api.models.data_table_column_request import DataTableColumnRequest
 
 class TestDataTableColumnRequest(unittest.TestCase):
     """DataTableColumnRequest unit test stubs"""
@@ -43,7 +43,7 @@ class TestDataTableColumnRequest(unittest.TestCase):
                 default_value = None,
                 metadata = { },
                 multivalue = True,
-                relation = workato_platform.client.workato_api.models.data_table_relation.DataTableRelation(
+                relation = workato_platform_cli.client.workato_api.models.data_table_relation.DataTableRelation(
                     table_id = '2507a39a-6847-4857-88ed-c3b9c8302e02', 
                     field_id = '900454f4-5b3d-4670-bc3c-d640915156f2', )
             )

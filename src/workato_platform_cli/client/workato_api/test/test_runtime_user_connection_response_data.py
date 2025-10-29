@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.runtime_user_connection_response_data import RuntimeUserConnectionResponseData
+from workato_platform_cli.client.workato_api.models.runtime_user_connection_response_data import RuntimeUserConnectionResponseData
 
 class TestRuntimeUserConnectionResponseData(unittest.TestCase):
     """RuntimeUserConnectionResponseData unit test stubs"""

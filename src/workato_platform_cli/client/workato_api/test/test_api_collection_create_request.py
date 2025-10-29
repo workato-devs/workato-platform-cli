@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.api_collection_create_request import ApiCollectionCreateRequest
+from workato_platform_cli.client.workato_api.models.api_collection_create_request import ApiCollectionCreateRequest
 
 class TestApiCollectionCreateRequest(unittest.TestCase):
     """ApiCollectionCreateRequest unit test stubs"""
@@ -38,7 +38,7 @@ class TestApiCollectionCreateRequest(unittest.TestCase):
                 name = 'My API Collection',
                 project_id = 123,
                 proxy_connection_id = 456,
-                openapi_spec = workato_platform.client.workato_api.models.open_api_spec.OpenApiSpec(
+                openapi_spec = workato_platform_cli.client.workato_api.models.open_api_spec.OpenApiSpec(
                     content = '', 
                     format = 'json', )
             )

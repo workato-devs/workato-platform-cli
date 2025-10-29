@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.api_client_api_policies_inner import ApiClientApiPoliciesInner
+from workato_platform_cli.client.workato_api.models.api_client_api_policies_inner import ApiClientApiPoliciesInner
 
 # TODO update the JSON string below
 json = "{}"

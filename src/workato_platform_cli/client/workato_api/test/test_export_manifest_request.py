@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.export_manifest_request import ExportManifestRequest
+from workato_platform_cli.client.workato_api.models.export_manifest_request import ExportManifestRequest
 
 class TestExportManifestRequest(unittest.TestCase):
     """ExportManifestRequest unit test stubs"""
@@ -37,7 +37,7 @@ class TestExportManifestRequest(unittest.TestCase):
             return ExportManifestRequest(
                 name = 'Test Manifest',
                 assets = [
-                    workato_platform.client.workato_api.models.asset_reference.AssetReference(
+                    workato_platform_cli.client.workato_api.models.asset_reference.AssetReference(
                         id = 56, 
                         type = 'recipe', 
                         checked = True, 

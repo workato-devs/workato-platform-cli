@@ -1,4 +1,4 @@
-# workato_platform.client.workato_api.ConnectionsApi
+# workato_platform_cli.client.workato_api.ConnectionsApi
 
 All URIs are relative to *https://www.workato.com*
 
@@ -27,15 +27,15 @@ for authentication, but can create shell connections for OAuth providers.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.connection import Connection
-from workato_platform.client.workato_api.models.connection_create_request import ConnectionCreateRequest
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.connection import Connection
+from workato_platform_cli.client.workato_api.models.connection_create_request import ConnectionCreateRequest
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -45,15 +45,15 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.ConnectionsApi(api_client)
-    connection_create_request = workato_platform.client.workato_api.ConnectionCreateRequest() # ConnectionCreateRequest | 
+    api_instance = workato_platform_cli.client.workato_api.ConnectionsApi(api_client)
+    connection_create_request = workato_platform_cli.client.workato_api.ConnectionCreateRequest() # ConnectionCreateRequest | 
 
     try:
         # Create a connection
@@ -111,15 +111,15 @@ a URL for end user authorization.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.runtime_user_connection_create_request import RuntimeUserConnectionCreateRequest
-from workato_platform.client.workato_api.models.runtime_user_connection_response import RuntimeUserConnectionResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.runtime_user_connection_create_request import RuntimeUserConnectionCreateRequest
+from workato_platform_cli.client.workato_api.models.runtime_user_connection_response import RuntimeUserConnectionResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -129,15 +129,15 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.ConnectionsApi(api_client)
-    runtime_user_connection_create_request = workato_platform.client.workato_api.RuntimeUserConnectionCreateRequest() # RuntimeUserConnectionCreateRequest | 
+    api_instance = workato_platform_cli.client.workato_api.ConnectionsApi(api_client)
+    runtime_user_connection_create_request = workato_platform_cli.client.workato_api.RuntimeUserConnectionCreateRequest() # RuntimeUserConnectionCreateRequest | 
 
     try:
         # Create OAuth runtime user connection
@@ -196,14 +196,14 @@ a connection.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.o_auth_url_response import OAuthUrlResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.o_auth_url_response import OAuthUrlResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -213,14 +213,14 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.ConnectionsApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.ConnectionsApi(api_client)
     connection_id = 56 # int | Connection ID
 
     try:
@@ -279,15 +279,15 @@ used in forms or dropdowns for the connected application.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.picklist_request import PicklistRequest
-from workato_platform.client.workato_api.models.picklist_response import PicklistResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.picklist_request import PicklistRequest
+from workato_platform_cli.client.workato_api.models.picklist_response import PicklistResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -297,16 +297,16 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.ConnectionsApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.ConnectionsApi(api_client)
     connection_id = 56 # int | ID of the connection. This can be found in the URL of the app connection or is the result of the List connections endpoint. 
-    picklist_request = workato_platform.client.workato_api.PicklistRequest() # PicklistRequest | 
+    picklist_request = workato_platform_cli.client.workato_api.PicklistRequest() # PicklistRequest | 
 
     try:
         # Get picklist values
@@ -363,14 +363,14 @@ Returns all connections and associated data for the authenticated user
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.connection import Connection
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.connection import Connection
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -380,14 +380,14 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.ConnectionsApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.ConnectionsApi(api_client)
     folder_id = 56 # int | Folder ID of the connection (optional)
     parent_id = 56 # int | Parent ID of the connection (must be same provider) (optional)
     external_id = 'external_id_example' # str | External identifier for the connection (optional)
@@ -452,15 +452,15 @@ metadata and parameters without requiring full re-creation.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.connection import Connection
-from workato_platform.client.workato_api.models.connection_update_request import ConnectionUpdateRequest
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.connection import Connection
+from workato_platform_cli.client.workato_api.models.connection_update_request import ConnectionUpdateRequest
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -470,16 +470,16 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.ConnectionsApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.ConnectionsApi(api_client)
     connection_id = 56 # int | The ID of the connection
-    connection_update_request = workato_platform.client.workato_api.ConnectionUpdateRequest() # ConnectionUpdateRequest |  (optional)
+    connection_update_request = workato_platform_cli.client.workato_api.ConnectionUpdateRequest() # ConnectionUpdateRequest |  (optional)
 
     try:
         # Update a connection

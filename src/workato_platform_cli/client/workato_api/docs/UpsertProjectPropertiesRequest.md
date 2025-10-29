@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.upsert_project_properties_request import UpsertProjectPropertiesRequest
+from workato_platform_cli.client.workato_api.models.upsert_project_properties_request import UpsertProjectPropertiesRequest
 
 # TODO update the JSON string below
 json = "{}"

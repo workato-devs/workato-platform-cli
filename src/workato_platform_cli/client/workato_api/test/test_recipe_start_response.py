@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.recipe_start_response import RecipeStartResponse
+from workato_platform_cli.client.workato_api.models.recipe_start_response import RecipeStartResponse
 
 class TestRecipeStartResponse(unittest.TestCase):
     """RecipeStartResponse unit test stubs"""

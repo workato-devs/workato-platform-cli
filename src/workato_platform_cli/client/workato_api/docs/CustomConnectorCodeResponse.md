@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.custom_connector_code_response import CustomConnectorCodeResponse
+from workato_platform_cli.client.workato_api.models.custom_connector_code_response import CustomConnectorCodeResponse
 
 # TODO update the JSON string below
 json = "{}"

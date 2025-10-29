@@ -20,14 +20,14 @@ from datetime import datetime
 from pydantic import Field, StrictBool, StrictInt, StrictStr, field_validator
 from typing import List, Optional
 from typing_extensions import Annotated
-from workato_platform.client.workato_api.models.recipe_connection_update_request import RecipeConnectionUpdateRequest
-from workato_platform.client.workato_api.models.recipe_list_response import RecipeListResponse
-from workato_platform.client.workato_api.models.recipe_start_response import RecipeStartResponse
-from workato_platform.client.workato_api.models.success_response import SuccessResponse
+from workato_platform_cli.client.workato_api.models.recipe_connection_update_request import RecipeConnectionUpdateRequest
+from workato_platform_cli.client.workato_api.models.recipe_list_response import RecipeListResponse
+from workato_platform_cli.client.workato_api.models.recipe_start_response import RecipeStartResponse
+from workato_platform_cli.client.workato_api.models.success_response import SuccessResponse
 
-from workato_platform.client.workato_api.api_client import ApiClient, RequestSerialized
-from workato_platform.client.workato_api.api_response import ApiResponse
-from workato_platform.client.workato_api.rest import RESTResponseType
+from workato_platform_cli.client.workato_api.api_client import ApiClient, RequestSerialized
+from workato_platform_cli.client.workato_api.api_response import ApiResponse
+from workato_platform_cli.client.workato_api.rest import RESTResponseType
 
 
 class RecipesApi:

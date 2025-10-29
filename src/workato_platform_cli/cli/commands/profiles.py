@@ -9,8 +9,8 @@ import asyncclick as click
 
 from dependency_injector.wiring import Provide, inject
 
-from workato_platform.cli.containers import Container
-from workato_platform.cli.utils.config import ConfigData, ConfigManager
+from workato_platform_cli.cli.containers import Container
+from workato_platform_cli.cli.utils.config import ConfigData, ConfigManager
 
 
 @click.group()

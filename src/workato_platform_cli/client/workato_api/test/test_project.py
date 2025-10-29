@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.project import Project
+from workato_platform_cli.client.workato_api.models.project import Project
 
 class TestProject(unittest.TestCase):
     """Project unit test stubs"""

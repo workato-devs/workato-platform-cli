@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.connector_action import ConnectorAction
+from workato_platform_cli.client.workato_api.models.connector_action import ConnectorAction
 
 class TestConnectorAction(unittest.TestCase):
     """ConnectorAction unit test stubs"""
@@ -44,7 +44,6 @@ class TestConnectorAction(unittest.TestCase):
         else:
             return ConnectorAction(
                 name = 'new_entry',
-                title = 'New entry',
                 deprecated = False,
                 bulk = False,
                 batch = False,

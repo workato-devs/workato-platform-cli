@@ -19,13 +19,13 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictInt
 from typing import Optional
 from typing_extensions import Annotated
-from workato_platform.client.workato_api.models.custom_connector_code_response import CustomConnectorCodeResponse
-from workato_platform.client.workato_api.models.custom_connector_list_response import CustomConnectorListResponse
-from workato_platform.client.workato_api.models.platform_connector_list_response import PlatformConnectorListResponse
+from workato_platform_cli.client.workato_api.models.custom_connector_code_response import CustomConnectorCodeResponse
+from workato_platform_cli.client.workato_api.models.custom_connector_list_response import CustomConnectorListResponse
+from workato_platform_cli.client.workato_api.models.platform_connector_list_response import PlatformConnectorListResponse
 
-from workato_platform.client.workato_api.api_client import ApiClient, RequestSerialized
-from workato_platform.client.workato_api.api_response import ApiResponse
-from workato_platform.client.workato_api.rest import RESTResponseType
+from workato_platform_cli.client.workato_api.api_client import ApiClient, RequestSerialized
+from workato_platform_cli.client.workato_api.api_response import ApiResponse
+from workato_platform_cli.client.workato_api.rest import RESTResponseType
 
 
 class ConnectorsApi:

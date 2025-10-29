@@ -7,12 +7,12 @@ from typing import Any
 import asyncclick as click
 import certifi
 
-from workato_platform import Workato
-from workato_platform.cli.commands.projects.project_manager import ProjectManager
-from workato_platform.cli.commands.pull import _pull_project
-from workato_platform.cli.utils.config import ConfigManager
-from workato_platform.cli.utils.exception_handler import handle_api_exceptions
-from workato_platform.client.workato_api.configuration import Configuration
+from workato_platform_cli import Workato
+from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
+from workato_platform_cli.cli.commands.pull import _pull_project
+from workato_platform_cli.cli.utils.config import ConfigManager
+from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.client.workato_api.configuration import Configuration
 
 
 @click.command()

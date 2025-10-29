@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.data_table_relation import DataTableRelation
+from workato_platform_cli.client.workato_api.models.data_table_relation import DataTableRelation
 
 class TestDataTableRelation(unittest.TestCase):
     """DataTableRelation unit test stubs"""

@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.api_collection import ApiCollection
+from workato_platform_cli.client.workato_api.models.api_collection import ApiCollection
 
 class TestApiCollection(unittest.TestCase):
     """ApiCollection unit test stubs"""
@@ -44,7 +44,7 @@ class TestApiCollection(unittest.TestCase):
                 created_at = '2020-06-15T22:20:15.327-07:00',
                 updated_at = '2020-06-15T22:20:15.327-07:00',
                 message = 'Import completed successfully',
-                import_results = workato_platform.client.workato_api.models.import_results.ImportResults(
+                import_results = workato_platform_cli.client.workato_api.models.import_results.ImportResults(
                     success = True, 
                     total_endpoints = 1, 
                     failed_endpoints = 0, 

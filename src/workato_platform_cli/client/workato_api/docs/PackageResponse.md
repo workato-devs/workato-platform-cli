@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.package_response import PackageResponse
+from workato_platform_cli.client.workato_api.models.package_response import PackageResponse
 
 # TODO update the JSON string below
 json = "{}"

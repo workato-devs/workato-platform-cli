@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.export_manifest_response_result import ExportManifestResponseResult
+from workato_platform_cli.client.workato_api.models.export_manifest_response_result import ExportManifestResponseResult
 
 class TestExportManifestResponseResult(unittest.TestCase):
     """ExportManifestResponseResult unit test stubs"""

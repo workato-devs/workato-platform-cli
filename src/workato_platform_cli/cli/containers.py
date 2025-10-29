@@ -2,12 +2,12 @@ import certifi
 
 from dependency_injector import containers, providers
 
-from workato_platform import Workato
-from workato_platform.cli.commands.connectors.connector_manager import ConnectorManager
-from workato_platform.cli.commands.projects.project_manager import ProjectManager
-from workato_platform.cli.commands.recipes.validator import RecipeValidator
-from workato_platform.cli.utils.config import ConfigManager
-from workato_platform.client.workato_api.configuration import Configuration
+from workato_platform_cli import Workato
+from workato_platform_cli.cli.commands.connectors.connector_manager import ConnectorManager
+from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
+from workato_platform_cli.cli.commands.recipes.validator import RecipeValidator
+from workato_platform_cli.cli.utils.config import ConfigManager
+from workato_platform_cli.client.workato_api.configuration import Configuration
 
 
 def create_workato_config(access_token: str, host: str) -> Configuration:

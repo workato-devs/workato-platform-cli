@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.api.projects_api import ProjectsApi
+from workato_platform_cli.client.workato_api.api.projects_api import ProjectsApi
 
 
 class TestProjectsApi(unittest.IsolatedAsyncioTestCase):

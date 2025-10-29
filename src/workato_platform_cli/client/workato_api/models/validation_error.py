@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from workato_platform.client.workato_api.models.validation_error_errors_value import ValidationErrorErrorsValue
+from workato_platform_cli.client.workato_api.models.validation_error_errors_value import ValidationErrorErrorsValue
 from typing import Optional, Set
 from typing_extensions import Self
 

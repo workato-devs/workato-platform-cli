@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List
-from workato_platform.client.workato_api.models.data_table_column_request import DataTableColumnRequest
+from workato_platform_cli.client.workato_api.models.data_table_column_request import DataTableColumnRequest
 from typing import Optional, Set
 from typing_extensions import Self
 

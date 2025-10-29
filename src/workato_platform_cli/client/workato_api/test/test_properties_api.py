@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.api.properties_api import PropertiesApi
+from workato_platform_cli.client.workato_api.api.properties_api import PropertiesApi
 
 
 class TestPropertiesApi(unittest.IsolatedAsyncioTestCase):

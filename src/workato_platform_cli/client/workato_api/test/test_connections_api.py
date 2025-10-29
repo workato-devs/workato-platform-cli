@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.api.connections_api import ConnectionsApi
+from workato_platform_cli.client.workato_api.api.connections_api import ConnectionsApi
 
 
 class TestConnectionsApi(unittest.IsolatedAsyncioTestCase):

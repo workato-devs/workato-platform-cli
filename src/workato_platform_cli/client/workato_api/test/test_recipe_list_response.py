@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.recipe_list_response import RecipeListResponse
+from workato_platform_cli.client.workato_api.models.recipe_list_response import RecipeListResponse
 
 class TestRecipeListResponse(unittest.TestCase):
     """RecipeListResponse unit test stubs"""
@@ -36,7 +36,7 @@ class TestRecipeListResponse(unittest.TestCase):
         if include_optional:
             return RecipeListResponse(
                 items = [
-                    workato_platform.client.workato_api.models.recipe.Recipe(
+                    workato_platform_cli.client.workato_api.models.recipe.Recipe(
                         id = 1913515, 
                         user_id = 4848, 
                         name = 'Callable service: JIRA ticket sync', 
@@ -50,7 +50,7 @@ class TestRecipeListResponse(unittest.TestCase):
                         parameters_schema = [
                             null
                             ], 
-                        parameters = workato_platform.client.workato_api.models.parameters.parameters(), 
+                        parameters = workato_platform_cli.client.workato_api.models.parameters.parameters(), 
                         webhook_url = '', 
                         folder_id = 241557, 
                         running = False, 
@@ -62,7 +62,7 @@ class TestRecipeListResponse(unittest.TestCase):
                         version_no = 3, 
                         stop_cause = '', 
                         config = [
-                            workato_platform.client.workato_api.models.recipe_config_inner.Recipe_config_inner(
+                            workato_platform_cli.client.workato_api.models.recipe_config_inner.Recipe_config_inner(
                                 keyword = 'application', 
                                 name = 'workato_service', 
                                 provider = 'workato_service', 
@@ -81,7 +81,7 @@ class TestRecipeListResponse(unittest.TestCase):
         else:
             return RecipeListResponse(
                 items = [
-                    workato_platform.client.workato_api.models.recipe.Recipe(
+                    workato_platform_cli.client.workato_api.models.recipe.Recipe(
                         id = 1913515, 
                         user_id = 4848, 
                         name = 'Callable service: JIRA ticket sync', 
@@ -95,7 +95,7 @@ class TestRecipeListResponse(unittest.TestCase):
                         parameters_schema = [
                             null
                             ], 
-                        parameters = workato_platform.client.workato_api.models.parameters.parameters(), 
+                        parameters = workato_platform_cli.client.workato_api.models.parameters.parameters(), 
                         webhook_url = '', 
                         folder_id = 241557, 
                         running = False, 
@@ -107,7 +107,7 @@ class TestRecipeListResponse(unittest.TestCase):
                         version_no = 3, 
                         stop_cause = '', 
                         config = [
-                            workato_platform.client.workato_api.models.recipe_config_inner.Recipe_config_inner(
+                            workato_platform_cli.client.workato_api.models.recipe_config_inner.Recipe_config_inner(
                                 keyword = 'application', 
                                 name = 'workato_service', 
                                 provider = 'workato_service', 

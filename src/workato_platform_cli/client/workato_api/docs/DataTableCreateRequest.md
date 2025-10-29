@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.data_table_create_request import DataTableCreateRequest
+from workato_platform_cli.client.workato_api.models.data_table_create_request import DataTableCreateRequest
 
 # TODO update the JSON string below
 json = "{}"

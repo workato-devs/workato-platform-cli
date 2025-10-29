@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.api_client_response import ApiClientResponse
+from workato_platform_cli.client.workato_api.models.api_client_response import ApiClientResponse
 
 class TestApiClientResponse(unittest.TestCase):
     """ApiClientResponse unit test stubs"""
@@ -35,7 +35,7 @@ class TestApiClientResponse(unittest.TestCase):
         model = ApiClientResponse()
         if include_optional:
             return ApiClientResponse(
-                data = workato_platform.client.workato_api.models.api_client.ApiClient(
+                data = workato_platform_cli.client.workato_api.models.api_client.ApiClient(
                     id = 1, 
                     name = 'Test client', 
                     description = '', 
@@ -53,19 +53,19 @@ class TestApiClientResponse(unittest.TestCase):
                     validation_formula = 'OU=Workato', 
                     cert_bundle_ids = [3], 
                     api_policies = [
-                        workato_platform.client.workato_api.models.api_client_api_policies_inner.ApiClient_api_policies_inner(
+                        workato_platform_cli.client.workato_api.models.api_client_api_policies_inner.ApiClient_api_policies_inner(
                             id = 2, 
                             name = 'Internal – Admins', )
                         ], 
                     api_collections = [
-                        workato_platform.client.workato_api.models.api_client_api_collections_inner.ApiClient_api_collections_inner(
+                        workato_platform_cli.client.workato_api.models.api_client_api_collections_inner.ApiClient_api_collections_inner(
                             id = 1, 
                             name = 'Echo collection', )
                         ], )
             )
         else:
             return ApiClientResponse(
-                data = workato_platform.client.workato_api.models.api_client.ApiClient(
+                data = workato_platform_cli.client.workato_api.models.api_client.ApiClient(
                     id = 1, 
                     name = 'Test client', 
                     description = '', 
@@ -83,12 +83,12 @@ class TestApiClientResponse(unittest.TestCase):
                     validation_formula = 'OU=Workato', 
                     cert_bundle_ids = [3], 
                     api_policies = [
-                        workato_platform.client.workato_api.models.api_client_api_policies_inner.ApiClient_api_policies_inner(
+                        workato_platform_cli.client.workato_api.models.api_client_api_policies_inner.ApiClient_api_policies_inner(
                             id = 2, 
                             name = 'Internal – Admins', )
                         ], 
                     api_collections = [
-                        workato_platform.client.workato_api.models.api_client_api_collections_inner.ApiClient_api_collections_inner(
+                        workato_platform_cli.client.workato_api.models.api_client_api_collections_inner.ApiClient_api_collections_inner(
                             id = 1, 
                             name = 'Echo collection', )
                         ], ),

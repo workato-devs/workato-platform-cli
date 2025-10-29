@@ -1,4 +1,4 @@
-# workato_platform.client.workato_api.RecipesApi
+# workato_platform_cli.client.workato_api.RecipesApi
 
 All URIs are relative to *https://www.workato.com*
 
@@ -24,14 +24,14 @@ Recipes are returned in descending ID order.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.recipe_list_response import RecipeListResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.recipe_list_response import RecipeListResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -41,14 +41,14 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.RecipesApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.RecipesApi(api_client)
     adapter_names_all = 'adapter_names_all_example' # str | Comma-separated adapter names (recipes must use ALL) (optional)
     adapter_names_any = 'adapter_names_any_example' # str | Comma-separated adapter names (recipes must use ANY) (optional)
     folder_id = 56 # int | Return recipes in specified folder (optional)
@@ -127,14 +127,14 @@ Starts a recipe specified by recipe ID
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.recipe_start_response import RecipeStartResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.recipe_start_response import RecipeStartResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -144,14 +144,14 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.RecipesApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.RecipesApi(api_client)
     recipe_id = 56 # int | Recipe ID
 
     try:
@@ -209,14 +209,14 @@ Stops a recipe specified by recipe ID
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.success_response import SuccessResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.success_response import SuccessResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -226,14 +226,14 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.RecipesApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.RecipesApi(api_client)
     recipe_id = 56 # int | Recipe ID
 
     try:
@@ -292,15 +292,15 @@ Updates the chosen connection for a specific connector in a stopped recipe.
 * Bearer Authentication (BearerAuth):
 
 ```python
-import workato_platform.client.workato_api
-from workato_platform.client.workato_api.models.recipe_connection_update_request import RecipeConnectionUpdateRequest
-from workato_platform.client.workato_api.models.success_response import SuccessResponse
-from workato_platform.client.workato_api.rest import ApiException
+import workato_platform_cli.client.workato_api
+from workato_platform_cli.client.workato_api.models.recipe_connection_update_request import RecipeConnectionUpdateRequest
+from workato_platform_cli.client.workato_api.models.success_response import SuccessResponse
+from workato_platform_cli.client.workato_api.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to https://www.workato.com
 # See configuration.py for a list of all supported configuration parameters.
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     host = "https://www.workato.com"
 )
 
@@ -310,16 +310,16 @@ configuration = workato_platform.client.workato_api.Configuration(
 # satisfies your auth use case.
 
 # Configure Bearer authorization: BearerAuth
-configuration = workato_platform.client.workato_api.Configuration(
+configuration = workato_platform_cli.client.workato_api.Configuration(
     access_token = os.environ["BEARER_TOKEN"]
 )
 
 # Enter a context with an instance of the API client
-async with workato_platform.client.workato_api.ApiClient(configuration) as api_client:
+async with workato_platform_cli.client.workato_api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = workato_platform.client.workato_api.RecipesApi(api_client)
+    api_instance = workato_platform_cli.client.workato_api.RecipesApi(api_client)
     recipe_id = 56 # int | ID of the recipe
-    recipe_connection_update_request = workato_platform.client.workato_api.RecipeConnectionUpdateRequest() # RecipeConnectionUpdateRequest | 
+    recipe_connection_update_request = workato_platform_cli.client.workato_api.RecipeConnectionUpdateRequest() # RecipeConnectionUpdateRequest | 
 
     try:
         # Update a connection for a recipe

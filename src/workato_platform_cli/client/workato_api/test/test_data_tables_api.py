@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.api.data_tables_api import DataTablesApi
+from workato_platform_cli.client.workato_api.api.data_tables_api import DataTablesApi
 
 
 class TestDataTablesApi(unittest.IsolatedAsyncioTestCase):

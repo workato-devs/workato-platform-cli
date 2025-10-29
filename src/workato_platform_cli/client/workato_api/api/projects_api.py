@@ -19,12 +19,12 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictInt
 from typing import List, Optional
 from typing_extensions import Annotated
-from workato_platform.client.workato_api.models.project import Project
-from workato_platform.client.workato_api.models.success_response import SuccessResponse
+from workato_platform_cli.client.workato_api.models.project import Project
+from workato_platform_cli.client.workato_api.models.success_response import SuccessResponse
 
-from workato_platform.client.workato_api.api_client import ApiClient, RequestSerialized
-from workato_platform.client.workato_api.api_response import ApiResponse
-from workato_platform.client.workato_api.rest import RESTResponseType
+from workato_platform_cli.client.workato_api.api_client import ApiClient, RequestSerialized
+from workato_platform_cli.client.workato_api.api_response import ApiResponse
+from workato_platform_cli.client.workato_api.rest import RESTResponseType
 
 
 class ProjectsApi:

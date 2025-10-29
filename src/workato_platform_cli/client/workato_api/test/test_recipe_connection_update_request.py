@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.recipe_connection_update_request import RecipeConnectionUpdateRequest
+from workato_platform_cli.client.workato_api.models.recipe_connection_update_request import RecipeConnectionUpdateRequest
 
 class TestRecipeConnectionUpdateRequest(unittest.TestCase):
     """RecipeConnectionUpdateRequest unit test stubs"""

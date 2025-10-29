@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.api_client_api_collections_inner import ApiClientApiCollectionsInner
+from workato_platform_cli.client.workato_api.models.api_client_api_collections_inner import ApiClientApiCollectionsInner
 
 class TestApiClientApiCollectionsInner(unittest.TestCase):
     """ApiClientApiCollectionsInner unit test stubs"""

@@ -9,9 +9,9 @@ import asyncclick as click
 
 from pydantic import BaseModel, Field
 
-from workato_platform import Workato
-from workato_platform.cli.utils import Spinner
-from workato_platform.client.workato_api.models.platform_connector import (
+from workato_platform_cli import Workato
+from workato_platform_cli.cli.utils import Spinner
+from workato_platform_cli.client.workato_api.models.platform_connector import (
     PlatformConnector,
 )
 

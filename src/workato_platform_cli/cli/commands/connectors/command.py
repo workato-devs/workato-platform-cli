@@ -2,9 +2,9 @@ import asyncclick as click
 
 from dependency_injector.wiring import Provide, inject
 
-from workato_platform.cli.commands.connectors.connector_manager import ConnectorManager
-from workato_platform.cli.containers import Container
-from workato_platform.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.commands.connectors.connector_manager import ConnectorManager
+from workato_platform_cli.cli.containers import Container
+from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
 
 
 @click.group()

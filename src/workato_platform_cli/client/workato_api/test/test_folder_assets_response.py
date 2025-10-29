@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.folder_assets_response import FolderAssetsResponse
+from workato_platform_cli.client.workato_api.models.folder_assets_response import FolderAssetsResponse
 
 class TestFolderAssetsResponse(unittest.TestCase):
     """FolderAssetsResponse unit test stubs"""
@@ -35,9 +35,9 @@ class TestFolderAssetsResponse(unittest.TestCase):
         model = FolderAssetsResponse()
         if include_optional:
             return FolderAssetsResponse(
-                result = workato_platform.client.workato_api.models.folder_assets_response_result.FolderAssetsResponse_result(
+                result = workato_platform_cli.client.workato_api.models.folder_assets_response_result.FolderAssetsResponse_result(
                     assets = [
-                        workato_platform.client.workato_api.models.asset.Asset(
+                        workato_platform_cli.client.workato_api.models.asset.Asset(
                             id = 12, 
                             name = 'Copy of Recipeops', 
                             type = 'recipe', 
@@ -53,9 +53,9 @@ class TestFolderAssetsResponse(unittest.TestCase):
             )
         else:
             return FolderAssetsResponse(
-                result = workato_platform.client.workato_api.models.folder_assets_response_result.FolderAssetsResponse_result(
+                result = workato_platform_cli.client.workato_api.models.folder_assets_response_result.FolderAssetsResponse_result(
                     assets = [
-                        workato_platform.client.workato_api.models.asset.Asset(
+                        workato_platform_cli.client.workato_api.models.asset.Asset(
                             id = 12, 
                             name = 'Copy of Recipeops', 
                             type = 'recipe', 

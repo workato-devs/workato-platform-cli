@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.folder_creation_response import FolderCreationResponse
+from workato_platform_cli.client.workato_api.models.folder_creation_response import FolderCreationResponse
 
 class TestFolderCreationResponse(unittest.TestCase):
     """FolderCreationResponse unit test stubs"""

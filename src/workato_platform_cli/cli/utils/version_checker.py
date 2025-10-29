@@ -16,11 +16,11 @@ from urllib.parse import urlparse
 
 import asyncclick as click
 
-from workato_platform.cli.utils.config import ConfigManager
+from workato_platform_cli.cli.utils.config import ConfigManager
 
 
 try:
-    from workato_platform._version import __version__
+    from workato_platform_cli._version import __version__
 except ImportError:
     # Fallback for development when not built with hatch
     __version__ = "0.0.0+unknown"
@@ -175,7 +175,7 @@ def check_updates_async(func: Callable) -> Callable:
     @wraps(func)
     async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
         # Import here to avoid circular imports
-        from workato_platform.cli.containers import Container
+        from workato_platform_cli.cli.containers import Container
 
         try:
             # Run main command first
@@ -203,7 +203,7 @@ def check_updates_async(func: Callable) -> Callable:
     @wraps(func)
     def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
         # Import here to avoid circular imports
-        from workato_platform.cli.containers import Container
+        from workato_platform_cli.cli.containers import Container
 
         try:
             # Run main command first

@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.api_key import ApiKey
+from workato_platform_cli.client.workato_api.models.api_key import ApiKey
 
 # TODO update the JSON string below
 json = "{}"

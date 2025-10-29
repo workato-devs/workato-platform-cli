@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.api_client_api_policies_inner import ApiClientApiPoliciesInner
+from workato_platform_cli.client.workato_api.models.api_client_api_policies_inner import ApiClientApiPoliciesInner
 
 class TestApiClientApiPoliciesInner(unittest.TestCase):
     """ApiClientApiPoliciesInner unit test stubs"""

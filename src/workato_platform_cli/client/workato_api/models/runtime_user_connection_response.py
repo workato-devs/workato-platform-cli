@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict
 from typing import Any, ClassVar, Dict, List
-from workato_platform.client.workato_api.models.runtime_user_connection_response_data import RuntimeUserConnectionResponseData
+from workato_platform_cli.client.workato_api.models.runtime_user_connection_response_data import RuntimeUserConnectionResponseData
 from typing import Optional, Set
 from typing_extensions import Self
 

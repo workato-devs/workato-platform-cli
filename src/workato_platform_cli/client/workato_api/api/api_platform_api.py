@@ -19,20 +19,20 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictInt
 from typing import List, Optional
 from typing_extensions import Annotated
-from workato_platform.client.workato_api.models.api_client_create_request import ApiClientCreateRequest
-from workato_platform.client.workato_api.models.api_client_list_response import ApiClientListResponse
-from workato_platform.client.workato_api.models.api_client_response import ApiClientResponse
-from workato_platform.client.workato_api.models.api_collection import ApiCollection
-from workato_platform.client.workato_api.models.api_collection_create_request import ApiCollectionCreateRequest
-from workato_platform.client.workato_api.models.api_endpoint import ApiEndpoint
-from workato_platform.client.workato_api.models.api_key_create_request import ApiKeyCreateRequest
-from workato_platform.client.workato_api.models.api_key_list_response import ApiKeyListResponse
-from workato_platform.client.workato_api.models.api_key_response import ApiKeyResponse
-from workato_platform.client.workato_api.models.success_response import SuccessResponse
+from workato_platform_cli.client.workato_api.models.api_client_create_request import ApiClientCreateRequest
+from workato_platform_cli.client.workato_api.models.api_client_list_response import ApiClientListResponse
+from workato_platform_cli.client.workato_api.models.api_client_response import ApiClientResponse
+from workato_platform_cli.client.workato_api.models.api_collection import ApiCollection
+from workato_platform_cli.client.workato_api.models.api_collection_create_request import ApiCollectionCreateRequest
+from workato_platform_cli.client.workato_api.models.api_endpoint import ApiEndpoint
+from workato_platform_cli.client.workato_api.models.api_key_create_request import ApiKeyCreateRequest
+from workato_platform_cli.client.workato_api.models.api_key_list_response import ApiKeyListResponse
+from workato_platform_cli.client.workato_api.models.api_key_response import ApiKeyResponse
+from workato_platform_cli.client.workato_api.models.success_response import SuccessResponse
 
-from workato_platform.client.workato_api.api_client import ApiClient, RequestSerialized
-from workato_platform.client.workato_api.api_response import ApiResponse
-from workato_platform.client.workato_api.rest import RESTResponseType
+from workato_platform_cli.client.workato_api.api_client import ApiClient, RequestSerialized
+from workato_platform_cli.client.workato_api.api_response import ApiResponse
+from workato_platform_cli.client.workato_api.rest import RESTResponseType
 
 
 class APIPlatformApi:

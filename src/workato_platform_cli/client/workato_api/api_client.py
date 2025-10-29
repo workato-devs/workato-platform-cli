@@ -27,11 +27,11 @@ from urllib.parse import quote
 from typing import Tuple, Optional, List, Dict, Union
 from pydantic import SecretStr
 
-from workato_platform.client.workato_api.configuration import Configuration
-from workato_platform.client.workato_api.api_response import ApiResponse, T as ApiResponseT
-import workato_platform.client.workato_api.models
-from workato_platform.client.workato_api import rest
-from workato_platform.client.workato_api.exceptions import (
+from workato_platform_cli.client.workato_api.configuration import Configuration
+from workato_platform_cli.client.workato_api.api_response import ApiResponse, T as ApiResponseT
+import workato_platform_cli.client.workato_api.models
+from workato_platform_cli.client.workato_api import rest
+from workato_platform_cli.client.workato_api.exceptions import (
     ApiValueError,
     ApiException,
     BadRequestException,
@@ -459,7 +459,7 @@ class ApiClient:
             if klass in self.NATIVE_TYPES_MAPPING:
                 klass = self.NATIVE_TYPES_MAPPING[klass]
             else:
-                klass = getattr(workato_platform.client.workato_api.models, klass)
+                klass = getattr(workato_platform_cli.client.workato_api.models, klass)
 
         if klass in self.PRIMITIVE_TYPES:
             return self.__deserialize_primitive(data, klass)

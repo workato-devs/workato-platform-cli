@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.recipe_config_inner import RecipeConfigInner
+from workato_platform_cli.client.workato_api.models.recipe_config_inner import RecipeConfigInner
 
 # TODO update the JSON string below
 json = "{}"

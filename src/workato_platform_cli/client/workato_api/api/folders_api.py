@@ -19,13 +19,13 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictInt
 from typing import List, Optional
 from typing_extensions import Annotated
-from workato_platform.client.workato_api.models.create_folder_request import CreateFolderRequest
-from workato_platform.client.workato_api.models.folder import Folder
-from workato_platform.client.workato_api.models.folder_creation_response import FolderCreationResponse
+from workato_platform_cli.client.workato_api.models.create_folder_request import CreateFolderRequest
+from workato_platform_cli.client.workato_api.models.folder import Folder
+from workato_platform_cli.client.workato_api.models.folder_creation_response import FolderCreationResponse
 
-from workato_platform.client.workato_api.api_client import ApiClient, RequestSerialized
-from workato_platform.client.workato_api.api_response import ApiResponse
-from workato_platform.client.workato_api.rest import RESTResponseType
+from workato_platform_cli.client.workato_api.api_client import ApiClient, RequestSerialized
+from workato_platform_cli.client.workato_api.api_response import ApiResponse
+from workato_platform_cli.client.workato_api.rest import RESTResponseType
 
 
 class FoldersApi:

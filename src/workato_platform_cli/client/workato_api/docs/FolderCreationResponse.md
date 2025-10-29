@@ -16,7 +16,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.folder_creation_response import FolderCreationResponse
+from workato_platform_cli.client.workato_api.models.folder_creation_response import FolderCreationResponse
 
 # TODO update the JSON string below
 json = "{}"

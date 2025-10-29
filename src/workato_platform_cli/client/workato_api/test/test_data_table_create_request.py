@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.data_table_create_request import DataTableCreateRequest
+from workato_platform_cli.client.workato_api.models.data_table_create_request import DataTableCreateRequest
 
 class TestDataTableCreateRequest(unittest.TestCase):
     """DataTableCreateRequest unit test stubs"""
@@ -38,7 +38,7 @@ class TestDataTableCreateRequest(unittest.TestCase):
                 name = 'Expense reports 4',
                 folder_id = 75509,
                 var_schema = [
-                    workato_platform.client.workato_api.models.data_table_column_request.DataTableColumnRequest(
+                    workato_platform_cli.client.workato_api.models.data_table_column_request.DataTableColumnRequest(
                         type = 'boolean', 
                         name = '', 
                         optional = True, 
@@ -47,7 +47,7 @@ class TestDataTableCreateRequest(unittest.TestCase):
                         default_value = null, 
                         metadata = { }, 
                         multivalue = True, 
-                        relation = workato_platform.client.workato_api.models.data_table_relation.DataTableRelation(
+                        relation = workato_platform_cli.client.workato_api.models.data_table_relation.DataTableRelation(
                             table_id = '2507a39a-6847-4857-88ed-c3b9c8302e02', 
                             field_id = '900454f4-5b3d-4670-bc3c-d640915156f2', ), )
                     ]
@@ -57,7 +57,7 @@ class TestDataTableCreateRequest(unittest.TestCase):
                 name = 'Expense reports 4',
                 folder_id = 75509,
                 var_schema = [
-                    workato_platform.client.workato_api.models.data_table_column_request.DataTableColumnRequest(
+                    workato_platform_cli.client.workato_api.models.data_table_column_request.DataTableColumnRequest(
                         type = 'boolean', 
                         name = '', 
                         optional = True, 
@@ -66,7 +66,7 @@ class TestDataTableCreateRequest(unittest.TestCase):
                         default_value = null, 
                         metadata = { }, 
                         multivalue = True, 
-                        relation = workato_platform.client.workato_api.models.data_table_relation.DataTableRelation(
+                        relation = workato_platform_cli.client.workato_api.models.data_table_relation.DataTableRelation(
                             table_id = '2507a39a-6847-4857-88ed-c3b9c8302e02', 
                             field_id = '900454f4-5b3d-4670-bc3c-d640915156f2', ), )
                     ],

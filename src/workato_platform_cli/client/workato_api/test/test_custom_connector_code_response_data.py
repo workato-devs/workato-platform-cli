@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.custom_connector_code_response_data import CustomConnectorCodeResponseData
+from workato_platform_cli.client.workato_api.models.custom_connector_code_response_data import CustomConnectorCodeResponseData
 
 class TestCustomConnectorCodeResponseData(unittest.TestCase):
     """CustomConnectorCodeResponseData unit test stubs"""

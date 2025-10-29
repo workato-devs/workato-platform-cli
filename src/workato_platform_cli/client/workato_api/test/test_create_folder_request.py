@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.create_folder_request import CreateFolderRequest
+from workato_platform_cli.client.workato_api.models.create_folder_request import CreateFolderRequest
 
 class TestCreateFolderRequest(unittest.TestCase):
     """CreateFolderRequest unit test stubs"""

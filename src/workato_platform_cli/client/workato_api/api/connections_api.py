@@ -19,18 +19,18 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictInt, StrictStr, field_validator
 from typing import List, Optional
 from typing_extensions import Annotated
-from workato_platform.client.workato_api.models.connection import Connection
-from workato_platform.client.workato_api.models.connection_create_request import ConnectionCreateRequest
-from workato_platform.client.workato_api.models.connection_update_request import ConnectionUpdateRequest
-from workato_platform.client.workato_api.models.o_auth_url_response import OAuthUrlResponse
-from workato_platform.client.workato_api.models.picklist_request import PicklistRequest
-from workato_platform.client.workato_api.models.picklist_response import PicklistResponse
-from workato_platform.client.workato_api.models.runtime_user_connection_create_request import RuntimeUserConnectionCreateRequest
-from workato_platform.client.workato_api.models.runtime_user_connection_response import RuntimeUserConnectionResponse
+from workato_platform_cli.client.workato_api.models.connection import Connection
+from workato_platform_cli.client.workato_api.models.connection_create_request import ConnectionCreateRequest
+from workato_platform_cli.client.workato_api.models.connection_update_request import ConnectionUpdateRequest
+from workato_platform_cli.client.workato_api.models.o_auth_url_response import OAuthUrlResponse
+from workato_platform_cli.client.workato_api.models.picklist_request import PicklistRequest
+from workato_platform_cli.client.workato_api.models.picklist_response import PicklistResponse
+from workato_platform_cli.client.workato_api.models.runtime_user_connection_create_request import RuntimeUserConnectionCreateRequest
+from workato_platform_cli.client.workato_api.models.runtime_user_connection_response import RuntimeUserConnectionResponse
 
-from workato_platform.client.workato_api.api_client import ApiClient, RequestSerialized
-from workato_platform.client.workato_api.api_response import ApiResponse
-from workato_platform.client.workato_api.rest import RESTResponseType
+from workato_platform_cli.client.workato_api.api_client import ApiClient, RequestSerialized
+from workato_platform_cli.client.workato_api.api_response import ApiResponse
+from workato_platform_cli.client.workato_api.rest import RESTResponseType
 
 
 class ConnectionsApi:

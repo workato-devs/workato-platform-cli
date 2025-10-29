@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.data_table_create_response import DataTableCreateResponse
+from workato_platform_cli.client.workato_api.models.data_table_create_response import DataTableCreateResponse
 
 class TestDataTableCreateResponse(unittest.TestCase):
     """DataTableCreateResponse unit test stubs"""
@@ -35,11 +35,11 @@ class TestDataTableCreateResponse(unittest.TestCase):
         model = DataTableCreateResponse()
         if include_optional:
             return DataTableCreateResponse(
-                data = workato_platform.client.workato_api.models.data_table.DataTable(
+                data = workato_platform_cli.client.workato_api.models.data_table.DataTable(
                     id = 'f4d2e85d-c7f4-4877-8f16-6643a4b3fb23', 
                     name = 'Resume screening', 
                     schema = [
-                        workato_platform.client.workato_api.models.data_table_column.DataTableColumn(
+                        workato_platform_cli.client.workato_api.models.data_table_column.DataTableColumn(
                             type = 'string', 
                             name = 'application_id', 
                             optional = True, 
@@ -48,7 +48,7 @@ class TestDataTableCreateResponse(unittest.TestCase):
                             default_value = null, 
                             metadata = { }, 
                             multivalue = False, 
-                            relation = workato_platform.client.workato_api.models.data_table_relation.DataTableRelation(
+                            relation = workato_platform_cli.client.workato_api.models.data_table_relation.DataTableRelation(
                                 table_id = '2507a39a-6847-4857-88ed-c3b9c8302e02', 
                                 field_id = '900454f4-5b3d-4670-bc3c-d640915156f2', ), )
                         ], 
@@ -58,11 +58,11 @@ class TestDataTableCreateResponse(unittest.TestCase):
             )
         else:
             return DataTableCreateResponse(
-                data = workato_platform.client.workato_api.models.data_table.DataTable(
+                data = workato_platform_cli.client.workato_api.models.data_table.DataTable(
                     id = 'f4d2e85d-c7f4-4877-8f16-6643a4b3fb23', 
                     name = 'Resume screening', 
                     schema = [
-                        workato_platform.client.workato_api.models.data_table_column.DataTableColumn(
+                        workato_platform_cli.client.workato_api.models.data_table_column.DataTableColumn(
                             type = 'string', 
                             name = 'application_id', 
                             optional = True, 
@@ -71,7 +71,7 @@ class TestDataTableCreateResponse(unittest.TestCase):
                             default_value = null, 
                             metadata = { }, 
                             multivalue = False, 
-                            relation = workato_platform.client.workato_api.models.data_table_relation.DataTableRelation(
+                            relation = workato_platform_cli.client.workato_api.models.data_table_relation.DataTableRelation(
                                 table_id = '2507a39a-6847-4857-88ed-c3b9c8302e02', 
                                 field_id = '900454f4-5b3d-4670-bc3c-d640915156f2', ), )
                         ], 

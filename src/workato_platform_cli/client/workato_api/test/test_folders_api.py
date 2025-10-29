@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.api.folders_api import FoldersApi
+from workato_platform_cli.client.workato_api.api.folders_api import FoldersApi
 
 
 class TestFoldersApi(unittest.IsolatedAsyncioTestCase):

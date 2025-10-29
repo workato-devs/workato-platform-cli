@@ -11,10 +11,10 @@ import asyncclick as click
 import certifi
 import inquirer
 
-from workato_platform import Workato
-from workato_platform.cli.commands.projects.project_manager import ProjectManager
-from workato_platform.client.workato_api.configuration import Configuration
-from workato_platform.client.workato_api.models.project import Project
+from workato_platform_cli import Workato
+from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
+from workato_platform_cli.client.workato_api.configuration import Configuration
+from workato_platform_cli.client.workato_api.models.project import Project
 
 from .models import AVAILABLE_REGIONS, ConfigData, ProfileData, ProjectInfo, RegionInfo
 from .profiles import ProfileManager, _validate_url_security

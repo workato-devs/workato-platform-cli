@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.api_client import ApiClient
+from workato_platform_cli.client.workato_api.models.api_client import ApiClient
 
 class TestApiClient(unittest.TestCase):
     """ApiClient unit test stubs"""
@@ -52,12 +52,12 @@ class TestApiClient(unittest.TestCase):
                 validation_formula = 'OU=Workato',
                 cert_bundle_ids = [3],
                 api_policies = [
-                    workato_platform.client.workato_api.models.api_client_api_policies_inner.ApiClient_api_policies_inner(
+                    workato_platform_cli.client.workato_api.models.api_client_api_policies_inner.ApiClient_api_policies_inner(
                         id = 2, 
                         name = 'Internal – Admins', )
                     ],
                 api_collections = [
-                    workato_platform.client.workato_api.models.api_client_api_collections_inner.ApiClient_api_collections_inner(
+                    workato_platform_cli.client.workato_api.models.api_client_api_collections_inner.ApiClient_api_collections_inner(
                         id = 1, 
                         name = 'Echo collection', )
                     ]
@@ -73,12 +73,12 @@ class TestApiClient(unittest.TestCase):
                 is_legacy = True,
                 auth_type = 'token',
                 api_policies = [
-                    workato_platform.client.workato_api.models.api_client_api_policies_inner.ApiClient_api_policies_inner(
+                    workato_platform_cli.client.workato_api.models.api_client_api_policies_inner.ApiClient_api_policies_inner(
                         id = 2, 
                         name = 'Internal – Admins', )
                     ],
                 api_collections = [
-                    workato_platform.client.workato_api.models.api_client_api_collections_inner.ApiClient_api_collections_inner(
+                    workato_platform_cli.client.workato_api.models.api_client_api_collections_inner.ApiClient_api_collections_inner(
                         id = 1, 
                         name = 'Echo collection', )
                     ],

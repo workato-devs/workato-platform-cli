@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.package_details_response_recipe_status_inner import PackageDetailsResponseRecipeStatusInner
+from workato_platform_cli.client.workato_api.models.package_details_response_recipe_status_inner import PackageDetailsResponseRecipeStatusInner
 
 class TestPackageDetailsResponseRecipeStatusInner(unittest.TestCase):
     """PackageDetailsResponseRecipeStatusInner unit test stubs"""

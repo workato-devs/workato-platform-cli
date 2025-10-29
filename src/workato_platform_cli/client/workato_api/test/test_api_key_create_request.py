@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.api_key_create_request import ApiKeyCreateRequest
+from workato_platform_cli.client.workato_api.models.api_key_create_request import ApiKeyCreateRequest
 
 class TestApiKeyCreateRequest(unittest.TestCase):
     """ApiKeyCreateRequest unit test stubs"""

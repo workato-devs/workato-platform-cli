@@ -11,19 +11,19 @@ from pathlib import Path
 import asyncclick as click
 import inquirer
 
-from workato_platform import Workato
-from workato_platform.cli.utils.spinner import Spinner
-from workato_platform.client.workato_api.models.asset import Asset
-from workato_platform.client.workato_api.models.create_export_manifest_request import (
+from workato_platform_cli import Workato
+from workato_platform_cli.cli.utils.spinner import Spinner
+from workato_platform_cli.client.workato_api.models.asset import Asset
+from workato_platform_cli.client.workato_api.models.create_export_manifest_request import (
     CreateExportManifestRequest,
 )
-from workato_platform.client.workato_api.models.create_folder_request import (
+from workato_platform_cli.client.workato_api.models.create_folder_request import (
     CreateFolderRequest,
 )
-from workato_platform.client.workato_api.models.export_manifest_request import (
+from workato_platform_cli.client.workato_api.models.export_manifest_request import (
     ExportManifestRequest,
 )
-from workato_platform.client.workato_api.models.project import Project
+from workato_platform_cli.client.workato_api.models.project import Project
 
 
 class ProjectManager:
@@ -283,7 +283,7 @@ class ProjectManager:
 
     def save_project_to_config(self, project: Project) -> None:
         """Save project info to config - returns True if successful"""
-        from workato_platform.cli.utils.config import ConfigManager
+        from workato_platform_cli.cli.utils.config import ConfigManager
 
         config_manager = ConfigManager()
 

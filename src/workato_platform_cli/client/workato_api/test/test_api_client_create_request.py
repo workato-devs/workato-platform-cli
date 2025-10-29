@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.api_client_create_request import ApiClientCreateRequest
+from workato_platform_cli.client.workato_api.models.api_client_create_request import ApiClientCreateRequest
 
 class TestApiClientCreateRequest(unittest.TestCase):
     """ApiClientCreateRequest unit test stubs"""

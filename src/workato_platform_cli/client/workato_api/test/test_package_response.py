@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.package_response import PackageResponse
+from workato_platform_cli.client.workato_api.models.package_response import PackageResponse
 
 class TestPackageResponse(unittest.TestCase):
     """PackageResponse unit test stubs"""

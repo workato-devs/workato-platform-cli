@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.asset import Asset
+from workato_platform_cli.client.workato_api.models.asset import Asset
 
 class TestAsset(unittest.TestCase):
     """Asset unit test stubs"""

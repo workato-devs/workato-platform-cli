@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.o_auth_url_response import OAuthUrlResponse
+from workato_platform_cli.client.workato_api.models.o_auth_url_response import OAuthUrlResponse
 
 class TestOAuthUrlResponse(unittest.TestCase):
     """OAuthUrlResponse unit test stubs"""
@@ -35,12 +35,12 @@ class TestOAuthUrlResponse(unittest.TestCase):
         model = OAuthUrlResponse()
         if include_optional:
             return OAuthUrlResponse(
-                data = workato_platform.client.workato_api.models.o_auth_url_response_data.OAuthUrlResponse_data(
+                data = workato_platform_cli.client.workato_api.models.o_auth_url_response_data.OAuthUrlResponse_data(
                     url = 'https://login.microsoftonline.com/oauth2/v2.0/authorize?client_id=...', )
             )
         else:
             return OAuthUrlResponse(
-                data = workato_platform.client.workato_api.models.o_auth_url_response_data.OAuthUrlResponse_data(
+                data = workato_platform_cli.client.workato_api.models.o_auth_url_response_data.OAuthUrlResponse_data(
                     url = 'https://login.microsoftonline.com/oauth2/v2.0/authorize?client_id=...', ),
         )
         """

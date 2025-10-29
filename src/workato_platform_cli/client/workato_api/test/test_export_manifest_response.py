@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.export_manifest_response import ExportManifestResponse
+from workato_platform_cli.client.workato_api.models.export_manifest_response import ExportManifestResponse
 
 class TestExportManifestResponse(unittest.TestCase):
     """ExportManifestResponse unit test stubs"""
@@ -35,7 +35,7 @@ class TestExportManifestResponse(unittest.TestCase):
         model = ExportManifestResponse()
         if include_optional:
             return ExportManifestResponse(
-                result = workato_platform.client.workato_api.models.export_manifest_response_result.ExportManifestResponse_result(
+                result = workato_platform_cli.client.workato_api.models.export_manifest_response_result.ExportManifestResponse_result(
                     id = 12, 
                     name = 'Test Manifest', 
                     last_exported_at = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
@@ -47,7 +47,7 @@ class TestExportManifestResponse(unittest.TestCase):
             )
         else:
             return ExportManifestResponse(
-                result = workato_platform.client.workato_api.models.export_manifest_response_result.ExportManifestResponse_result(
+                result = workato_platform_cli.client.workato_api.models.export_manifest_response_result.ExportManifestResponse_result(
                     id = 12, 
                     name = 'Test Manifest', 
                     last_exported_at = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 

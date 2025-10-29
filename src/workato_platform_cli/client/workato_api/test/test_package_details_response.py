@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.package_details_response import PackageDetailsResponse
+from workato_platform_cli.client.workato_api.models.package_details_response import PackageDetailsResponse
 
 class TestPackageDetailsResponse(unittest.TestCase):
     """PackageDetailsResponse unit test stubs"""
@@ -42,7 +42,7 @@ class TestPackageDetailsResponse(unittest.TestCase):
                 download_url = 'https://www.workato-staging-assets.com/packages/zip_files/000/000/242/original/exportdemo.zip',
                 error = 'error_message',
                 recipe_status = [
-                    workato_platform.client.workato_api.models.package_details_response_recipe_status_inner.PackageDetailsResponse_recipe_status_inner(
+                    workato_platform_cli.client.workato_api.models.package_details_response_recipe_status_inner.PackageDetailsResponse_recipe_status_inner(
                         id = 12345, 
                         import_result = 'no_update_or_updated_without_restart', )
                     ]

@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.runtime_user_connection_response import RuntimeUserConnectionResponse
+from workato_platform_cli.client.workato_api.models.runtime_user_connection_response import RuntimeUserConnectionResponse
 
 class TestRuntimeUserConnectionResponse(unittest.TestCase):
     """RuntimeUserConnectionResponse unit test stubs"""
@@ -35,13 +35,13 @@ class TestRuntimeUserConnectionResponse(unittest.TestCase):
         model = RuntimeUserConnectionResponse()
         if include_optional:
             return RuntimeUserConnectionResponse(
-                data = workato_platform.client.workato_api.models.runtime_user_connection_response_data.RuntimeUserConnectionResponse_data(
+                data = workato_platform_cli.client.workato_api.models.runtime_user_connection_response_data.RuntimeUserConnectionResponse_data(
                     id = 18009027, 
                     url = 'https://oauth.workato.com/oauth/authorize?connection_id=18009027', )
             )
         else:
             return RuntimeUserConnectionResponse(
-                data = workato_platform.client.workato_api.models.runtime_user_connection_response_data.RuntimeUserConnectionResponse_data(
+                data = workato_platform_cli.client.workato_api.models.runtime_user_connection_response_data.RuntimeUserConnectionResponse_data(
                     id = 18009027, 
                     url = 'https://oauth.workato.com/oauth/authorize?connection_id=18009027', ),
         )

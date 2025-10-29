@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.custom_connector_list_response import CustomConnectorListResponse
+from workato_platform_cli.client.workato_api.models.custom_connector_list_response import CustomConnectorListResponse
 
 class TestCustomConnectorListResponse(unittest.TestCase):
     """CustomConnectorListResponse unit test stubs"""
@@ -36,14 +36,14 @@ class TestCustomConnectorListResponse(unittest.TestCase):
         if include_optional:
             return CustomConnectorListResponse(
                 result = [
-                    workato_platform.client.workato_api.models.custom_connector.CustomConnector(
+                    workato_platform_cli.client.workato_api.models.custom_connector.CustomConnector(
                         id = 562523, 
                         name = 'apps_by_workato_connector_804586_1719241698', 
                         title = 'Apps by Workato', 
                         latest_released_version = 2, 
                         latest_released_version_note = 'Connector Version', 
                         released_versions = [
-                            workato_platform.client.workato_api.models.connector_version.ConnectorVersion(
+                            workato_platform_cli.client.workato_api.models.connector_version.ConnectorVersion(
                                 version = 2, 
                                 version_note = '', 
                                 created_at = '2024-06-24T11:17:52.516-04:00', 
@@ -55,14 +55,14 @@ class TestCustomConnectorListResponse(unittest.TestCase):
         else:
             return CustomConnectorListResponse(
                 result = [
-                    workato_platform.client.workato_api.models.custom_connector.CustomConnector(
+                    workato_platform_cli.client.workato_api.models.custom_connector.CustomConnector(
                         id = 562523, 
                         name = 'apps_by_workato_connector_804586_1719241698', 
                         title = 'Apps by Workato', 
                         latest_released_version = 2, 
                         latest_released_version_note = 'Connector Version', 
                         released_versions = [
-                            workato_platform.client.workato_api.models.connector_version.ConnectorVersion(
+                            workato_platform_cli.client.workato_api.models.connector_version.ConnectorVersion(
                                 version = 2, 
                                 version_note = '', 
                                 created_at = '2024-06-24T11:17:52.516-04:00', 

@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.custom_connector_code_response import CustomConnectorCodeResponse
+from workato_platform_cli.client.workato_api.models.custom_connector_code_response import CustomConnectorCodeResponse
 
 class TestCustomConnectorCodeResponse(unittest.TestCase):
     """CustomConnectorCodeResponse unit test stubs"""
@@ -35,12 +35,12 @@ class TestCustomConnectorCodeResponse(unittest.TestCase):
         model = CustomConnectorCodeResponse()
         if include_optional:
             return CustomConnectorCodeResponse(
-                data = workato_platform.client.workato_api.models.custom_connector_code_response_data.CustomConnectorCodeResponse_data(
+                data = workato_platform_cli.client.workato_api.models.custom_connector_code_response_data.CustomConnectorCodeResponse_data(
                     code = '', )
             )
         else:
             return CustomConnectorCodeResponse(
-                data = workato_platform.client.workato_api.models.custom_connector_code_response_data.CustomConnectorCodeResponse_data(
+                data = workato_platform_cli.client.workato_api.models.custom_connector_code_response_data.CustomConnectorCodeResponse_data(
                     code = '', ),
         )
         """

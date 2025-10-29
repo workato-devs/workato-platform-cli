@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.models.asset_reference import AssetReference
+from workato_platform_cli.client.workato_api.models.asset_reference import AssetReference
 
 class TestAssetReference(unittest.TestCase):
     """AssetReference unit test stubs"""

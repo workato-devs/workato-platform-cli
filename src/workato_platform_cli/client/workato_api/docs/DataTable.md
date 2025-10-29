@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from workato_platform.client.workato_api.models.data_table import DataTable
+from workato_platform_cli.client.workato_api.models.data_table import DataTable
 
 # TODO update the JSON string below
 json = "{}"

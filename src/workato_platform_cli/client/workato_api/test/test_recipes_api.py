@@ -14,7 +14,7 @@
 
 import unittest
 
-from workato_platform.client.workato_api.api.recipes_api import RecipesApi
+from workato_platform_cli.client.workato_api.api.recipes_api import RecipesApi
 
 
 class TestRecipesApi(unittest.IsolatedAsyncioTestCase):
