@@ -22,4 +22,4 @@
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
 
-workato_platform/__init__.py
+workato_platform_cli/__init__.py
