@@ -89,7 +89,9 @@ class TestExceptionHandler:
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
     def test_handle_api_exceptions_with_http_error(self, mock_echo: MagicMock) -> None:
         """Test handling of HTTP-like errors."""
-        from workato_platform_cli.client.workato_api.exceptions import UnauthorizedException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            UnauthorizedException,
+        )
 
         @handle_api_exceptions
         def http_error_function() -> None:
@@ -153,7 +155,9 @@ class TestExceptionHandler:
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
     def test_handle_api_exceptions_error_formatting(self, mock_echo: MagicMock) -> None:
         """Test that error messages are formatted appropriately."""
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         @handle_api_exceptions
         def error_function() -> None:
@@ -176,7 +180,9 @@ class TestExceptionHandler:
         self,
         mock_echo: MagicMock,
     ) -> None:
-        from workato_platform_cli.client.workato_api.exceptions import ForbiddenException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            ForbiddenException,
+        )
 
         @handle_api_exceptions
         async def failing_async() -> None:
@@ -186,20 +192,26 @@ class TestExceptionHandler:
         mock_echo.assert_any_call("❌ Access forbidden")
 
     def test_extract_error_details_from_message(self) -> None:
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         exc = BadRequestException(status=400, body='{"message": "Invalid data"}')
         assert _extract_error_details(exc) == "Invalid data"
 
     def test_extract_error_details_from_errors_list(self) -> None:
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         body = '{"errors": ["Field is required"]}'
         exc = BadRequestException(status=400, body=body)
         assert _extract_error_details(exc) == "Validation error: Field is required"
 
     def test_extract_error_details_from_errors_dict(self) -> None:
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         body = '{"errors": {"field": ["must be unique"]}}'
         exc = BadRequestException(status=400, body=body)
@@ -215,7 +227,9 @@ class TestExceptionHandler:
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
     def test_sync_handler_bad_request(self, mock_echo: MagicMock) -> None:
         """Test sync handler with BadRequestException"""
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         @handle_api_exceptions
         def sync_bad_request() -> None:
@@ -243,7 +257,9 @@ class TestExceptionHandler:
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
     def test_sync_handler_unauthorized(self, mock_echo: MagicMock) -> None:
         """Test sync handler with UnauthorizedException"""
-        from workato_platform_cli.client.workato_api.exceptions import UnauthorizedException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            UnauthorizedException,
+        )
 
         @handle_api_exceptions
         def sync_unauthorized() -> None:
@@ -256,7 +272,9 @@ class TestExceptionHandler:
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
     def test_sync_handler_forbidden(self, mock_echo: MagicMock) -> None:
         """Test sync handler with ForbiddenException"""
-        from workato_platform_cli.client.workato_api.exceptions import ForbiddenException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            ForbiddenException,
+        )
 
         @handle_api_exceptions
         def sync_forbidden() -> None:
@@ -323,7 +341,9 @@ class TestExceptionHandler:
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
     async def test_async_handler_bad_request(self, mock_echo: MagicMock) -> None:
         """Test async handler with BadRequestException"""
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         @handle_api_exceptions
         async def async_bad_request() -> None:
@@ -353,7 +373,9 @@ class TestExceptionHandler:
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
     async def test_async_handler_unauthorized(self, mock_echo: MagicMock) -> None:
         """Test async handler with UnauthorizedException"""
-        from workato_platform_cli.client.workato_api.exceptions import UnauthorizedException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            UnauthorizedException,
+        )
 
         @handle_api_exceptions
         async def async_unauthorized() -> None:
@@ -416,7 +438,9 @@ class TestExceptionHandler:
 
     def test_extract_error_details_invalid_json(self) -> None:
         """Test error details extraction with invalid JSON"""
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         exc = BadRequestException(status=400, body="invalid json {")
         # Should fallback to raw body when JSON parsing fails
@@ -424,7 +448,9 @@ class TestExceptionHandler:
 
     def test_extract_error_details_no_message_or_errors(self) -> None:
         """Test error details extraction with valid JSON but no message/errors"""
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         exc = BadRequestException(status=400, body='{"other": "data"}')
         # Should fallback to raw body when no message/errors found
@@ -432,7 +458,9 @@ class TestExceptionHandler:
 
     def test_extract_error_details_empty_errors_list(self) -> None:
         """Test error details extraction with empty errors list"""
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         exc = BadRequestException(status=400, body='{"errors": []}')
         # Should fallback to raw body when errors list is empty
@@ -440,7 +468,9 @@ class TestExceptionHandler:
 
     def test_extract_error_details_non_string_errors(self) -> None:
         """Test error details extraction with non-string errors"""
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         exc = BadRequestException(status=400, body='{"errors": [123, null]}')
         # Should handle non-string errors gracefully
@@ -454,7 +484,9 @@ class TestExceptionHandler:
         self, mock_get_context: MagicMock, mock_echo: MagicMock
     ) -> None:
         """Test JSON output for BadRequestException"""
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         # Mock Click context to return json output mode
         mock_ctx = MagicMock()
@@ -477,7 +509,9 @@ class TestExceptionHandler:
         self, mock_get_context: MagicMock, mock_echo: MagicMock
     ) -> None:
         """Test JSON output for UnauthorizedException"""
-        from workato_platform_cli.client.workato_api.exceptions import UnauthorizedException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            UnauthorizedException,
+        )
 
         mock_ctx = MagicMock()
         mock_ctx.params = {"output_mode": "json"}
@@ -498,7 +532,9 @@ class TestExceptionHandler:
         self, mock_get_context: MagicMock, mock_echo: MagicMock
     ) -> None:
         """Test JSON output for ForbiddenException"""
-        from workato_platform_cli.client.workato_api.exceptions import ForbiddenException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            ForbiddenException,
+        )
 
         mock_ctx = MagicMock()
         mock_ctx.params = {"output_mode": "json"}
@@ -603,7 +639,9 @@ class TestExceptionHandler:
         self, mock_get_context: MagicMock, mock_echo: MagicMock
     ) -> None:
         """Test JSON output includes error details from body"""
-        from workato_platform_cli.client.workato_api.exceptions import BadRequestException
+        from workato_platform_cli.client.workato_api.exceptions import (
+            BadRequestException,
+        )
 
         mock_ctx = MagicMock()
         mock_ctx.params = {"output_mode": "json"}

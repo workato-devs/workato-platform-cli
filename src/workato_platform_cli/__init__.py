@@ -25,7 +25,9 @@ from workato_platform_cli.client.workato_api.api_client import ApiClient
 from workato_platform_cli.client.workato_api.configuration import Configuration
 
 
-def _configure_retry_with_429_support(rest_client: Any, configuration: Configuration) -> None:
+def _configure_retry_with_429_support(
+    rest_client: Any, configuration: Configuration
+) -> None:
     """
     Configure REST client to retry on 429 (Too Many Requests) errors.
 
@@ -52,6 +54,7 @@ def _configure_retry_with_429_support(rest_client: Any, configuration: Configura
     if rest_client.retries is not None:
         try:
             import aiohttp_retry
+
             rest_client.retry_client = aiohttp_retry.RetryClient(
                 client_session=rest_client.pool_manager,
                 retry_options=aiohttp_retry.ExponentialRetry(
@@ -60,8 +63,8 @@ def _configure_retry_with_429_support(rest_client: Any, configuration: Configura
                     start_timeout=1.0,
                     max_timeout=120.0,
                     retry_all_server_errors=True,
-                    statuses={429}
-                )
+                    statuses={429},
+                ),
             )
         except ImportError:
             pass
@@ -72,17 +75,17 @@ class Workato:
 
     def __init__(self, configuration: Configuration):
         self._configuration = configuration
-        
+
         # Set default retries if not configured
         if configuration.retries is None:
             configuration.retries = 3
-            
+
         self._api_client = ApiClient(configuration)
 
         # Set User-Agent header with CLI version
         user_agent = f"workato-platform-cli/{__version__}"
         self._api_client.user_agent = user_agent
-        
+
         # Configure retries with 429 support
         rest_client = self._api_client.rest_client
         _configure_retry_with_429_support(rest_client, configuration)

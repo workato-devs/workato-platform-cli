@@ -609,7 +609,9 @@ class TestVersionChecker:
         old_time = time.time() - (CHECK_INTERVAL + 100)
         os.utime(checker.cache_file, (old_time, old_time))
 
-        with patch("workato_platform_cli.cli.utils.version_checker.HAS_DEPENDENCIES", True):
+        with patch(
+            "workato_platform_cli.cli.utils.version_checker.HAS_DEPENDENCIES", True
+        ):
             assert checker.should_check_for_updates() is True
 
     @patch("workato_platform_cli.cli.utils.version_checker.urllib.request.urlopen")

@@ -11,7 +11,9 @@ import asyncclick as click
 from dependency_injector.wiring import Provide, inject
 
 from workato_platform_cli import Workato
-from workato_platform_cli.cli.commands.connectors.connector_manager import ConnectorManager
+from workato_platform_cli.cli.commands.connectors.connector_manager import (
+    ConnectorManager,
+)
 from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
 from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils import Spinner
@@ -24,7 +26,9 @@ from workato_platform_cli.client.workato_api.models.connection_create_request im
 from workato_platform_cli.client.workato_api.models.connection_update_request import (
     ConnectionUpdateRequest,
 )
-from workato_platform_cli.client.workato_api.models.picklist_request import PicklistRequest
+from workato_platform_cli.client.workato_api.models.picklist_request import (
+    PicklistRequest,
+)
 from workato_platform_cli.client.workato_api.models.runtime_user_connection_create_request import (  # noqa: E501
     RuntimeUserConnectionCreateRequest,
 )

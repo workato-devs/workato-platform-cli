@@ -12,7 +12,7 @@ from workato_platform_cli.cli.utils import Spinner
 from workato_platform_cli.cli.utils.config import ConfigManager
 from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
 from workato_platform_cli.client.workato_api.models.api_collection import ApiCollection
-from workato_platform_cli.client.workato_api.models.api_collection_create_request import (
+from workato_platform_cli.client.workato_api.models.api_collection_create_request import (  # noqa: E501
     ApiCollectionCreateRequest,
 )
 from workato_platform_cli.client.workato_api.models.api_endpoint import ApiEndpoint

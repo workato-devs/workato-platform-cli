@@ -35,7 +35,9 @@ from workato_platform_cli.client.workato_api.models.api_key import ApiKey
 from workato_platform_cli.client.workato_api.models.api_key_list_response import (
     ApiKeyListResponse,
 )
-from workato_platform_cli.client.workato_api.models.api_key_response import ApiKeyResponse
+from workato_platform_cli.client.workato_api.models.api_key_response import (
+    ApiKeyResponse,
+)
 
 
 class TestApiClientsGroup:
@@ -214,7 +216,9 @@ class TestDisplayFunctions:
             updated_at=datetime(2024, 1, 15, 10, 30, 0),
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             display_client_summary(client)
 
         # Verify key information is displayed
@@ -239,7 +243,9 @@ class TestDisplayFunctions:
             updated_at=datetime(2024, 1, 15, 10, 30, 0),
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             display_client_summary(client)
 
         # Verify collections are displayed
@@ -257,7 +263,9 @@ class TestDisplayFunctions:
             active_since=datetime(2024, 1, 15, 12, 0, 0),
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             display_key_summary(key)
 
         # Verify key information is displayed
@@ -276,7 +284,9 @@ class TestDisplayFunctions:
             active_since=datetime.now(),
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             display_key_summary(key)
 
         # Verify IP lists are displayed
@@ -294,7 +304,9 @@ class TestDisplayFunctions:
             active_since=datetime.now(),  # active_since is required field
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             display_key_summary(key)
 
         # Verify inactive status is shown
@@ -312,7 +324,9 @@ class TestDisplayFunctions:
             active_since=datetime.now(),
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             display_key_summary(key)
 
         # Verify token is truncated
@@ -330,7 +344,9 @@ class TestDisplayFunctions:
             active_since=datetime.now(),
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             display_key_summary(key)
 
         # Verify full short token is shown
@@ -348,7 +364,9 @@ class TestDisplayFunctions:
             active_since=datetime.now(),
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             display_key_summary(key)
 
         # Verify output is generated
@@ -378,8 +396,12 @@ class TestRefreshApiKeySecret:
         )
 
         with (
-            patch("workato_platform_cli.cli.commands.api_clients.Spinner") as mock_spinner,
-            patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo,
+            patch(
+                "workato_platform_cli.cli.commands.api_clients.Spinner"
+            ) as mock_spinner,
+            patch(
+                "workato_platform_cli.cli.commands.api_clients.click.echo"
+            ) as mock_echo,
         ):
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 0.9
@@ -422,8 +444,12 @@ class TestRefreshApiKeySecret:
         )
 
         with (
-            patch("workato_platform_cli.cli.commands.api_clients.Spinner") as mock_spinner,
-            patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo,
+            patch(
+                "workato_platform_cli.cli.commands.api_clients.Spinner"
+            ) as mock_spinner,
+            patch(
+                "workato_platform_cli.cli.commands.api_clients.click.echo"
+            ) as mock_echo,
         ):
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 0.5
@@ -461,8 +487,12 @@ class TestRefreshApiKeySecret:
         )
 
         with (
-            patch("workato_platform_cli.cli.commands.api_clients.Spinner") as mock_spinner,
-            patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo,
+            patch(
+                "workato_platform_cli.cli.commands.api_clients.Spinner"
+            ) as mock_spinner,
+            patch(
+                "workato_platform_cli.cli.commands.api_clients.click.echo"
+            ) as mock_echo,
         ):
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.2
@@ -502,7 +532,9 @@ class TestRefreshApiKeySecret:
         )
 
         with (
-            patch("workato_platform_cli.cli.commands.api_clients.Spinner") as mock_spinner,
+            patch(
+                "workato_platform_cli.cli.commands.api_clients.Spinner"
+            ) as mock_spinner,
             patch("workato_platform_cli.cli.commands.api_clients.click.echo"),
         ):
             mock_spinner_instance = MagicMock()
@@ -593,7 +625,9 @@ def test_parse_ip_list_empty_ips() -> None:
 @pytest.mark.asyncio
 async def test_create_key_invalid_allow_list() -> None:
     """Test create-key command with invalid IP allow list."""
-    with patch("workato_platform_cli.cli.commands.api_clients.parse_ip_list") as mock_parse:
+    with patch(
+        "workato_platform_cli.cli.commands.api_clients.parse_ip_list"
+    ) as mock_parse:
         mock_parse.return_value = None  # Simulate parse failure
         assert create_key.callback
         result = await create_key.callback(
@@ -612,7 +646,9 @@ async def test_create_key_invalid_allow_list() -> None:
 @pytest.mark.asyncio
 async def test_create_key_invalid_deny_list() -> None:
     """Test create-key command with invalid IP deny list."""
-    with patch("workato_platform_cli.cli.commands.api_clients.parse_ip_list") as mock_parse:
+    with patch(
+        "workato_platform_cli.cli.commands.api_clients.parse_ip_list"
+    ) as mock_parse:
         # Return valid list for allow list, None for deny list
         mock_parse.side_effect = [["192.168.1.1"], None]
 
@@ -785,7 +821,9 @@ class TestCreateCommand:
             mock_response
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.Spinner") as mock_spinner:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.Spinner"
+        ) as mock_spinner:
             mock_spinner_instance = MagicMock()
             mock_spinner_instance.stop.return_value = 1.5
             mock_spinner.return_value = mock_spinner_instance
@@ -852,7 +890,9 @@ class TestCreateCommandWithContainer:
             mock_response
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             # Call the callback directly, passing workato_api_client as parameter
             assert create.callback
             await create.callback(
@@ -909,7 +949,9 @@ class TestCreateCommandWithContainer:
         mock_workato_client = AsyncMock()
         mock_workato_client.api_platform_api.create_api_key.return_value = mock_response
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             assert create_key.callback
             await create_key.callback(
                 api_client_id=123,
@@ -954,7 +996,9 @@ class TestCreateCommandWithContainer:
             mock_response
         )
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             assert list_api_clients.callback
             await list_api_clients.callback(
                 project_id=None,
@@ -986,7 +1030,9 @@ class TestCreateCommandWithContainer:
         mock_workato_client = AsyncMock()
         mock_workato_client.api_platform_api.list_api_keys.return_value = mock_response
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             assert list_api_keys.callback
             await list_api_keys.callback(
                 api_client_id=123,
@@ -1024,7 +1070,9 @@ class TestCreateCommandWithContainer:
         """Test create command with validation errors to hit error handling paths."""
         mock_workato_client = AsyncMock()
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             # Call with invalid parameters that trigger validation errors
             assert create.callback
             await create.callback(
@@ -1057,7 +1105,9 @@ class TestCreateCommandWithContainer:
         """Test create command with invalid collection IDs."""
         mock_workato_client = AsyncMock()
 
-        with patch("workato_platform_cli.cli.commands.api_clients.click.echo") as mock_echo:
+        with patch(
+            "workato_platform_cli.cli.commands.api_clients.click.echo"
+        ) as mock_echo:
             assert create.callback
             await create.callback(
                 name="Test Client",

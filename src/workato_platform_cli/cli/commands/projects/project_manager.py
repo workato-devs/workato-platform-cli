@@ -14,7 +14,7 @@ import inquirer
 from workato_platform_cli import Workato
 from workato_platform_cli.cli.utils.spinner import Spinner
 from workato_platform_cli.client.workato_api.models.asset import Asset
-from workato_platform_cli.client.workato_api.models.create_export_manifest_request import (
+from workato_platform_cli.client.workato_api.models.create_export_manifest_request import (  # noqa: E501
     CreateExportManifestRequest,
 )
 from workato_platform_cli.client.workato_api.models.create_folder_request import (
