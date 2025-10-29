@@ -451,6 +451,111 @@ class TestConfigManager:
 
         assert "No project selected" in str(excinfo.value)
 
+    @pytest.mark.asyncio
+    async def test_setup_non_interactive_with_env_vars(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Non-interactive mode should use environment variables automatically."""
+        monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-ni")
+        monkeypatch.setenv("WORKATO_HOST", "https://www.workato.com")
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: mock_profile_manager,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = []
+        StubProjectManager.created_projects = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        # Mock resolve_environment_variables to return None
+        # so it uses the api_token/api_url params
+        mock_profile_manager.resolve_environment_variables.return_value = (None, None)
+        mock_profile_manager.get_current_profile_name.return_value = "env-profile"
+        mock_profile_manager.get_profile.return_value = None  # No existing profile
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+        manager.workspace_manager = WorkspaceManager(start_path=tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        # Should use env vars without requiring --region or --api-token flags
+        await manager._setup_non_interactive(
+            profile_name="env-profile",
+            api_token="env-token-ni",
+            api_url="https://www.workato.com",
+            project_name="EnvProject",
+        )
+
+        # Verify profile was created
+        mock_profile_manager.set_profile.assert_called_once()
+        call_args = mock_profile_manager.set_profile.call_args
+        profile_name, profile_data, token = call_args[0]
+
+        assert profile_name == "env-profile"
+        assert token == "env-token-ni"
+        assert profile_data.region == "us"
+
+    @pytest.mark.asyncio
+    async def test_setup_non_interactive_detects_eu_from_env(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Non-interactive mode should detect EU region from WORKATO_HOST."""
+        monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-eu")
+        monkeypatch.setenv("WORKATO_HOST", "https://app.eu.workato.com")
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: mock_profile_manager,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+        StubProjectManager.available_projects = []
+        StubProjectManager.created_projects = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProjectManager",
+            StubProjectManager,
+        )
+
+        mock_profile_manager.resolve_environment_variables.return_value = (None, None)
+        mock_profile_manager.get_current_profile_name.return_value = "eu-profile"
+        mock_profile_manager.get_profile.return_value = None  # No existing profile
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+        manager.workspace_manager = WorkspaceManager(start_path=tmp_path)
+        monkeypatch.chdir(tmp_path)
+
+        await manager._setup_non_interactive(
+            profile_name="eu-profile",
+            api_token="env-token-eu",
+            api_url="https://app.eu.workato.com",
+            project_name="EuProject",
+        )
+
+        # Verify EU region was detected
+        mock_profile_manager.set_profile.assert_called_once()
+        call_args = mock_profile_manager.set_profile.call_args
+        profile_name, profile_data, token = call_args[0]
+
+        assert profile_name == "eu-profile"
+        assert profile_data.region == "eu"
+        assert profile_data.region_url == "https://app.eu.workato.com"
+
     def test_init_with_explicit_config_dir(self, tmp_path: Path) -> None:
         """Test ConfigManager respects explicit config_dir."""
         config_dir = tmp_path / "explicit"
@@ -1499,6 +1604,7 @@ class TestConfigManager:
         with pytest.raises(SystemExit):
             await manager._create_new_profile("dev")
 
+    @pytest.mark.asyncio
     @pytest.mark.asyncio
     async def test_setup_profile_existing_create_new_success(
         self,
