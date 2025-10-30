@@ -36,6 +36,7 @@ dependencies = [
     "python-dateutil>=2.8.0",
     "typing-extensions>=4.0.0",
     "packaging>=21.0",
+    "pwinput>=1.0.3",
     "cbor2>=5.7.0",
     "certifi>=2025.8.3",
     "keyring>=25.6.0",
@@ -182,6 +183,7 @@ module = [
     "dependency_injector.*",
     "asyncclick.*",
     "keyring.*",
+    "pwinput.*",
 ]
 ignore_missing_imports = true
 
