@@ -63,7 +63,11 @@ STATUS_INFO = {
 
 @click.command()
 @click.option(
-    "--restart-recipes", is_flag=True, default=True, help="Restart recipes after import"
+    "--restart-recipes",
+    is_flag=True,
+    default=False,
+    help="Allow restarting of running recipes that are updated during import. "
+    "Stopped recipes will remain stopped.",
 )
 @click.option(
     "--include-tags", is_flag=True, default=True, help="Include tags in import"
@@ -72,7 +76,7 @@ STATUS_INFO = {
 @inject
 @handle_api_exceptions
 async def push(
-    restart_recipes: bool = True,
+    restart_recipes: bool = False,
     include_tags: bool = True,
     config_manager: ConfigManager = Provide[Container.config_manager],
 ) -> None:
