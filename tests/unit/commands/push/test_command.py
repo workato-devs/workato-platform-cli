@@ -184,7 +184,7 @@ async def test_push_creates_zip_and_invokes_upload(
     assert upload_mock.await_count == 1
     call_kwargs = upload_calls[0]
     assert call_kwargs["folder_id"] == 777
-    assert call_kwargs["restart_recipes"] is True
+    assert call_kwargs["restart_recipes"] is False
     assert call_kwargs["include_tags"] is True
     assert not (tmp_path / "demo.zip").exists()
     assert any("Package created" in line for line in capture_echo)
