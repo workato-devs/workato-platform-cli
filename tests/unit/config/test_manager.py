@@ -1325,7 +1325,6 @@ class TestConfigManager:
 
         prompt_answers = {
             "Enter profile name": ["dev"],
-            "Enter your Workato API token": ["token-123"],
             "Enter project name": ["DemoProject"],
         }
 
@@ -1337,6 +1336,16 @@ class TestConfigManager:
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
             fake_prompt,
+        )
+
+        # Mock pwinput for token input
+        def fake_pwinput(prompt: str, mask: str = "*") -> str:
+            assert "API token" in prompt
+            return "token-123"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".pwinput.pwinput",
+            fake_pwinput,
         )
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.confirm",
@@ -1519,7 +1528,6 @@ class TestConfigManager:
 
         prompt_answers = {
             "Enter your custom Workato base URL": ["https://custom.workato.test"],
-            "Enter your Workato API token": ["custom-token"],
         }
 
         async def fake_prompt(message: str, **_: Any) -> str:
@@ -1530,6 +1538,16 @@ class TestConfigManager:
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
             fake_prompt,
+        )
+
+        # Mock pwinput for token input
+        def fake_pwinput(prompt: str, mask: str = "*") -> str:
+            assert "API token" in prompt
+            return "custom-token"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".pwinput.pwinput",
+            fake_pwinput,
         )
 
         def custom_region_prompt(questions: list[Any]) -> dict[str, str]:
@@ -1591,14 +1609,13 @@ class TestConfigManager:
             lambda _questions: {"region": "US Data Center (https://www.workato.com)"},
         )
 
-        async def fake_prompt(message: str, **_: Any) -> str:
-            if "API token" in message:
-                return "   "
-            return "unused"
+        # Mock pwinput to return blank token
+        def fake_pwinput(prompt: str, mask: str = "*") -> str:
+            return "   "
 
         monkeypatch.setattr(
-            ConfigManager.__module__ + ".click.prompt",
-            fake_prompt,
+            ConfigManager.__module__ + ".pwinput.pwinput",
+            fake_pwinput,
         )
 
         with pytest.raises(SystemExit):

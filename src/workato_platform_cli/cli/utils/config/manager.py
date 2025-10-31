@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 import asyncclick as click
 import certifi
 import inquirer
+import pwinput
 
 from workato_platform_cli import Workato
 from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
@@ -527,8 +528,18 @@ class ConfigManager:
             )
 
         # Prompt for token
+        # Note: pwinput.pwinput() is called synchronously (not wrapped in
+        # asyncio.to_thread) because wrapping it causes terminal buffer issues
+        # when pasting long tokens. The async wrapper interferes with terminal
+        # input buffering, causing some characters to leak through before masking.
+        # Since this is a blocking user input operation anyway, there's no benefit
+        # to making it async.
+        #
+        # TODO: Once we upgrade to Python 3.14+, consider migrating to the built-in
+        # getpass.getpass(prompt="...", echo_char='*') which provides native masked
+        # input support without requiring the pwinput dependency.
         click.echo("🔐 Enter your API token")
-        token = await click.prompt("Enter your Workato API token", hide_input=True)
+        token = pwinput.pwinput(prompt="Enter your Workato API token: ", mask="*")
         if not token.strip():
             click.echo("❌ No token provided")
             sys.exit(1)
