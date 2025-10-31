@@ -15,7 +15,10 @@ from workato_platform_cli.cli.containers import (
     create_profile_aware_workato_config,
 )
 from workato_platform_cli.cli.utils.config import ConfigData, ConfigManager
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 from workato_platform_cli.client.workato_api.models.project import Project
 
 
@@ -43,8 +46,9 @@ def projects() -> None:
     default="table",
     help="Output format: table (default) or json",
 )
-@handle_api_exceptions
+@handle_cli_exceptions
 @inject
+@handle_api_exceptions
 async def list_projects(
     profile: str | None = None,
     source: str = "local",
@@ -79,6 +83,7 @@ async def list_projects(
 
 @projects.command()
 @click.argument("project_name")
+@handle_cli_exceptions
 @inject
 async def use(
     project_name: str,
@@ -146,6 +151,7 @@ async def use(
 
 
 @projects.command()
+@handle_cli_exceptions
 @inject
 async def switch(
     config_manager: ConfigManager = Provide[Container.config_manager],

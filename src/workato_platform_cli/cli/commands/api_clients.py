@@ -6,7 +6,10 @@ from dependency_injector.wiring import Provide, inject
 
 from workato_platform_cli import Workato
 from workato_platform_cli.cli.containers import Container
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 from workato_platform_cli.cli.utils.spinner import Spinner
 from workato_platform_cli.client.workato_api.models.api_client import ApiClient
 from workato_platform_cli.client.workato_api.models.api_client_create_request import (
@@ -69,6 +72,7 @@ def api_clients() -> None:
 @click.option(
     "--cert-bundle-ids", help="Comma-separated list of certificate bundle IDs for mTLS"
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def create(
@@ -242,6 +246,7 @@ def validate_create_parameters(
     "--ip-allow-list", help="Comma-separated list of IP addresses to allowlist"
 )
 @click.option("--ip-deny-list", help="Comma-separated list of IP addresses to deny")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def create_key(
@@ -374,6 +379,7 @@ def validate_ip_address(ip: str) -> bool:
     "--api-key-id", required=True, type=int, help="ID of the API key to refresh"
 )
 @click.option("--force", is_flag=True, help="Skip confirmation prompt")
+@handle_cli_exceptions
 @handle_api_exceptions
 async def refresh_secret(
     api_client_id: int,
@@ -452,6 +458,7 @@ async def refresh_api_key_secret(
 
 @api_clients.command(name="list")
 @click.option("--project-id", type=int, help="Filter API clients by project ID")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_api_clients(
@@ -509,6 +516,7 @@ async def list_api_clients(
     type=int,
     help="ID of the API client to list keys for",
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_api_keys(
