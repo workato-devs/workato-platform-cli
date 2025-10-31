@@ -142,6 +142,9 @@ def handle_cli_exceptions(func: F) -> F:
             except (aiohttp.ClientSSLError, ssl.SSLError) as e:
                 _handle_ssl_error(e)
                 raise SystemExit(1) from None
+            except click.Abort:
+                # Let Click handle Abort - don't catch it
+                raise
             except Exception as e:
                 # Catch-all for any exceptions during initialization
                 _handle_generic_cli_error(e)
@@ -169,6 +172,9 @@ def handle_cli_exceptions(func: F) -> F:
             except (aiohttp.ClientSSLError, ssl.SSLError) as e:
                 _handle_ssl_error(e)
                 raise SystemExit(1) from None
+            except click.Abort:
+                # Let Click handle Abort - don't catch it
+                raise
             except Exception as e:
                 # Catch-all for any exceptions during initialization
                 _handle_generic_cli_error(e)

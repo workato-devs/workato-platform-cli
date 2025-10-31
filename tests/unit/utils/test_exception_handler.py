@@ -80,9 +80,10 @@ class TestExceptionHandler:
         def failing_function() -> None:
             raise ApiException(status=500, reason="Test error")
 
-        # Should handle exception gracefully (not raise SystemExit, just return)
-        result = failing_function()
-        assert result is None
+        # Should handle exception and exit with code 1
+        with pytest.raises(SystemExit) as exc_info:
+            failing_function()
+        assert exc_info.value.code == 1
 
         # Should have displayed error message
         mock_echo.assert_called()
@@ -99,9 +100,10 @@ class TestExceptionHandler:
             # Simulate an HTTP 401 error
             raise UnauthorizedException(status=401, reason="Unauthorized")
 
-        # Should handle exception gracefully (not raise SystemExit, just return)
-        result = http_error_function()
-        assert result is None
+        # Should handle exception and exit with code 1
+        with pytest.raises(SystemExit) as exc_info:
+            http_error_function()
+        assert exc_info.value.code == 1
 
         mock_echo.assert_called()
 
@@ -124,8 +126,9 @@ class TestExceptionHandler:
         def failing() -> None:
             raise exc_cls(status=exc_cls.__name__, reason="error")
 
-        result = failing()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            failing()
+        assert exc_info.value.code == 1
         assert any(expected in call.args[0] for call in mock_echo.call_args_list)
 
     def test_handle_api_exceptions_with_keyboard_interrupt(self) -> None:
@@ -165,10 +168,10 @@ class TestExceptionHandler:
             # Use a proper Workato API exception that the handler actually catches
             raise BadRequestException(status=400, reason="Invalid request parameters")
 
-        # The function should return None (not raise SystemExit) when API
-        # exceptions are handled
-        result = error_function()
-        assert result is None
+        # The function should exit with code 1 when API exceptions are handled
+        with pytest.raises(SystemExit) as exc_info:
+            error_function()
+        assert exc_info.value.code == 1
 
         # Should have called click.echo with formatted error
         mock_echo.assert_called()
@@ -189,7 +192,9 @@ class TestExceptionHandler:
         async def failing_async() -> None:
             raise ForbiddenException(status=403, reason="Forbidden")
 
-        await failing_async()
+        with pytest.raises(SystemExit) as exc_info:
+            await failing_async()
+        assert exc_info.value.code == 1
         mock_echo.assert_any_call("❌ Access forbidden")
 
     def test_extract_error_details_from_message(self) -> None:
@@ -236,8 +241,9 @@ class TestExceptionHandler:
         def sync_bad_request() -> None:
             raise BadRequestException(status=400, reason="Bad request")
 
-        result = sync_bad_request()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            sync_bad_request()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
@@ -251,8 +257,9 @@ class TestExceptionHandler:
         def sync_unprocessable() -> None:
             raise UnprocessableEntityException(status=422, reason="Unprocessable")
 
-        result = sync_unprocessable()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            sync_unprocessable()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
@@ -266,8 +273,9 @@ class TestExceptionHandler:
         def sync_unauthorized() -> None:
             raise UnauthorizedException(status=401, reason="Unauthorized")
 
-        result = sync_unauthorized()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            sync_unauthorized()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
@@ -281,8 +289,9 @@ class TestExceptionHandler:
         def sync_forbidden() -> None:
             raise ForbiddenException(status=403, reason="Forbidden")
 
-        result = sync_forbidden()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            sync_forbidden()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
@@ -294,8 +303,9 @@ class TestExceptionHandler:
         def sync_not_found() -> None:
             raise NotFoundException(status=404, reason="Not found")
 
-        result = sync_not_found()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            sync_not_found()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
@@ -307,8 +317,9 @@ class TestExceptionHandler:
         def sync_conflict() -> None:
             raise ConflictException(status=409, reason="Conflict")
 
-        result = sync_conflict()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            sync_conflict()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
@@ -320,8 +331,9 @@ class TestExceptionHandler:
         def sync_service_error() -> None:
             raise ServiceException(status=500, reason="Service error")
 
-        result = sync_service_error()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            sync_service_error()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @patch("workato_platform_cli.cli.utils.exception_handler.click.echo")
@@ -333,8 +345,9 @@ class TestExceptionHandler:
         def sync_generic_error() -> None:
             raise ApiException(status=418, reason="I'm a teapot")
 
-        result = sync_generic_error()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            sync_generic_error()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     # Additional async tests for missing coverage
@@ -350,7 +363,9 @@ class TestExceptionHandler:
         async def async_bad_request() -> None:
             raise BadRequestException(status=400, reason="Bad request")
 
-        await async_bad_request()
+        with pytest.raises(SystemExit) as exc_info:
+            await async_bad_request()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -367,7 +382,9 @@ class TestExceptionHandler:
         async def async_unprocessable() -> None:
             raise UnprocessableEntityException(status=422, reason="Unprocessable")
 
-        await async_unprocessable()
+        with pytest.raises(SystemExit) as exc_info:
+            await async_unprocessable()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -382,7 +399,9 @@ class TestExceptionHandler:
         async def async_unauthorized() -> None:
             raise UnauthorizedException(status=401, reason="Unauthorized")
 
-        await async_unauthorized()
+        with pytest.raises(SystemExit) as exc_info:
+            await async_unauthorized()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -395,7 +414,9 @@ class TestExceptionHandler:
         async def async_not_found() -> None:
             raise NotFoundException(status=404, reason="Not found")
 
-        await async_not_found()
+        with pytest.raises(SystemExit) as exc_info:
+            await async_not_found()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -408,7 +429,9 @@ class TestExceptionHandler:
         async def async_conflict() -> None:
             raise ConflictException(status=409, reason="Conflict")
 
-        await async_conflict()
+        with pytest.raises(SystemExit) as exc_info:
+            await async_conflict()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -421,7 +444,9 @@ class TestExceptionHandler:
         async def async_service_error() -> None:
             raise ServiceException(status=500, reason="Service error")
 
-        await async_service_error()
+        with pytest.raises(SystemExit) as exc_info:
+            await async_service_error()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     @pytest.mark.asyncio
@@ -434,7 +459,9 @@ class TestExceptionHandler:
         async def async_generic_error() -> None:
             raise ApiException(status=418, reason="I'm a teapot")
 
-        await async_generic_error()
+        with pytest.raises(SystemExit) as exc_info:
+            await async_generic_error()
+        assert exc_info.value.code == 1
         mock_echo.assert_called()
 
     def test_extract_error_details_invalid_json(self) -> None:
@@ -498,7 +525,9 @@ class TestExceptionHandler:
         def bad_request_json() -> None:
             raise BadRequestException(status=400, reason="Bad request")
 
-        bad_request_json()
+        with pytest.raises(SystemExit) as exc_info:
+            bad_request_json()
+        assert exc_info.value.code == 1
 
         # Should output JSON
         call_args = [call[0][0] for call in mock_echo.call_args_list]
@@ -522,7 +551,9 @@ class TestExceptionHandler:
         def unauthorized_json() -> None:
             raise UnauthorizedException(status=401, reason="Unauthorized")
 
-        unauthorized_json()
+        with pytest.raises(SystemExit) as exc_info:
+            unauthorized_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "UNAUTHORIZED"' in arg for arg in call_args)
@@ -545,7 +576,9 @@ class TestExceptionHandler:
         def forbidden_json() -> None:
             raise ForbiddenException(status=403, reason="Forbidden")
 
-        forbidden_json()
+        with pytest.raises(SystemExit) as exc_info:
+            forbidden_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "FORBIDDEN"' in arg for arg in call_args)
@@ -566,7 +599,9 @@ class TestExceptionHandler:
         def not_found_json() -> None:
             raise NotFoundException(status=404, reason="Not found")
 
-        not_found_json()
+        with pytest.raises(SystemExit) as exc_info:
+            not_found_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "NOT_FOUND"' in arg for arg in call_args)
@@ -587,7 +622,9 @@ class TestExceptionHandler:
         def conflict_json() -> None:
             raise ConflictException(status=409, reason="Conflict")
 
-        conflict_json()
+        with pytest.raises(SystemExit) as exc_info:
+            conflict_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "CONFLICT"' in arg for arg in call_args)
@@ -608,7 +645,9 @@ class TestExceptionHandler:
         def server_error_json() -> None:
             raise ServiceException(status=500, reason="Server error")
 
-        server_error_json()
+        with pytest.raises(SystemExit) as exc_info:
+            server_error_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "SERVER_ERROR"' in arg for arg in call_args)
@@ -629,7 +668,9 @@ class TestExceptionHandler:
         def generic_error_json() -> None:
             raise ApiException(status=418, reason="I'm a teapot")
 
-        generic_error_json()
+        with pytest.raises(SystemExit) as exc_info:
+            generic_error_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "API_ERROR"' in arg for arg in call_args)
@@ -654,7 +695,9 @@ class TestExceptionHandler:
                 status=400, body='{"message": "Field validation failed"}'
             )
 
-        with_details_json()
+        with pytest.raises(SystemExit) as exc_info:
+            with_details_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any("Field validation failed" in arg for arg in call_args)
@@ -722,8 +765,9 @@ class TestCLIExceptionHandler:
                 "Could not resolve API credentials. Please run 'workato init'"
             )
 
-        result = failing_function()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            failing_function()
+        assert exc_info.value.code == 1
 
         # Should display the error with the message from the exception
         call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
@@ -741,7 +785,9 @@ class TestCLIExceptionHandler:
         async def async_failing() -> None:
             raise ValueError("API credentials not found")
 
-        await async_failing()
+        with pytest.raises(SystemExit) as exc_info:
+            await async_failing()
+        assert exc_info.value.code == 1
 
         call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
         assert any("ValueError" in arg for arg in call_args)
@@ -759,8 +805,9 @@ class TestCLIExceptionHandler:
                 connection_key=MagicMock(), os_error=OSError("Connection refused")
             )
 
-        result = network_error_function()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            network_error_function()
+        assert exc_info.value.code == 1
 
         call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
         assert any("Cannot connect to Workato API" in arg for arg in call_args)
@@ -776,7 +823,9 @@ class TestCLIExceptionHandler:
         async def timeout_function() -> None:
             raise TimeoutError()
 
-        await timeout_function()
+        with pytest.raises(SystemExit) as exc_info:
+            await timeout_function()
+        assert exc_info.value.code == 1
 
         call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
         assert any("Request timed out" in arg for arg in call_args)
@@ -790,8 +839,9 @@ class TestCLIExceptionHandler:
         def ssl_error_function() -> None:
             raise ssl.SSLError("certificate verify failed")
 
-        result = ssl_error_function()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            ssl_error_function()
+        assert exc_info.value.code == 1
 
         call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
         assert any("SSL certificate error" in arg for arg in call_args)
@@ -811,7 +861,9 @@ class TestCLIExceptionHandler:
         def init_error_json() -> None:
             raise ValueError("Could not resolve API credentials")
 
-        init_error_json()
+        with pytest.raises(SystemExit) as exc_info:
+            init_error_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "CLI_ERROR"' in arg for arg in call_args)
@@ -835,7 +887,9 @@ class TestCLIExceptionHandler:
                 connection_key=MagicMock(), os_error=OSError("Connection refused")
             )
 
-        network_error_json()
+        with pytest.raises(SystemExit) as exc_info:
+            network_error_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "NETWORK_ERROR"' in arg for arg in call_args)
@@ -855,7 +909,9 @@ class TestCLIExceptionHandler:
         def timeout_error_json() -> None:
             raise TimeoutError()
 
-        timeout_error_json()
+        with pytest.raises(SystemExit) as exc_info:
+            timeout_error_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "TIMEOUT_ERROR"' in arg for arg in call_args)
@@ -876,7 +932,9 @@ class TestCLIExceptionHandler:
         def ssl_error_json() -> None:
             raise ssl.SSLError("certificate verify failed")
 
-        ssl_error_json()
+        with pytest.raises(SystemExit) as exc_info:
+            ssl_error_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "SSL_ERROR"' in arg for arg in call_args)
@@ -891,8 +949,9 @@ class TestCLIExceptionHandler:
         def non_init_value_error() -> None:
             raise ValueError("Some other validation error")
 
-        result = non_init_value_error()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            non_init_value_error()
+        assert exc_info.value.code == 1
 
         # Should be handled by generic error handler
         call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
@@ -909,8 +968,9 @@ class TestCLIExceptionHandler:
         def unexpected_error() -> None:
             raise RuntimeError("Something unexpected happened")
 
-        result = unexpected_error()
-        assert result is None
+        with pytest.raises(SystemExit) as exc_info:
+            unexpected_error()
+        assert exc_info.value.code == 1
 
         # Should be handled by generic error handler
         call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
@@ -928,7 +988,9 @@ class TestCLIExceptionHandler:
         async def async_unexpected_error() -> None:
             raise KeyError("Missing key")
 
-        await async_unexpected_error()
+        with pytest.raises(SystemExit) as exc_info:
+            await async_unexpected_error()
+        assert exc_info.value.code == 1
 
         # Should be handled by generic error handler
         call_args = [str(call[0][0]) for call in mock_echo.call_args_list]
@@ -949,7 +1011,9 @@ class TestCLIExceptionHandler:
         def generic_error_json() -> None:
             raise RuntimeError("Unexpected error")
 
-        generic_error_json()
+        with pytest.raises(SystemExit) as exc_info:
+            generic_error_json()
+        assert exc_info.value.code == 1
 
         call_args = [call[0][0] for call in mock_echo.call_args_list]
         assert any('"error_code": "CLI_ERROR"' in arg for arg in call_args)
