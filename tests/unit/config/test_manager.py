@@ -1607,7 +1607,6 @@ class TestConfigManager:
     @pytest.mark.asyncio
     async def test_setup_profile_existing_create_new_success(
         self,
-        self,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
