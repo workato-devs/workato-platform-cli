@@ -86,7 +86,7 @@ async def init(
         # Either profile OR individual attributes are required
         if not profile and not ((region or api_url) and api_token):
             error_msg = (
-                "Either --profile or both --region/WORKATO_HOST and "
+                "Either --profile or both (--region or --api-url/WORKATO_HOST) and "
                 "--api-token/WORKATO_API_TOKEN are required in non-interactive mode"
             )
             error_code = "MISSING_REQUIRED_OPTIONS"
