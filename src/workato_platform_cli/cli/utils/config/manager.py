@@ -142,8 +142,6 @@ class ConfigManager:
         if not region and api_url:
             region_info = self._match_host_to_region(api_url)
             region = region_info.region
-            if not api_url:  # If api_url was matched to a known region
-                api_url = region_info.url
 
         # Map region to URL
         if region == "custom":
@@ -386,6 +384,14 @@ class ConfigManager:
                     sys.exit(1)
                 return profile_name
             else:
+                # Warn user about overwriting existing profile
+                click.echo(
+                    f"\n⚠️  This will overwrite the existing profile "
+                    f"'{selected_choice}' with environment variable credentials."
+                )
+                if not click.confirm("Continue?", default=True):
+                    click.echo("❌ Cancelled")
+                    sys.exit(1)
                 return selected_choice
         else:
             default_profile_input: str = await click.prompt(
