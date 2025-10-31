@@ -72,6 +72,7 @@ def recipes() -> None:
 @click.option(
     "--recursive", is_flag=True, help="Recursively list recipes in subfolders"
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_recipes(
@@ -280,6 +281,7 @@ async def validate(
     "--all", "start_all", is_flag=True, help="Start all recipes in current project"
 )
 @click.option("--folder-id", help="Start all recipes in specified folder")
+@handle_cli_exceptions
 @handle_api_exceptions
 async def start(
     recipe_id: int,
@@ -812,6 +814,7 @@ def display_recipe_summary(recipe: Recipe) -> None:
 @click.option(
     "--connection-id", required=True, type=int, help="The ID of the connection to use"
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def update_connection(

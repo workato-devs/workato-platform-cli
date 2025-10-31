@@ -72,6 +72,7 @@ def api_clients() -> None:
 @click.option(
     "--cert-bundle-ids", help="Comma-separated list of certificate bundle IDs for mTLS"
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def create(
@@ -245,6 +246,7 @@ def validate_create_parameters(
     "--ip-allow-list", help="Comma-separated list of IP addresses to allowlist"
 )
 @click.option("--ip-deny-list", help="Comma-separated list of IP addresses to deny")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def create_key(
@@ -377,6 +379,7 @@ def validate_ip_address(ip: str) -> bool:
     "--api-key-id", required=True, type=int, help="ID of the API key to refresh"
 )
 @click.option("--force", is_flag=True, help="Skip confirmation prompt")
+@handle_cli_exceptions
 @handle_api_exceptions
 async def refresh_secret(
     api_client_id: int,
@@ -513,6 +516,7 @@ async def list_api_clients(
     type=int,
     help="ID of the API client to list keys for",
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_api_keys(

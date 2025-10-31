@@ -25,6 +25,7 @@ def connectors() -> None:
     help="List platform connectors with trigger and action metadata",
 )
 @click.option("--custom", is_flag=True, help="List custom connectors")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_connectors(

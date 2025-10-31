@@ -82,6 +82,7 @@ async def list_data_tables(
 @click.option(
     "--schema-json", required=True, help="JSON string containing table schema"
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def create_data_table(

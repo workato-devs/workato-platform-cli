@@ -387,6 +387,7 @@ async def create_oauth(
 @click.option(
     "--input-file", help="Path to JSON file containing updated connection parameters"
 )
+@handle_cli_exceptions
 @handle_api_exceptions
 async def update(
     connection_id: int,
@@ -763,6 +764,7 @@ def display_connection_summary(connection: Connection) -> None:
     default=True,
     help="Automatically open OAuth URL in browser",
 )
+@handle_cli_exceptions
 @handle_api_exceptions
 async def get_oauth_url(
     connection_id: int,

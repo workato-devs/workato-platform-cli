@@ -46,8 +46,9 @@ def projects() -> None:
     default="table",
     help="Output format: table (default) or json",
 )
-@handle_api_exceptions
+@handle_cli_exceptions
 @inject
+@handle_api_exceptions
 async def list_projects(
     profile: str | None = None,
     source: str = "local",
