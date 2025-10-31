@@ -18,7 +18,10 @@ from workato_platform_cli.cli.commands.projects.project_manager import ProjectMa
 from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils import Spinner
 from workato_platform_cli.cli.utils.config import ConfigManager
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 from workato_platform_cli.client.workato_api.models.connection import Connection
 from workato_platform_cli.client.workato_api.models.connection_create_request import (
     ConnectionCreateRequest,
@@ -117,6 +120,7 @@ def connections() -> None:
     help="Create as shell connection (no authentication test)",  # noboost
 )
 @click.option("--input", "input_params", help="Connection parameters as JSON string")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def create(
@@ -274,6 +278,7 @@ async def create(
     "--redirect-url",
     help="URL to redirect user after successful token acquisition (optional)",
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def create_oauth(
@@ -382,6 +387,7 @@ async def create_oauth(
 @click.option(
     "--input-file", help="Path to JSON file containing updated connection parameters"
 )
+@handle_cli_exceptions
 @handle_api_exceptions
 async def update(
     connection_id: int,
@@ -537,6 +543,7 @@ async def update_connection(
 @click.option("--tags", help="Filter by connection tags")
 @click.option("--provider", help="Filter by provider type (e.g., salesforce, jira)")
 @click.option("--unauthorized", is_flag=True, help="Show only authorized connections")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_connections(
@@ -757,6 +764,7 @@ def display_connection_summary(connection: Connection) -> None:
     default=True,
     help="Automatically open OAuth URL in browser",
 )
+@handle_cli_exceptions
 @handle_api_exceptions
 async def get_oauth_url(
     connection_id: int,
@@ -862,6 +870,7 @@ def show_connection_statistics(connections: list[Connection]) -> None:
     "--params",
     help='Pick list params as JSON string (e.g. \'{"sobject_name": "Invoice__c"}\')',
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def pick_list(

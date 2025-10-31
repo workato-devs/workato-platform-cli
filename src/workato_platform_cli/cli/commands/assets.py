@@ -6,7 +6,10 @@ from workato_platform_cli import Workato
 from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils import Spinner
 from workato_platform_cli.cli.utils.config import ConfigManager
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 from workato_platform_cli.client.workato_api.models.asset import Asset
 
 
@@ -14,6 +17,7 @@ from workato_platform_cli.client.workato_api.models.asset import Asset
 @click.option(
     "--folder-id", help="Folder ID (uses current project folder if not specified)"
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def assets(

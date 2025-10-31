@@ -10,7 +10,10 @@ from workato_platform_cli.cli.commands.projects.project_manager import ProjectMa
 from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils import Spinner
 from workato_platform_cli.cli.utils.config import ConfigManager
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 from workato_platform_cli.client.workato_api.models.api_collection import ApiCollection
 from workato_platform_cli.client.workato_api.models.api_collection_create_request import (  # noqa: E501
     ApiCollectionCreateRequest,
@@ -43,6 +46,7 @@ def api_collections() -> None:
     type=int,
     help="ID of the proxy connection to use",
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def create(
@@ -144,6 +148,7 @@ async def create(
     type=int,
     help="Items per page (default: 100, max: 100)",
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_collections(
@@ -209,6 +214,7 @@ async def list_collections(
 @click.option(
     "--api-collection-id", required=True, type=int, help="ID of the API collection"
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_endpoints(
@@ -282,6 +288,7 @@ async def list_endpoints(
     is_flag=True,
     help="Enable all endpoints in the collection (requires --api-collection-id)",
 )
+@handle_cli_exceptions
 @handle_api_exceptions
 async def enable_endpoint(
     api_endpoint_id: int,

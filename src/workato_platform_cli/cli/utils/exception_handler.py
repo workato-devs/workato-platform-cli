@@ -3,11 +3,13 @@
 import asyncio
 import functools
 import json
+import ssl
 
 from collections.abc import Callable
 from json import JSONDecodeError
 from typing import Any, TypeVar, cast
 
+import aiohttp
 import asyncclick as click
 
 from workato_platform_cli.client.workato_api.exceptions import (
@@ -48,25 +50,25 @@ def handle_api_exceptions(func: F) -> F:
                 return await func(*args, **kwargs)
             except (BadRequestException, UnprocessableEntityException) as e:
                 _handle_client_error(e)
-                return
+                raise SystemExit(1) from None
             except UnauthorizedException as e:
                 _handle_auth_error(e)
-                return
+                raise SystemExit(1) from None
             except ForbiddenException as e:
                 _handle_forbidden_error(e)
-                return
+                raise SystemExit(1) from None
             except NotFoundException as e:
                 _handle_not_found_error(e)
-                return
+                raise SystemExit(1) from None
             except ConflictException as e:
                 _handle_conflict_error(e)
-                return
+                raise SystemExit(1) from None
             except ServiceException as e:
                 _handle_server_error(e)
-                return
+                raise SystemExit(1) from None
             except ApiException as e:
                 _handle_generic_api_error(e)
-                return
+                raise SystemExit(1) from None
 
         return cast(F, async_wrapper)
     else:
@@ -77,25 +79,106 @@ def handle_api_exceptions(func: F) -> F:
                 return func(*args, **kwargs)
             except (BadRequestException, UnprocessableEntityException) as e:
                 _handle_client_error(e)
-                return
+                raise SystemExit(1) from None
             except UnauthorizedException as e:
                 _handle_auth_error(e)
-                return
+                raise SystemExit(1) from None
             except ForbiddenException as e:
                 _handle_forbidden_error(e)
-                return
+                raise SystemExit(1) from None
             except NotFoundException as e:
                 _handle_not_found_error(e)
-                return
+                raise SystemExit(1) from None
             except ConflictException as e:
                 _handle_conflict_error(e)
-                return
+                raise SystemExit(1) from None
             except ServiceException as e:
                 _handle_server_error(e)
-                return
+                raise SystemExit(1) from None
             except ApiException as e:
                 _handle_generic_api_error(e)
-                return
+                raise SystemExit(1) from None
+
+        return cast(F, sync_wrapper)
+
+
+def handle_cli_exceptions(func: F) -> F:
+    """Handle CLI initialization and network errors with friendly messages.
+
+    This decorator catches errors that occur during dependency injection and CLI
+    initialization, such as missing credentials, network failures, and configuration
+    errors. It should be placed above @inject in the decorator stack.
+
+    Supports both sync and async functions.
+
+    Usage:
+        @click.command()
+        @handle_cli_exceptions
+        @inject
+        @handle_api_exceptions
+        async def my_command():
+            # Your command logic here
+            pass
+    """
+
+    if asyncio.iscoroutinefunction(func):
+
+        @functools.wraps(func)
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+            try:
+                return await func(*args, **kwargs)
+            except (
+                aiohttp.ClientConnectorError,
+                aiohttp.ClientConnectionError,
+            ) as e:
+                _handle_network_error(e)
+                raise SystemExit(1) from None
+            except TimeoutError as e:
+                _handle_timeout_error(e)
+                raise SystemExit(1) from None
+            except aiohttp.ServerDisconnectedError as e:
+                _handle_server_disconnect_error(e)
+                raise SystemExit(1) from None
+            except (aiohttp.ClientSSLError, ssl.SSLError) as e:
+                _handle_ssl_error(e)
+                raise SystemExit(1) from None
+            except click.Abort:
+                # Let Click handle Abort - don't catch it
+                raise
+            except Exception as e:
+                # Catch-all for any exceptions during initialization
+                _handle_generic_cli_error(e)
+                raise SystemExit(1) from None
+
+        return cast(F, async_wrapper)
+    else:
+
+        @functools.wraps(func)
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+            try:
+                return func(*args, **kwargs)
+            except (
+                aiohttp.ClientConnectorError,
+                aiohttp.ClientConnectionError,
+            ) as e:
+                _handle_network_error(e)
+                raise SystemExit(1) from None
+            except TimeoutError as e:
+                _handle_timeout_error(e)
+                raise SystemExit(1) from None
+            except aiohttp.ServerDisconnectedError as e:
+                _handle_server_disconnect_error(e)
+                raise SystemExit(1) from None
+            except (aiohttp.ClientSSLError, ssl.SSLError) as e:
+                _handle_ssl_error(e)
+                raise SystemExit(1) from None
+            except click.Abort:
+                # Let Click handle Abort - don't catch it
+                raise
+            except Exception as e:
+                # Catch-all for any exceptions during initialization
+                _handle_generic_cli_error(e)
+                raise SystemExit(1) from None
 
         return cast(F, sync_wrapper)
 
@@ -337,3 +420,112 @@ def _extract_error_details(e: ApiException) -> str:
     # Return first 200 chars of raw response as fallback
     raw_response = str(e.body or e.data)
     return raw_response[:200] + ("..." if len(raw_response) > 200 else "")
+
+
+def _handle_network_error(
+    e: aiohttp.ClientConnectorError | aiohttp.ClientConnectionError,
+) -> None:
+    """Handle network connection errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_data = {
+            "status": "error",
+            "error": "Cannot connect to Workato API",
+            "error_code": "NETWORK_ERROR",
+            "details": str(e),
+        }
+        click.echo(json.dumps(error_data))
+        return
+
+    click.echo("❌ Cannot connect to Workato API")
+    click.echo(f"   {str(e)}")
+    click.echo("💡 Please check:")
+    click.echo("   • Your internet connection is working")
+    click.echo("   • The Workato API is accessible")
+    click.echo("   • Your firewall/proxy settings allow the connection")
+
+
+def _handle_timeout_error(e: TimeoutError) -> None:
+    """Handle timeout errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_data = {
+            "status": "error",
+            "error": "Request timed out",
+            "error_code": "TIMEOUT_ERROR",
+        }
+        click.echo(json.dumps(error_data))
+        return
+
+    click.echo("❌ Request timed out")
+    click.echo("   The request took too long to complete")
+    click.echo("💡 Please try:")
+    click.echo("   • Retry the operation")
+    click.echo("   • Check your network connection")
+    click.echo("   • The Workato API may be experiencing high load")
+
+
+def _handle_server_disconnect_error(e: aiohttp.ServerDisconnectedError) -> None:
+    """Handle server disconnection errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_data = {
+            "status": "error",
+            "error": "Server disconnected unexpectedly",
+            "error_code": "SERVER_DISCONNECT",
+        }
+        click.echo(json.dumps(error_data))
+        return
+
+    click.echo("❌ Server disconnected")
+    click.echo("   The connection to Workato API was lost")
+    click.echo("💡 Please try:")
+    click.echo("   • Retry the operation")
+    click.echo("   • Check Workato status page for outages")
+
+
+def _handle_ssl_error(e: aiohttp.ClientSSLError | ssl.SSLError) -> None:
+    """Handle SSL/certificate errors."""
+    output_mode = _get_output_mode()
+
+    if output_mode == "json":
+        error_data = {
+            "status": "error",
+            "error": "SSL certificate verification failed",
+            "error_code": "SSL_ERROR",
+            "details": str(e),
+        }
+        click.echo(json.dumps(error_data))
+        return
+
+    click.echo("❌ SSL certificate error")
+    click.echo("   Could not verify the SSL certificate")
+    click.echo(f"   {str(e)}")
+    click.echo("💡 Please check:")
+    click.echo("   • Your system clock is set correctly")
+    click.echo("   • You have the latest CA certificates installed")
+    click.echo("   • Your network is not intercepting HTTPS connections")
+
+
+def _handle_generic_cli_error(e: Exception) -> None:
+    """Handle any other unexpected CLI errors with a generic message."""
+    output_mode = _get_output_mode()
+
+    error_type = type(e).__name__
+    error_msg = str(e)
+
+    if output_mode == "json":
+        error_data = {
+            "status": "error",
+            "error": error_msg,
+            "error_code": "CLI_ERROR",
+            "error_type": error_type,
+        }
+        click.echo(json.dumps(error_data))
+        return
+
+    click.echo(f"❌ {error_type}")
+    click.echo(f"   {error_msg}")

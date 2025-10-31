@@ -11,6 +11,7 @@ from dependency_injector.wiring import Provide, inject
 
 from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils.config import ConfigData, ConfigManager
+from workato_platform_cli.cli.utils.exception_handler import handle_cli_exceptions
 
 
 @click.group()
@@ -26,6 +27,7 @@ def profiles() -> None:
     default="table",
     help="Output format: table (default) or json",
 )
+@handle_cli_exceptions
 @inject
 async def list_profiles(
     output_mode: str = "table",
@@ -66,6 +68,7 @@ async def list_profiles(
 
 
 @profiles.command()
+@handle_cli_exceptions
 @inject
 async def show(
     profile_name: str,
@@ -117,6 +120,7 @@ async def show(
 
 @profiles.command()
 @click.argument("profile_name")
+@handle_cli_exceptions
 @inject
 async def use(
     profile_name: str,
@@ -168,6 +172,7 @@ async def use(
     default="table",
     help="Output format: table (default) or json",
 )
+@handle_cli_exceptions
 @inject
 async def status(
     output_mode: str = "table",
@@ -335,6 +340,7 @@ async def status(
 @profiles.command()
 @click.argument("profile_name")
 @click.confirmation_option(prompt="Are you sure you want to delete this profile?")
+@handle_cli_exceptions
 @inject
 async def delete(
     profile_name: str,

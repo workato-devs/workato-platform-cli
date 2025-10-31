@@ -12,7 +12,10 @@ from workato_platform_cli.cli.commands.projects.project_manager import ProjectMa
 from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils import Spinner
 from workato_platform_cli.cli.utils.config import ConfigManager
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 from workato_platform_cli.client.workato_api.models.data_table import DataTable
 from workato_platform_cli.client.workato_api.models.data_table_column_request import (
     DataTableColumnRequest,
@@ -29,6 +32,7 @@ def data_tables() -> None:
 
 
 @data_tables.command(name="list")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_data_tables(
@@ -78,6 +82,7 @@ async def list_data_tables(
 @click.option(
     "--schema-json", required=True, help="JSON string containing table schema"
 )
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def create_data_table(

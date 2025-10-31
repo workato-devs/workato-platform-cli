@@ -11,7 +11,10 @@ from workato_platform_cli import Workato
 from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
 from workato_platform_cli.cli.commands.pull import _pull_project
 from workato_platform_cli.cli.utils.config import ConfigManager
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 from workato_platform_cli.client.workato_api.configuration import Configuration
 
 
@@ -39,6 +42,7 @@ from workato_platform_cli.client.workato_api.configuration import Configuration
     default="table",
     help="Output format: table (default) or json (only with --non-interactive)",
 )
+@handle_cli_exceptions
 @handle_api_exceptions
 async def init(
     profile: str | None = None,

@@ -6,7 +6,10 @@ from workato_platform_cli.cli.commands.connectors.connector_manager import (
     ConnectorManager,
 )
 from workato_platform_cli.cli.containers import Container
-from workato_platform_cli.cli.utils.exception_handler import handle_api_exceptions
+from workato_platform_cli.cli.utils.exception_handler import (
+    handle_api_exceptions,
+    handle_cli_exceptions,
+)
 
 
 @click.group()
@@ -22,6 +25,7 @@ def connectors() -> None:
     help="List platform connectors with trigger and action metadata",
 )
 @click.option("--custom", is_flag=True, help="List custom connectors")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def list_connectors(
@@ -57,6 +61,7 @@ async def list_connectors(
 @click.option("--provider", help="Show parameters for a specific provider")
 @click.option("--oauth-only", is_flag=True, help="Show only OAuth-enabled providers")
 @click.option("--search", help="Search provider names (case-insensitive)")
+@handle_cli_exceptions
 @inject
 @handle_api_exceptions
 async def parameters(
