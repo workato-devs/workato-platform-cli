@@ -446,7 +446,7 @@ def _handle_network_error(
     click.echo("   • Your firewall/proxy settings allow the connection")
 
 
-def _handle_timeout_error(e: asyncio.TimeoutError) -> None:
+def _handle_timeout_error(e: TimeoutError) -> None:
     """Handle timeout errors."""
     output_mode = _get_output_mode()
 
