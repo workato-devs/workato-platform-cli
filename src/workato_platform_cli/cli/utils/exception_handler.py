@@ -50,25 +50,25 @@ def handle_api_exceptions(func: F) -> F:
                 return await func(*args, **kwargs)
             except (BadRequestException, UnprocessableEntityException) as e:
                 _handle_client_error(e)
-                return
+                raise SystemExit(1) from None
             except UnauthorizedException as e:
                 _handle_auth_error(e)
-                return
+                raise SystemExit(1) from None
             except ForbiddenException as e:
                 _handle_forbidden_error(e)
-                return
+                raise SystemExit(1) from None
             except NotFoundException as e:
                 _handle_not_found_error(e)
-                return
+                raise SystemExit(1) from None
             except ConflictException as e:
                 _handle_conflict_error(e)
-                return
+                raise SystemExit(1) from None
             except ServiceException as e:
                 _handle_server_error(e)
-                return
+                raise SystemExit(1) from None
             except ApiException as e:
                 _handle_generic_api_error(e)
-                return
+                raise SystemExit(1) from None
 
         return cast(F, async_wrapper)
     else:
@@ -79,25 +79,25 @@ def handle_api_exceptions(func: F) -> F:
                 return func(*args, **kwargs)
             except (BadRequestException, UnprocessableEntityException) as e:
                 _handle_client_error(e)
-                return
+                raise SystemExit(1) from None
             except UnauthorizedException as e:
                 _handle_auth_error(e)
-                return
+                raise SystemExit(1) from None
             except ForbiddenException as e:
                 _handle_forbidden_error(e)
-                return
+                raise SystemExit(1) from None
             except NotFoundException as e:
                 _handle_not_found_error(e)
-                return
+                raise SystemExit(1) from None
             except ConflictException as e:
                 _handle_conflict_error(e)
-                return
+                raise SystemExit(1) from None
             except ServiceException as e:
                 _handle_server_error(e)
-                return
+                raise SystemExit(1) from None
             except ApiException as e:
                 _handle_generic_api_error(e)
-                return
+                raise SystemExit(1) from None
 
         return cast(F, sync_wrapper)
 
@@ -132,20 +132,20 @@ def handle_cli_exceptions(func: F) -> F:
                 aiohttp.ClientConnectionError,
             ) as e:
                 _handle_network_error(e)
-                return
+                raise SystemExit(1) from None
             except TimeoutError as e:
                 _handle_timeout_error(e)
-                return
+                raise SystemExit(1) from None
             except aiohttp.ServerDisconnectedError as e:
                 _handle_server_disconnect_error(e)
-                return
+                raise SystemExit(1) from None
             except (aiohttp.ClientSSLError, ssl.SSLError) as e:
                 _handle_ssl_error(e)
-                return
+                raise SystemExit(1) from None
             except Exception as e:
                 # Catch-all for any exceptions during initialization
                 _handle_generic_cli_error(e)
-                return
+                raise SystemExit(1) from None
 
         return cast(F, async_wrapper)
     else:
@@ -159,20 +159,20 @@ def handle_cli_exceptions(func: F) -> F:
                 aiohttp.ClientConnectionError,
             ) as e:
                 _handle_network_error(e)
-                return
+                raise SystemExit(1) from None
             except TimeoutError as e:
                 _handle_timeout_error(e)
-                return
+                raise SystemExit(1) from None
             except aiohttp.ServerDisconnectedError as e:
                 _handle_server_disconnect_error(e)
-                return
+                raise SystemExit(1) from None
             except (aiohttp.ClientSSLError, ssl.SSLError) as e:
                 _handle_ssl_error(e)
-                return
+                raise SystemExit(1) from None
             except Exception as e:
                 # Catch-all for any exceptions during initialization
                 _handle_generic_cli_error(e)
-                return
+                raise SystemExit(1) from None
 
         return cast(F, sync_wrapper)
 
