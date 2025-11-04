@@ -279,6 +279,34 @@ class ConfigManager:
                 await self._create_new_profile(profile_name)
             else:
                 profile_name = answers["profile_choice"]
+
+                # Check if credentials exist in keychain for existing profile
+                existing_profile = self.profile_manager.get_profile(profile_name)
+                token = self.profile_manager._get_token_from_keyring(profile_name)
+
+                if existing_profile and not token:
+                    # Credentials missing from keychain - prompt for re-entry
+                    click.echo("⚠️  Credentials not found for this profile")
+
+                    # Get region info from existing profile
+                    region_info = RegionInfo(
+                        region=existing_profile.region,
+                        url=existing_profile.region_url,
+                        name=existing_profile.region,
+                    )
+
+                    # Prompt and validate credentials
+                    (
+                        profile_data,
+                        validated_token,
+                    ) = await self._prompt_and_validate_credentials(
+                        profile_name, region_info
+                    )
+
+                    # Update profile with validated credentials
+                    self.profile_manager.set_profile(
+                        profile_name, profile_data, validated_token
+                    )
         else:
             profile_name = (
                 await click.prompt("Enter profile name", default="default", type=str)
