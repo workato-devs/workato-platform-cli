@@ -369,7 +369,9 @@ async def create_oauth(
 
 
 @connections.command()
-@click.option("--connection-id", required=True, type=int, help="ID of the connection to update")
+@click.option(
+    "--connection-id", required=True, type=int, help="ID of the connection to update"
+)
 @click.option("--name", help="New name for the connection")
 @click.option(
     "--parent-id", help="ID of the parent connection (must be same provider type)"
