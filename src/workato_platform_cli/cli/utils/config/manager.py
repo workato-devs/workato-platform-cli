@@ -294,6 +294,72 @@ class ConfigManager:
 
         return profile_name
 
+    async def _prompt_and_validate_credentials(
+        self, profile_name: str, region_info: RegionInfo
+    ) -> ProfileData:
+        """Prompt for API credentials and validate them with an API call.
+
+        Args:
+            profile_name: Name of the profile being configured
+            region_info: Region information containing the API URL
+
+        Returns:
+            ProfileData: Validated profile data with workspace information
+
+        Raises:
+            click.ClickException: If token is empty or validation fails
+        """
+        # Prompt for API token
+        click.echo("🔐 Enter your API token")
+        token = await click.prompt("Enter your Workato API token", hide_input=True)
+
+        # Validate token is not empty
+        if not token.strip():
+            raise click.ClickException("API token cannot be empty")
+
+        # Create API configuration with the token and region URL
+        api_config = Configuration(
+            access_token=token, host=region_info.url, ssl_ca_cert=certifi.where()
+        )
+
+        # Make API call to test authentication and get workspace info
+        try:
+            async with Workato(configuration=api_config) as workato_api_client:
+                user_info = await workato_api_client.users_api.get_workspace_details()
+        except Exception as e:
+            raise click.ClickException(
+                f"Authentication failed: {e}\n"
+                "Please verify your API token is correct and try again."
+            ) from e
+
+        # Store validated token in keyring
+        success = self.profile_manager._store_token_in_keyring(profile_name, token)
+        if not success:
+            if self.profile_manager._is_keyring_enabled():
+                raise click.ClickException(
+                    "Failed to store token in keyring. "
+                    "Please check your system keyring setup."
+                )
+            # If keyring is disabled, token will need to come from env vars
+            click.echo(
+                "⚠️  Keyring is disabled. "
+                "Set WORKATO_API_TOKEN environment variable to persist token."
+            )
+
+        # Create and return ProfileData object with workspace info
+        if not region_info.url:
+            raise click.ClickException("Region URL is required")
+
+        profile_data = ProfileData(
+            region=region_info.region,
+            region_url=region_info.url,
+            workspace_id=user_info.id,
+        )
+
+        click.echo(f"✅ Authenticated as: {user_info.name}")
+
+        return profile_data
+
     async def _create_new_profile(self, profile_name: str) -> None:
         """Create a new profile interactively"""
         # AVAILABLE_REGIONS and RegionInfo already imported at top

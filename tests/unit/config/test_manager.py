@@ -1500,6 +1500,201 @@ class TestConfigManager:
             await manager._create_new_profile("dev")
 
     @pytest.mark.asyncio
+    async def test_prompt_and_validate_credentials_success(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Test successful credential prompt and validation."""
+        from workato_platform_cli.cli.utils.config.models import RegionInfo
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+
+        async def fake_prompt(message: str, **_: Any) -> str:
+            if "API token" in message:
+                return "valid-token-123"
+            return "unused"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.prompt",
+            fake_prompt,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        region_info = RegionInfo(
+            region="us", name="US Data Center", url="https://www.workato.com"
+        )
+        profile_data = await manager._prompt_and_validate_credentials(
+            "test-profile", region_info
+        )
+
+        assert profile_data.region == "us"
+        assert profile_data.region_url == "https://www.workato.com"
+        assert profile_data.workspace_id == 101
+        mock_profile_manager._store_token_in_keyring.assert_called_with(
+            "test-profile", "valid-token-123"
+        )
+        assert any("Authenticated as" in msg for msg in outputs)
+
+    @pytest.mark.asyncio
+    async def test_prompt_and_validate_credentials_empty_token(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Test that empty token raises ClickException."""
+        from workato_platform_cli.cli.utils.config.models import RegionInfo
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+
+        async def fake_prompt(message: str, **_: Any) -> str:
+            if "API token" in message:
+                return "   "  # Empty/whitespace token
+            return "unused"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.prompt",
+            fake_prompt,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        region_info = RegionInfo(
+            region="us", name="US Data Center", url="https://www.workato.com"
+        )
+
+        with pytest.raises(click.ClickException) as excinfo:
+            await manager._prompt_and_validate_credentials("test-profile", region_info)
+
+        assert "token cannot be empty" in str(excinfo.value)
+
+    @pytest.mark.asyncio
+    async def test_prompt_and_validate_credentials_api_failure(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Test that API validation failure raises appropriate exception."""
+        from workato_platform_cli.cli.utils.config.models import RegionInfo
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+
+        # Create a Workato stub that raises an exception
+        class FailingWorkato:
+            def __init__(self, configuration: Configuration) -> None:
+                self.configuration = configuration
+                self.users_api = FailingUsersAPI()
+
+            async def __aenter__(self) -> "FailingWorkato":
+                return self
+
+            async def __aexit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+                return None
+
+        class FailingUsersAPI:
+            async def get_workspace_details(self) -> User:
+                raise Exception("Authentication failed: Invalid token")
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            FailingWorkato,
+        )
+
+        async def fake_prompt(message: str, **_: Any) -> str:
+            if "API token" in message:
+                return "invalid-token"
+            return "unused"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.prompt",
+            fake_prompt,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        region_info = RegionInfo(
+            region="us", name="US Data Center", url="https://www.workato.com"
+        )
+
+        with pytest.raises(click.ClickException) as excinfo:
+            await manager._prompt_and_validate_credentials("test-profile", region_info)
+
+        assert "Authentication failed" in str(excinfo.value)
+
+    @pytest.mark.asyncio
+    async def test_prompt_and_validate_credentials_keyring_disabled(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Test credential validation with keyring disabled."""
+        from workato_platform_cli.cli.utils.config.models import RegionInfo
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+
+        # Mock keyring as disabled
+        mock_profile_manager._store_token_in_keyring.return_value = False
+        mock_profile_manager._is_keyring_enabled.return_value = False
+        manager.profile_manager = mock_profile_manager
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+
+        async def fake_prompt(message: str, **_: Any) -> str:
+            if "API token" in message:
+                return "valid-token-123"
+            return "unused"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.prompt",
+            fake_prompt,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        region_info = RegionInfo(
+            region="us", name="US Data Center", url="https://www.workato.com"
+        )
+        profile_data = await manager._prompt_and_validate_credentials(
+            "test-profile", region_info
+        )
+
+        assert profile_data.region == "us"
+        assert any("Keyring is disabled" in msg for msg in outputs)
+        assert any("WORKATO_API_TOKEN" in msg for msg in outputs)
+
+    @pytest.mark.asyncio
     async def test_setup_profile_existing_create_new_success(
         self,
         tmp_path: Path,
