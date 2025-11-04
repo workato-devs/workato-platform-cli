@@ -129,6 +129,28 @@ async def init(
         non_interactive=non_interactive,
     )
 
+    # Validate credentials exist for non-interactive mode with existing profile
+    if non_interactive and profile and not (region and api_token):
+        # Only validate if using existing profile (not creating new one)
+        is_valid, _ = config_manager.validate_environment_config()
+        if not is_valid:
+            error_msg = (
+                f"Profile '{profile}' exists but credentials not found in keychain. "
+                "Please run 'workato init' interactively or set WORKATO_API_TOKEN "
+                "environment variable."
+            )
+            if output_mode == "json":
+                error_data = {
+                    "status": "error",
+                    "error": error_msg,
+                    "error_code": "MISSING_CREDENTIALS",
+                }
+                click.echo(json.dumps(error_data))
+                raise SystemExit(1)
+            else:
+                click.echo(f"❌ {error_msg}")
+                raise click.Abort()
+
     # Check if project directory exists and is non-empty
     # Exclude CLI-managed files from the check
     cli_managed_files = {".workatoenv", ".gitignore", ".workato-ignore"}
