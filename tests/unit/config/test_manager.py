@@ -556,6 +556,476 @@ class TestConfigManager:
         assert profile_data.region == "eu"
         assert profile_data.region_url == "https://app.eu.workato.com"
 
+    @pytest.mark.asyncio
+    async def test_setup_profile_with_both_env_vars_user_accepts_new_profile(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """When both env vars detected and user accepts, profile should use env vars."""
+        # Setup environment variables
+        monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-123")
+        monkeypatch.setenv("WORKATO_HOST", "https://www.workato.com")
+
+        # Setup stubs and mocks
+        monkeypatch.setattr(ConfigManager.__module__ + ".Workato", StubWorkato)
+
+        # Mock that no profiles exist yet
+        mock_profile_manager.list_profiles.return_value = {}
+
+        # Mock user confirms using env vars
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            lambda message, **k: True,
+        )
+
+        # Mock profile name prompt (message is "Enter profile name")
+        prompt_responses = {"Enter profile name": "test-env-profile"}
+
+        async def fake_prompt(message: str, **kwargs: Any) -> str:
+            return prompt_responses.get(message, "default")
+
+        monkeypatch.setattr(ConfigManager.__module__ + ".click.prompt", fake_prompt)
+
+        # Capture outputs
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        # Execute method under test
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+        profile_name = await manager._setup_profile()
+
+        # Assertions
+        assert profile_name == "test-env-profile"
+
+        # Verify env vars were detected and shown to user
+        assert any(
+            "✓ Found WORKATO_API_TOKEN in environment" in output for output in outputs
+        )
+        assert any(
+            "✓ Found WORKATO_HOST in environment" in output for output in outputs
+        )
+
+        # Verify profile was created with env var credentials
+        mock_profile_manager.set_profile.assert_called_once()
+        call_args = mock_profile_manager.set_profile.call_args
+        created_profile_name, profile_data, token = call_args[0]
+
+        assert created_profile_name == "test-env-profile"
+        assert token == "env-token-123"
+        assert profile_data.region == "us"
+        assert profile_data.region_url == "https://www.workato.com"
+
+        # Verify profile was set as current
+        mock_profile_manager.set_current_profile.assert_called_once_with(
+            "test-env-profile"
+        )
+
+    @pytest.mark.asyncio
+    async def test_setup_profile_with_env_vars_user_declines(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """When env vars detected but user declines, should follow normal flow."""
+        # Setup environment variables
+        monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-decline")
+        monkeypatch.setenv("WORKATO_HOST", "https://www.workato.com")
+
+        # Setup stubs and mocks
+        monkeypatch.setattr(ConfigManager.__module__ + ".Workato", StubWorkato)
+
+        # Mock that profiles exist
+        mock_profile_manager.list_profiles.return_value = {
+            "default": ProfileData(
+                region="us",
+                region_url="https://www.workato.com",
+                workspace_id=1,
+            )
+        }
+
+        # Mock user DECLINES using env vars
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            lambda message, **k: False,
+        )
+
+        # Mock inquirer.prompt for profile selection (normal flow)
+        def fake_inquirer_prompt(questions: list[Any]) -> dict[str, str]:
+            # User selects existing profile in normal flow
+            return {"profile_choice": "default"}
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            fake_inquirer_prompt,
+        )
+
+        # Capture outputs
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        # Execute method under test
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+        profile_name = await manager._setup_profile()
+
+        # Assertions
+        assert profile_name == "default"
+
+        # Verify env vars were detected
+        assert any(
+            "✓ Found WORKATO_API_TOKEN in environment" in output for output in outputs
+        )
+
+        # Verify profile was NOT created with env vars (normal flow was followed)
+        # The set_profile should not have been called for env vars
+        # Instead, set_current_profile should be called for existing profile
+        mock_profile_manager.set_current_profile.assert_called_once_with("default")
+
+    @pytest.mark.asyncio
+    async def test_setup_profile_with_only_token_prompts_for_region(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """When only WORKATO_API_TOKEN set, should prompt for region selection."""
+        # Setup only token env var (no host)
+        monkeypatch.setenv("WORKATO_API_TOKEN", "token-only")
+
+        # Setup stubs and mocks
+        monkeypatch.setattr(ConfigManager.__module__ + ".Workato", StubWorkato)
+
+        # Mock that no profiles exist yet
+        mock_profile_manager.list_profiles.return_value = {}
+
+        # Mock user confirms using env vars
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            lambda message, **k: True,
+        )
+
+        # Mock profile name prompt (message is "Enter profile name")
+        prompt_responses = {"Enter profile name": "token-only-profile"}
+
+        async def fake_prompt(message: str, **kwargs: Any) -> str:
+            return prompt_responses.get(message, "default")
+
+        monkeypatch.setattr(ConfigManager.__module__ + ".click.prompt", fake_prompt)
+
+        # Mock region selection (since no host provided)
+        from workato_platform_cli.cli.utils.config.models import RegionInfo
+
+        region_selected = False
+
+        async def mock_select_region() -> RegionInfo:
+            nonlocal region_selected
+            region_selected = True
+            return RegionInfo(
+                region="us",
+                name="United States",
+                url="https://www.workato.com",
+            )
+
+        mock_profile_manager.select_region_interactive = mock_select_region
+
+        # Capture outputs
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        # Execute method under test
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+        profile_name = await manager._setup_profile()
+
+        # Assertions
+        assert profile_name == "token-only-profile"
+
+        # Verify only token was detected (not host)
+        assert any(
+            "✓ Found WORKATO_API_TOKEN in environment" in output for output in outputs
+        )
+        assert not any(
+            "✓ Found WORKATO_HOST in environment" in output for output in outputs
+        )
+
+        # Verify region was prompted
+        assert region_selected
+
+        # Verify profile was created
+        mock_profile_manager.set_profile.assert_called_once()
+        call_args = mock_profile_manager.set_profile.call_args
+        created_profile_name, profile_data, token = call_args[0]
+
+        assert created_profile_name == "token-only-profile"
+        assert token == "token-only"
+        assert profile_data.region == "us"
+
+    @pytest.mark.asyncio
+    async def test_setup_profile_with_only_host_prompts_for_token(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """When only WORKATO_HOST set, should prompt for token input."""
+        # Setup only host env var (no token)
+        monkeypatch.setenv("WORKATO_HOST", "https://app.eu.workato.com")
+
+        # Setup stubs and mocks
+        monkeypatch.setattr(ConfigManager.__module__ + ".Workato", StubWorkato)
+
+        # Mock that no profiles exist yet
+        mock_profile_manager.list_profiles.return_value = {}
+
+        # Mock user confirms using env vars
+        confirm_calls = []
+
+        def fake_confirm(message: str, **kwargs: Any) -> bool:
+            confirm_calls.append(message)
+            return True
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            fake_confirm,
+        )
+
+        # Mock prompts for both profile name and token
+        token_prompted = False
+        prompt_responses = {
+            "Enter profile name": "host-only-profile",
+            "Enter your Workato API token": "prompted-token-456",
+        }
+
+        async def fake_prompt(message: str, **kwargs: Any) -> str:
+            nonlocal token_prompted
+            if "API token" in message:
+                token_prompted = True
+            return prompt_responses.get(message, "default")
+
+        monkeypatch.setattr(ConfigManager.__module__ + ".click.prompt", fake_prompt)
+
+        # Capture outputs
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        # Execute method under test
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+        profile_name = await manager._setup_profile()
+
+        # Assertions
+        assert profile_name == "host-only-profile"
+
+        # Verify only host was detected (not token)
+        assert any(
+            "✓ Found WORKATO_HOST in environment (EU Data Center)" in output
+            for output in outputs
+        )
+        assert not any(
+            "✓ Found WORKATO_API_TOKEN in environment" in output for output in outputs
+        )
+
+        # Verify token was prompted
+        assert token_prompted
+
+        # Verify profile was created with prompted token and env host
+        mock_profile_manager.set_profile.assert_called_once()
+        call_args = mock_profile_manager.set_profile.call_args
+        created_profile_name, profile_data, token = call_args[0]
+
+        assert created_profile_name == "host-only-profile"
+        assert token == "prompted-token-456"
+        assert profile_data.region == "eu"
+        assert profile_data.region_url == "https://app.eu.workato.com"
+
+    @pytest.mark.asyncio
+    async def test_select_profile_name_overwrites_existing_with_confirmation(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """When existing profile selected and user confirms, should overwrite."""
+        # Setup environment variables
+        monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-overwrite")
+        monkeypatch.setenv("WORKATO_HOST", "https://www.workato.com")
+
+        # Setup stubs and mocks
+        monkeypatch.setattr(ConfigManager.__module__ + ".Workato", StubWorkato)
+
+        # Mock that profiles exist
+        mock_profile_manager.list_profiles.return_value = {
+            "dev": ProfileData(
+                region="us",
+                region_url="https://www.workato.com",
+                workspace_id=1,
+            ),
+            "prod": ProfileData(
+                region="us",
+                region_url="https://www.workato.com",
+                workspace_id=2,
+            ),
+        }
+
+        # Track confirm calls to verify both prompts
+        confirm_calls: list[str] = []
+
+        def fake_confirm(message: str, **kwargs: Any) -> bool:
+            confirm_calls.append(message)
+            return True  # User accepts both times
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            fake_confirm,
+        )
+
+        # Mock inquirer to select existing profile
+        def fake_inquirer_prompt(questions: list[Any]) -> dict[str, str]:
+            message = questions[0].message
+            if "Select a profile name" in message:
+                # Select existing profile "dev"
+                return {"profile_choice": "dev"}
+            return {}
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            fake_inquirer_prompt,
+        )
+
+        # Capture outputs
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        # Execute method under test
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+        profile_name = await manager._setup_profile()
+
+        # Assertions
+        assert profile_name == "dev"
+
+        # Verify both confirm prompts were called
+        assert len(confirm_calls) == 2
+        assert "Use environment variables for authentication?" in confirm_calls[0]
+        assert "Continue?" in confirm_calls[1]
+
+        # Verify overwrite warning was shown
+        assert any(
+            "⚠️" in output and "overwrite" in output.lower() for output in outputs
+        )
+
+        # Verify profile was created/overwritten
+        mock_profile_manager.set_profile.assert_called_once()
+        call_args = mock_profile_manager.set_profile.call_args
+        created_profile_name, profile_data, token = call_args[0]
+
+        assert created_profile_name == "dev"
+        assert token == "env-token-overwrite"
+
+    @pytest.mark.asyncio
+    async def test_select_profile_name_cancels_on_overwrite_decline(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """When existing profile selected but user declines overwrite, should exit."""
+        # Setup environment variables
+        monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-cancel")
+        monkeypatch.setenv("WORKATO_HOST", "https://www.workato.com")
+
+        # Setup stubs and mocks
+        monkeypatch.setattr(ConfigManager.__module__ + ".Workato", StubWorkato)
+
+        # Mock that profiles exist
+        mock_profile_manager.list_profiles.return_value = {
+            "dev": ProfileData(
+                region="us",
+                region_url="https://www.workato.com",
+                workspace_id=1,
+            ),
+            "prod": ProfileData(
+                region="us",
+                region_url="https://www.workato.com",
+                workspace_id=2,
+            ),
+        }
+
+        # Track confirm calls - accept env vars, but decline overwrite
+        confirm_calls: list[str] = []
+
+        def fake_confirm(message: str, **kwargs: Any) -> bool:
+            confirm_calls.append(message)
+            if "Use environment variables" in message:
+                return True  # Accept using env vars
+            elif "Continue?" in message:
+                return False  # Decline overwrite
+            return True
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.confirm",
+            fake_confirm,
+        )
+
+        # Mock inquirer to select existing profile
+        def fake_inquirer_prompt(questions: list[Any]) -> dict[str, str]:
+            message = questions[0].message
+            if "Select a profile name" in message:
+                # Select existing profile "dev"
+                return {"profile_choice": "dev"}
+            return {}
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            fake_inquirer_prompt,
+        )
+
+        # Capture outputs
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        # Execute method under test - should raise SystemExit
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+
+        with pytest.raises(SystemExit):
+            await manager._setup_profile()
+
+        # Verify both confirm prompts were called
+        assert len(confirm_calls) == 2
+        assert "Use environment variables for authentication?" in confirm_calls[0]
+        assert "Continue?" in confirm_calls[1]
+
+        # Verify overwrite warning was shown
+        assert any(
+            "⚠️" in output and "overwrite" in output.lower() for output in outputs
+        )
+
+        # Verify profile was NOT created (user cancelled)
+        mock_profile_manager.set_profile.assert_not_called()
+
     def test_init_with_explicit_config_dir(self, tmp_path: Path) -> None:
         """Test ConfigManager respects explicit config_dir."""
         config_dir = tmp_path / "explicit"
