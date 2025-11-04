@@ -76,12 +76,26 @@ async def init(
         env_token = os.environ.get("WORKATO_API_TOKEN")
         env_host = os.environ.get("WORKATO_HOST")
 
+        # Track which env vars are actually used for visibility
+        used_env_token = False
+        used_env_host = False
+
         # Use env vars as fallback if CLI flags not provided
         if not api_token and env_token:
             api_token = env_token
+            used_env_token = True
         if not region and not api_url and env_host:
             api_url = env_host
+            used_env_host = True
             # Will detect region in _setup_non_interactive
+
+        # Show which env vars are being used (only in non-JSON mode)
+        if output_mode != "json" and (used_env_token or used_env_host):
+            if used_env_token:
+                click.echo("Using WORKATO_API_TOKEN from environment")
+            if used_env_host:
+                click.echo("Using WORKATO_HOST from environment")
+            click.echo()
 
         # Validate required parameters for non-interactive mode
         error_msg = None

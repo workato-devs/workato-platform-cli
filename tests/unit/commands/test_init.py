@@ -949,3 +949,333 @@ async def test_init_only_workatoenv_file_ignored(
 
         # Should proceed without error
         mock_pull.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_init_non_interactive_with_env_vars_regular_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test non-interactive mode shows messages when using env vars (regular mode)."""
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+
+    # Set environment variables
+    monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-123")
+    monkeypatch.setenv("WORKATO_HOST", "https://www.workato.com")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("env-token-123", "https://www.workato.com"),
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        # Capture output
+        output = StringIO()
+        monkeypatch.setattr(
+            init_module.click, "echo", lambda msg="": output.write(str(msg) + "\n")
+        )
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,  # Not provided, should use env var
+            api_url=None,  # Not provided, should use env var
+            project_name="test-project",
+            project_id=None,
+            non_interactive=True,
+            output_mode="table",
+        )
+
+        output_text = output.getvalue()
+        # Verify messages about env var usage
+        assert "Using WORKATO_API_TOKEN from environment" in output_text
+        assert "Using WORKATO_HOST from environment" in output_text
+        mock_pull.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_init_non_interactive_with_env_vars_json_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test non-interactive mode with env vars in JSON output."""
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+
+    # Set environment variables
+    monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-123")
+    monkeypatch.setenv("WORKATO_HOST", "https://www.workato.com")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(
+                profile="test-profile",
+                project_name="test-project",
+                project_id=123,
+                folder_id=456,
+            ),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("env-token-123", "https://www.workato.com"),
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "get_profile",
+            return_value=Mock(
+                region="us",
+                region_name="US",
+                region_url="https://www.workato.com",
+                workspace_id=789,
+            ),
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "get_current_profile_name",
+            return_value="test-profile",
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        output = StringIO()
+        monkeypatch.setattr(
+            init_module.click, "echo", lambda msg: output.write(str(msg))
+        )
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,  # Not provided, should use env var
+            api_url=None,  # Not provided, should use env var
+            project_name="test-project",
+            project_id=None,
+            non_interactive=True,
+            output_mode="json",
+        )
+
+        result = json.loads(output.getvalue())
+        assert result["status"] == "success"
+        assert "Using WORKATO_API_TOKEN" not in output.getvalue()
+
+
+@pytest.mark.asyncio
+async def test_init_non_interactive_cli_flags_take_precedence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that CLI flags take precedence over env vars with no env var messages."""
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+
+    # Set environment variables
+    monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-123")
+    monkeypatch.setenv("WORKATO_HOST", "https://www.workato.com")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(
+                profile="test-profile",
+                project_name="test-project",
+                project_id=123,
+                folder_id=456,
+            ),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("cli-token", "https://api.workato.com"),
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "get_profile",
+            return_value=Mock(
+                region="us",
+                region_name="US",
+                region_url="https://api.workato.com",
+                workspace_id=789,
+            ),
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "get_current_profile_name",
+            return_value="test-profile",
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        output = StringIO()
+        monkeypatch.setattr(
+            init_module.click, "echo", lambda msg="": output.write(str(msg) + "\n")
+        )
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region="us",
+            api_token="cli-token",  # CLI flag provided
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=True,
+            output_mode="table",
+        )
+
+        output_text = output.getvalue()
+        # Should NOT show env var messages since CLI flags were provided
+        assert "Using WORKATO_API_TOKEN from environment" not in output_text
+        assert "Using WORKATO_HOST from environment" not in output_text
+        mock_pull.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_init_non_interactive_partial_env_vars_json(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test JSON mode with partial env vars (token from env, region from CLI)."""
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+
+    # Only set WORKATO_API_TOKEN, not WORKATO_HOST
+    monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-123")
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(
+                profile="test-profile",
+                project_name="test-project",
+                project_id=123,
+                folder_id=456,
+            ),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("env-token-123", "https://www.workato.com"),
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "get_profile",
+            return_value=Mock(
+                region="us",
+                region_name="US",
+                region_url="https://www.workato.com",
+                workspace_id=789,
+            ),
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "get_current_profile_name",
+            return_value="test-profile",
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        output = StringIO()
+        monkeypatch.setattr(
+            init_module.click, "echo", lambda msg: output.write(str(msg))
+        )
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region="us",  # CLI flag provided for region
+            api_token=None,  # Not provided, should use env var
+            api_url=None,
+            project_name="test-project",
+            project_id=None,
+            non_interactive=True,
+            output_mode="json",
+        )
+
+        result = json.loads(output.getvalue())
+        assert result["status"] == "success"
+        # Verify JSON output is valid and contains expected profile data
+        assert "profile" in result
+        assert result["profile"]["region"] == "us"
