@@ -1,6 +1,7 @@
 """Main configuration manager with simplified workspace rules."""
 
 import json
+import os
 import sys
 
 from pathlib import Path
@@ -127,19 +128,32 @@ class ConfigManager:
         profile = self.profile_manager.get_profile(current_profile_name)
         if profile and profile.region:
             region = profile.region
-        api_token, api_url = self.profile_manager.resolve_environment_variables(
+        env_token, env_url = self.profile_manager.resolve_environment_variables(
             project_profile_override=current_profile_name
         )
+
+        # Use provided values or fall back to env vars
+        if not api_token:
+            api_token = env_token
+        if not api_url:
+            api_url = env_url
+
+        # Detect region from api_url if region not provided
+        if not region and api_url:
+            region_info = self._match_host_to_region(api_url)
+            region = region_info.region
 
         # Map region to URL
         if region == "custom":
             if not api_url:
                 raise click.ClickException("--api-url is required when region=custom")
             region_info = RegionInfo(region="custom", name="Custom URL", url=api_url)
-        else:
+        elif region:
             if region not in AVAILABLE_REGIONS:
                 raise click.ClickException(f"Invalid region: {region}")
             region_info = AVAILABLE_REGIONS[region]
+        else:
+            raise click.ClickException("Region could not be determined")
 
         # Test authentication and get workspace info
         api_config = Configuration(
@@ -251,8 +265,56 @@ class ConfigManager:
         """Setup or select profile"""
         click.echo("📋 Step 1: Configure profile")
 
-        existing_profiles = self.profile_manager.list_profiles()
+        # Check for environment variables FIRST
+        env_token = os.environ.get("WORKATO_API_TOKEN")
+        env_host = os.environ.get("WORKATO_HOST")
+
         profile_name: str | None = None
+
+        if env_token or env_host:
+            # Show what was detected and what's missing
+            if env_token:
+                click.echo("✓ Found WORKATO_API_TOKEN in environment")
+            else:
+                click.echo("✗ WORKATO_API_TOKEN not found - will prompt for token")
+
+            if env_host:
+                region_info = self._match_host_to_region(env_host)
+                click.echo(f"✓ Found WORKATO_HOST in environment ({region_info.name})")
+            else:
+                click.echo("✗ WORKATO_HOST not found - will prompt for region")
+
+            # Ask user if they want to use env vars
+            if env_token and env_host:
+                prompt_msg = "Use environment variables for authentication?"
+            elif env_token:
+                prompt_msg = "Use WORKATO_API_TOKEN from environment?"
+            else:  # only env_host
+                prompt_msg = "Use WORKATO_HOST from environment?"
+
+            use_env_vars = click.confirm(
+                prompt_msg,
+                default=True,
+            )
+
+            if use_env_vars:
+                # Just select/create profile NAME (credentials from env vars)
+                click.echo()
+                profile_name = await self._select_profile_name_for_env_vars()
+
+                # Create profile with env var credentials
+                await self._create_profile_with_env_vars(
+                    profile_name, env_token, env_host
+                )
+
+                # Set as current profile
+                self.profile_manager.set_current_profile(profile_name)
+                click.echo(f"✅ Profile: {profile_name}")
+
+                return profile_name
+
+        # Normal flow - no env vars or user declined
+        existing_profiles = self.profile_manager.list_profiles()
 
         if existing_profiles:
             choices = list(existing_profiles.keys()) + ["Create new profile"]
@@ -294,48 +356,129 @@ class ConfigManager:
 
         return profile_name
 
+    def _match_host_to_region(self, host: str) -> RegionInfo:
+        """Match host URL to known region or return custom"""
+        for region_info in AVAILABLE_REGIONS.values():
+            if region_info.url and region_info.url in host:
+                return region_info
+        # Return custom region with provided host
+        return RegionInfo(region="custom", name="Custom URL", url=host)
+
+    async def _select_profile_name_for_env_vars(self) -> str:
+        """Let user choose profile name when using env var credentials"""
+        existing_profiles = self.profile_manager.list_profiles()
+
+        if existing_profiles:
+            choices = list(existing_profiles.keys()) + ["Create new profile"]
+            questions = [
+                inquirer.List(
+                    "profile_choice",
+                    message="Select a profile name to use",
+                    choices=choices,
+                )
+            ]
+
+            answers: dict[str, str] = inquirer.prompt(questions)
+            if not answers:
+                click.echo("❌ No profile selected")
+                sys.exit(1)
+
+            selected_choice: str = answers["profile_choice"]
+            if selected_choice == "Create new profile":
+                new_profile_input: str = await click.prompt(
+                    "Enter new profile name", type=str
+                )
+                profile_name = new_profile_input.strip()
+                if not profile_name:
+                    click.echo("❌ Profile name cannot be empty")
+                    sys.exit(1)
+                return profile_name
+            else:
+                # Warn user about overwriting existing profile
+                click.echo(
+                    f"\n⚠️  This will overwrite the existing profile "
+                    f"'{selected_choice}' with the environment variables."
+                )
+                if not click.confirm("Continue?", default=True):
+                    click.echo("❌ Cancelled")
+                    sys.exit(1)
+                return selected_choice
+        else:
+            default_profile_input: str = await click.prompt(
+                "Enter profile name", default="default", type=str
+            )
+            profile_name = default_profile_input.strip()
+            if not profile_name:
+                click.echo("❌ Profile name cannot be empty")
+                sys.exit(1)
+            return profile_name
+
+    async def _create_profile_with_env_vars(
+        self,
+        profile_name: str,
+        env_token: str | None,
+        env_host: str | None,
+    ) -> None:
+        """Create profile using environment variable credentials"""
+        # Detect region from env_host
+        selected_region: RegionInfo
+        if env_host:
+            selected_region = self._match_host_to_region(env_host)
+        else:
+            # No env_host, need to ask for region
+            click.echo()
+            click.echo("📍 Select your Workato region")
+            region_result = await self.profile_manager.select_region_interactive()
+
+            if not region_result:
+                click.echo("❌ Setup cancelled")
+                sys.exit(1)
+
+            selected_region = region_result
+
+        # Get token from env or prompt
+        if env_token:
+            token = env_token
+        else:
+            click.echo()
+            token = await click.prompt("Enter your Workato API token", hide_input=True)
+            if not token.strip():
+                click.echo("❌ No token provided")
+                sys.exit(1)
+
+        # Test authentication and get workspace info
+        click.echo("🔄 Testing authentication with environment variables...")
+        api_config = Configuration(
+            access_token=token, host=selected_region.url, ssl_ca_cert=certifi.where()
+        )
+
+        async with Workato(configuration=api_config) as workato_api_client:
+            user_info = await workato_api_client.users_api.get_workspace_details()
+
+        # Create and save profile
+        if not selected_region.url:
+            raise click.ClickException("Region URL is required")
+        profile_data = ProfileData(
+            region=selected_region.region,
+            region_url=selected_region.url,
+            workspace_id=user_info.id,
+        )
+
+        self.profile_manager.set_profile(profile_name, profile_data, token)
+        click.echo(f"✅ Authenticated as: {user_info.name}")
+        click.echo("✓ Using environment variables for authentication")
+
     async def _create_new_profile(self, profile_name: str) -> None:
         """Create a new profile interactively"""
-        # AVAILABLE_REGIONS and RegionInfo already imported at top
-
-        # Region selection
+        # Select region
         click.echo("📍 Select your Workato region")
-        regions = list(AVAILABLE_REGIONS.values())
-        choices = []
+        region_result = await self.profile_manager.select_region_interactive()
 
-        for region in regions:
-            if region.region == "custom":
-                choice_text = "Custom URL"
-            else:
-                choice_text = f"{region.name} ({region.url})"
-            choices.append(choice_text)
-
-        questions = [
-            inquirer.List(
-                "region",
-                message="Select your Workato region",
-                choices=choices,
-            ),
-        ]
-
-        answers = inquirer.prompt(questions)
-        if not answers:
+        if not region_result:
             click.echo("❌ Setup cancelled")
             sys.exit(1)
 
-        selected_index = choices.index(answers["region"])
-        selected_region = regions[selected_index]
-
-        # Handle custom URL
-        if selected_region.region == "custom":
-            custom_url = await click.prompt(
-                "Enter your custom Workato base URL",
-                type=str,
-                default="https://www.workato.com",
-            )
-            selected_region = RegionInfo(
-                region="custom", name="Custom URL", url=custom_url
-            )
+        selected_region = region_result
 
         # Get API token
         click.echo("🔐 Enter your API token")
