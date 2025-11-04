@@ -59,6 +59,12 @@ def isolate_tests(monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path) -> Non
     # Ensure we don't make real API calls
     monkeypatch.setenv("WORKATO_TEST_MODE", "1")
 
+    # Clear environment variables that tests expect to control explicitly
+    # This prevents shell environment from affecting test behavior
+    monkeypatch.delenv("WORKATO_API_TOKEN", raising=False)
+    monkeypatch.delenv("WORKATO_HOST", raising=False)
+    monkeypatch.delenv("WORKATO_PROFILE", raising=False)
+
     # Note: Keyring mocking is handled by individual test fixtures when needed
 
     # Mock Path.home() to use temp directory for ProfileManager
