@@ -761,6 +761,12 @@ class TestConfigManager:
             "✓ Found WORKATO_HOST in environment" in output for output in outputs
         )
 
+        # Verify missing host message was shown
+        assert any(
+            "✗ WORKATO_HOST not found - will prompt for region" in output
+            for output in outputs
+        )
+
         # Verify region was prompted
         assert region_selected
 
@@ -839,6 +845,12 @@ class TestConfigManager:
         )
         assert not any(
             "✓ Found WORKATO_API_TOKEN in environment" in output for output in outputs
+        )
+
+        # Verify missing token message was shown
+        assert any(
+            "✗ WORKATO_API_TOKEN not found - will prompt for token" in output
+            for output in outputs
         )
 
         # Verify token was prompted

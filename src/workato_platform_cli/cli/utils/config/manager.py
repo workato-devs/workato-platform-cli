@@ -272,16 +272,28 @@ class ConfigManager:
         profile_name: str | None = None
 
         if env_token or env_host:
-            # Show what was detected
+            # Show what was detected and what's missing
             if env_token:
                 click.echo("✓ Found WORKATO_API_TOKEN in environment")
+            else:
+                click.echo("✗ WORKATO_API_TOKEN not found - will prompt for token")
+
             if env_host:
                 region_info = self._match_host_to_region(env_host)
                 click.echo(f"✓ Found WORKATO_HOST in environment ({region_info.name})")
+            else:
+                click.echo("✗ WORKATO_HOST not found - will prompt for region")
 
             # Ask user if they want to use env vars
+            if env_token and env_host:
+                prompt_msg = "Use environment variables for authentication?"
+            elif env_token:
+                prompt_msg = "Use WORKATO_API_TOKEN from environment?"
+            else:  # only env_host
+                prompt_msg = "Use WORKATO_HOST from environment?"
+
             use_env_vars = click.confirm(
-                "Use environment variables for authentication?",
+                prompt_msg,
                 default=True,
             )
 
@@ -361,9 +373,7 @@ class ConfigManager:
             questions = [
                 inquirer.List(
                     "profile_choice",
-                    message=(
-                        "Select a profile name to use (credentials from environment)"
-                    ),
+                    message="Select a profile name to use",
                     choices=choices,
                 )
             ]
@@ -387,7 +397,7 @@ class ConfigManager:
                 # Warn user about overwriting existing profile
                 click.echo(
                     f"\n⚠️  This will overwrite the existing profile "
-                    f"'{selected_choice}' with environment variable credentials."
+                    f"'{selected_choice}' with the environment variables."
                 )
                 if not click.confirm("Continue?", default=True):
                     click.echo("❌ Cancelled")
@@ -416,6 +426,7 @@ class ConfigManager:
             selected_region = self._match_host_to_region(env_host)
         else:
             # No env_host, need to ask for region
+            click.echo()
             click.echo("📍 Select your Workato region")
             region_result = await self.profile_manager.select_region_interactive()
 
@@ -429,7 +440,7 @@ class ConfigManager:
         if env_token:
             token = env_token
         else:
-            click.echo("🔐 Enter your API token")
+            click.echo()
             token = await click.prompt("Enter your Workato API token", hide_input=True)
             if not token.strip():
                 click.echo("❌ No token provided")
