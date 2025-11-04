@@ -996,57 +996,52 @@ async def test_init_non_interactive_profile_missing_credentials_json(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test non-interactive mode with missing credentials in JSON output mode."""
-    mock_config_manager = Mock()
+    # Mock ConfigManager.initialize to raise ClickException
+    # (simulating missing credentials)
+    mock_initialize = AsyncMock(
+        side_effect=click.ClickException(
+            "Profile 'test-profile' exists but credentials not found in keychain. "
+            "Please run 'workato init' interactively or set WORKATO_API_TOKEN "
+            "environment variable."
+        )
+    )
+    monkeypatch.setattr(
+        init_module.ConfigManager,
+        "initialize",
+        mock_initialize,
+    )
 
-    with (
-        patch.object(
-            mock_config_manager,
-            "load_config",
-            return_value=Mock(profile="test-profile"),
-        ),
-        patch.object(
-            mock_config_manager,
-            "get_project_directory",
-            return_value=None,
-        ),
-        patch.object(
-            mock_config_manager,
-            "validate_environment_config",
-            return_value=(
-                False,
-                ["API token (WORKATO_API_TOKEN or profile credentials)"],
-            ),
-        ),
-    ):
-        mock_initialize = AsyncMock(return_value=mock_config_manager)
-        monkeypatch.setattr(
-            init_module.ConfigManager,
-            "initialize",
-            mock_initialize,
+    output = StringIO()
+    monkeypatch.setattr(init_module.click, "echo", lambda msg: output.write(msg))
+
+    # Mock get_current_context to return output_mode
+    mock_ctx = Mock()
+    mock_ctx.params = {"output_mode": "json"}
+    monkeypatch.setattr(
+        init_module.click,
+        "get_current_context",
+        lambda silent=True: mock_ctx,
+    )
+
+    assert init_module.init.callback
+    with pytest.raises(SystemExit) as exc_info:
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name=None,
+            project_id=123,
+            non_interactive=True,
+            output_mode="json",
         )
 
-        output = StringIO()
-        monkeypatch.setattr(init_module.click, "echo", lambda msg: output.write(msg))
-
-        assert init_module.init.callback
-        with pytest.raises(SystemExit) as exc_info:
-            await init_module.init.callback(
-                profile="test-profile",
-                region=None,
-                api_token=None,
-                api_url=None,
-                project_name=None,
-                project_id=123,
-                non_interactive=True,
-                output_mode="json",
-            )
-
-        assert exc_info.value.code == 1
-        result = json.loads(output.getvalue())
-        assert result["status"] == "error"
-        assert "credentials not found" in result["error"]
-        assert "test-profile" in result["error"]
-        assert result["error_code"] == "MISSING_CREDENTIALS"
+    assert exc_info.value.code == 1
+    result = json.loads(output.getvalue())
+    assert result["status"] == "error"
+    assert "credentials not found" in result["error"]
+    assert "test-profile" in result["error"]
+    assert result["error_code"] == "CLI_ERROR"
 
 
 @pytest.mark.asyncio
@@ -1054,49 +1049,51 @@ async def test_init_non_interactive_profile_missing_credentials_table(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test non-interactive mode with missing credentials in table output mode."""
-    mock_config_manager = Mock()
+    # Mock ConfigManager.initialize to raise ClickException
+    # (simulating missing credentials)
+    mock_initialize = AsyncMock(
+        side_effect=click.ClickException(
+            "Profile 'test-profile' exists but credentials not found in keychain. "
+            "Please run 'workato init' interactively or set WORKATO_API_TOKEN "
+            "environment variable."
+        )
+    )
+    monkeypatch.setattr(
+        init_module.ConfigManager,
+        "initialize",
+        mock_initialize,
+    )
 
-    with (
-        patch.object(
-            mock_config_manager,
-            "load_config",
-            return_value=Mock(profile="test-profile"),
-        ),
-        patch.object(
-            mock_config_manager,
-            "get_project_directory",
-            return_value=None,
-        ),
-        patch.object(
-            mock_config_manager,
-            "validate_environment_config",
-            return_value=(
-                False,
-                ["API token (WORKATO_API_TOKEN or profile credentials)"],
-            ),
-        ),
-    ):
-        mock_initialize = AsyncMock(return_value=mock_config_manager)
-        monkeypatch.setattr(
-            init_module.ConfigManager,
-            "initialize",
-            mock_initialize,
+    output = StringIO()
+    monkeypatch.setattr(init_module.click, "echo", lambda msg: output.write(msg))
+
+    # Mock get_current_context to return output_mode
+    mock_ctx = Mock()
+    mock_ctx.params = {"output_mode": "table"}
+    monkeypatch.setattr(
+        init_module.click,
+        "get_current_context",
+        lambda silent=True: mock_ctx,
+    )
+
+    assert init_module.init.callback
+    with pytest.raises(SystemExit) as exc_info:
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name=None,
+            project_id=123,
+            non_interactive=True,
+            output_mode="table",
         )
 
-        monkeypatch.setattr(init_module.click, "echo", lambda *args, **kwargs: None)
-
-        assert init_module.init.callback
-        with pytest.raises(click.Abort):
-            await init_module.init.callback(
-                profile="test-profile",
-                region=None,
-                api_token=None,
-                api_url=None,
-                project_name=None,
-                project_id=123,
-                non_interactive=True,
-                output_mode="table",
-            )
+    assert exc_info.value.code == 1
+    # Verify error message was shown
+    output_text = output.getvalue()
+    assert "credentials not found" in output_text
+    assert "test-profile" in output_text
 
 
 @pytest.mark.asyncio
