@@ -1507,7 +1507,7 @@ class TestConfigManager:
 
         # Should show credential warning
         assert any("Credentials not found" in line for line in outputs)
-        assert any("Please re-enter your API token" in line for line in outputs)
+        assert any("Enter your API token" in line for line in outputs)
 
         # Should call set_profile with new credentials
         mock_profile_manager.set_profile.assert_called()
