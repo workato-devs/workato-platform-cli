@@ -411,47 +411,19 @@ class ConfigManager:
     ) -> None:
         """Create profile using environment variable credentials"""
         # Detect region from env_host
+        selected_region: RegionInfo
         if env_host:
             selected_region = self._match_host_to_region(env_host)
         else:
             # No env_host, need to ask for region
             click.echo("📍 Select your Workato region")
-            regions = list(AVAILABLE_REGIONS.values())
-            choices = []
+            region_result = await self.profile_manager.select_region_interactive()
 
-            for region in regions:
-                if region.region == "custom":
-                    choice_text = "Custom URL"
-                else:
-                    choice_text = f"{region.name} ({region.url})"
-                choices.append(choice_text)
-
-            questions = [
-                inquirer.List(
-                    "region",
-                    message="Select your Workato region",
-                    choices=choices,
-                ),
-            ]
-
-            answers = inquirer.prompt(questions)
-            if not answers:
+            if not region_result:
                 click.echo("❌ Setup cancelled")
                 sys.exit(1)
 
-            selected_index = choices.index(answers["region"])
-            selected_region = regions[selected_index]
-
-            # Handle custom URL
-            if selected_region.region == "custom":
-                custom_url = await click.prompt(
-                    "Enter your custom Workato base URL",
-                    type=str,
-                    default="https://www.workato.com",
-                )
-                selected_region = RegionInfo(
-                    region="custom", name="Custom URL", url=custom_url
-                )
+            selected_region = region_result
 
         # Get token from env or prompt
         if env_token:
@@ -489,42 +461,13 @@ class ConfigManager:
         """Create a new profile interactively"""
         # Select region
         click.echo("📍 Select your Workato region")
-        regions = list(AVAILABLE_REGIONS.values())
-        choices = []
+        region_result = await self.profile_manager.select_region_interactive()
 
-        for region in regions:
-            if region.region == "custom":
-                choice_text = "Custom URL"
-            else:
-                choice_text = f"{region.name} ({region.url})"
-            choices.append(choice_text)
-
-        questions = [
-            inquirer.List(
-                "region",
-                message="Select your Workato region",
-                choices=choices,
-            ),
-        ]
-
-        answers = inquirer.prompt(questions)
-        if not answers:
+        if not region_result:
             click.echo("❌ Setup cancelled")
             sys.exit(1)
 
-        selected_index = choices.index(answers["region"])
-        selected_region = regions[selected_index]
-
-        # Handle custom URL
-        if selected_region.region == "custom":
-            custom_url = await click.prompt(
-                "Enter your custom Workato base URL",
-                type=str,
-                default="https://www.workato.com",
-            )
-            selected_region = RegionInfo(
-                region="custom", name="Custom URL", url=custom_url
-            )
+        selected_region = region_result
 
         # Get API token
         click.echo("🔐 Enter your API token")

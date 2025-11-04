@@ -1517,8 +1517,19 @@ class TestConfigManager:
             StubWorkato,
         )
 
+        # Mock select_region_interactive to return a custom region
+        from workato_platform_cli.cli.utils.config.models import RegionInfo
+
+        async def mock_select_region() -> RegionInfo:
+            return RegionInfo(
+                region="custom",
+                name="Custom URL",
+                url="https://custom.workato.test",
+            )
+
+        mock_profile_manager.select_region_interactive = mock_select_region
+
         prompt_answers = {
-            "Enter your custom Workato base URL": ["https://custom.workato.test"],
             "Enter your Workato API token": ["custom-token"],
         }
 
@@ -1530,15 +1541,6 @@ class TestConfigManager:
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
             fake_prompt,
-        )
-
-        def custom_region_prompt(questions: list[Any]) -> dict[str, str]:
-            assert questions[0].message == "Select your Workato region"
-            return {"region": "Custom URL"}
-
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".inquirer.prompt",
-            custom_region_prompt,
         )
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
@@ -1566,10 +1568,11 @@ class TestConfigManager:
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         manager.profile_manager = mock_profile_manager
 
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".inquirer.prompt",
-            lambda _questions: None,
-        )
+        # Mock select_region_interactive to return None (cancelled)
+        async def mock_select_region_cancelled() -> None:
+            return None
+
+        mock_profile_manager.select_region_interactive = mock_select_region_cancelled
 
         with pytest.raises(SystemExit):
             await manager._create_new_profile("dev")
