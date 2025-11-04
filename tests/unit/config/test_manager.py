@@ -1496,7 +1496,7 @@ class TestConfigManager:
             fake_prompt,
         )
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="API token cannot be empty"):
             await manager._create_new_profile("dev")
 
     @pytest.mark.asyncio
@@ -1536,16 +1536,14 @@ class TestConfigManager:
         region_info = RegionInfo(
             region="us", name="US Data Center", url="https://www.workato.com"
         )
-        profile_data = await manager._prompt_and_validate_credentials(
+        profile_data, token = await manager._prompt_and_validate_credentials(
             "test-profile", region_info
         )
 
         assert profile_data.region == "us"
         assert profile_data.region_url == "https://www.workato.com"
         assert profile_data.workspace_id == 101
-        mock_profile_manager._store_token_in_keyring.assert_called_with(
-            "test-profile", "valid-token-123"
-        )
+        assert token == "valid-token-123"
         assert any("Authenticated as" in msg for msg in outputs)
 
     @pytest.mark.asyncio
@@ -1652,14 +1650,10 @@ class TestConfigManager:
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
     ) -> None:
-        """Test credential validation with keyring disabled."""
+        """Test credential validation returns correct data."""
         from workato_platform_cli.cli.utils.config.models import RegionInfo
 
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-
-        # Mock keyring as disabled
-        mock_profile_manager._store_token_in_keyring.return_value = False
-        mock_profile_manager._is_keyring_enabled.return_value = False
         manager.profile_manager = mock_profile_manager
 
         monkeypatch.setattr(
@@ -1686,13 +1680,13 @@ class TestConfigManager:
         region_info = RegionInfo(
             region="us", name="US Data Center", url="https://www.workato.com"
         )
-        profile_data = await manager._prompt_and_validate_credentials(
+        profile_data, token = await manager._prompt_and_validate_credentials(
             "test-profile", region_info
         )
 
         assert profile_data.region == "us"
-        assert any("Keyring is disabled" in msg for msg in outputs)
-        assert any("WORKATO_API_TOKEN" in msg for msg in outputs)
+        assert token == "valid-token-123"
+        assert any("Authenticated as" in msg for msg in outputs)
 
     @pytest.mark.asyncio
     async def test_setup_profile_existing_create_new_success(
