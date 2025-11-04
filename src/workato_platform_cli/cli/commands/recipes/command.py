@@ -276,11 +276,11 @@ async def validate(
 
 
 @recipes.command()
-@click.option("--id", "recipe_id", help="Recipe ID to start")
+@click.option("--id", "recipe_id", type=int, help="Recipe ID to start")
 @click.option(
     "--all", "start_all", is_flag=True, help="Start all recipes in current project"
 )
-@click.option("--folder-id", help="Start all recipes in specified folder")
+@click.option("--folder-id", type=int, help="Start all recipes in specified folder")
 @handle_cli_exceptions
 @handle_api_exceptions
 async def start(
@@ -315,11 +315,11 @@ async def start(
 
 
 @recipes.command()
-@click.option("--id", "recipe_id", help="Recipe ID to stop")
+@click.option("--id", "recipe_id", type=int, help="Recipe ID to stop")
 @click.option(
     "--all", "stop_all", is_flag=True, help="Stop all recipes in current project"
 )
-@click.option("--folder-id", help="Stop all recipes in specified folder")
+@click.option("--folder-id", type=int, help="Stop all recipes in specified folder")
 async def stop(
     recipe_id: int,
     stop_all: bool,

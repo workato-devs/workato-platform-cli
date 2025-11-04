@@ -369,7 +369,9 @@ async def create_oauth(
 
 
 @connections.command()
-@click.option("--connection-id", required=True, help="ID of the connection to update")
+@click.option(
+    "--connection-id", required=True, type=int, help="ID of the connection to update"
+)
 @click.option("--name", help="New name for the connection")
 @click.option(
     "--parent-id", help="ID of the parent connection (must be same provider type)"
@@ -535,7 +537,7 @@ async def update_connection(
 
 @connections.command(name="list")
 @click.option("--folder-id", type=int, help="Filter by folder ID")
-@click.option("--parent-id", help="Filter by parent connection ID")
+@click.option("--parent-id", type=int, help="Filter by parent connection ID")
 @click.option("--external-id", help="Filter by external ID")
 @click.option(
     "--include-runtime", is_flag=True, help="Include runtime user connections"
@@ -864,7 +866,7 @@ def show_connection_statistics(connections: list[Connection]) -> None:
 
 
 @connections.command(name="pick-list")
-@click.option("--id", required=True, help="Connection ID")
+@click.option("--id", required=True, type=int, help="Connection ID")
 @click.option("--pick-list-name", required=True, help="Name of the pick list")
 @click.option(
     "--params",
