@@ -131,6 +131,14 @@ class ConfigManager:
             project_profile_override=current_profile_name
         )
 
+        # Validate credentials are available before attempting authentication
+        if not api_token:
+            raise click.ClickException(
+                f"Profile '{current_profile_name}' exists but credentials not found "
+                "in keychain. Please run 'workato init' interactively or set "
+                "WORKATO_API_TOKEN environment variable."
+            )
+
         # Map region to URL
         if region == "custom":
             if not api_url:
