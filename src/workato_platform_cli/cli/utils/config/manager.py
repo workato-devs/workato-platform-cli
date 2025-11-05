@@ -1,5 +1,6 @@
 """Main configuration manager with simplified workspace rules."""
 
+import asyncio
 import json
 import os
 import sys
@@ -14,6 +15,7 @@ import inquirer
 
 from workato_platform_cli import Workato
 from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
+from workato_platform_cli.cli.utils.token_input import get_token_with_smart_paste
 from workato_platform_cli.client.workato_api.configuration import Configuration
 from workato_platform_cli.client.workato_api.models.project import Project
 
@@ -441,7 +443,11 @@ class ConfigManager:
             token = env_token
         else:
             click.echo()
-            token = await click.prompt("Enter your Workato API token", hide_input=True)
+            token = await asyncio.to_thread(
+                get_token_with_smart_paste,
+                prompt_text="Workato API token",
+                paste_threshold=50,
+            )
             if not token.strip():
                 click.echo("❌ No token provided")
                 sys.exit(1)
@@ -482,7 +488,11 @@ class ConfigManager:
 
         # Get API token
         click.echo("🔐 Enter your API token")
-        token = await click.prompt("Enter your Workato API token", hide_input=True)
+        token = await asyncio.to_thread(
+            get_token_with_smart_paste,
+            prompt_text="Workato API token",
+            paste_threshold=50,
+        )
         if not token.strip():
             click.echo("❌ No token provided")
             sys.exit(1)

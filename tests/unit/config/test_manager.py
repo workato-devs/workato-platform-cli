@@ -808,20 +808,27 @@ class TestConfigManager:
             fake_confirm,
         )
 
-        # Mock prompts for both profile name and token
+        # Mock prompts for profile name
         token_prompted = False
         prompt_responses = {
             "Enter profile name": "host-only-profile",
-            "Enter your Workato API token": "prompted-token-456",
         }
 
         async def fake_prompt(message: str, **kwargs: Any) -> str:
-            nonlocal token_prompted
-            if "API token" in message:
-                token_prompted = True
             return prompt_responses.get(message, "default")
 
         monkeypatch.setattr(ConfigManager.__module__ + ".click.prompt", fake_prompt)
+
+        # Mock get_token_with_smart_paste
+        def fake_get_token(**kwargs: Any) -> str:
+            nonlocal token_prompted
+            token_prompted = True
+            return "prompted-token-456"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".get_token_with_smart_paste",
+            fake_get_token,
+        )
 
         # Capture outputs
         outputs: list[str] = []
@@ -1807,7 +1814,6 @@ class TestConfigManager:
 
         prompt_answers = {
             "Enter profile name": ["dev"],
-            "Enter your Workato API token": ["token-123"],
             "Enter project name": ["DemoProject"],
         }
 
@@ -1819,6 +1825,12 @@ class TestConfigManager:
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.prompt",
             fake_prompt,
+        )
+
+        # Mock get_token_with_smart_paste
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".get_token_with_smart_paste",
+            lambda **kwargs: "token-123",
         )
         monkeypatch.setattr(
             ConfigManager.__module__ + ".click.confirm",
@@ -2011,18 +2023,10 @@ class TestConfigManager:
 
         mock_profile_manager.select_region_interactive = mock_select_region
 
-        prompt_answers = {
-            "Enter your Workato API token": ["custom-token"],
-        }
-
-        async def fake_prompt(message: str, **_: Any) -> str:
-            values = prompt_answers.get(message)
-            assert values, f"Unexpected prompt: {message}"
-            return values.pop(0)
-
+        # Mock get_token_with_smart_paste
         monkeypatch.setattr(
-            ConfigManager.__module__ + ".click.prompt",
-            fake_prompt,
+            ConfigManager.__module__ + ".get_token_with_smart_paste",
+            lambda **kwargs: "custom-token",
         )
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
@@ -2076,14 +2080,10 @@ class TestConfigManager:
             lambda _questions: {"region": "US Data Center (https://www.workato.com)"},
         )
 
-        async def fake_prompt(message: str, **_: Any) -> str:
-            if "API token" in message:
-                return "   "
-            return "unused"
-
+        # Mock get_token_with_smart_paste to return blank token
         monkeypatch.setattr(
-            ConfigManager.__module__ + ".click.prompt",
-            fake_prompt,
+            ConfigManager.__module__ + ".get_token_with_smart_paste",
+            lambda **kwargs: "   ",
         )
 
         with pytest.raises(SystemExit):
