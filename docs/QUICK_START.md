@@ -8,6 +8,7 @@ Get the Workato CLI running in 5 minutes.
 - Workato account with API token
 
 ### Getting Your API Token
+
 1. Log into your Workato account
 1. Navigate to **Workspace Admin** → **API clients**
 1. Click **Create API client**
@@ -16,20 +17,38 @@ Get the Workato CLI running in 5 minutes.
 
 ## Installation
 
-### Standard Installation
+There are multiple methods of installing Python packages, depending on how your local environment is setup. Below we cover a few possible methods based on common configurations.
+
+### Standard Installation - Try this first (Mac/Windows/Linux)
+
 ```bash
-pip install -e .
+python3 --version # Ensure your Python version is >= 3.11
+pip install workato-platform-cli
 workato --version  # Verify installation
 ```
 
-### Alternative (if standard fails)
-If you get an "externally-managed-environment" error:
+### Homebrew (Mac)
+
+Workato-platform-cli is not available in Homebrew yet. If your Python versions are managed in Homebrew, use the following method.
 
 ```bash
-# Virtual environment (recommended)
-python3 -m venv venv
-source venv/bin/activate  # Linux/Mac
-pip install -e .
+python3 --version # Ensure your Python version is >= 3.11
+brew install pipx
+pipx install workato-platform-cli
+workato --version  # Verify installation
+```
+
+### Alternative Installation
+
+Workato recommends using [UV](https://docs.astral.sh/uv/) to install and manage alternative versions of Python.
+
+Install UV [Other Install Options](https://docs.astral.sh/uv/getting-started/installation/)
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv python install
+uv pip install workato-platform-cli
+workato --version  # Verify installation
 ```
 
 Having issues? See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for troubleshooting.
@@ -43,7 +62,6 @@ workato init
 # Verify your workspace
 workato workspace
 ```
-
 
 ## First Commands
 
