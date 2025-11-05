@@ -73,4 +73,4 @@ target/
 .ruff_cache
 
 
-src/workato_platform/_version.py
+src/workato_platform_cli/_version.py
