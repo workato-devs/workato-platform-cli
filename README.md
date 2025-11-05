@@ -25,6 +25,7 @@ Get the Workato CLI running in 5 minutes.
 - Workato account with API token
 
 ### Getting Your API Token
+
 1. Log into your Workato account
 1. Navigate to **Workspace Admin** → **API clients**
 1. Click **Create API client**
@@ -34,18 +35,20 @@ Get the Workato CLI running in 5 minutes.
 ## Installation
 
 ### From PyPI (Coming Soon)
+
 ```bash
 pip install workato-platform-cli
 ```
 
 ### From Source
+
 ```bash
 git clone https://github.com/workato-devs/workato-platform-cli.git
 cd workato-platform-cli
 make install
 ```
 
-Having issues? See [DEVELOPER_GUIDE.md](/docs/DEVELOPER_GUIDE.md) for troubleshooting.
+Having issues? See [DEVELOPER_GUIDE.md](https://github.com/workato-devs/blob/main/docs/DEVELOPER_GUIDE.md) for troubleshooting.
 
 ## Setup
 
@@ -56,7 +59,6 @@ workato init
 # Verify your workspace
 workato workspace
 ```
-
 
 ## First Commands
 
@@ -76,12 +78,11 @@ workato workspace
 
 ## Next Steps
 
-- **Need detailed commands?** → See [COMMAND_REFERENCE.md](/docs/COMMAND_REFERENCE.md)
-- **Want real-world examples?** → See [USE_CASES.md](/docs/USE_CASES.md)
-- **Looking for sample recipes?** → See [examples/](/docs/examples/)
-- **Installation issues?** → See [DEVELOPER_GUIDE.md](/docs/DEVELOPER_GUIDE.md)
-- **Looking for all documentation?** → See [INDEX.md](/docs/INDEX.md)
-
+- **Need detailed commands?** → See [COMMAND_REFERENCE.md](https://github.com/workato-devs/blob/main/docs/COMMAND_REFERENCE.md)
+- **Want real-world examples?** → See [USE_CASES.md](https://github.com/workato-devs/blob/main/docs/USE_CASES.md)
+- **Looking for sample recipes?** → See [examples/](https://github.com/workato-devs/blob/main/docs/examples/)
+- **Installation issues?** → See [DEVELOPER_GUIDE.md](https://github.com/workato-devs/blob/main/docs/DEVELOPER_GUIDE.md)
+- **Looking for all documentation?** → See [INDEX.md](https://github.com/workato-devs/blob/main/docs/INDEX.md)
 
 ## Quick Recipe Workflow
 
@@ -98,12 +99,12 @@ workato pull
 
 You're ready to go!
 
-
 ## Contributing to the CLI
 
 These commands are for CLI maintainers and contributors, not for developers using the CLI to build Workato integrations.
 
 ### For Development
+
 ```bash
 # Setup (with uv - recommended)
 make install-dev
@@ -119,8 +120,8 @@ make lint         # check code quality
 make build        # build distribution packages
 ```
 
-
 ### Tech Stack
+
 - **🐍 Python 3.11+** with full type annotations
 - **⚡ uv** for fast dependency management
 - **🔍 mypy** for static type checking
