@@ -1,6 +1,7 @@
 """Initialize Workato CLI for a new project"""
 
 import json
+import os
 
 from typing import Any
 
@@ -54,7 +55,10 @@ async def init(
     non_interactive: bool = False,
     output_mode: str = "table",
 ) -> None:
-    """Initialize Workato CLI for a new project"""
+    """Initialize Workato CLI for a new project
+
+    Detects WORKATO_API_TOKEN and WORKATO_HOST environment variables if present.
+    """
 
     # Validate that --output-mode json requires --non-interactive
     if output_mode == "json" and not non_interactive:
@@ -68,15 +72,40 @@ async def init(
         return
 
     if non_interactive:
+        # Check for environment variables if flags not provided
+        env_token = os.environ.get("WORKATO_API_TOKEN")
+        env_host = os.environ.get("WORKATO_HOST")
+
+        # Track which env vars are actually used for visibility
+        used_env_token = False
+        used_env_host = False
+
+        # Use env vars as fallback if CLI flags not provided
+        if not api_token and env_token:
+            api_token = env_token
+            used_env_token = True
+        if not region and not api_url and env_host:
+            api_url = env_host
+            used_env_host = True
+            # Will detect region in _setup_non_interactive
+
+        # Show which env vars are being used (only in non-JSON mode)
+        if output_mode != "json" and (used_env_token or used_env_host):
+            if used_env_token:
+                click.echo("Using WORKATO_API_TOKEN from environment")
+            if used_env_host:
+                click.echo("Using WORKATO_HOST from environment")
+            click.echo()
+
         # Validate required parameters for non-interactive mode
         error_msg = None
         error_code = None
 
-        # Either profile OR individual attributes (region, api_token) are required
-        if not profile and not (region and api_token):
+        # Either profile OR individual attributes are required
+        if not profile and not ((region or api_url) and api_token):
             error_msg = (
-                "Either --profile or both --region and --api-token are required "
-                "in non-interactive mode"
+                "Either --profile or both (--region or --api-url/WORKATO_HOST) and "
+                "--api-token/WORKATO_API_TOKEN are required in non-interactive mode"
             )
             error_code = "MISSING_REQUIRED_OPTIONS"
         elif region == "custom" and not api_url:
