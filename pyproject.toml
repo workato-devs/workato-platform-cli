@@ -41,6 +41,7 @@ dependencies = [
     "keyring>=25.6.0",
     "ruff==0.13.0",
     "urllib3>=2.5.0",
+    "prompt-toolkit>=3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -182,6 +183,7 @@ module = [
     "dependency_injector.*",
     "asyncclick.*",
     "keyring.*",
+    "prompt_toolkit.*",
 ]
 ignore_missing_imports = true
 

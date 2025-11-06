@@ -1,8 +1,8 @@
 """Main configuration manager with simplified workspace rules."""
 
+import asyncio
 import json
 import os
-import sys
 
 from pathlib import Path
 from typing import Any
@@ -14,6 +14,7 @@ import inquirer
 
 from workato_platform_cli import Workato
 from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
+from workato_platform_cli.cli.utils.token_input import get_token_with_smart_paste
 from workato_platform_cli.client.workato_api.configuration import Configuration
 from workato_platform_cli.client.workato_api.models.project import Project
 
@@ -336,16 +337,14 @@ class ConfigManager:
 
             answers: dict[str, str] = inquirer.prompt(questions)
             if not answers:
-                click.echo("❌ No profile selected")
-                sys.exit(1)
+                raise click.ClickException("No profile selected")
 
             if answers["profile_choice"] == "Create new profile":
                 profile_name = (
                     await click.prompt("Enter new profile name", type=str)
                 ).strip()
                 if not profile_name:
-                    click.echo("❌ Profile name cannot be empty")
-                    sys.exit(1)
+                    raise click.ClickException("Profile name cannot be empty")
                 await self._create_new_profile(profile_name)
             else:
                 profile_name = answers["profile_choice"]
@@ -382,8 +381,7 @@ class ConfigManager:
                 await click.prompt("Enter profile name", default="default", type=str)
             ).strip()
             if not profile_name:
-                click.echo("❌ Profile name cannot be empty")
-                sys.exit(1)
+                raise click.ClickException("Profile name cannot be empty")
             await self._create_new_profile(profile_name)
 
         # Set as current profile
@@ -416,8 +414,7 @@ class ConfigManager:
 
             answers: dict[str, str] = inquirer.prompt(questions)
             if not answers:
-                click.echo("❌ No profile selected")
-                sys.exit(1)
+                raise click.ClickException("No profile selected")
 
             selected_choice: str = answers["profile_choice"]
             if selected_choice == "Create new profile":
@@ -426,8 +423,7 @@ class ConfigManager:
                 )
                 profile_name = new_profile_input.strip()
                 if not profile_name:
-                    click.echo("❌ Profile name cannot be empty")
-                    sys.exit(1)
+                    raise click.ClickException("Profile name cannot be empty")
                 return profile_name
             else:
                 # Warn user about overwriting existing profile
@@ -436,8 +432,7 @@ class ConfigManager:
                     f"'{selected_choice}' with the environment variables."
                 )
                 if not click.confirm("Continue?", default=True):
-                    click.echo("❌ Cancelled")
-                    sys.exit(1)
+                    raise click.ClickException("Operation cancelled")
                 return selected_choice
         else:
             default_profile_input: str = await click.prompt(
@@ -445,8 +440,7 @@ class ConfigManager:
             )
             profile_name = default_profile_input.strip()
             if not profile_name:
-                click.echo("❌ Profile name cannot be empty")
-                sys.exit(1)
+                raise click.ClickException("Profile name cannot be empty")
             return profile_name
 
     async def _create_profile_with_env_vars(
@@ -467,8 +461,7 @@ class ConfigManager:
             region_result = await self.profile_manager.select_region_interactive()
 
             if not region_result:
-                click.echo("❌ Setup cancelled")
-                sys.exit(1)
+                raise click.ClickException("Setup cancelled")
 
             selected_region = region_result
 
@@ -477,10 +470,12 @@ class ConfigManager:
             token = env_token
         else:
             click.echo()
-            token = await click.prompt("Enter your Workato API token", hide_input=True)
+            token = await asyncio.to_thread(
+                get_token_with_smart_paste,
+                prompt_text="API token",
+            )
             if not token.strip():
-                click.echo("❌ No token provided")
-                sys.exit(1)
+                raise click.ClickException("API token cannot be empty")
 
         # Test authentication and get workspace info
         click.echo("🔄 Testing authentication with environment variables...")
@@ -530,14 +525,8 @@ class ConfigManager:
         )
 
         # Make API call to test authentication and get workspace info
-        try:
-            async with Workato(configuration=api_config) as workato_api_client:
-                user_info = await workato_api_client.users_api.get_workspace_details()
-        except Exception as e:
-            raise click.ClickException(
-                f"Authentication failed: {e}\n"
-                "Please verify your API token is correct and try again."
-            ) from e
+        async with Workato(configuration=api_config) as workato_api_client:
+            user_info = await workato_api_client.users_api.get_workspace_details()
 
         # Create and return ProfileData object with workspace info
         if not region_info.url:
@@ -560,14 +549,33 @@ class ConfigManager:
         region_result = await self.profile_manager.select_region_interactive()
 
         if not region_result:
-            click.echo("❌ Setup cancelled")
-            sys.exit(1)
+            raise click.ClickException("Setup cancelled")
 
         selected_region = region_result
 
-        # Prompt for credentials and validate with API
-        profile_data, token = await self._prompt_and_validate_credentials(
-            profile_name, selected_region
+        # Get API token
+        token = await asyncio.to_thread(
+            get_token_with_smart_paste,
+            prompt_text="API token",
+        )
+        if not token.strip():
+            raise click.ClickException("API token cannot be empty")
+
+        # Test authentication and get workspace info
+        api_config = Configuration(
+            access_token=token, host=selected_region.url, ssl_ca_cert=certifi.where()
+        )
+
+        async with Workato(configuration=api_config) as workato_api_client:
+            user_info = await workato_api_client.users_api.get_workspace_details()
+
+        # Create and save profile
+        if not selected_region.url:
+            raise click.ClickException("Region URL is required")
+        profile_data = ProfileData(
+            region=selected_region.region,
+            region_url=selected_region.url,
+            workspace_id=user_info.id,
         )
 
         # Save profile and token
@@ -606,16 +614,14 @@ class ConfigManager:
 
             answers = inquirer.prompt(questions)
             if not answers:
-                click.echo("❌ No project selected")
-                sys.exit(1)
+                raise click.ClickException("No project selected")
 
             selected_project = None
 
             if answers["project"] == "Create new project":
                 project_name = await click.prompt("Enter project name", type=str)
                 if not project_name or not project_name.strip():
-                    click.echo("❌ Project name cannot be empty")
-                    sys.exit(1)
+                    raise click.ClickException("Project name cannot be empty")
 
                 click.echo(f"🔨 Creating project: {project_name}")
                 selected_project = await project_manager.create_project(project_name)
@@ -628,8 +634,7 @@ class ConfigManager:
                         break
 
             if not selected_project:
-                click.echo("❌ No project selected")
-                sys.exit(1)
+                raise click.ClickException("No project selected")
 
             # Check if this specific project already exists locally in the workspace
             local_projects = self._find_all_projects(workspace_root)
@@ -659,8 +664,7 @@ class ConfigManager:
                     "This may overwrite or delete local files.",
                     default=False,
                 ):
-                    click.echo("❌ Initialization cancelled")
-                    sys.exit(1)
+                    raise click.ClickException("Initialization cancelled")
                 # Use existing path instead of creating new one
                 project_path = existing_local_path
             else:
@@ -674,8 +678,7 @@ class ConfigManager:
                     project_path, workspace_root
                 )
             except ValueError as e:
-                click.echo(f"❌ {e}")
-                sys.exit(1)
+                raise click.ClickException(str(e)) from e
 
             # Check if project directory already exists and is non-empty
             if not project_path.exists():
@@ -1059,28 +1062,24 @@ Thumbs.db
         except (json.JSONDecodeError, OSError):
             existing_name = "Unknown"
 
-        click.echo(
-            f"❌ Directory contains different Workato project: "
-            f"{existing_name} (ID: {existing_project_id})"
-        )
-        click.echo(
+        raise click.ClickException(
+            f"Directory contains different Workato project: "
+            f"{existing_name} (ID: {existing_project_id})\n"
             f"   Cannot initialize {selected_project.name} "
-            f"(ID: {selected_project.id}) here"
+            f"(ID: {selected_project.id}) here\n"
+            f"💡 Choose a different directory or project name"
         )
-        click.echo("💡 Choose a different directory or project name")
-        sys.exit(1)
 
     def _handle_non_empty_directory_error(
         self, project_path: Path, workspace_root: Path, existing_files: list
     ) -> None:
         """Handle error when directory is non-empty but not a Workato project."""
-        click.echo(
-            f"❌ Project directory is not empty: "
-            f"{project_path.relative_to(workspace_root)}"
+        raise click.ClickException(
+            f"Project directory is not empty: "
+            f"{project_path.relative_to(workspace_root)}\n"
+            f"   Found {len(existing_files)} existing files\n"
+            f"💡 Choose a different project name or clean the directory first"
         )
-        click.echo(f"   Found {len(existing_files)} existing files")
-        click.echo("💡 Choose a different project name or clean the directory first")
-        sys.exit(1)
 
     # Credential management
 
@@ -1088,12 +1087,11 @@ Thumbs.db
         """Validate credentials and exit if missing"""
         is_valid, missing_items = self.validate_environment_config()
         if not is_valid:
-            click.echo("❌ Missing required credentials:")
-            for item in missing_items:
-                click.echo(f"   • {item}")
-            click.echo()
-            click.echo("💡 Run 'workato init' to set up authentication")
-            sys.exit(1)
+            error_msg = "Missing required credentials:\n" + "\n".join(
+                f"   • {item}" for item in missing_items
+            )
+            error_msg += "\n\n💡 Run 'workato init' to set up authentication"
+            raise click.ClickException(error_msg)
 
     def validate_environment_config(self) -> tuple[bool, list[str]]:
         """Validate environment configuration"""
