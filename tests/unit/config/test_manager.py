@@ -1994,6 +1994,124 @@ class TestConfigManager:
         assert any("Profile:" in line for line in outputs)
 
     @pytest.mark.asyncio
+    async def test_setup_profile_existing_with_valid_credentials(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Existing profile with valid credentials should not prompt for re-entry."""
+
+        mock_profile_manager.set_profile(
+            "existing",
+            ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=1
+            ),
+            "existing-token",
+        )
+        mock_profile_manager.set_current_profile("existing")
+
+        # Mock _get_token_from_keyring to return valid token
+        mock_profile_manager._get_token_from_keyring.return_value = "existing-token"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: mock_profile_manager,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        def fake_inquirer_prompt(questions: list[Any]) -> dict[str, str]:
+            assert questions[0].message == "Select a profile"
+            return {"profile_choice": "existing"}
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            fake_inquirer_prompt,
+        )
+
+        config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        profile_name = await config_manager._setup_profile()
+        assert profile_name == "existing"
+        assert any("Profile:" in line for line in outputs)
+        # Should not show credential warning
+        assert not any("Credentials not found" in line for line in outputs)
+
+    @pytest.mark.asyncio
+    async def test_setup_profile_existing_with_missing_credentials(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Existing profile with missing credentials should prompt for re-entry."""
+
+        existing_profile = ProfileData(
+            region="us", region_url="https://www.workato.com", workspace_id=1
+        )
+        mock_profile_manager.set_profile("existing", existing_profile, None)
+        mock_profile_manager.set_current_profile("existing")
+
+        # Mock _get_token_from_keyring to return None (missing credentials)
+        mock_profile_manager._get_token_from_keyring.return_value = None
+
+        # Mock get_profile to return the existing profile
+        mock_profile_manager.get_profile.return_value = existing_profile
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".ProfileManager",
+            lambda: mock_profile_manager,
+        )
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        prompt_answers = {
+            "Enter your Workato API token": ["new-token"],
+        }
+
+        async def fake_prompt(
+            text: str, type: Any = None, hide_input: bool = False
+        ) -> Any:
+            return prompt_answers.get(text, [""])[0]
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.prompt",
+            fake_prompt,
+        )
+
+        def fake_inquirer_prompt(questions: list[Any]) -> dict[str, str]:
+            assert questions[0].message == "Select a profile"
+            return {"profile_choice": "existing"}
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".inquirer.prompt",
+            fake_inquirer_prompt,
+        )
+
+        config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        profile_name = await config_manager._setup_profile()
+        assert profile_name == "existing"
+
+        # Should show credential warning
+        assert any("Credentials not found" in line for line in outputs)
+        assert any("Enter your API token" in line for line in outputs)
+
+        # Should call set_profile with new credentials
+        mock_profile_manager.set_profile.assert_called()
+
+    @pytest.mark.asyncio
     async def test_create_new_profile_custom_region(
         self,
         tmp_path: Path,
@@ -2086,8 +2204,197 @@ class TestConfigManager:
             lambda **kwargs: "   ",
         )
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="API token cannot be empty"):
             await manager._create_new_profile("dev")
+
+    @pytest.mark.asyncio
+    async def test_prompt_and_validate_credentials_success(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Test successful credential prompt and validation."""
+        from workato_platform_cli.cli.utils.config.models import RegionInfo
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+
+        async def fake_prompt(message: str, **_: Any) -> str:
+            if "API token" in message:
+                return "valid-token-123"
+            return "unused"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.prompt",
+            fake_prompt,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        region_info = RegionInfo(
+            region="us", name="US Data Center", url="https://www.workato.com"
+        )
+        profile_data, token = await manager._prompt_and_validate_credentials(
+            "test-profile", region_info
+        )
+
+        assert profile_data.region == "us"
+        assert profile_data.region_url == "https://www.workato.com"
+        assert profile_data.workspace_id == 101
+        assert token == "valid-token-123"
+        assert any("Authenticated as" in msg for msg in outputs)
+
+    @pytest.mark.asyncio
+    async def test_prompt_and_validate_credentials_empty_token(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Test that empty token raises ClickException."""
+        from workato_platform_cli.cli.utils.config.models import RegionInfo
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+
+        async def fake_prompt(message: str, **_: Any) -> str:
+            if "API token" in message:
+                return "   "  # Empty/whitespace token
+            return "unused"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.prompt",
+            fake_prompt,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        region_info = RegionInfo(
+            region="us", name="US Data Center", url="https://www.workato.com"
+        )
+
+        with pytest.raises(click.ClickException) as excinfo:
+            await manager._prompt_and_validate_credentials("test-profile", region_info)
+
+        assert "token cannot be empty" in str(excinfo.value)
+
+    @pytest.mark.asyncio
+    async def test_prompt_and_validate_credentials_api_failure(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Test that API validation failure raises appropriate exception."""
+        from workato_platform_cli.cli.utils.config.models import RegionInfo
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+
+        # Create a Workato stub that raises an exception
+        class FailingWorkato:
+            def __init__(self, configuration: Configuration) -> None:
+                self.configuration = configuration
+                self.users_api = FailingUsersAPI()
+
+            async def __aenter__(self) -> "FailingWorkato":
+                return self
+
+            async def __aexit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+                return None
+
+        class FailingUsersAPI:
+            async def get_workspace_details(self) -> User:
+                raise Exception("Authentication failed: Invalid token")
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            FailingWorkato,
+        )
+
+        async def fake_prompt(message: str, **_: Any) -> str:
+            if "API token" in message:
+                return "invalid-token"
+            return "unused"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.prompt",
+            fake_prompt,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        region_info = RegionInfo(
+            region="us", name="US Data Center", url="https://www.workato.com"
+        )
+
+        with pytest.raises(click.ClickException) as excinfo:
+            await manager._prompt_and_validate_credentials("test-profile", region_info)
+
+        assert "Authentication failed" in str(excinfo.value)
+
+    @pytest.mark.asyncio
+    async def test_prompt_and_validate_credentials_keyring_disabled(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_profile_manager: Mock,
+    ) -> None:
+        """Test credential validation returns correct data."""
+        from workato_platform_cli.cli.utils.config.models import RegionInfo
+
+        manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
+        manager.profile_manager = mock_profile_manager
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".Workato",
+            StubWorkato,
+        )
+
+        async def fake_prompt(message: str, **_: Any) -> str:
+            if "API token" in message:
+                return "valid-token-123"
+            return "unused"
+
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.prompt",
+            fake_prompt,
+        )
+
+        outputs: list[str] = []
+        monkeypatch.setattr(
+            ConfigManager.__module__ + ".click.echo",
+            lambda msg="": outputs.append(str(msg)),
+        )
+
+        region_info = RegionInfo(
+            region="us", name="US Data Center", url="https://www.workato.com"
+        )
+        profile_data, token = await manager._prompt_and_validate_credentials(
+            "test-profile", region_info
+        )
+
+        assert profile_data.region == "us"
+        assert token == "valid-token-123"
+        assert any("Authenticated as" in msg for msg in outputs)
 
     @pytest.mark.asyncio
     async def test_setup_profile_existing_create_new_success(
