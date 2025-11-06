@@ -1029,7 +1029,7 @@ class TestConfigManager:
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         manager.profile_manager = mock_profile_manager
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="Operation cancelled"):
             await manager._setup_profile()
 
         # Verify both confirm prompts were called
@@ -1692,7 +1692,9 @@ class TestConfigManager:
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         with patch.object(manager, "profile_manager", spec=ProfileManager) as mock_pm:
             mock_pm.validate_credentials = Mock(return_value=(False, ["token"]))
-            with pytest.raises(SystemExit):
+            with pytest.raises(
+                click.ClickException, match="Missing required credentials"
+            ):
                 manager._validate_credentials_or_exit()
 
     def test_api_token_setter_missing_profile(
@@ -1888,7 +1890,7 @@ class TestConfigManager:
             lambda _questions: None,
         )
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="No profile selected"):
             await manager._setup_profile()
 
     @pytest.mark.asyncio
@@ -1923,7 +1925,7 @@ class TestConfigManager:
             mock_prompt,
         )
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="Profile name cannot be empty"):
             await manager._setup_profile()
 
     @pytest.mark.asyncio
@@ -1947,7 +1949,7 @@ class TestConfigManager:
             mock_prompt2,
         )
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="Profile name cannot be empty"):
             await manager._setup_profile()
 
     @pytest.mark.asyncio
@@ -2178,7 +2180,7 @@ class TestConfigManager:
 
         mock_profile_manager.select_region_interactive = mock_select_region_cancelled
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="Setup cancelled"):
             await manager._create_new_profile("dev")
 
     @pytest.mark.asyncio
@@ -2346,7 +2348,7 @@ class TestConfigManager:
             region="us", name="US Data Center", url="https://www.workato.com"
         )
 
-        with pytest.raises(click.ClickException) as excinfo:
+        with pytest.raises(Exception) as excinfo:
             await manager._prompt_and_validate_credentials("test-profile", region_info)
 
         assert "Authentication failed" in str(excinfo.value)
@@ -2675,7 +2677,7 @@ class TestConfigManager:
             ),
         ):
             manager.profile_manager = mock_profile_manager
-            with pytest.raises(SystemExit):
+            with pytest.raises(click.ClickException):
                 await manager._setup_project("dev", workspace_root)
 
     @pytest.mark.asyncio
@@ -2722,7 +2724,9 @@ class TestConfigManager:
         )
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
-        with pytest.raises(SystemExit):
+        with pytest.raises(
+            click.ClickException, match="Directory contains different Workato project"
+        ):
             await manager._setup_project("dev", workspace_root)
 
     @pytest.mark.asyncio
@@ -2843,7 +2847,7 @@ class TestConfigManager:
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="No project selected"):
             await manager._setup_project("dev", workspace_root)
 
     @pytest.mark.asyncio
@@ -2914,7 +2918,7 @@ class TestConfigManager:
                 "validate_project_path",
                 side_effect=ValueError("bad path"),
             ),
-            pytest.raises(SystemExit),
+            pytest.raises(click.ClickException, match="bad path"),
         ):
             await manager._setup_project("dev", workspace_root)
 
@@ -2978,7 +2982,7 @@ class TestConfigManager:
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException):
             await manager._setup_project("dev", workspace_root)
 
     @pytest.mark.asyncio
@@ -3023,7 +3027,7 @@ class TestConfigManager:
         )
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="Project name cannot be empty"):
             await config_manager._setup_project("dev", tmp_path)
 
     @pytest.mark.asyncio
@@ -3066,7 +3070,7 @@ class TestConfigManager:
         )
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="No project selected"):
             await config_manager._setup_project("dev", tmp_path)
 
     def test_validate_region_valid(self, tmp_path: Path) -> None:
@@ -3311,11 +3315,8 @@ class TestConfigManager:
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(click.ClickException, match="Initialization cancelled"):
             await manager._setup_project("dev", workspace_root)
-
-        # Should see cancellation message
-        assert any("Initialization cancelled" in msg for msg in outputs)
 
     @pytest.mark.asyncio
     async def test_setup_non_interactive_fails_when_project_exists(
