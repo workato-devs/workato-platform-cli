@@ -572,7 +572,6 @@ class ConfigManager:
         selected_region = region_result
 
         # Get API token
-        click.echo("🔐 Enter your API token")
         token = await asyncio.to_thread(
             get_token_with_smart_paste,
             prompt_text="Workato API token",
