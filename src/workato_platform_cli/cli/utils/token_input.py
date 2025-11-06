@@ -46,7 +46,7 @@ def get_token_with_smart_paste(
         🔐 Enter your API Token
         API Token: ****  # User types
         >>> # or
-        ✅ Detected API token (750 characters)
+        (📋 750 chars pasted)
         Is this correct? [Y/n]: y
     """
     for attempt in range(max_retries):
