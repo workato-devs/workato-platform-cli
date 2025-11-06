@@ -143,6 +143,14 @@ class ConfigManager:
             region_info = self._match_host_to_region(api_url)
             region = region_info.region
 
+        # Validate credentials are available before attempting authentication
+        if not api_token:
+            raise click.ClickException(
+                f"Profile '{current_profile_name}' exists but credentials not found "
+                "in keychain. Please run 'workato init' interactively or set "
+                "WORKATO_API_TOKEN environment variable."
+            )
+
         # Map region to URL
         if region == "custom":
             if not api_url:
@@ -341,6 +349,34 @@ class ConfigManager:
                 await self._create_new_profile(profile_name)
             else:
                 profile_name = answers["profile_choice"]
+
+                # Check if credentials exist in keychain for existing profile
+                existing_profile = self.profile_manager.get_profile(profile_name)
+                token = self.profile_manager._get_token_from_keyring(profile_name)
+
+                if existing_profile and not token:
+                    # Credentials missing from keychain - prompt for re-entry
+                    click.echo("⚠️  Credentials not found for this profile")
+
+                    # Get region info from existing profile
+                    region_info = RegionInfo(
+                        region=existing_profile.region,
+                        url=existing_profile.region_url,
+                        name=existing_profile.region,
+                    )
+
+                    # Prompt and validate credentials
+                    (
+                        profile_data,
+                        validated_token,
+                    ) = await self._prompt_and_validate_credentials(
+                        profile_name, region_info
+                    )
+
+                    # Update profile with validated credentials
+                    self.profile_manager.set_profile(
+                        profile_name, profile_data, validated_token
+                    )
         else:
             profile_name = (
                 await click.prompt("Enter profile name", default="default", type=str)
@@ -468,6 +504,55 @@ class ConfigManager:
         click.echo(f"✅ Authenticated as: {user_info.name}")
         click.echo("✓ Using environment variables for authentication")
 
+    async def _prompt_and_validate_credentials(
+        self, profile_name: str, region_info: RegionInfo
+    ) -> tuple[ProfileData, str]:
+        """Prompt for API credentials and validate them with an API call.
+        Args:
+            profile_name: Name of the profile being configured
+            region_info: Region information containing the API URL
+        Returns:
+            tuple[ProfileData, str]: Validated profile data and API token
+        Raises:
+            click.ClickException: If token is empty or validation fails
+        """
+        # Prompt for API token
+        click.echo("🔐 Enter your API token")
+        token = await click.prompt("Enter your Workato API token", hide_input=True)
+
+        # Validate token is not empty
+        if not token.strip():
+            raise click.ClickException("API token cannot be empty")
+
+        # Create API configuration with the token and region URL
+        api_config = Configuration(
+            access_token=token, host=region_info.url, ssl_ca_cert=certifi.where()
+        )
+
+        # Make API call to test authentication and get workspace info
+        try:
+            async with Workato(configuration=api_config) as workato_api_client:
+                user_info = await workato_api_client.users_api.get_workspace_details()
+        except Exception as e:
+            raise click.ClickException(
+                f"Authentication failed: {e}\n"
+                "Please verify your API token is correct and try again."
+            ) from e
+
+        # Create and return ProfileData object with workspace info
+        if not region_info.url:
+            raise click.ClickException("Region URL is required")
+
+        profile_data = ProfileData(
+            region=region_info.region,
+            region_url=region_info.url,
+            workspace_id=user_info.id,
+        )
+
+        click.echo(f"✅ Authenticated as: {user_info.name}")
+
+        return profile_data, token
+
     async def _create_new_profile(self, profile_name: str) -> None:
         """Create a new profile interactively"""
         # Select region
@@ -480,32 +565,13 @@ class ConfigManager:
 
         selected_region = region_result
 
-        # Get API token
-        click.echo("🔐 Enter your API token")
-        token = await click.prompt("Enter your Workato API token", hide_input=True)
-        if not token.strip():
-            click.echo("❌ No token provided")
-            sys.exit(1)
-
-        # Test authentication and get workspace info
-        api_config = Configuration(
-            access_token=token, host=selected_region.url, ssl_ca_cert=certifi.where()
+        # Prompt for credentials and validate with API
+        profile_data, token = await self._prompt_and_validate_credentials(
+            profile_name, selected_region
         )
 
-        async with Workato(configuration=api_config) as workato_api_client:
-            user_info = await workato_api_client.users_api.get_workspace_details()
-
-        # Create and save profile
-        if not selected_region.url:
-            raise click.ClickException("Region URL is required")
-        profile_data = ProfileData(
-            region=selected_region.region,
-            region_url=selected_region.url,
-            workspace_id=user_info.id,
-        )
-
+        # Save profile and token
         self.profile_manager.set_profile(profile_name, profile_data, token)
-        click.echo(f"✅ Authenticated as: {user_info.name}")
 
     async def _setup_project(self, profile_name: str, workspace_root: Path) -> None:
         """Setup project interactively"""

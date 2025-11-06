@@ -145,6 +145,10 @@ def handle_cli_exceptions(func: F) -> F:
             except click.Abort:
                 # Let Click handle Abort - don't catch it
                 raise
+            except click.ClickException as e:
+                # Handle ClickException specifically - show message without error type
+                _handle_click_exception(e)
+                raise SystemExit(1) from None
             except Exception as e:
                 # Catch-all for any exceptions during initialization
                 _handle_generic_cli_error(e)
@@ -175,6 +179,10 @@ def handle_cli_exceptions(func: F) -> F:
             except click.Abort:
                 # Let Click handle Abort - don't catch it
                 raise
+            except click.ClickException as e:
+                # Handle ClickException specifically - show message without error type
+                _handle_click_exception(e)
+                raise SystemExit(1) from None
             except Exception as e:
                 # Catch-all for any exceptions during initialization
                 _handle_generic_cli_error(e)
@@ -508,6 +516,24 @@ def _handle_ssl_error(e: aiohttp.ClientSSLError | ssl.SSLError) -> None:
     click.echo("   • Your system clock is set correctly")
     click.echo("   • You have the latest CA certificates installed")
     click.echo("   • Your network is not intercepting HTTPS connections")
+
+
+def _handle_click_exception(e: click.ClickException) -> None:
+    """Handle click.ClickException with clean error message."""
+    output_mode = _get_output_mode()
+
+    error_msg = str(e)
+
+    if output_mode == "json":
+        error_data = {
+            "status": "error",
+            "error": error_msg,
+            "error_code": "CLI_ERROR",
+        }
+        click.echo(json.dumps(error_data))
+        return
+
+    click.echo(f"❌ {error_msg}")
 
 
 def _handle_generic_cli_error(e: Exception) -> None:

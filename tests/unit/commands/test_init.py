@@ -87,6 +87,11 @@ async def test_init_non_interactive_success(monkeypatch: pytest.MonkeyPatch) -> 
             return_value=None,
         ),
         patch.object(
+            mock_config_manager,
+            "validate_environment_config",
+            return_value=(True, []),
+        ),
+        patch.object(
             mock_config_manager.profile_manager,
             "resolve_environment_variables",
             return_value=("test-token", "https://api.workato.com"),
@@ -437,6 +442,11 @@ async def test_init_non_empty_directory_non_interactive_json(
             "get_project_directory",
             return_value=project_dir,
         ),
+        patch.object(
+            mock_config_manager,
+            "validate_environment_config",
+            return_value=(True, []),
+        ),
     ):
         mock_initialize = AsyncMock(return_value=mock_config_manager)
         monkeypatch.setattr(
@@ -487,6 +497,11 @@ async def test_init_non_empty_directory_non_interactive_table(
             "get_project_directory",
             return_value=project_dir,
         ),
+        patch.object(
+            mock_config_manager,
+            "validate_environment_config",
+            return_value=(True, []),
+        ),
     ):
         mock_initialize = AsyncMock(return_value=mock_config_manager)
         monkeypatch.setattr(
@@ -531,6 +546,11 @@ async def test_init_non_empty_directory_interactive_cancelled(
             mock_config_manager,
             "get_project_directory",
             return_value=project_dir,
+        ),
+        patch.object(
+            mock_config_manager,
+            "validate_environment_config",
+            return_value=(True, []),
         ),
     ):
         mock_initialize = AsyncMock(return_value=mock_config_manager)
@@ -648,6 +668,11 @@ async def test_init_json_output_mode_success(
             mock_config_manager,
             "get_project_directory",
             return_value=None,
+        ),
+        patch.object(
+            mock_config_manager,
+            "validate_environment_config",
+            return_value=(True, []),
         ),
         patch.object(
             mock_config_manager.profile_manager,
@@ -804,6 +829,11 @@ async def test_init_cli_managed_files_ignored_non_interactive(
             return_value=project_dir,
         ),
         patch.object(
+            mock_config_manager,
+            "validate_environment_config",
+            return_value=(True, []),
+        ),
+        patch.object(
             mock_config_manager.profile_manager,
             "resolve_environment_variables",
             return_value=("test-token", "https://api.workato.com"),
@@ -865,6 +895,11 @@ async def test_init_user_files_with_cli_files_triggers_warning(
             "get_project_directory",
             return_value=project_dir,
         ),
+        patch.object(
+            mock_config_manager,
+            "validate_environment_config",
+            return_value=(True, []),
+        ),
     ):
         mock_initialize = AsyncMock(return_value=mock_config_manager)
         monkeypatch.setattr(
@@ -912,6 +947,11 @@ async def test_init_only_workatoenv_file_ignored(
             mock_config_manager,
             "get_project_directory",
             return_value=project_dir,
+        ),
+        patch.object(
+            mock_config_manager,
+            "validate_environment_config",
+            return_value=(True, []),
         ),
         patch.object(
             mock_config_manager.profile_manager,
@@ -1279,3 +1319,237 @@ async def test_init_non_interactive_partial_env_vars_json(
         # Verify JSON output is valid and contains expected profile data
         assert "profile" in result
         assert result["profile"]["region"] == "us"
+
+
+@pytest.mark.asyncio
+async def test_init_non_interactive_profile_missing_credentials_json(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test non-interactive mode with missing credentials in JSON output mode."""
+    # Mock ConfigManager.initialize to raise ClickException
+    # (simulating missing credentials)
+    mock_initialize = AsyncMock(
+        side_effect=click.ClickException(
+            "Profile 'test-profile' exists but credentials not found in keychain. "
+            "Please run 'workato init' interactively or set WORKATO_API_TOKEN "
+            "environment variable."
+        )
+    )
+    monkeypatch.setattr(
+        init_module.ConfigManager,
+        "initialize",
+        mock_initialize,
+    )
+
+    output = StringIO()
+    monkeypatch.setattr(init_module.click, "echo", lambda msg: output.write(msg))
+
+    # Mock get_current_context to return output_mode
+    mock_ctx = Mock()
+    mock_ctx.params = {"output_mode": "json"}
+    monkeypatch.setattr(
+        init_module.click,
+        "get_current_context",
+        lambda silent=True: mock_ctx,
+    )
+
+    assert init_module.init.callback
+    with pytest.raises(SystemExit) as exc_info:
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name=None,
+            project_id=123,
+            non_interactive=True,
+            output_mode="json",
+        )
+
+    assert exc_info.value.code == 1
+    result = json.loads(output.getvalue())
+    assert result["status"] == "error"
+    assert "credentials not found" in result["error"]
+    assert "test-profile" in result["error"]
+    assert result["error_code"] == "CLI_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_init_non_interactive_profile_missing_credentials_table(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test non-interactive mode with missing credentials in table output mode."""
+    # Mock ConfigManager.initialize to raise ClickException
+    # (simulating missing credentials)
+    mock_initialize = AsyncMock(
+        side_effect=click.ClickException(
+            "Profile 'test-profile' exists but credentials not found in keychain. "
+            "Please run 'workato init' interactively or set WORKATO_API_TOKEN "
+            "environment variable."
+        )
+    )
+    monkeypatch.setattr(
+        init_module.ConfigManager,
+        "initialize",
+        mock_initialize,
+    )
+
+    output = StringIO()
+    monkeypatch.setattr(init_module.click, "echo", lambda msg: output.write(msg))
+
+    # Mock get_current_context to return output_mode
+    mock_ctx = Mock()
+    mock_ctx.params = {"output_mode": "table"}
+    monkeypatch.setattr(
+        init_module.click,
+        "get_current_context",
+        lambda silent=True: mock_ctx,
+    )
+
+    assert init_module.init.callback
+    with pytest.raises(SystemExit) as exc_info:
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name=None,
+            project_id=123,
+            non_interactive=True,
+            output_mode="table",
+        )
+
+    assert exc_info.value.code == 1
+    # Verify error message was shown
+    output_text = output.getvalue()
+    assert "credentials not found" in output_text
+    assert "test-profile" in output_text
+
+
+@pytest.mark.asyncio
+async def test_init_non_interactive_profile_with_valid_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test non-interactive mode with valid credentials proceeds normally."""
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="test-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
+        ),
+        patch.object(
+            mock_config_manager,
+            "validate_environment_config",
+            return_value=(True, []),
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("test-token", "https://api.workato.com"),
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        monkeypatch.setattr(init_module.click, "echo", lambda *args, **kwargs: None)
+
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="test-profile",
+            region=None,
+            api_token=None,
+            api_url=None,
+            project_name=None,
+            project_id=123,
+            non_interactive=True,
+            output_mode="table",
+        )
+
+        # Should proceed without error
+        mock_pull.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_init_non_interactive_new_profile_with_region_and_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test non-interactive mode creating new profile with region and token.
+
+    This test verifies that credential validation is skipped when creating
+    a new profile with both region and token provided.
+    """
+    mock_config_manager = Mock()
+    mock_workato_client = Mock()
+    workato_context = AsyncMock()
+
+    with (
+        patch.object(
+            mock_config_manager,
+            "load_config",
+            return_value=Mock(profile="new-profile"),
+        ),
+        patch.object(
+            mock_config_manager,
+            "get_project_directory",
+            return_value=None,
+        ),
+        patch.object(
+            mock_config_manager.profile_manager,
+            "resolve_environment_variables",
+            return_value=("new-token", "https://api.workato.com"),
+        ),
+        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
+        patch.object(workato_context, "__aexit__", return_value=False),
+    ):
+        mock_initialize = AsyncMock(return_value=mock_config_manager)
+        monkeypatch.setattr(
+            init_module.ConfigManager,
+            "initialize",
+            mock_initialize,
+        )
+
+        mock_pull = AsyncMock()
+        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
+
+        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
+        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
+
+        monkeypatch.setattr(init_module.click, "echo", lambda *args, **kwargs: None)
+
+        # Should not call validate_environment_config when creating new profile
+        # (region and api_token are both provided)
+        assert init_module.init.callback
+        await init_module.init.callback(
+            profile="new-profile",
+            region="us",
+            api_token="new-token",
+            api_url=None,
+            project_name=None,
+            project_id=123,
+            non_interactive=True,
+            output_mode="table",
+        )
+
+        # Should proceed without error and not check credentials
+        mock_pull.assert_awaited_once()
