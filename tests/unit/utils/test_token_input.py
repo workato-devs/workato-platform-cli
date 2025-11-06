@@ -45,7 +45,7 @@ class TestGetTokenWithSmartPaste:
         assert result == "valid_token"
         assert mock_prompt.call_count == 2
         # Check that error message was shown
-        mock_echo.assert_any_call("❌ Token cannot be empty")
+        mock_echo.assert_any_call("❌ API Token cannot be empty")
 
     @patch("workato_platform_cli.cli.utils.token_input.pt_prompt")
     @patch("workato_platform_cli.cli.utils.token_input.click.echo")
@@ -62,7 +62,7 @@ class TestGetTokenWithSmartPaste:
 
         assert result == "valid_token"
         assert mock_prompt.call_count == 2
-        mock_echo.assert_any_call("❌ Token cannot be empty")
+        mock_echo.assert_any_call("❌ API Token cannot be empty")
 
     @patch("workato_platform_cli.cli.utils.token_input.pt_prompt")
     @patch("workato_platform_cli.cli.utils.token_input.click.echo")

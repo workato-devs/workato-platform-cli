@@ -13,6 +13,10 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 
 
+# Character count threshold to trigger paste confirmation
+DEFAULT_PASTE_THRESHOLD = 50
+
+
 class TokenInputCancelledError(Exception):
     """Raised when user cancels token input."""
 
@@ -21,7 +25,7 @@ class TokenInputCancelledError(Exception):
 
 def get_token_with_smart_paste(
     prompt_text: str = "API Token",
-    paste_threshold: int = 50,
+    paste_threshold: int = DEFAULT_PASTE_THRESHOLD,
     max_retries: int = 3,
 ) -> str:
     """Get API token with smart paste detection.
@@ -55,7 +59,7 @@ def get_token_with_smart_paste(
             if token and token.strip():
                 return token.strip()
 
-            click.echo("❌ Token cannot be empty")
+            click.echo(f"❌ {prompt_text} cannot be empty")
 
         except TokenInputCancelledError:
             if attempt < max_retries - 1:
