@@ -48,7 +48,7 @@ cd workato-platform-cli
 make install
 ```
 
-Having issues? See [DEVELOPER_GUIDE.md](https://github.com/workato-devs/blob/main/docs/DEVELOPER_GUIDE.md) for troubleshooting.
+Having issues? See [DEVELOPER_GUIDE.md](https://github.com/workato-devs/workato-platform-cli/blob/main/docs/DEVELOPER_GUIDE.md) for troubleshooting.
 
 ## Setup
 
@@ -78,11 +78,11 @@ workato workspace
 
 ## Next Steps
 
-- **Need detailed commands?** → See [COMMAND_REFERENCE.md](https://github.com/workato-devs/blob/main/docs/COMMAND_REFERENCE.md)
-- **Want real-world examples?** → See [USE_CASES.md](https://github.com/workato-devs/blob/main/docs/USE_CASES.md)
-- **Looking for sample recipes?** → See [examples/](https://github.com/workato-devs/blob/main/docs/examples/)
-- **Installation issues?** → See [DEVELOPER_GUIDE.md](https://github.com/workato-devs/blob/main/docs/DEVELOPER_GUIDE.md)
-- **Looking for all documentation?** → See [INDEX.md](https://github.com/workato-devs/blob/main/docs/INDEX.md)
+- **Need detailed commands?** → See [COMMAND_REFERENCE.md](https://github.com/workato-devs/workato-platform-cli/blob/main/docs/COMMAND_REFERENCE.md)
+- **Want real-world examples?** → See [USE_CASES.md](https://github.com/workato-devs/workato-platform-cli/blob/main/docs/USE_CASES.md)
+- **Looking for sample recipes?** → See [examples/](https://github.com/workato-devs/workato-platform-cli/blob/main/docs/examples/)
+- **Installation issues?** → See [DEVELOPER_GUIDE.md](https://github.com/workato-devs/workato-platform-cli/blob/main/docs/DEVELOPER_GUIDE.md)
+- **Looking for all documentation?** → See [INDEX.md](https://github.com/workato-devs/workato-platform-cli/blob/main/docs/INDEX.md)
 
 ## Quick Recipe Workflow
 
