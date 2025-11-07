@@ -126,14 +126,14 @@ def main() -> None:
     input_file = Path(__file__).parent.parent / "connections-parameters.md"
     output_file = (
         Path(__file__).parent.parent
-        / "workato_platform"
+        / "workato_platform_cli"
         / "cli"
         / "data"
         / "connection-data.json"
     )
     output_simple = (
         Path(__file__).parent.parent
-        / "workato_platform"
+        / "workato_platform_cli"
         / "cli"
         / "data"
         / "connection-data-simple.json"

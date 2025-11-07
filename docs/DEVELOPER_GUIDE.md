@@ -41,9 +41,9 @@ workato --help
 7. **Monitor** - Track execution with `workato recipes jobs`
 
 ## Project Structure
-- `workato_platform/` - Main package with API client and utilities
-- `workato_platform/cli/commands/` - Individual CLI command implementations
-- `workato_platform/client/` - API client and data models
+- `workato_platform_cli/` - Main package with API client and utilities
+- `workato_platform_cli/cli/commands/` - Individual CLI command implementations
+- `workato_platform_cli/client/` - API client and data models
 - `setup.py` - Package configuration with dependencies (click, requests, inquirer, pydantic)
 
 This CLI is specifically designed for AI-assisted development of Workato automation recipes, providing validation, connection management, and deployment capabilities.
@@ -92,7 +92,7 @@ workato init
 pip show workato-platform-cli
 
 # If command still not found, try running directly:
-python -m workato_platform.cli.main --help
+python -m workato_platform_cli.cli.main --help
 ```
 
 ## Contributing to the CLI

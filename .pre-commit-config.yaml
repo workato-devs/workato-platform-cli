@@ -3,9 +3,9 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^(client/|src/workato_platform/client/)
+        exclude: ^(client/|src/workato_platform_cli/client/)
       - id: end-of-file-fixer
-        exclude: ^(client/|src/workato_platform/client/)
+        exclude: ^(client/|src/workato_platform_cli/client/)
       - id: check-yaml
       - id: check-added-large-files
       - id: check-json
@@ -17,9 +17,9 @@ repos:
     rev: v0.13.0
     hooks:
       - id: ruff
-        exclude: ^(client/|src/workato_platform/client/)
+        exclude: ^(client/|src/workato_platform_cli/client/)
       - id: ruff-format
-        exclude: ^(client/|src/workato_platform/client/)
+        exclude: ^(client/|src/workato_platform_cli/client/)
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.18.1
@@ -44,7 +44,7 @@ repos:
             pytest-mock>=3.10.0,
             prompt-toolkit>=3.0.0,
           ]
-        exclude: ^(client/|src/workato_platform/client/)
+        exclude: ^(client/|src/workato_platform_cli/client/)
 
   # pip-audit for dependency security auditing
   - repo: https://github.com/pypa/pip-audit
