@@ -408,7 +408,7 @@ class RecipeValidator:
 
         # Cache settings
         self._cache_file = (
-            Path.home() / ".workato_platform" / "cli" / "connector_cache.json"
+            Path.home() / ".workato_platform_cli" / "cli" / "connector_cache.json"
         )
         self._cache_ttl_hours = 24  # Cache for 24 hours
         self._last_cache_update = None
