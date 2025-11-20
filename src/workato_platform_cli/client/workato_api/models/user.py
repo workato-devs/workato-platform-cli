@@ -39,7 +39,7 @@ class User(BaseModel):
     interested_applications: Optional[List[StrictStr]] = None
     company_name: Optional[StrictStr]
     location: Optional[StrictStr]
-    last_seen: datetime
+    last_seen: Optional[datetime] = None
     contact_phone: Optional[StrictStr] = None
     contact_email: Optional[StrictStr] = None
     about_me: Optional[StrictStr] = None
@@ -97,6 +97,11 @@ class User(BaseModel):
         # and model_fields_set contains the field
         if self.location is None and "location" in self.model_fields_set:
             _dict['location'] = None
+
+        # set to None if last_seen (nullable) is None
+        # and model_fields_set contains the field
+        if self.last_seen is None and "last_seen" in self.model_fields_set:
+            _dict['last_seen'] = None
 
         # set to None if contact_phone (nullable) is None
         # and model_fields_set contains the field

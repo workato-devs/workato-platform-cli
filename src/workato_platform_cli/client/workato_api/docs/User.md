@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 **interested_applications** | **List[str]** |  | [optional] 
 **company_name** | **str** |  | 
 **location** | **str** |  | 
-**last_seen** | **datetime** |  | 
+**last_seen** | **datetime** |  | [optional] 
 **contact_phone** | **str** |  | [optional] 
 **contact_email** | **str** |  | [optional] 
 **about_me** | **str** |  | [optional] 
