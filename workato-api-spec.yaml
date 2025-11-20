@@ -1469,7 +1469,6 @@ components:
         - recipes_count
         - company_name
         - location
-        - last_seen
         - email
         - active_recipes_count
         - root_folder_id
@@ -1518,6 +1517,7 @@ components:
         last_seen:
           type: string
           format: date-time
+          nullable: true
           example: "2020-08-23T23:22:24.329-07:00"
         contact_phone:
           type: string

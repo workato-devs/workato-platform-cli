@@ -74,3 +74,4 @@ target/
 
 
 src/workato_platform_cli/_version.py
+.workato-ignore
