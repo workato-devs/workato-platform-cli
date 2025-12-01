@@ -61,8 +61,8 @@ jobs:
         id: version
         run: |
           if [[ "${{ steps.determine-env.outputs.environment }}" == "test" ]]; then
-            # Test environment: use hatch-vcs for automatic dev versioning
-            VERSION=$(python -c "import hatch_vcs; print(hatch_vcs.get_version())")
+            # Test environment: use hatch to get automatic dev versioning
+            VERSION=$(hatch version)
             echo "Development version: $VERSION"
           else
             # Production environment: get clean version from tags
