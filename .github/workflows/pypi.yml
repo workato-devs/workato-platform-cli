@@ -60,34 +60,18 @@ jobs:
       - name: Get version and configure for environment
         id: version
         run: |
-          # Get version from git tags
-          BASE_VERSION=$(git describe --tags --always --match="*.*.*" | sed 's/^v//')
-          if [[ -z "$BASE_VERSION" || "$BASE_VERSION" == *"-"* ]]; then
-            # Fallback: use the latest tag or default
-            BASE_VERSION=$(git tag --sort=-version:refname | head -n1 | sed 's/^v//')
-            if [[ -z "$BASE_VERSION" ]]; then
-              BASE_VERSION="1.0.0rc4"
-            fi
-          fi
-          echo "Base version: $BASE_VERSION"
-          
           if [[ "${{ steps.determine-env.outputs.environment }}" == "test" ]]; then
-            # Test environment: append .devN
-            VERSION="${BASE_VERSION}.dev${{ github.run_number }}"
+            # Test environment: use hatch to get automatic dev versioning
+            VERSION=$(hatch version)
             echo "Development version: $VERSION"
-            echo "SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION}" >> $GITHUB_ENV
           else
-            # Production environment: use version as-is
-            VERSION="${BASE_VERSION}"
-            echo "Production version: $VERSION"
-            
-            # Verify no dev suffix for production
-            if [[ "$VERSION" =~ "dev" ]]; then
-              echo "Error: Version contains 'dev' suffix. Production releases must be clean versions."
-              echo "Current version: $VERSION"
-              echo "Please create a git tag (e.g., v1.0.0) on the release branch."
+            # Production environment: get clean version from tags
+            VERSION=$(git describe --tags --exact-match 2>/dev/null | sed 's/^v//' || echo "")
+            if [[ -z "$VERSION" ]]; then
+              echo "Error: Production releases require an exact git tag"
               exit 1
             fi
+            echo "Production version: $VERSION"
           fi
           
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
