@@ -1698,6 +1698,11 @@ components:
               topic,
               api_group,
               api_endpoint,
+              agentic_genie,
+              agentic_skill,
+              data_pipeline,
+              decision_engine_model,
+              agentic_knowledge_base,
             ]
           example: "recipe"
         version:
@@ -1804,6 +1809,11 @@ components:
               topic,
               api_group,
               api_endpoint,
+              agentic_genie,
+              agentic_skill,
+              data_pipeline,
+              decision_engine_model,
+              agentic_knowledge_base,
             ]
         checked:
           type: boolean
