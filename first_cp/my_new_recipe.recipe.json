@@ -1,0 +1,21 @@
+{
+  "name": "My new recipe",
+  "description": "",
+  "version": 1,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "keyword": "trigger",
+    "input": {
+    },
+    "block": [
+
+    ],
+    "uuid": "455da0fe-638d-4c30-9408-f06b13da3e5c",
+    "unfinished": false
+  },
+  "config": [
+
+  ]
+}

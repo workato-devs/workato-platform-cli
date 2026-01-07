@@ -257,7 +257,7 @@ def _handle_auth_error(e: UnauthorizedException) -> None:
     click.echo("   • Run 'workato profiles list' to check your profile")
     click.echo("   • Run 'workato profiles use' to update your credentials")
     click.echo()
-    click.echo("📚 Learn more about API client permissions and permissions required for the client:")
+    click.echo("📚 Learn more about permissions required for API client")
     click.echo("   https://docs.workato.com/en/platform-cli.html#authentication")
 
 
