@@ -246,11 +246,19 @@ def _handle_auth_error(e: UnauthorizedException) -> None:
         return
 
     click.echo("❌ Authentication failed")
-    click.echo("   Your API token may be invalid")
-    click.echo("💡 Please check your authentication:")
+    click.echo("   Your API token may be invalid or lack sufficient permissions")
+    click.echo()
+    click.echo("💡 This could be due to:")
+    click.echo("   • Invalid or expired API token")
+    click.echo("   • API client lacking required permissions for this operation")
+    click.echo()
+    click.echo("🔧 To resolve:")
     click.echo("   • Verify your API token is correct")
     click.echo("   • Run 'workato profiles list' to check your profile")
     click.echo("   • Run 'workato profiles use' to update your credentials")
+    click.echo()
+    click.echo("📚 Learn more about permissions required for API client")
+    click.echo("   https://docs.workato.com/en/platform-cli.html#authentication")
 
 
 def _handle_forbidden_error(e: ForbiddenException) -> None:
