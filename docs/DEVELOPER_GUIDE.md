@@ -104,4 +104,27 @@ If you want to contribute to the Workato CLI codebase itself, use these developm
 make test      # Run tests and check code style
 ```
 
+### Testing with Test PyPI
+
+When testing pre-release versions from Test PyPI, you need to use both Test PyPI and regular PyPI to resolve dependencies:
+
+**Using pipx (Recommended):**
+```bash
+pipx install \
+  --index-url https://test.pypi.org/simple/ \
+  --pip-args="--extra-index-url https://pypi.org/simple/" \
+  workato-platform-cli
+```
+
+**Using pip:**
+```bash
+pip install \
+  --index-url https://test.pypi.org/simple/ \
+  --extra-index-url https://pypi.org/simple/ \
+  workato-platform-cli
+```
+
+**Why this is needed:**
+Some dependencies (like `aiohttp-retry`) are not available on Test PyPI. Using `--extra-index-url` tells pip to fall back to the regular PyPI index when a package is not found on Test PyPI.
+
 These commands are for CLI maintainers and contributors, not for developers using the CLI to build Workato integrations.
