@@ -1703,6 +1703,7 @@ components:
               data_pipeline,
               decision_engine_model,
               agentic_knowledge_base,
+              mcp_server,
             ]
           example: "recipe"
         version:
@@ -1814,6 +1815,7 @@ components:
               data_pipeline,
               decision_engine_model,
               agentic_knowledge_base,
+              mcp_server,
             ]
         checked:
           type: boolean
