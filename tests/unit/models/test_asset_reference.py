@@ -1,9 +1,11 @@
 import pytest
+
 from workato_platform_cli.client.workato_api.models.asset_reference import (
     AssetReference,
 )
 
-def test_asset_reference_accepts_all_valid_types():
+
+def test_asset_reference_accepts_all_valid_types() -> None:
     """Test that AssetReference model accepts all valid asset types."""
     valid_types = [
         "recipe",
@@ -37,10 +39,11 @@ def test_asset_reference_accepts_all_valid_types():
 
         # Should not raise ValueError
         asset_ref = AssetReference.from_dict(asset_ref_data)
+        assert asset_ref is not None
         assert asset_ref.type == asset_type
 
 
-def test_asset_reference_rejects_invalid_type():
+def test_asset_reference_rejects_invalid_type() -> None:
     """Test that AssetReference model rejects invalid types."""
     asset_ref_data = {
         "id": 12345,
@@ -50,4 +53,3 @@ def test_asset_reference_rejects_invalid_type():
 
     with pytest.raises(ValueError, match="must be one of enum values"):
         AssetReference.from_dict(asset_ref_data)
-
