@@ -20,12 +20,15 @@ help:
 	@echo "  generate-client  Generate API client from OpenAPI spec"
 
 install:
-	@if [ ! -d ".venv" ]; then \
-		echo "🔄 Creating virtual environment..."; \
-		uv venv; \
-	fi
-	uv sync
-	uv pip install -e .
+	@echo "🧹 Cleaning up old installations..."
+	@pipx uninstall workato-platform-cli 2>/dev/null || true
+	@echo "🔄 Syncing dependencies..."
+	@uv sync
+	@rm -rf .venv
+	@echo "🔄 Creating fresh virtual environment..."
+	@uv venv
+	@echo "🔄 Installing package in editable mode..."
+	@pipx install -e .
 	@echo "✅ Installation complete!"
 	@echo "💡 To activate the virtual environment, run: source .venv/bin/activate"
 	@echo "   Or use 'uv run workato' to run commands without activation"
