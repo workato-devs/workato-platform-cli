@@ -15,7 +15,9 @@ from workato_platform_cli.client.workato_api.models.asset import Asset
 
 @click.command()
 @click.option(
-    "--folder-id", help="Folder ID (uses current project folder if not specified)"
+    "--folder-id",
+    type=int,
+    help="Folder ID (uses current project folder if not specified)",
 )
 @handle_cli_exceptions
 @inject
