@@ -200,6 +200,78 @@ def _get_output_mode() -> str:
     return "table"
 
 
+def _get_required_permissions(ctx: click.Context) -> list[str]:
+    """Get required Workato permissions for a CLI command.
+
+    Args:
+        ctx: Click context object
+
+    Returns:
+        List of required permission strings
+    """
+    # Map CLI command names to required Workato permissions
+    permission_map = {
+        "init": [
+            "Projects → Projects & folders",
+            "Projects → Connections",
+            "Projects → Recipes",
+            "Projects → Recipe Versions",
+            "Projects → Recipe lifecycle management",
+            "Projects → Export manifests",
+            "Tools → Collections & endpoints",
+            "Admin → Workspace details",
+        ],
+        "recipes": [
+            "Projects → Export manifests",
+            "Projects → Recipes",
+        ],
+        "pull": [
+            "Projects → Recipe lifecycle management",
+            "Projects → Export manifests",
+        ],
+        "push": [
+            "Projects → Recipe lifecycle management",
+        ],
+        "api-clients": [
+            "Tools → Clients & access profiles",
+        ],
+        "api-collections": [
+            "Tools → Collections & endpoints",
+        ],
+        "assets": [
+            "Projects → Export manifests",
+        ],
+        "connections": [
+            "Projects → Connections",
+        ],
+        "connectors": [
+            "Tools → Connector SDKs",
+            "Tools → Connectors",
+        ],
+        "data-tables": [
+            "Tools → Data tables",
+        ],
+        "properties": [
+            "Tools → Environment properties",
+        ],
+        "workspace": [
+            "Admin → Workspace details",
+        ],
+    }
+
+    # Get command name from context
+    # For nested commands like "workato recipes list", check parent context
+    command_name = ctx.info_name
+    if ctx.parent and ctx.parent.info_name and ctx.parent.info_name not in ("workato",):
+        # If parent is not root, use parent's name (the command group)
+        command_name = ctx.parent.info_name
+
+    if not command_name:
+        return []
+
+    return permission_map.get(command_name, [])
+
+
 def _handle_client_error(
     e: BadRequestException | UnprocessableEntityException,
 ) -> None:
@@ -235,6 +307,12 @@ def _handle_client_error(
 def _handle_auth_error(e: UnauthorizedException) -> None:
     """Handle 401 Unauthorized errors."""
     output_mode = _get_output_mode()
+    ctx = click.get_current_context(silent=True)
+
+    # Get required permissions for this command
+    required_permissions = []
+    if ctx:
+        required_permissions = _get_required_permissions(ctx)
 
     if output_mode == "json":
         error_data = {
@@ -245,9 +323,19 @@ def _handle_auth_error(e: UnauthorizedException) -> None:
         click.echo(json.dumps(error_data))
         return
 
-    click.echo("❌ Authentication failed")
+    command_info = f" (command: {ctx.command_path})" if ctx else ""
+    click.echo(f"❌ Authentication failed{command_info}")
     click.echo("   Your API token may be invalid or lack sufficient permissions")
     click.echo()
+
+    # Show required permissions if available
+    if required_permissions:
+        click.echo("🔐 Required permissions for this command:")
+        for permission in required_permissions:
+            click.echo(f"   • {permission}")
+        click.echo("Ensure your API client has the permissions listed above")
+        click.echo()
+
     click.echo("💡 This could be due to:")
     click.echo("   • Invalid or expired API token")
     click.echo("   • API client lacking required permissions for this operation")
