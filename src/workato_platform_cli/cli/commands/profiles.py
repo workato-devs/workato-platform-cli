@@ -360,5 +360,53 @@ async def delete(
         click.echo(f"❌ Failed to delete profile '{profile_name}'")
 
 
+@profiles.command()
+@click.argument("profile_name")
+@handle_cli_exceptions
+@inject
+async def create(
+    profile_name: str,
+    config_manager: ConfigManager = Provide[Container.config_manager],
+) -> None:
+    """Create a new profile with API credentials"""
+    # Check if profile already exists
+    existing_profile = config_manager.profile_manager.get_profile(profile_name)
+    if existing_profile:
+        click.echo(f"❌ Profile '{profile_name}' already exists")
+        click.echo("💡 Use 'workato profiles use' to switch to it")
+        click.echo("💡 Or use 'workato profiles delete' to remove it first")
+        return
+
+    click.echo(f"🔧 Creating profile: {profile_name}")
+    click.echo()
+
+    # Create profile interactively
+    try:
+        (
+            profile_data,
+            token,
+        ) = await config_manager.profile_manager.create_profile_interactive(
+            profile_name
+        )
+    except click.ClickException:
+        click.echo("❌ Profile creation cancelled")
+        return
+
+    # Save profile
+    try:
+        config_manager.profile_manager.set_profile(profile_name, profile_data, token)
+    except ValueError as e:
+        click.echo(f"❌ Failed to save profile: {e}")
+        return
+
+    # Set as current profile
+    config_manager.profile_manager.set_current_profile(profile_name)
+
+    click.echo(f"✅ Profile '{profile_name}' created successfully")
+    click.echo(f"✅ Set '{profile_name}' as the active profile")
+    click.echo()
+    click.echo("💡 You can now use this profile with Workato CLI commands")
+
+
 # Add show as click argument command
 show = click.argument("profile_name")(show)

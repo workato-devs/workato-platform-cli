@@ -4,11 +4,13 @@ import json
 
 from collections.abc import Callable
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
+import asyncclick as click
 import pytest
 
 from workato_platform_cli.cli.commands.profiles import (
+    create,
     delete,
     list_profiles,
     show,
@@ -953,3 +955,160 @@ async def test_status_json_exception_handling(
     parsed = json.loads(output)
 
     assert parsed["project"]["configured"] is False
+
+
+@pytest.mark.asyncio
+async def test_create_profile_success(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+    profile_data_factory: Callable[..., ProfileData],
+) -> None:
+    """Test successful profile creation."""
+    # Mock profile data returned from create_profile_interactive
+    profile_data = profile_data_factory(
+        region="us",
+        region_url="https://www.workato.com",
+        workspace_id=123,
+    )
+
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=None),  # Profile doesn't exist yet
+        set_profile=Mock(),
+        set_current_profile=Mock(),
+    )
+
+    # Mock the create_profile_interactive method
+    config_manager.profile_manager.create_profile_interactive = AsyncMock(
+        return_value=(profile_data, "test_token")
+    )
+
+    assert create.callback
+    await create.callback(profile_name="new_profile", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "✅ Profile 'new_profile' created successfully" in output
+    assert "✅ Set 'new_profile' as the active profile" in output
+
+    # Verify profile was set and made current
+    config_manager.profile_manager.set_profile.assert_called_once()
+    config_manager.profile_manager.set_current_profile.assert_called_once_with(
+        "new_profile"
+    )
+
+
+@pytest.mark.asyncio
+async def test_create_profile_already_exists(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test creating a profile that already exists."""
+    profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=profile),  # Profile already exists
+    )
+
+    assert create.callback
+    await create.callback(profile_name="existing", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "❌ Profile 'existing' already exists" in output
+    assert "Use 'workato profiles use' to switch to it" in output
+
+
+@pytest.mark.asyncio
+async def test_create_profile_cancelled_region_selection(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test profile creation when region selection is cancelled."""
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=None),
+    )
+
+    # Mock create_profile_interactive to raise ClickException (cancelled)
+    config_manager.profile_manager.create_profile_interactive = AsyncMock(
+        side_effect=click.ClickException("Setup cancelled")
+    )
+
+    assert create.callback
+    await create.callback(profile_name="new_profile", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "❌ Profile creation cancelled" in output
+
+
+@pytest.mark.asyncio
+async def test_create_profile_empty_token(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test profile creation with empty token."""
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=None),
+    )
+
+    # Mock create_profile_interactive to raise ClickException (empty token)
+    config_manager.profile_manager.create_profile_interactive = AsyncMock(
+        side_effect=click.ClickException("API token cannot be empty")
+    )
+
+    assert create.callback
+    await create.callback(profile_name="new_profile", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "❌ Profile creation cancelled" in output
+
+
+@pytest.mark.asyncio
+async def test_create_profile_authentication_failure(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test profile creation when authentication fails."""
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=None),
+    )
+
+    # Mock create_profile_interactive to raise ClickException (auth failed)
+    config_manager.profile_manager.create_profile_interactive = AsyncMock(
+        side_effect=click.ClickException("Authentication failed: Invalid credentials")
+    )
+
+    assert create.callback
+    await create.callback(profile_name="new_profile", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "❌ Profile creation cancelled" in output
+
+
+@pytest.mark.asyncio
+async def test_create_profile_keyring_failure(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+    profile_data_factory: Callable[..., ProfileData],
+) -> None:
+    """Test profile creation when keyring storage fails."""
+    # Mock profile data returned from create_profile_interactive
+    profile_data = profile_data_factory(
+        region="us",
+        region_url="https://www.workato.com",
+        workspace_id=123,
+    )
+
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=None),
+        set_profile=Mock(side_effect=ValueError("Failed to store token in keyring")),
+    )
+
+    # Mock create_profile_interactive to succeed, but set_profile will fail
+    config_manager.profile_manager.create_profile_interactive = AsyncMock(
+        return_value=(profile_data, "test_token")
+    )
+
+    assert create.callback
+    await create.callback(profile_name="new_profile", config_manager=config_manager)
+
+    output = capsys.readouterr().out
+    assert "❌ Failed to save profile:" in output
+    assert "Failed to store token in keyring" in output
