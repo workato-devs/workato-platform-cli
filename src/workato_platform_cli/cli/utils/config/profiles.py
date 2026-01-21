@@ -1,5 +1,6 @@
 """Profile management for multiple Workato environments."""
 
+import asyncio
 import contextlib
 import json
 import os
@@ -9,12 +10,17 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import asyncclick as click
+import certifi
 import inquirer
 import keyring
 
 from keyring.backend import KeyringBackend
 from keyring.compat import properties
 from keyring.errors import KeyringError, NoKeyringError
+
+from workato_platform_cli import Workato
+from workato_platform_cli.cli.utils.token_input import get_token_with_smart_paste
+from workato_platform_cli.client.workato_api.configuration import Configuration
 
 from .models import AVAILABLE_REGIONS, ProfileData, ProfilesConfig, RegionInfo
 
@@ -489,3 +495,62 @@ class ProfileManager:
             return RegionInfo(region="custom", name="Custom URL", url=custom_url)
 
         return selected_region
+
+    async def create_profile_interactive(
+        self, profile_name: str
+    ) -> tuple[ProfileData, str]:
+        """Create a new profile with interactive prompts for region and token.
+
+        Performs region selection, token input, credential validation, and returns
+        the validated profile data and token.
+
+        Args:
+            profile_name: Name of the profile being created
+
+        Returns:
+            tuple[ProfileData, str]: The validated profile data and API token
+
+        Raises:
+            click.ClickException: If setup is cancelled, token is empty,
+                or validation fails
+        """
+        # Step 1: Select region
+        click.echo("📍 Select your Workato region")
+        selected_region = await self.select_region_interactive(profile_name)
+
+        if not selected_region:
+            raise click.ClickException("Setup cancelled")
+
+        # Step 2: Get API token
+        token = await asyncio.to_thread(
+            get_token_with_smart_paste,
+            prompt_text="API token",
+        )
+        if not token.strip():
+            raise click.ClickException("API token cannot be empty")
+
+        # Step 3: Test authentication and get workspace info
+        click.echo("🔄 Validating credentials...")
+        api_config = Configuration(
+            access_token=token, host=selected_region.url, ssl_ca_cert=certifi.where()
+        )
+
+        try:
+            async with Workato(configuration=api_config) as workato_api_client:
+                user_info = await workato_api_client.users_api.get_workspace_details()
+        except Exception as e:
+            raise click.ClickException(f"Authentication failed: {e}") from e
+
+        # Step 4: Create profile data
+        if not selected_region.url:
+            raise click.ClickException("Region URL is required")
+
+        profile_data = ProfileData(
+            region=selected_region.region,
+            region_url=selected_region.url,
+            workspace_id=user_info.id,
+        )
+
+        click.echo(f"✅ Authenticated as: {user_info.name}")
+
+        return profile_data, token
