@@ -1,5 +1,6 @@
 """Tests for ConfigManager."""
 
+import asyncio
 import json
 
 from datetime import datetime
@@ -1801,6 +1802,16 @@ class TestConfigManager:
             ConfigManager.__module__ + ".Workato",
             StubWorkato,
         )
+        # Also mock Workato in profiles module since
+        # create_profile_interactive uses it
+        monkeypatch.setattr(
+            "workato_platform_cli.Workato",
+            StubWorkato,
+        )
+        monkeypatch.setattr(
+            "workato_platform_cli.cli.utils.config.profiles.Workato",
+            StubWorkato,
+        )
         StubProjectManager.available_projects = []
         StubProjectManager.created_projects = []
         monkeypatch.setattr(
@@ -1829,7 +1840,16 @@ class TestConfigManager:
             fake_prompt,
         )
 
-        # Mock get_token_with_smart_paste
+        # Mock asyncio.to_thread to avoid calling the real get_token_with_smart_paste
+        async def fake_to_thread(func: Any, *args: Any, **kwargs: Any) -> str:
+            if func.__name__ == "get_token_with_smart_paste":
+                return "token-123"
+            return await asyncio.to_thread(func, *args, **kwargs)
+
+        monkeypatch.setattr(
+            "workato_platform_cli.cli.utils.config.profiles.asyncio.to_thread",
+            fake_to_thread,
+        )
         monkeypatch.setattr(
             ConfigManager.__module__ + ".get_token_with_smart_paste",
             lambda **kwargs: "token-123",
@@ -2131,23 +2151,20 @@ class TestConfigManager:
             StubWorkato,
         )
 
-        # Mock select_region_interactive to return a custom region
-        from workato_platform_cli.cli.utils.config.models import RegionInfo
+        # Mock create_profile_interactive to return profile data and token
+        from workato_platform_cli.cli.utils.config.models import ProfileData
 
-        async def mock_select_region() -> RegionInfo:
-            return RegionInfo(
-                region="custom",
-                name="Custom URL",
-                url="https://custom.workato.test",
+        async def mock_create_profile(profile_name: str) -> tuple[ProfileData, str]:
+            return (
+                ProfileData(
+                    region="custom",
+                    region_url="https://custom.workato.test",
+                    workspace_id=123,
+                ),
+                "custom-token",
             )
 
-        mock_profile_manager.select_region_interactive = mock_select_region
-
-        # Mock get_token_with_smart_paste
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".get_token_with_smart_paste",
-            lambda **kwargs: "custom-token",
-        )
+        mock_profile_manager.create_profile_interactive = mock_create_profile
 
         config_manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         await config_manager._create_new_profile("custom")
@@ -2174,11 +2191,11 @@ class TestConfigManager:
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         manager.profile_manager = mock_profile_manager
 
-        # Mock select_region_interactive to return None (cancelled)
-        async def mock_select_region_cancelled() -> None:
-            return None
+        # Mock create_profile_interactive to raise ClickException (cancelled)
+        async def mock_create_profile_cancelled(profile_name: str) -> tuple:
+            raise click.ClickException("Setup cancelled")
 
-        mock_profile_manager.select_region_interactive = mock_select_region_cancelled
+        mock_profile_manager.create_profile_interactive = mock_create_profile_cancelled
 
         with pytest.raises(click.ClickException, match="Setup cancelled"):
             await manager._create_new_profile("dev")
@@ -2195,15 +2212,12 @@ class TestConfigManager:
         manager = ConfigManager(config_dir=tmp_path, skip_validation=True)
         manager.profile_manager = mock_profile_manager
 
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".inquirer.prompt",
-            lambda _questions: {"region": "US Data Center (https://www.workato.com)"},
-        )
+        # Mock create_profile_interactive to raise ClickException (empty token)
+        async def mock_create_profile_empty_token(profile_name: str) -> tuple:
+            raise click.ClickException("API token cannot be empty")
 
-        # Mock get_token_with_smart_paste to return blank token
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".get_token_with_smart_paste",
-            lambda **kwargs: "   ",
+        mock_profile_manager.create_profile_interactive = (
+            mock_create_profile_empty_token
         )
 
         with pytest.raises(click.ClickException, match="API token cannot be empty"):
