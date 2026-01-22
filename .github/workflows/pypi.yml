@@ -66,7 +66,7 @@ jobs:
             echo "Development version: $VERSION"
           else
             # Production environment: get clean version from tags
-            VERSION=$(git describe --tags --exact-match 2>/dev/null | sed 's/^v//' || echo "")
+            VERSION=$(git describe --tags --exact-match 2>/dev/null | sed 's/^v//')
             if [[ -z "$VERSION" ]]; then
               echo "Error: Production releases require an exact git tag"
               exit 1
