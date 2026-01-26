@@ -42,8 +42,8 @@ class Asset(BaseModel):
     @field_validator('type')
     def type_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['recipe', 'connection', 'lookup_table', 'workato_db_table', 'account_property', 'project_property', 'workato_schema', 'workato_template', 'lcap_app', 'lcap_page', 'custom_adapter', 'topic', 'api_group', 'api_endpoint']):
-            raise ValueError("must be one of enum values ('recipe', 'connection', 'lookup_table', 'workato_db_table', 'account_property', 'project_property', 'workato_schema', 'workato_template', 'lcap_app', 'lcap_page', 'custom_adapter', 'topic', 'api_group', 'api_endpoint')")
+        if value not in set(['recipe', 'connection', 'lookup_table', 'workato_db_table', 'account_property', 'project_property', 'workato_schema', 'workato_template', 'lcap_app', 'lcap_page', 'custom_adapter', 'topic', 'api_group', 'api_endpoint', 'agentic_genie', 'agentic_skill', 'data_pipeline', 'decision_engine_model', 'agentic_knowledge_base', 'mcp_server']):
+            raise ValueError("must be one of enum values ('recipe', 'connection', 'lookup_table', 'workato_db_table', 'account_property', 'project_property', 'workato_schema', 'workato_template', 'lcap_app', 'lcap_page', 'custom_adapter', 'topic', 'api_group', 'api_endpoint', 'agentic_genie', 'agentic_skill', 'data_pipeline', 'decision_engine_model', 'agentic_knowledge_base', 'mcp_server')")
         return value
 
     @field_validator('status')
