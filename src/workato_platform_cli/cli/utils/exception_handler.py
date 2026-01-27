@@ -305,9 +305,30 @@ def _handle_client_error(
 
 
 def _handle_auth_error(e: UnauthorizedException) -> None:
-    """Handle 401 Unauthorized errors."""
+    """Handle 401 Unauthorized errors.
+
+    For 'workato init' command: Shows both authentication and authorization
+    possibilities since we cannot distinguish between them at this stage.
+
+    For other commands: Shows only authorization error, assuming the token
+    was already validated during initialization. A 401 error is treated as
+    missing permissions.
+
+    TODO: This is a temporary solution. The API should return distinct error
+    codes for authentication vs authorization failures. Track progress at:
+    https://github.com/workato-devs/workato-platform-cli-issues/issues/106
+    """
     output_mode = _get_output_mode()
     ctx = click.get_current_context(silent=True)
+
+    # Check if this is the init command (top-level init, not subcommands)
+    is_init_command = False
+    if ctx and ctx.command:
+        is_init_command = (
+            ctx.command.name == "init"
+            and ctx.parent
+            and ctx.parent.info_name == "workato"
+        )
 
     # Get required permissions for this command
     required_permissions = []
@@ -315,38 +336,77 @@ def _handle_auth_error(e: UnauthorizedException) -> None:
         required_permissions = _get_required_permissions(ctx)
 
     if output_mode == "json":
+        if is_init_command:
+            error_msg = (
+                "Authentication failed - invalid or missing API token "
+                "or insufficient permissions"
+            )
+        else:
+            error_msg = "Authorization failed - insufficient permissions"
+
         error_data = {
             "status": "error",
-            "error": "Authentication failed - invalid or missing API token",
+            "error": error_msg,
             "error_code": "UNAUTHORIZED",
         }
         click.echo(json.dumps(error_data))
         return
 
     command_info = f" (command: {ctx.command_path})" if ctx else ""
-    click.echo(f"❌ Authentication failed{command_info}")
-    click.echo("   Your API token may be invalid or lack sufficient permissions")
-    click.echo()
 
-    # Show required permissions if available
-    if required_permissions:
-        click.echo("🔐 Required permissions for this command:")
-        for permission in required_permissions:
-            click.echo(f"   • {permission}")
-        click.echo("Ensure your API client has the permissions listed above")
+    if is_init_command:
+        # For init command: Show both possibilities since we can't distinguish
+        click.echo(f"❌ Authentication failed{command_info}")
+        click.echo("   This could be due to:")
+        click.echo("   • Invalid or expired API token")
+        click.echo("   • API client lacking required permissions")
         click.echo()
 
-    click.echo("💡 This could be due to:")
-    click.echo("   • Invalid or expired API token")
-    click.echo("   • API client lacking required permissions for this operation")
-    click.echo()
-    click.echo("🔧 To resolve:")
-    click.echo("   • Verify your API token is correct")
-    click.echo("   • Run 'workato profiles list' to check your profile")
-    click.echo("   • Run 'workato profiles use' to update your credentials")
-    click.echo()
-    click.echo("📚 Learn more about permissions required for API client")
-    click.echo("   https://docs.workato.com/en/platform-cli.html#authentication")
+        # Show required permissions if available
+        if required_permissions:
+            click.echo("🔐 Required permissions for this command:")
+            for permission in required_permissions:
+                click.echo(f"   • {permission}")
+            click.echo()
+
+        click.echo("🔧 To resolve:")
+        click.echo("   • Verify your API token is correct")
+        click.echo(
+            "   • Ensure your API client has all required permissions in Workato"
+        )
+        click.echo("   • Run 'workato profiles list' to check your profile")
+        click.echo("   • Run 'workato profiles use' to update your credentials")
+        click.echo()
+        click.echo("📚 Learn more about authentication and permissions")
+        click.echo("   https://docs.workato.com/en/platform-cli.html#authentication")
+    else:
+        # For non-init commands: Show only authorization error
+        # Assumption: Token validity was already verified during init when
+        # the profile was created. If they're using an existing profile and
+        # getting 401, it's an authorization issue (missing permissions).
+        click.echo(f"❌ Authorization failed{command_info}")
+        click.echo(
+            "   Your API client lacks the required permissions for this operation"
+        )
+        click.echo()
+
+        # Show required permissions if available
+        if required_permissions:
+            click.echo("🔐 Required permissions for this command:")
+            for permission in required_permissions:
+                click.echo(f"   • {permission}")
+            click.echo()
+
+        click.echo("🔧 To resolve:")
+        click.echo("   • Update your API client permissions in Workato")
+        click.echo("   • Ensure the permissions listed above are enabled")
+        click.echo(
+            "   • Run 'workato profiles use' if you need to switch to "
+            "a different API client"
+        )
+        click.echo()
+        click.echo("📚 Learn more about permissions required for API client")
+        click.echo("   https://docs.workato.com/en/platform-cli.html#authentication")
 
 
 def _handle_forbidden_error(e: ForbiddenException) -> None:
