@@ -50,11 +50,20 @@ def mock_workato_client() -> Mock:
 
 
 @pytest.fixture(autouse=True)
-def isolate_tests(monkeypatch: pytest.MonkeyPatch, temp_config_dir: Path) -> None:
+def isolate_tests(
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+    temp_config_dir: Path,
+) -> None:
     """Isolate tests by using temporary directories and env vars."""
     # Prevent tests from accessing real config files
     monkeypatch.setenv("WORKATO_CONFIG_DIR", str(temp_config_dir))
     monkeypatch.setenv("WORKATO_DISABLE_UPDATE_CHECK", "1")
+    monkeypatch.setattr("pathlib.Path.home", lambda: temp_config_dir)
+
+    # If this is a live test, do NOT force test mode and do NOT wipe creds
+    if request.node.get_closest_marker("live"):
+        return
 
     # Ensure we don't make real API calls
     monkeypatch.setenv("WORKATO_TEST_MODE", "1")
