@@ -47,6 +47,9 @@ test-unit:
 test-integration:
 	uv run pytest tests/integration/ -v
 
+test-live:
+	uv run pytest -m live -vv -s
+
 test-client:
 	uv run pytest src/workato_platform_cli/client/workato_api/test/ -v
 

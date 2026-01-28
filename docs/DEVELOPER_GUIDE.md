@@ -104,6 +104,19 @@ If you want to contribute to the Workato CLI codebase itself, use these developm
 make test      # Run tests and check code style
 ```
 
+### Live Tests (Sandbox Only)
+Live tests hit real Workato APIs and require a sandbox or trial workspace.
+
+```bash
+WORKATO_LIVE_SANDBOX=1 make test-live
+```
+
+Required environment variables:
+- `WORKATO_HOST`
+- `WORKATO_API_TOKEN`
+
+Optional environment variables and flags are documented in `tests/live/README.md`.
+
 ### Testing with Test PyPI
 
 When testing pre-release versions from Test PyPI, you need to use both Test PyPI and regular PyPI to resolve dependencies:

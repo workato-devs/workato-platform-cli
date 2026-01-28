@@ -197,7 +197,19 @@ ignore_missing_imports = true
 # Pytest configuration
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q"
+
+# Default pytest flags:
+# -ra: show extra summary for skipped/failed/etc
+# -q: quiet
+# -m "not live": never run real sandbox tests unless explicitly requested
+addopts = '-ra -q -m "not live"'
+
+# Markers used across the suite
+markers = [
+    "live: hits real sandbox endpoints (skipped by default; requires env vars like WORKATO_HOST/WORKATO_API_TOKEN)",
+    "stubbed: uses mocked/stubbed HTTP (default tier for integration workflow tests)",
+]
+
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
