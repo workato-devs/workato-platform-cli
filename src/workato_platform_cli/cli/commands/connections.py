@@ -260,6 +260,7 @@ async def create(
 @connections.command(name="create-oauth")
 @click.option(
     "--parent-id",
+    type=int,
     required=True,
     help="ID of the parent OAuth connection (must be established/authorized)",
 )
@@ -269,7 +270,11 @@ async def create(
     type=int,
     help="ID of the project/folder (uses current project if not specified)",
 )
-@click.option("--external-id", help="End user string ID for identifying the connection")
+@click.option(
+    "--external-id",
+    required=True,
+    help="End user string ID for identifying the connection",
+)
 @click.option(
     "--callback-url",
     help="URL called back after successful token acquisition (optional)",
