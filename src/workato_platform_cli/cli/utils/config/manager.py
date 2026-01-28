@@ -544,38 +544,9 @@ class ConfigManager:
 
     async def _create_new_profile(self, profile_name: str) -> None:
         """Create a new profile interactively"""
-        # Select region
-        click.echo("📍 Select your Workato region")
-        region_result = await self.profile_manager.select_region_interactive()
-
-        if not region_result:
-            raise click.ClickException("Setup cancelled")
-
-        selected_region = region_result
-
-        # Get API token
-        token = await asyncio.to_thread(
-            get_token_with_smart_paste,
-            prompt_text="API token",
-        )
-        if not token.strip():
-            raise click.ClickException("API token cannot be empty")
-
-        # Test authentication and get workspace info
-        api_config = Configuration(
-            access_token=token, host=selected_region.url, ssl_ca_cert=certifi.where()
-        )
-
-        async with Workato(configuration=api_config) as workato_api_client:
-            user_info = await workato_api_client.users_api.get_workspace_details()
-
-        # Create and save profile
-        if not selected_region.url:
-            raise click.ClickException("Region URL is required")
-        profile_data = ProfileData(
-            region=selected_region.region,
-            region_url=selected_region.url,
-            workspace_id=user_info.id,
+        # Create profile using shared helper
+        profile_data, token = await self.profile_manager.create_profile_interactive(
+            profile_name
         )
 
         # Save profile and token
