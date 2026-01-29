@@ -61,6 +61,10 @@ async def list_connectors(
 @click.option("--provider", help="Show parameters for a specific provider")
 @click.option("--oauth-only", is_flag=True, help="Show only OAuth-enabled providers")
 @click.option("--search", help="Search provider names (case-insensitive)")
+@click.option("--all", "show_all", is_flag=True, help="Output full schema as JSON")
+@click.option(
+    "--pretty", is_flag=True, help="Pretty-print JSON output (use with --all)"
+)
 @handle_cli_exceptions
 @inject
 @handle_api_exceptions
@@ -68,15 +72,32 @@ async def parameters(
     provider: str,
     oauth_only: bool,
     search: str,
+    show_all: bool,
+    pretty: bool,
     connector_manager: ConnectorManager = Provide[Container.connector_manager],
 ) -> None:
     """List connection parameters for connectors
 
     Shows configuration requirements for creating connections to different services.
     """
+    import json
 
     # Load the bundled connection data using the injected manager
     connection_data = connector_manager.load_connection_data()
+
+    # Handle --all flag - output raw schema data as JSON
+    if show_all:
+        # Convert ProviderData objects back to dict for JSON serialization
+        json_data = {}
+        for key, provider_data in connection_data.items():
+            json_data[key] = provider_data.model_dump()
+
+        # Pretty-print if --pretty flag is set
+        if pretty:
+            click.echo(json.dumps(json_data, indent=2))
+        else:
+            click.echo(json.dumps(json_data))
+        return
 
     if not connection_data:
         click.echo("❌ Connection parameter data not found.")
@@ -172,6 +193,8 @@ async def parameters(
             "  • View provider details: workato connectors parameters "
             "--provider salesforce"
         )
+        click.echo("  • Get JSON schema: workato connectors parameters --all")
+        click.echo("  • Get pretty JSON: workato connectors parameters --all --pretty")
         click.echo(
             "  • Create connection: workato connections create --provider <PROVIDER> "
             "--name 'My Connection'"
