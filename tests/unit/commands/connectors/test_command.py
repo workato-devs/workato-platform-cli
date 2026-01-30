@@ -85,6 +85,8 @@ async def test_parameters_no_data(
         provider=None,
         oauth_only=False,
         search=None,
+        show_all=False,
+        pretty=False,
         connector_manager=manager,
     )
 
@@ -107,6 +109,8 @@ async def test_parameters_specific_provider(
         provider="salesforce",
         oauth_only=False,
         search=None,
+        show_all=False,
+        pretty=False,
         connector_manager=manager,
     )
 
@@ -131,6 +135,8 @@ async def test_parameters_provider_not_found(
         provider="unknown",
         oauth_only=False,
         search=None,
+        show_all=False,
+        pretty=False,
         connector_manager=manager,
     )
 
@@ -156,6 +162,8 @@ async def test_parameters_filtered_list(
             provider=None,
             oauth_only=True,
             search="ji",
+            show_all=False,
+            pretty=False,
             connector_manager=manager,
         )
 
@@ -181,7 +189,95 @@ async def test_parameters_filtered_none(
             provider=None,
             oauth_only=False,
             search="sales",
+            show_all=False,
+            pretty=False,
             connector_manager=manager,
         )
 
         assert any("No providers" in line for line in capture_echo)
+
+
+@pytest.mark.asyncio
+async def test_parameters_all_flag_json_output(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
+    """Test that --all flag outputs single-line JSON"""
+    import json
+
+    manager = Mock()
+    connection_data = {
+        "jira": ProviderData(
+            name="Jira", provider="jira", oauth=True, secure_tunnel=True
+        ),
+        "mysql": ProviderData(name="MySQL", provider="mysql", oauth=False),
+    }
+
+    with patch.object(manager, "load_connection_data", return_value=connection_data):
+        assert command.parameters.callback
+
+        await command.parameters.callback(
+            provider=None,
+            oauth_only=False,
+            search=None,
+            show_all=True,
+            pretty=False,
+            connector_manager=manager,
+        )
+
+        # Should output single-line JSON
+        assert len(capture_echo) == 1, "Should output exactly one line"
+        output = capture_echo[0]
+
+        # Verify it's valid JSON
+        parsed = json.loads(output)
+        assert "jira" in parsed
+        assert "mysql" in parsed
+        assert parsed["jira"]["name"] == "Jira"
+        assert parsed["mysql"]["oauth"] is False
+
+
+@pytest.mark.asyncio
+async def test_parameters_all_with_pretty_flag(
+    monkeypatch: pytest.MonkeyPatch, capture_echo: list[str]
+) -> None:
+    """Test that --all --pretty flags output pretty-printed JSON"""
+    import json
+
+    manager = Mock()
+    connection_data = {
+        "jira": ProviderData(
+            name="Jira", provider="jira", oauth=True, secure_tunnel=True
+        ),
+    }
+
+    with patch.object(manager, "load_connection_data", return_value=connection_data):
+        assert command.parameters.callback
+
+        await command.parameters.callback(
+            provider=None,
+            oauth_only=False,
+            search=None,
+            show_all=True,
+            pretty=True,
+            connector_manager=manager,
+        )
+
+        # Get the output (should be a single echo call with embedded newlines)
+        assert len(capture_echo) == 1, "Should output exactly one echo call"
+        output = capture_echo[0]
+
+        # Verify it's valid JSON
+        parsed = json.loads(output)
+        assert "jira" in parsed
+        assert parsed["jira"]["name"] == "Jira"
+
+        # Verify it has proper indentation (pretty-printed with indent=2)
+        # Pretty-printed JSON should have newlines and indentation
+        assert "\n" in output, "Pretty-printed JSON should contain newlines"
+        assert '  "jira"' in output or '  "name"' in output, "Should have indented keys"
+
+        # Verify the non-pretty version would be different (compact)
+        compact = json.dumps(parsed)
+        assert len(output) > len(compact), (
+            "Pretty-printed should be longer than compact"
+        )
