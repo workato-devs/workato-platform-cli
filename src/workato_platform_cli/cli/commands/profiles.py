@@ -450,7 +450,7 @@ async def create(
         click.echo(f"❌ Profile '{profile_name}' already exists")
         click.echo("💡 Use 'workato profiles use' to switch to it")
         click.echo("💡 Or use 'workato profiles delete' to remove it first")
-        return
+        raise SystemExit(1)
 
     # Get profile data and token (either interactively or non-interactively)
     if non_interactive:
@@ -464,7 +464,7 @@ async def create(
 
         result = await _create_profile_non_interactive(region, api_token, api_url)
         if result is None:
-            return
+            raise SystemExit(1)
         profile_data, token = result
     else:
         click.echo(f"🔧 Creating profile: {profile_name}")
@@ -479,14 +479,14 @@ async def create(
             )
         except click.ClickException:
             click.echo("❌ Profile creation cancelled")
-            return
+            raise SystemExit(1)
 
     # Save profile (common for both modes)
     try:
         config_manager.profile_manager.set_profile(profile_name, profile_data, token)
     except ValueError as e:
         click.echo(f"❌ Failed to save profile: {e}")
-        return
+        raise SystemExit(1)
 
     # Set as current profile (common for both modes)
     config_manager.profile_manager.set_current_profile(profile_name)

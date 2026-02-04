@@ -1009,8 +1009,10 @@ async def test_create_profile_already_exists(
     )
 
     assert create.callback
-    await create.callback(profile_name="existing", config_manager=config_manager)
+    with pytest.raises(SystemExit) as exc_info:
+        await create.callback(profile_name="existing", config_manager=config_manager)
 
+    assert exc_info.value.code == 1
     output = capsys.readouterr().out
     assert "❌ Profile 'existing' already exists" in output
     assert "Use 'workato profiles use' to switch to it" in output
@@ -1032,8 +1034,10 @@ async def test_create_profile_cancelled_region_selection(
     )
 
     assert create.callback
-    await create.callback(profile_name="new_profile", config_manager=config_manager)
+    with pytest.raises(SystemExit) as exc_info:
+        await create.callback(profile_name="new_profile", config_manager=config_manager)
 
+    assert exc_info.value.code == 1
     output = capsys.readouterr().out
     assert "❌ Profile creation cancelled" in output
 
@@ -1054,8 +1058,10 @@ async def test_create_profile_empty_token(
     )
 
     assert create.callback
-    await create.callback(profile_name="new_profile", config_manager=config_manager)
+    with pytest.raises(SystemExit) as exc_info:
+        await create.callback(profile_name="new_profile", config_manager=config_manager)
 
+    assert exc_info.value.code == 1
     output = capsys.readouterr().out
     assert "❌ Profile creation cancelled" in output
 
@@ -1076,8 +1082,10 @@ async def test_create_profile_authentication_failure(
     )
 
     assert create.callback
-    await create.callback(profile_name="new_profile", config_manager=config_manager)
+    with pytest.raises(SystemExit) as exc_info:
+        await create.callback(profile_name="new_profile", config_manager=config_manager)
 
+    assert exc_info.value.code == 1
     output = capsys.readouterr().out
     assert "❌ Profile creation cancelled" in output
 
@@ -1107,7 +1115,10 @@ async def test_create_profile_keyring_failure(
     )
 
     assert create.callback
-    await create.callback(profile_name="new_profile", config_manager=config_manager)
+    with pytest.raises(SystemExit) as exc_info:
+        await create.callback(profile_name="new_profile", config_manager=config_manager)
+
+    assert exc_info.value.code == 1
 
     output = capsys.readouterr().out
     assert "❌ Failed to save profile:" in output
