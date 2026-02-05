@@ -369,24 +369,28 @@ async def delete(
 
 
 async def _create_profile_non_interactive(
-    region: str,
-    api_token: str,
+    region: str | None,
+    api_token: str | None,
     api_url: str | None,
 ) -> tuple[ProfileData, str] | None:
     """Create profile data non-interactively.
 
     Returns (ProfileData, token) on success, or None on error (error already echoed).
     """
-    # Validate custom region requirements
+    # Validate required parameters
+    if not region:
+        click.echo("❌ --region is required in non-interactive mode")
+        return None
+    if not api_token:
+        click.echo("❌ --api-token is required in non-interactive mode")
+        return None
     if region == "custom" and not api_url:
         click.echo("❌ --api-url is required when region=custom")
         return None
 
     # Get region info
     if region == "custom":
-        region_info: RegionInfo = RegionInfo(
-            region="custom", name="Custom", url=api_url
-        )
+        region_info = RegionInfo(region="custom", name="Custom", url=api_url)
     else:
         region_info_lookup = AVAILABLE_REGIONS.get(region)
         if not region_info_lookup:
@@ -450,21 +454,13 @@ async def create(
         click.echo(f"❌ Profile '{profile_name}' already exists")
         click.echo("💡 Use 'workato profiles use' to switch to it")
         click.echo("💡 Or use 'workato profiles delete' to remove it first")
-        raise SystemExit(1)
+        return
 
     # Get profile data and token (either interactively or non-interactively)
     if non_interactive:
-        # Validate required parameters for non-interactive mode
-        if not region:
-            click.echo("❌ --region is required in non-interactive mode")
-            return
-        if not api_token:
-            click.echo("❌ --api-token is required in non-interactive mode")
-            return
-
         result = await _create_profile_non_interactive(region, api_token, api_url)
         if result is None:
-            raise SystemExit(1)
+            return
         profile_data, token = result
     else:
         click.echo(f"🔧 Creating profile: {profile_name}")
@@ -479,14 +475,14 @@ async def create(
             )
         except click.ClickException:
             click.echo("❌ Profile creation cancelled")
-            raise SystemExit(1)
+            return
 
     # Save profile (common for both modes)
     try:
         config_manager.profile_manager.set_profile(profile_name, profile_data, token)
     except ValueError as e:
         click.echo(f"❌ Failed to save profile: {e}")
-        raise SystemExit(1)
+        return
 
     # Set as current profile (common for both modes)
     config_manager.profile_manager.set_current_profile(profile_name)
