@@ -6,12 +6,20 @@ import os
 from typing import Any
 
 import asyncclick as click
+import certifi
 
 from dependency_injector.wiring import Provide, inject
 
+from workato_platform_cli import Workato
 from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils.config import ConfigData, ConfigManager
+from workato_platform_cli.cli.utils.config.models import (
+    AVAILABLE_REGIONS,
+    ProfileData,
+    RegionInfo,
+)
 from workato_platform_cli.cli.utils.exception_handler import handle_cli_exceptions
+from workato_platform_cli.client.workato_api.configuration import Configuration
 
 
 @click.group()
@@ -360,12 +368,83 @@ async def delete(
         click.echo(f"❌ Failed to delete profile '{profile_name}'")
 
 
+async def _create_profile_non_interactive(
+    region: str | None,
+    api_token: str | None,
+    api_url: str | None,
+) -> tuple[ProfileData, str] | None:
+    """Create profile data non-interactively.
+
+    Returns (ProfileData, token) on success, or None on error (error already echoed).
+    """
+    # Validate required parameters
+    if not region:
+        click.echo("❌ --region is required in non-interactive mode")
+        return None
+    if not api_token:
+        click.echo("❌ --api-token is required in non-interactive mode")
+        return None
+    if region == "custom" and not api_url:
+        click.echo("❌ --api-url is required when region=custom")
+        return None
+
+    # Get region info
+    if region == "custom":
+        region_info = RegionInfo(region="custom", name="Custom", url=api_url)
+    else:
+        region_info_lookup = AVAILABLE_REGIONS.get(region)
+        if not region_info_lookup:
+            click.echo(f"❌ Invalid region: {region}")
+            return None
+        region_info = region_info_lookup
+
+    # Validate credentials and get workspace info
+    api_config = Configuration(
+        access_token=api_token, host=region_info.url, ssl_ca_cert=certifi.where()
+    )
+    try:
+        async with Workato(configuration=api_config) as workato_api_client:
+            user_info = await workato_api_client.users_api.get_workspace_details()
+    except Exception as e:
+        click.echo(f"❌ Authentication failed: {e}")
+        return None
+
+    profile_data = ProfileData(
+        region=region_info.region,
+        region_url=region_info.url,
+        workspace_id=user_info.id,
+    )
+    return profile_data, api_token
+
+
 @profiles.command()
 @click.argument("profile_name")
+@click.option(
+    "--region",
+    type=click.Choice(["us", "eu", "jp", "au", "sg", "custom"]),
+    help="Workato region",
+)
+@click.option(
+    "--api-token",
+    help="Workato API token",
+)
+@click.option(
+    "--api-url",
+    help="Custom API URL (required when region=custom)",
+)
+@click.option(
+    "--non-interactive",
+    is_flag=True,
+    help="Run in non-interactive mode (requires --region and --api-token)",
+)
 @handle_cli_exceptions
 @inject
 async def create(
     profile_name: str,
+    region: str | None = None,
+    api_token: str | None = None,
+    api_url: str | None = None,
+    non_interactive: bool = False,
     config_manager: ConfigManager = Provide[Container.config_manager],
 ) -> None:
     """Create a new profile with API credentials"""
@@ -377,31 +456,38 @@ async def create(
         click.echo("💡 Or use 'workato profiles delete' to remove it first")
         return
 
-    click.echo(f"🔧 Creating profile: {profile_name}")
-    click.echo()
+    # Get profile data and token (either interactively or non-interactively)
+    if non_interactive:
+        result = await _create_profile_non_interactive(region, api_token, api_url)
+        if result is None:
+            return
+        profile_data, token = result
+    else:
+        click.echo(f"🔧 Creating profile: {profile_name}")
+        click.echo()
 
-    # Create profile interactively
-    try:
-        (
-            profile_data,
-            token,
-        ) = await config_manager.profile_manager.create_profile_interactive(
-            profile_name
-        )
-    except click.ClickException:
-        click.echo("❌ Profile creation cancelled")
-        return
+        try:
+            (
+                profile_data,
+                token,
+            ) = await config_manager.profile_manager.create_profile_interactive(
+                profile_name
+            )
+        except click.ClickException:
+            click.echo("❌ Profile creation cancelled")
+            return
 
-    # Save profile
+    # Save profile (common for both modes)
     try:
         config_manager.profile_manager.set_profile(profile_name, profile_data, token)
     except ValueError as e:
         click.echo(f"❌ Failed to save profile: {e}")
         return
 
-    # Set as current profile
+    # Set as current profile (common for both modes)
     config_manager.profile_manager.set_current_profile(profile_name)
 
+    # Success message (common for both modes)
     click.echo(f"✅ Profile '{profile_name}' created successfully")
     click.echo(f"✅ Set '{profile_name}' as the active profile")
     click.echo()

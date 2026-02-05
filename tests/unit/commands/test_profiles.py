@@ -1112,3 +1112,48 @@ async def test_create_profile_keyring_failure(
     output = capsys.readouterr().out
     assert "❌ Failed to save profile:" in output
     assert "Failed to store token in keyring" in output
+
+
+@pytest.mark.asyncio
+async def test_create_profile_non_interactive(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test successful non-interactive profile creation."""
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=None),  # Profile doesn't exist yet
+        set_profile=Mock(),
+        set_current_profile=Mock(),
+    )
+
+    # Mock Workato API client
+    mock_client = AsyncMock()
+    mock_user = Mock()
+    mock_user.id = 123
+    mock_client.users_api.get_workspace_details = AsyncMock(return_value=mock_user)
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
+
+    with patch(
+        "workato_platform_cli.cli.commands.profiles.Workato",
+        return_value=mock_client,
+    ):
+        assert create.callback
+        await create.callback(
+            profile_name="test_profile",
+            region="us",
+            api_token="test_token",
+            api_url=None,
+            non_interactive=True,
+            config_manager=config_manager,
+        )
+
+    output = capsys.readouterr().out
+    assert "✅ Profile 'test_profile' created successfully" in output
+    assert "✅ Set 'test_profile' as the active profile" in output
+
+    # Verify profile was set and made current
+    config_manager.profile_manager.set_profile.assert_called_once()
+    config_manager.profile_manager.set_current_profile.assert_called_once_with(
+        "test_profile"
+    )
