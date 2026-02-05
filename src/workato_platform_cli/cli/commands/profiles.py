@@ -390,12 +390,15 @@ async def _create_profile_non_interactive(
 
     # Get region info
     if region == "custom":
-        region_info = RegionInfo(region="custom", name="Custom", url=api_url)
+        region_info: RegionInfo = RegionInfo(
+            region="custom", name="Custom", url=api_url
+        )
     else:
-        region_info = AVAILABLE_REGIONS.get(region)
-        if not region_info:
+        region_info_lookup = AVAILABLE_REGIONS.get(region)
+        if not region_info_lookup:
             click.echo(f"❌ Invalid region: {region}")
             return None
+        region_info = region_info_lookup
 
     # Validate credentials and get workspace info
     api_config = Configuration(
@@ -457,6 +460,14 @@ async def create(
 
     # Get profile data and token (either interactively or non-interactively)
     if non_interactive:
+        # Validate required parameters for non-interactive mode
+        if not region:
+            click.echo("❌ --region is required in non-interactive mode")
+            return
+        if not api_token:
+            click.echo("❌ --api-token is required in non-interactive mode")
+            return
+
         result = await _create_profile_non_interactive(region, api_token, api_url)
         if result is None:
             return
