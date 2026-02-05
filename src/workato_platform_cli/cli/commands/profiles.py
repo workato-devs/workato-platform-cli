@@ -377,13 +377,7 @@ async def _create_profile_non_interactive(
 
     Returns (ProfileData, token) on success, or None on error (error already echoed).
     """
-    # Validate required parameters
-    if not region:
-        click.echo("❌ --region is required in non-interactive mode")
-        return None
-    if not api_token:
-        click.echo("❌ --api-token is required in non-interactive mode")
-        return None
+    # Validate custom region requirements
     if region == "custom" and not api_url:
         click.echo("❌ --api-url is required when region=custom")
         return None
