@@ -346,6 +346,59 @@ async def status(
 
 
 @profiles.command()
+@click.argument("old_name")
+@click.argument("new_name")
+@handle_cli_exceptions
+@inject
+async def rename(
+    old_name: str,
+    new_name: str,
+    config_manager: ConfigManager = Provide[Container.config_manager],
+) -> None:
+    """Rename a profile"""
+    # Check if old profile exists
+    old_profile = config_manager.profile_manager.get_profile(old_name)
+    if not old_profile:
+        click.echo(f"❌ Profile '{old_name}' not found")
+        click.echo("💡 Use 'workato profiles list' to see available profiles")
+        return
+
+    # Check if new name already exists
+    if config_manager.profile_manager.get_profile(new_name):
+        click.echo(f"❌ Profile '{new_name}' already exists")
+        click.echo("💡 Choose a different name or delete the existing profile first")
+        return
+
+    # Show confirmation prompt
+    if not click.confirm(f"Rename profile '{old_name}' to '{new_name}'?"):
+        click.echo("❌ Rename cancelled")
+        return
+
+    # Get the token from keyring
+    old_token = config_manager.profile_manager._get_token_from_keyring(old_name)
+
+    # Create new profile with same data and token
+    try:
+        config_manager.profile_manager.set_profile(new_name, old_profile, old_token)
+    except ValueError as e:
+        click.echo(f"❌ Failed to create new profile: {e}")
+        return
+
+    # If old profile was current, set new profile as current
+    current_profile = config_manager.profile_manager.get_current_profile_name()
+    if current_profile == old_name:
+        config_manager.profile_manager.set_current_profile(new_name)
+
+    # Delete old profile
+    config_manager.profile_manager.delete_profile(old_name)
+
+    # Show success message
+    click.echo("✅ Profile renamed successfully")
+    if current_profile == old_name:
+        click.echo(f"✅ Set '{new_name}' as the active profile")
+
+
+@profiles.command()
 @click.argument("profile_name")
 @click.confirmation_option(prompt="Are you sure you want to delete this profile?")
 @handle_cli_exceptions

@@ -13,6 +13,7 @@ from workato_platform_cli.cli.commands.profiles import (
     create,
     delete,
     list_profiles,
+    rename,
     show,
     status,
     use,
@@ -1157,3 +1158,172 @@ async def test_create_profile_non_interactive(
     config_manager.profile_manager.set_current_profile.assert_called_once_with(
         "test_profile"
     )
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_success(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test successful profile rename."""
+    old_profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(
+            side_effect=lambda name: old_profile if name == "old" else None
+        ),
+        _get_token_from_keyring=Mock(return_value="test_token"),
+        set_profile=Mock(),
+        get_current_profile_name=Mock(return_value="other"),  # Not renaming current
+        delete_profile=Mock(),
+    )
+
+    assert rename.callback
+    with patch("asyncclick.confirm", return_value=True):
+        await rename.callback(
+            old_name="old", new_name="new", config_manager=config_manager
+        )
+
+    output = capsys.readouterr().out
+    assert "✅ Profile renamed successfully" in output
+
+    # Verify profile was created with new name and old profile deleted
+    config_manager.profile_manager.set_profile.assert_called_once_with(
+        "new", old_profile, "test_token"
+    )
+    config_manager.profile_manager.delete_profile.assert_called_once_with("old")
+
+
+@pytest.mark.asyncio
+async def test_rename_current_profile(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test renaming the current profile updates current profile setting."""
+    old_profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(
+            side_effect=lambda name: old_profile if name == "old" else None
+        ),
+        _get_token_from_keyring=Mock(return_value="test_token"),
+        set_profile=Mock(),
+        get_current_profile_name=Mock(return_value="old"),  # Renaming current profile
+        set_current_profile=Mock(),
+        delete_profile=Mock(),
+    )
+
+    assert rename.callback
+    with patch("asyncclick.confirm", return_value=True):
+        await rename.callback(
+            old_name="old", new_name="new", config_manager=config_manager
+        )
+
+    output = capsys.readouterr().out
+    assert "✅ Profile renamed successfully" in output
+    assert "✅ Set 'new' as the active profile" in output
+
+    # Verify current profile was updated
+    config_manager.profile_manager.set_current_profile.assert_called_once_with("new")
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_not_found(
+    capsys: pytest.CaptureFixture[str],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test renaming a profile that doesn't exist."""
+    config_manager = make_config_manager(
+        get_profile=Mock(return_value=None),  # Profile doesn't exist
+    )
+
+    assert rename.callback
+    await rename.callback(
+        old_name="missing", new_name="new", config_manager=config_manager
+    )
+
+    output = capsys.readouterr().out
+    assert "❌ Profile 'missing' not found" in output
+    assert "Use 'workato profiles list'" in output
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_new_name_exists(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test renaming to a profile name that already exists."""
+    old_profile = profile_data_factory()
+    new_profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(
+            side_effect=lambda name: old_profile if name == "old" else new_profile
+        ),
+    )
+
+    assert rename.callback
+    await rename.callback(
+        old_name="old", new_name="existing", config_manager=config_manager
+    )
+
+    output = capsys.readouterr().out
+    assert "❌ Profile 'existing' already exists" in output
+    assert "Choose a different name" in output
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_cancelled(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test cancelling profile rename."""
+    old_profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(
+            side_effect=lambda name: old_profile if name == "old" else None
+        ),
+        set_profile=Mock(),
+        delete_profile=Mock(),
+    )
+
+    assert rename.callback
+    with patch("asyncclick.confirm", return_value=False):  # User cancels
+        await rename.callback(
+            old_name="old", new_name="new", config_manager=config_manager
+        )
+
+    output = capsys.readouterr().out
+    assert "❌ Rename cancelled" in output
+
+    # Verify profile was not modified
+    config_manager.profile_manager.set_profile.assert_not_called()
+    config_manager.profile_manager.delete_profile.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_set_profile_failure(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> None:
+    """Test handling of set_profile failure during rename."""
+    old_profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(
+            side_effect=lambda name: old_profile if name == "old" else None
+        ),
+        _get_token_from_keyring=Mock(return_value="test_token"),
+        set_profile=Mock(side_effect=ValueError("Keyring error")),
+    )
+
+    assert rename.callback
+    with patch("asyncclick.confirm", return_value=True):
+        await rename.callback(
+            old_name="old", new_name="new", config_manager=config_manager
+        )
+
+    output = capsys.readouterr().out
+    assert "❌ Failed to create new profile:" in output
+    assert "Keyring error" in output
