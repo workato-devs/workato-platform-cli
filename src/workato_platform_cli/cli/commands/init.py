@@ -43,6 +43,10 @@ from workato_platform_cli.client.workato_api.configuration import Configuration
     default="table",
     help="Output format: table (default) or json (only with --non-interactive)",
 )
+@click.option(
+    "--folder-name",
+    help="Custom folder name for the project (defaults to project name)",
+)
 @handle_cli_exceptions
 @handle_api_exceptions
 async def init(
@@ -54,6 +58,7 @@ async def init(
     project_id: int | None = None,
     non_interactive: bool = False,
     output_mode: str = "table",
+    folder_name: str | None = None,
 ) -> None:
     """Initialize Workato CLI for a new project
 
@@ -156,6 +161,7 @@ async def init(
         project_id=project_id,
         output_mode=output_mode,
         non_interactive=non_interactive,
+        folder_name=folder_name,
     )
 
     # Check if project directory exists and is non-empty
