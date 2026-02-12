@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import asyncclick as click
 import pytest
 
+from workato_platform_cli.cli.commands import profiles as profiles_module
 from workato_platform_cli.cli.commands.profiles import (
     create,
     delete,
@@ -67,6 +68,32 @@ def make_config_manager() -> Callable[..., Mock]:
         return config_manager
 
     return _factory
+
+
+def _make_workatoenv_updater(tmp_path: Path) -> Callable[[str, str], list[Path]]:
+    """Create a mock _update_workatoenv_files function for testing.
+
+    Returns a function that searches tmp_path instead of home directory.
+    """
+
+    def mock_update(old_name: str, new_name: str) -> list[Path]:
+        updated_files = []
+        for workatoenv_file in tmp_path.rglob(".workatoenv"):
+            try:
+                with open(workatoenv_file, "r+") as f:
+                    data = json.load(f)
+                    if data.get("profile") == old_name:
+                        data["profile"] = new_name
+                        f.seek(0)
+                        f.truncate()
+                        json.dump(data, f, indent=2)
+                        f.write("\n")
+                        updated_files.append(workatoenv_file)
+            except (OSError, json.JSONDecodeError):
+                continue
+        return updated_files
+
+    return mock_update
 
 
 @pytest.mark.asyncio
@@ -1327,3 +1354,140 @@ async def test_rename_profile_set_profile_failure(
     output = capsys.readouterr().out
     assert "❌ Failed to create new profile:" in output
     assert "Keyring error" in output
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_updates_workatoenv_files(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+    tmp_path: Path,
+) -> None:
+    """Test that rename updates .workatoenv files that reference the old profile."""
+    old_profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(
+            side_effect=lambda name: old_profile if name == "old" else None
+        ),
+        _get_token_from_keyring=Mock(return_value="test_token"),
+        set_profile=Mock(),
+        get_current_profile_name=Mock(return_value="other"),
+        delete_profile=Mock(),
+    )
+
+    # Create test .workatoenv files
+    project1 = tmp_path / "project1"
+    project1.mkdir()
+    workatoenv1 = project1 / ".workatoenv"
+    workatoenv1.write_text(
+        json.dumps(
+            {
+                "project_id": 123,
+                "project_name": "Project 1",
+                "folder_id": 456,
+                "profile": "old",
+            }
+        )
+    )
+
+    project2 = tmp_path / "project2"
+    project2.mkdir()
+    workatoenv2 = project2 / ".workatoenv"
+    workatoenv2.write_text(
+        json.dumps(
+            {
+                "project_id": 789,
+                "project_name": "Project 2",
+                "folder_id": 101,
+                "profile": "other",  # Different profile - should not be updated
+            }
+        )
+    )
+
+    # Mock _update_workatoenv_files to only search in tmp_path
+    mock_update = _make_workatoenv_updater(tmp_path)
+
+    with patch.object(
+        profiles_module, "_update_workatoenv_files", side_effect=mock_update
+    ):
+        assert rename.callback
+        with patch("asyncclick.confirm", return_value=True):
+            await rename.callback(
+                old_name="old", new_name="new", config_manager=config_manager
+            )
+
+    # Verify workatoenv1 was updated
+    with open(workatoenv1) as f:
+        data1 = json.load(f)
+    assert data1["profile"] == "new"
+
+    # Verify workatoenv2 was NOT updated
+    with open(workatoenv2) as f:
+        data2 = json.load(f)
+    assert data2["profile"] == "other"
+
+    output = capsys.readouterr().out
+    assert "✅ Updated 1 project configuration(s)" in output
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_skips_malformed_workatoenv_files(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+    tmp_path: Path,
+) -> None:
+    """Test that rename skips malformed .workatoenv files."""
+    old_profile = profile_data_factory()
+    config_manager = make_config_manager(
+        get_profile=Mock(
+            side_effect=lambda name: old_profile if name == "old" else None
+        ),
+        _get_token_from_keyring=Mock(return_value="test_token"),
+        set_profile=Mock(),
+        get_current_profile_name=Mock(return_value="other"),
+        delete_profile=Mock(),
+    )
+
+    # Create malformed .workatoenv file
+    project1 = tmp_path / "project1"
+    project1.mkdir()
+    workatoenv1 = project1 / ".workatoenv"
+    workatoenv1.write_text("invalid json {")
+
+    # Create valid .workatoenv file
+    project2 = tmp_path / "project2"
+    project2.mkdir()
+    workatoenv2 = project2 / ".workatoenv"
+    workatoenv2.write_text(
+        json.dumps(
+            {
+                "project_id": 789,
+                "project_name": "Project 2",
+                "folder_id": 101,
+                "profile": "old",
+            }
+        )
+    )
+
+    mock_update = _make_workatoenv_updater(tmp_path)
+
+    with patch.object(
+        profiles_module, "_update_workatoenv_files", side_effect=mock_update
+    ):
+        assert rename.callback
+        with patch("asyncclick.confirm", return_value=True):
+            await rename.callback(
+                old_name="old", new_name="new", config_manager=config_manager
+            )
+
+    # Verify valid file was updated
+    with open(workatoenv2) as f:
+        data2 = json.load(f)
+    assert data2["profile"] == "new"
+
+    # Verify malformed file was skipped (still invalid)
+    assert workatoenv1.read_text() == "invalid json {"
+
+    output = capsys.readouterr().out
+    assert "✅ Updated 1 project configuration(s)" in output

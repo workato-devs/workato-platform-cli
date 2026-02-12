@@ -3,6 +3,7 @@
 import json
 import os
 
+from pathlib import Path
 from typing import Any
 
 import asyncclick as click
@@ -345,6 +346,51 @@ async def status(
             click.echo("   💡 Or set WORKATO_API_TOKEN environment variable")
 
 
+def _format_file_path(file_path: Path) -> str:
+    """Format file path for display, showing relative to current directory."""
+    try:
+        rel_path = file_path.relative_to(Path.cwd())
+        return f"./{rel_path}"
+    except ValueError:
+        # File is outside current directory (shouldn't happen with cwd search)
+        return str(file_path)
+
+
+def _update_workatoenv_files(old_name: str, new_name: str) -> list[Path]:
+    """Find and update all .workatoenv files that reference the old profile name.
+
+    Searches recursively from current directory.
+    Returns list of updated file paths.
+    """
+    updated_files = []
+    current_dir = Path.cwd()
+
+    # Search from current directory for .workatoenv files
+    for workatoenv_file in current_dir.rglob(".workatoenv"):
+        try:
+            # Open for reading and writing
+            with open(workatoenv_file, "r+") as f:
+                data = json.load(f)
+
+                # Check if profile field matches old name
+                if data.get("profile") == old_name:
+                    # Update to new name
+                    data["profile"] = new_name
+
+                    # Write back (truncate and write from beginning)
+                    f.seek(0)
+                    f.truncate()
+                    json.dump(data, f, indent=2)
+                    f.write("\n")  # Add trailing newline
+
+                    updated_files.append(workatoenv_file)
+        except (OSError, json.JSONDecodeError):
+            # Skip files we can't read or parse
+            continue
+
+    return updated_files
+
+
 @profiles.command()
 @click.argument("old_name")
 @click.argument("new_name")
@@ -392,10 +438,22 @@ async def rename(
     # Delete old profile
     config_manager.profile_manager.delete_profile(old_name)
 
+    # Update all .workatoenv files that reference the old profile
+    click.echo("🔄 Updating project configurations...")
+    updated_files = _update_workatoenv_files(old_name, new_name)
+
     # Show success message
     click.echo("✅ Profile renamed successfully")
     if current_profile == old_name:
         click.echo(f"✅ Set '{new_name}' as the active profile")
+
+    # Display updated files
+    if not updated_files:
+        return
+
+    click.echo(f"✅ Updated {len(updated_files)} project configuration(s)")
+    for file_path in updated_files:
+        click.echo(f"   • {_format_file_path(file_path)}")
 
 
 @profiles.command()
