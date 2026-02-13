@@ -394,29 +394,58 @@ def _update_workatoenv_files(old_name: str, new_name: str) -> list[Path]:
 @profiles.command()
 @click.argument("old_name")
 @click.argument("new_name")
+@click.option(
+    "--output-mode",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format: table (default) or json",
+)
+@click.option(
+    "--yes",
+    is_flag=True,
+    help="Skip confirmation prompt",
+)
 @handle_cli_exceptions
 @inject
 async def rename(
     old_name: str,
     new_name: str,
+    output_mode: str = "table",
+    yes: bool = False,
     config_manager: ConfigManager = Provide[Container.config_manager],
 ) -> None:
     """Rename a profile"""
     # Check if old profile exists
     old_profile = config_manager.profile_manager.get_profile(old_name)
     if not old_profile:
-        click.echo(f"❌ Profile '{old_name}' not found")
-        click.echo("💡 Use 'workato profiles list' to see available profiles")
+        if output_mode == "json":
+            error_msg = f"Profile '{old_name}' not found"
+            output_data: dict[str, Any] = {"status": "error", "error": error_msg}
+            click.echo(json.dumps(output_data))
+        else:
+            click.echo(f"❌ Profile '{old_name}' not found")
+            click.echo("💡 Use 'workato profiles list' to see available profiles")
         return
 
     # Check if new name already exists
     if config_manager.profile_manager.get_profile(new_name):
-        click.echo(f"❌ Profile '{new_name}' already exists")
-        click.echo("💡 Choose a different name or delete the existing profile first")
+        if output_mode == "json":
+            error_msg = f"Profile '{new_name}' already exists"
+            output_data = {"status": "error", "error": error_msg}
+            click.echo(json.dumps(output_data))
+        else:
+            click.echo(f"❌ Profile '{new_name}' already exists")
+            click.echo(
+                "💡 Choose a different name or delete the existing profile first"
+            )
         return
 
-    # Show confirmation prompt
-    if not click.confirm(f"Rename profile '{old_name}' to '{new_name}'?"):
+    # Show confirmation prompt (skip in JSON mode or if --yes flag)
+    if (
+        not yes
+        and output_mode != "json"
+        and not click.confirm(f"Rename profile '{old_name}' to '{new_name}'?")
+    ):
         click.echo("❌ Rename cancelled")
         return
 
@@ -427,24 +456,43 @@ async def rename(
     try:
         config_manager.profile_manager.set_profile(new_name, old_profile, old_token)
     except ValueError as e:
-        click.echo(f"❌ Failed to create new profile: {e}")
+        if output_mode == "json":
+            output_data = {"status": "error", "error": str(e)}
+            click.echo(json.dumps(output_data))
+        else:
+            click.echo(f"❌ Failed to create new profile: {e}")
         return
 
     # If old profile was current, set new profile as current
     current_profile = config_manager.profile_manager.get_current_profile_name()
-    if current_profile == old_name:
+    was_current = current_profile == old_name
+    if was_current:
         config_manager.profile_manager.set_current_profile(new_name)
 
     # Delete old profile
     config_manager.profile_manager.delete_profile(old_name)
 
     # Update all .workatoenv files that reference the old profile
-    click.echo("🔄 Updating project configurations...")
+    if output_mode == "table":
+        click.echo("🔄 Updating project configurations...")
     updated_files = _update_workatoenv_files(old_name, new_name)
 
-    # Show success message
+    # JSON output mode
+    if output_mode == "json":
+        output_data = {
+            "status": "success",
+            "old_name": old_name,
+            "new_name": new_name,
+            "was_current_profile": was_current,
+            "updated_files": [str(f) for f in updated_files],
+            "updated_files_count": len(updated_files),
+        }
+        click.echo(json.dumps(output_data))
+        return
+
+    # Table output mode (default)
     click.echo("✅ Profile renamed successfully")
-    if current_profile == old_name:
+    if was_current:
         click.echo(f"✅ Set '{new_name}' as the active profile")
 
     # Display updated files

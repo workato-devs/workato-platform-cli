@@ -9,7 +9,11 @@ from unittest.mock import AsyncMock, Mock, patch
 import asyncclick as click
 import pytest
 
-from workato_platform_cli.cli.commands import profiles as profiles_module
+from tests.conftest import (
+    create_workatoenv_file,
+    mock_workatoenv_updates,
+    parse_json_output,
+)
 from workato_platform_cli.cli.commands.profiles import (
     create,
     delete,
@@ -70,30 +74,38 @@ def make_config_manager() -> Callable[..., Mock]:
     return _factory
 
 
-def _make_workatoenv_updater(tmp_path: Path) -> Callable[[str, str], list[Path]]:
-    """Create a mock _update_workatoenv_files function for testing.
+# Test-specific fixtures
 
-    Returns a function that searches tmp_path instead of home directory.
-    """
 
-    def mock_update(old_name: str, new_name: str) -> list[Path]:
-        updated_files = []
-        for workatoenv_file in tmp_path.rglob(".workatoenv"):
-            try:
-                with open(workatoenv_file, "r+") as f:
-                    data = json.load(f)
-                    if data.get("profile") == old_name:
-                        data["profile"] = new_name
-                        f.seek(0)
-                        f.truncate()
-                        json.dump(data, f, indent=2)
-                        f.write("\n")
-                        updated_files.append(workatoenv_file)
-            except (OSError, json.JSONDecodeError):
-                continue
-        return updated_files
+@pytest.fixture
+def make_rename_config_manager(
+    profile_data_factory: Callable[..., ProfileData],
+    make_config_manager: Callable[..., Mock],
+) -> Callable:
+    """Factory for creating config managers for rename tests."""
 
-    return mock_update
+    def _factory(
+        is_current: bool = False, **overrides: Mock
+    ) -> tuple[Mock, ProfileData]:
+        old_profile = profile_data_factory()
+        current = "old" if is_current else "other"
+
+        defaults = {
+            "get_profile": Mock(
+                side_effect=lambda name: old_profile if name == "old" else None
+            ),
+            "_get_token_from_keyring": Mock(return_value="test_token"),
+            "set_profile": Mock(),
+            "get_current_profile_name": Mock(return_value=current),
+            "delete_profile": Mock(),
+        }
+        if is_current:
+            defaults["set_current_profile"] = Mock()
+
+        defaults.update(overrides)
+        return make_config_manager(**defaults), old_profile
+
+    return _factory
 
 
 @pytest.mark.asyncio
@@ -696,10 +708,7 @@ async def test_list_profiles_json_output_mode(
     assert list_profiles.callback
     await list_profiles.callback(output_mode="json", config_manager=config_manager)
 
-    output = capsys.readouterr().out
-
-    # Parse JSON output
-    parsed = json.loads(output)
+    parsed = parse_json_output(capsys)
 
     assert parsed["current_profile"] == "dev"
     assert "dev" in parsed["profiles"]
@@ -724,10 +733,7 @@ async def test_list_profiles_json_output_mode_empty(
     assert list_profiles.callback
     await list_profiles.callback(output_mode="json", config_manager=config_manager)
 
-    output = capsys.readouterr().out
-
-    # Parse JSON output
-    parsed = json.loads(output)
+    parsed = parse_json_output(capsys)
 
     assert parsed["current_profile"] is None
     assert parsed["profiles"] == {}
@@ -746,8 +752,7 @@ async def test_status_json_no_profile(
     assert status.callback
     await status.callback(output_mode="json", config_manager=config_manager)
 
-    output = capsys.readouterr().out
-    parsed = json.loads(output)
+    parsed = parse_json_output(capsys)
 
     assert parsed["profile"] is None
     assert parsed["error"] == "No active profile configured"
@@ -788,8 +793,7 @@ async def test_status_json_with_project_override(
     assert status.callback
     await status.callback(output_mode="json", config_manager=config_manager)
 
-    output = capsys.readouterr().out
-    parsed = json.loads(output)
+    parsed = parse_json_output(capsys)
 
     assert parsed["profile"]["name"] == "dev-profile"
     assert parsed["profile"]["source"]["type"] == "project_override"
@@ -832,8 +836,7 @@ async def test_status_json_with_env_profile(
     assert status.callback
     await status.callback(output_mode="json", config_manager=config_manager)
 
-    output = capsys.readouterr().out
-    parsed = json.loads(output)
+    parsed = parse_json_output(capsys)
 
     assert parsed["profile"]["name"] == "env-profile"
     assert parsed["profile"]["source"]["type"] == "environment_variable"
@@ -871,8 +874,7 @@ async def test_status_json_with_env_token(
     assert status.callback
     await status.callback(output_mode="json", config_manager=config_manager)
 
-    output = capsys.readouterr().out
-    parsed = json.loads(output)
+    parsed = parse_json_output(capsys)
 
     assert parsed["authentication"]["configured"] is True
     assert parsed["authentication"]["source"]["type"] == "environment_variable"
@@ -906,8 +908,7 @@ async def test_status_json_no_token(
     assert status.callback
     await status.callback(output_mode="json", config_manager=config_manager)
 
-    output = capsys.readouterr().out
-    parsed = json.loads(output)
+    parsed = parse_json_output(capsys)
 
     assert parsed["authentication"]["configured"] is False
 
@@ -947,8 +948,7 @@ async def test_status_json_project_path_none(
     assert status.callback
     await status.callback(output_mode="json", config_manager=config_manager)
 
-    output = capsys.readouterr().out
-    parsed = json.loads(output)
+    parsed = parse_json_output(capsys)
 
     assert parsed["project"]["configured"] is False
 
@@ -979,8 +979,7 @@ async def test_status_json_exception_handling(
     assert status.callback
     await status.callback(output_mode="json", config_manager=config_manager)
 
-    output = capsys.readouterr().out
-    parsed = json.loads(output)
+    parsed = parse_json_output(capsys)
 
     assert parsed["project"]["configured"] is False
 
@@ -1190,20 +1189,10 @@ async def test_create_profile_non_interactive(
 @pytest.mark.asyncio
 async def test_rename_profile_success(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory: Callable[..., ProfileData],
-    make_config_manager: Callable[..., Mock],
+    make_rename_config_manager: Callable,
 ) -> None:
     """Test successful profile rename."""
-    old_profile = profile_data_factory()
-    config_manager = make_config_manager(
-        get_profile=Mock(
-            side_effect=lambda name: old_profile if name == "old" else None
-        ),
-        _get_token_from_keyring=Mock(return_value="test_token"),
-        set_profile=Mock(),
-        get_current_profile_name=Mock(return_value="other"),  # Not renaming current
-        delete_profile=Mock(),
-    )
+    config_manager, old_profile = make_rename_config_manager(is_current=False)
 
     assert rename.callback
     with patch("asyncclick.confirm", return_value=True):
@@ -1224,21 +1213,10 @@ async def test_rename_profile_success(
 @pytest.mark.asyncio
 async def test_rename_current_profile(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory: Callable[..., ProfileData],
-    make_config_manager: Callable[..., Mock],
+    make_rename_config_manager: Callable,
 ) -> None:
     """Test renaming the current profile updates current profile setting."""
-    old_profile = profile_data_factory()
-    config_manager = make_config_manager(
-        get_profile=Mock(
-            side_effect=lambda name: old_profile if name == "old" else None
-        ),
-        _get_token_from_keyring=Mock(return_value="test_token"),
-        set_profile=Mock(),
-        get_current_profile_name=Mock(return_value="old"),  # Renaming current profile
-        set_current_profile=Mock(),
-        delete_profile=Mock(),
-    )
+    config_manager, _ = make_rename_config_manager(is_current=True)
 
     assert rename.callback
     with patch("asyncclick.confirm", return_value=True):
@@ -1257,11 +1235,11 @@ async def test_rename_current_profile(
 @pytest.mark.asyncio
 async def test_rename_profile_not_found(
     capsys: pytest.CaptureFixture[str],
-    make_config_manager: Callable[..., Mock],
+    make_rename_config_manager: Callable,
 ) -> None:
     """Test renaming a profile that doesn't exist."""
-    config_manager = make_config_manager(
-        get_profile=Mock(return_value=None),  # Profile doesn't exist
+    config_manager, _ = make_rename_config_manager(
+        get_profile=Mock(return_value=None)  # Profile doesn't exist
     )
 
     assert rename.callback
@@ -1278,15 +1256,16 @@ async def test_rename_profile_not_found(
 async def test_rename_profile_new_name_exists(
     capsys: pytest.CaptureFixture[str],
     profile_data_factory: Callable[..., ProfileData],
-    make_config_manager: Callable[..., Mock],
+    make_rename_config_manager: Callable,
 ) -> None:
     """Test renaming to a profile name that already exists."""
-    old_profile = profile_data_factory()
+    # Create both profiles first to avoid circular dependency
+    config_manager, old_profile = make_rename_config_manager()
     new_profile = profile_data_factory()
-    config_manager = make_config_manager(
-        get_profile=Mock(
-            side_effect=lambda name: old_profile if name == "old" else new_profile
-        ),
+
+    # Override get_profile to return new_profile for non-"old" names
+    config_manager.profile_manager.get_profile = Mock(
+        side_effect=lambda name: old_profile if name == "old" else new_profile
     )
 
     assert rename.callback
@@ -1302,18 +1281,10 @@ async def test_rename_profile_new_name_exists(
 @pytest.mark.asyncio
 async def test_rename_profile_cancelled(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory: Callable[..., ProfileData],
-    make_config_manager: Callable[..., Mock],
+    make_rename_config_manager: Callable,
 ) -> None:
     """Test cancelling profile rename."""
-    old_profile = profile_data_factory()
-    config_manager = make_config_manager(
-        get_profile=Mock(
-            side_effect=lambda name: old_profile if name == "old" else None
-        ),
-        set_profile=Mock(),
-        delete_profile=Mock(),
-    )
+    config_manager, _ = make_rename_config_manager()
 
     assert rename.callback
     with patch("asyncclick.confirm", return_value=False):  # User cancels
@@ -1332,17 +1303,11 @@ async def test_rename_profile_cancelled(
 @pytest.mark.asyncio
 async def test_rename_profile_set_profile_failure(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory: Callable[..., ProfileData],
-    make_config_manager: Callable[..., Mock],
+    make_rename_config_manager: Callable,
 ) -> None:
     """Test handling of set_profile failure during rename."""
-    old_profile = profile_data_factory()
-    config_manager = make_config_manager(
-        get_profile=Mock(
-            side_effect=lambda name: old_profile if name == "old" else None
-        ),
-        _get_token_from_keyring=Mock(return_value="test_token"),
-        set_profile=Mock(side_effect=ValueError("Keyring error")),
+    config_manager, _ = make_rename_config_manager(
+        set_profile=Mock(side_effect=ValueError("Keyring error"))
     )
 
     assert rename.callback
@@ -1359,57 +1324,26 @@ async def test_rename_profile_set_profile_failure(
 @pytest.mark.asyncio
 async def test_rename_profile_updates_workatoenv_files(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory: Callable[..., ProfileData],
-    make_config_manager: Callable[..., Mock],
+    make_rename_config_manager: Callable,
     tmp_path: Path,
 ) -> None:
     """Test that rename updates .workatoenv files that reference the old profile."""
-    old_profile = profile_data_factory()
-    config_manager = make_config_manager(
-        get_profile=Mock(
-            side_effect=lambda name: old_profile if name == "old" else None
-        ),
-        _get_token_from_keyring=Mock(return_value="test_token"),
-        set_profile=Mock(),
-        get_current_profile_name=Mock(return_value="other"),
-        delete_profile=Mock(),
-    )
+    config_manager, _ = make_rename_config_manager()
 
     # Create test .workatoenv files
-    project1 = tmp_path / "project1"
-    project1.mkdir()
-    workatoenv1 = project1 / ".workatoenv"
-    workatoenv1.write_text(
-        json.dumps(
-            {
-                "project_id": 123,
-                "project_name": "Project 1",
-                "folder_id": 456,
-                "profile": "old",
-            }
-        )
+    workatoenv1 = create_workatoenv_file(
+        tmp_path, "project1", "old", project_name="Project 1", folder_id=456
+    )
+    workatoenv2 = create_workatoenv_file(
+        tmp_path,
+        "project2",
+        "other",
+        project_id=789,
+        project_name="Project 2",
+        folder_id=101,
     )
 
-    project2 = tmp_path / "project2"
-    project2.mkdir()
-    workatoenv2 = project2 / ".workatoenv"
-    workatoenv2.write_text(
-        json.dumps(
-            {
-                "project_id": 789,
-                "project_name": "Project 2",
-                "folder_id": 101,
-                "profile": "other",  # Different profile - should not be updated
-            }
-        )
-    )
-
-    # Mock _update_workatoenv_files to only search in tmp_path
-    mock_update = _make_workatoenv_updater(tmp_path)
-
-    with patch.object(
-        profiles_module, "_update_workatoenv_files", side_effect=mock_update
-    ):
+    with mock_workatoenv_updates(tmp_path):
         assert rename.callback
         with patch("asyncclick.confirm", return_value=True):
             await rename.callback(
@@ -1433,21 +1367,11 @@ async def test_rename_profile_updates_workatoenv_files(
 @pytest.mark.asyncio
 async def test_rename_profile_skips_malformed_workatoenv_files(
     capsys: pytest.CaptureFixture[str],
-    profile_data_factory: Callable[..., ProfileData],
-    make_config_manager: Callable[..., Mock],
+    make_rename_config_manager: Callable,
     tmp_path: Path,
 ) -> None:
     """Test that rename skips malformed .workatoenv files."""
-    old_profile = profile_data_factory()
-    config_manager = make_config_manager(
-        get_profile=Mock(
-            side_effect=lambda name: old_profile if name == "old" else None
-        ),
-        _get_token_from_keyring=Mock(return_value="test_token"),
-        set_profile=Mock(),
-        get_current_profile_name=Mock(return_value="other"),
-        delete_profile=Mock(),
-    )
+    config_manager, _ = make_rename_config_manager()
 
     # Create malformed .workatoenv file
     project1 = tmp_path / "project1"
@@ -1456,25 +1380,16 @@ async def test_rename_profile_skips_malformed_workatoenv_files(
     workatoenv1.write_text("invalid json {")
 
     # Create valid .workatoenv file
-    project2 = tmp_path / "project2"
-    project2.mkdir()
-    workatoenv2 = project2 / ".workatoenv"
-    workatoenv2.write_text(
-        json.dumps(
-            {
-                "project_id": 789,
-                "project_name": "Project 2",
-                "folder_id": 101,
-                "profile": "old",
-            }
-        )
+    workatoenv2 = create_workatoenv_file(
+        tmp_path,
+        "project2",
+        "old",
+        project_id=789,
+        project_name="Project 2",
+        folder_id=101,
     )
 
-    mock_update = _make_workatoenv_updater(tmp_path)
-
-    with patch.object(
-        profiles_module, "_update_workatoenv_files", side_effect=mock_update
-    ):
+    with mock_workatoenv_updates(tmp_path):
         assert rename.callback
         with patch("asyncclick.confirm", return_value=True):
             await rename.callback(
@@ -1491,3 +1406,111 @@ async def test_rename_profile_skips_malformed_workatoenv_files(
 
     output = capsys.readouterr().out
     assert "✅ Updated 1 project configuration(s)" in output
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_json_output_success(
+    capsys: pytest.CaptureFixture[str],
+    make_rename_config_manager: Callable,
+    tmp_path: Path,
+) -> None:
+    """Test rename with JSON output mode."""
+    config_manager, _ = make_rename_config_manager(is_current=True)
+
+    # Create test .workatoenv file
+    create_workatoenv_file(tmp_path, "project1", "old")
+
+    with mock_workatoenv_updates(tmp_path):
+        assert rename.callback
+        await rename.callback(
+            old_name="old",
+            new_name="new",
+            output_mode="json",
+            config_manager=config_manager,
+        )
+
+    parsed = parse_json_output(capsys)
+
+    assert parsed["status"] == "success"
+    assert parsed["old_name"] == "old"
+    assert parsed["new_name"] == "new"
+    assert parsed["was_current_profile"] is True
+    assert parsed["updated_files_count"] == 1
+    assert len(parsed["updated_files"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_json_output_error_not_found(
+    capsys: pytest.CaptureFixture[str],
+    make_rename_config_manager: Callable,
+) -> None:
+    """Test rename JSON output when profile not found."""
+    config_manager, _ = make_rename_config_manager(get_profile=Mock(return_value=None))
+
+    assert rename.callback
+    await rename.callback(
+        old_name="missing",
+        new_name="new",
+        output_mode="json",
+        config_manager=config_manager,
+    )
+
+    parsed = parse_json_output(capsys)
+
+    assert parsed["status"] == "error"
+    assert "not found" in parsed["error"]
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_json_output_error_exists(
+    capsys: pytest.CaptureFixture[str],
+    profile_data_factory: Callable[..., ProfileData],
+    make_rename_config_manager: Callable,
+) -> None:
+    """Test rename JSON output when new name already exists."""
+    # Create both profiles first to avoid circular dependency
+    config_manager, old_profile = make_rename_config_manager()
+    new_profile = profile_data_factory()
+
+    # Override get_profile to return new_profile for non-"old" names
+    config_manager.profile_manager.get_profile = Mock(
+        side_effect=lambda name: old_profile if name == "old" else new_profile
+    )
+
+    assert rename.callback
+    await rename.callback(
+        old_name="old",
+        new_name="existing",
+        output_mode="json",
+        config_manager=config_manager,
+    )
+
+    parsed = parse_json_output(capsys)
+
+    assert parsed["status"] == "error"
+    assert "already exists" in parsed["error"]
+
+
+@pytest.mark.asyncio
+async def test_rename_profile_yes_flag_skips_confirmation(
+    capsys: pytest.CaptureFixture[str],
+    make_rename_config_manager: Callable,
+    tmp_path: Path,
+) -> None:
+    """Test that --yes flag skips confirmation prompt."""
+    config_manager, _ = make_rename_config_manager()
+
+    with mock_workatoenv_updates(tmp_path):
+        # Should not prompt with --yes flag
+        assert rename.callback
+        await rename.callback(
+            old_name="old",
+            new_name="new",
+            yes=True,
+            config_manager=config_manager,
+        )
+
+    output = capsys.readouterr().out
+    assert "✅ Profile renamed successfully" in output
+    # Verify no confirmation prompt was shown
+    assert "Rename profile" not in output
