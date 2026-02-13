@@ -14,7 +14,7 @@ repos:
       - id: debug-statements
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.0
+    rev: v0.15.1
     hooks:
       - id: ruff
         exclude: ^(client/|src/workato_platform_cli/client/)
@@ -22,7 +22,7 @@ repos:
         exclude: ^(client/|src/workato_platform_cli/client/)
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.18.1
+    rev: v1.19.1
     hooks:
       - id: mypy
         args: [--explicit-package-bases]
@@ -48,12 +48,11 @@ repos:
 
   # pip-audit for dependency security auditing
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.9.0
+    rev: v2.10.0
     hooks:
       - id: pip-audit
-        # Temporary workaround: ignoring pip vulnerability GHSA-4xh5-x5gv-qwph (pip 25.2).
-        # Remove this ignore once a patched version of pip is available.
-        args: [--format=json, --ignore-vuln=GHSA-4xh5-x5gv-qwph]
+        args: [--format=json]
+        additional_dependencies: ['pip>=26.0']
 
   # Local hooks for project-specific tasks
   - repo: local
