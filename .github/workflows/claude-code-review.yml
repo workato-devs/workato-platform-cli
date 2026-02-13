@@ -38,7 +38,14 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
+          claude_args: '--allowedTools WebSearch,WebFetch,Bash,Skill,Read,Glob'
+          prompt: |
+            /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }} --comment
 
+            Review instructions:
+            - Focus on critical issues or best practices violations
+            - In case no issues or violations are found, post: "✅ LGTM"
+            - Do NOT comment on what's already good, etc.
+            - Skip minor style/formatting issues
+
+            NOTE: If appropriate, research Workato's public documentation for core concepts or API details.
