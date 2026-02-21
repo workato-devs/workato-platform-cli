@@ -3,6 +3,7 @@
 import json
 import os
 
+from pathlib import Path
 from typing import Any
 
 import asyncclick as click
@@ -343,6 +344,164 @@ async def status(
             click.echo("   Status: ❌ Token not found")
             click.echo("   💡 Token should be stored in keyring")
             click.echo("   💡 Or set WORKATO_API_TOKEN environment variable")
+
+
+def _format_file_path(file_path: Path) -> str:
+    """Format file path for display, showing relative to current directory."""
+    try:
+        rel_path = file_path.relative_to(Path.cwd())
+        return f"./{rel_path}"
+    except ValueError:
+        # File is outside current directory (shouldn't happen with cwd search)
+        return str(file_path)
+
+
+def _update_workatoenv_files(old_name: str, new_name: str) -> list[Path]:
+    """Find and update all .workatoenv files that reference the old profile name.
+
+    Searches recursively from current directory.
+    Returns list of updated file paths.
+    """
+    updated_files = []
+    current_dir = Path.cwd()
+
+    # Search from current directory for .workatoenv files
+    for workatoenv_file in current_dir.rglob(".workatoenv"):
+        try:
+            # Open for reading and writing
+            with open(workatoenv_file, "r+") as f:
+                data = json.load(f)
+
+                # Check if profile field matches old name
+                if data.get("profile") == old_name:
+                    # Update to new name
+                    data["profile"] = new_name
+
+                    # Write back (truncate and write from beginning)
+                    f.seek(0)
+                    f.truncate()
+                    json.dump(data, f, indent=2)
+                    f.write("\n")  # Add trailing newline
+
+                    updated_files.append(workatoenv_file)
+        except (OSError, json.JSONDecodeError):
+            # Skip files we can't read or parse
+            continue
+
+    return updated_files
+
+
+@profiles.command()
+@click.argument("old_name")
+@click.argument("new_name")
+@click.option(
+    "--output-mode",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format: table (default) or json",
+)
+@click.option(
+    "--yes",
+    is_flag=True,
+    help="Skip confirmation prompt",
+)
+@handle_cli_exceptions
+@inject
+async def rename(
+    old_name: str,
+    new_name: str,
+    output_mode: str = "table",
+    yes: bool = False,
+    config_manager: ConfigManager = Provide[Container.config_manager],
+) -> None:
+    """Rename a profile"""
+    # Check if old profile exists
+    old_profile = config_manager.profile_manager.get_profile(old_name)
+    if not old_profile:
+        if output_mode == "json":
+            error_msg = f"Profile '{old_name}' not found"
+            output_data: dict[str, Any] = {"status": "error", "error": error_msg}
+            click.echo(json.dumps(output_data))
+        else:
+            click.echo(f"❌ Profile '{old_name}' not found")
+            click.echo("💡 Use 'workato profiles list' to see available profiles")
+        return
+
+    # Check if new name already exists
+    if config_manager.profile_manager.get_profile(new_name):
+        if output_mode == "json":
+            error_msg = f"Profile '{new_name}' already exists"
+            output_data = {"status": "error", "error": error_msg}
+            click.echo(json.dumps(output_data))
+        else:
+            click.echo(f"❌ Profile '{new_name}' already exists")
+            click.echo(
+                "💡 Choose a different name or delete the existing profile first"
+            )
+        return
+
+    # Show confirmation prompt (skip in JSON mode or if --yes flag)
+    if (
+        not yes
+        and output_mode != "json"
+        and not click.confirm(f"Rename profile '{old_name}' to '{new_name}'?")
+    ):
+        click.echo("❌ Rename cancelled")
+        return
+
+    # Get the token from keyring
+    old_token = config_manager.profile_manager._get_token_from_keyring(old_name)
+
+    # Create new profile with same data and token
+    try:
+        config_manager.profile_manager.set_profile(new_name, old_profile, old_token)
+    except ValueError as e:
+        if output_mode == "json":
+            output_data = {"status": "error", "error": str(e)}
+            click.echo(json.dumps(output_data))
+        else:
+            click.echo(f"❌ Failed to create new profile: {e}")
+        return
+
+    # If old profile was current, set new profile as current
+    current_profile = config_manager.profile_manager.get_current_profile_name()
+    was_current = current_profile == old_name
+    if was_current:
+        config_manager.profile_manager.set_current_profile(new_name)
+
+    # Delete old profile
+    config_manager.profile_manager.delete_profile(old_name)
+
+    # Update all .workatoenv files that reference the old profile
+    if output_mode == "table":
+        click.echo("🔄 Updating project configurations...")
+    updated_files = _update_workatoenv_files(old_name, new_name)
+
+    # JSON output mode
+    if output_mode == "json":
+        output_data = {
+            "status": "success",
+            "old_name": old_name,
+            "new_name": new_name,
+            "was_current_profile": was_current,
+            "updated_files": [str(f) for f in updated_files],
+            "updated_files_count": len(updated_files),
+        }
+        click.echo(json.dumps(output_data))
+        return
+
+    # Table output mode (default)
+    click.echo("✅ Profile renamed successfully")
+    if was_current:
+        click.echo(f"✅ Set '{new_name}' as the active profile")
+
+    # Display updated files
+    if not updated_files:
+        return
+
+    click.echo(f"✅ Updated {len(updated_files)} project configuration(s)")
+    for file_path in updated_files:
+        click.echo(f"   • {_format_file_path(file_path)}")
 
 
 @profiles.command()
