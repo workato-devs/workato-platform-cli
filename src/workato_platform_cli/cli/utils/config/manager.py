@@ -56,6 +56,7 @@ class ConfigManager:
         project_id: int | None = None,
         output_mode: str = "table",
         non_interactive: bool = False,
+        folder_name: str | None = None,
     ) -> "ConfigManager":
         """Initialize workspace with interactive or non-interactive setup"""
         if output_mode == "table":
@@ -80,14 +81,15 @@ class ConfigManager:
                 api_url=api_url,
                 project_name=project_name,
                 project_id=project_id,
+                folder_name=folder_name,
             )
         else:
             # Run setup flow
-            await manager._run_setup_flow()
+            await manager._run_setup_flow(folder_name=folder_name)
 
         return manager
 
-    async def _run_setup_flow(self) -> None:
+    async def _run_setup_flow(self, folder_name: str | None = None) -> None:
         """Run the complete setup flow"""
         workspace_root = self.workspace_manager.find_workspace_root()
         self.config_dir = workspace_root
@@ -99,7 +101,7 @@ class ConfigManager:
         profile_name = await self._setup_profile()
 
         # Step 2: Project setup
-        await self._setup_project(profile_name, workspace_root)
+        await self._setup_project(profile_name, workspace_root, folder_name)
 
         # Step 3: Create workspace files
         self._create_workspace_files(workspace_root)
@@ -114,6 +116,7 @@ class ConfigManager:
         api_url: str | None = None,
         project_name: str | None = None,
         project_id: int | None = None,
+        folder_name: str | None = None,
     ) -> None:
         """Perform all setup actions non-interactively"""
 
@@ -238,7 +241,9 @@ class ConfigManager:
 
             # Project doesn't exist locally - create new directory
             current_dir = Path.cwd().resolve()
-            project_path = current_dir / selected_project.name
+            # Use custom folder name if provided, otherwise use project name
+            folder_name = folder_name if folder_name else selected_project.name
+            project_path = current_dir / folder_name
 
             # Create project directory
             project_path.mkdir(parents=True, exist_ok=True)
@@ -552,7 +557,9 @@ class ConfigManager:
         # Save profile and token
         self.profile_manager.set_profile(profile_name, profile_data, token)
 
-    async def _setup_project(self, profile_name: str, workspace_root: Path) -> None:
+    async def _setup_project(
+        self, profile_name: str, workspace_root: Path, folder_name: str | None = None
+    ) -> None:
         """Setup project interactively"""
         click.echo("📁 Step 2: Setup project")
 
@@ -607,6 +614,16 @@ class ConfigManager:
             if not selected_project:
                 raise click.ClickException("No project selected")
 
+            # Prompt for custom folder name if not provided via CLI
+            if folder_name is None:
+                click.echo()
+                custom_name = await click.prompt(
+                    "Folder name (leave blank for default)",
+                    default=selected_project.name,
+                    type=str,
+                )
+                folder_name = custom_name.strip() if custom_name.strip() else None
+
             # Check if this specific project already exists locally in the workspace
             local_projects = self._find_all_projects(workspace_root)
             existing_local_path = None
@@ -641,7 +658,9 @@ class ConfigManager:
             else:
                 # Project doesn't exist locally - create new directory
                 current_dir = Path.cwd().resolve()
-                project_path = current_dir / selected_project.name
+                # Use custom folder name if provided, otherwise use project name
+                folder_name = folder_name if folder_name else selected_project.name
+                project_path = current_dir / folder_name
 
             # Validate project path
             try:
