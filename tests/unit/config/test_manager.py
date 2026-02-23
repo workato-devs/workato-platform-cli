@@ -74,36 +74,30 @@ def mock_profile_manager() -> Mock:
 
 
 @pytest.fixture
-def mock_folder_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Mock click.prompt to return default folder name for _setup_project tests."""
+def mock_folder_prompt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Callable[[Any | None], None]:
+    """Mock click.prompt to intercept the folder name prompt.
 
-    async def mock_prompt(msg: str, **kwargs: Any) -> str:
-        return str(kwargs.get("default", ""))
-
-    monkeypatch.setattr(
-        "workato_platform_cli.cli.utils.config.manager.click.prompt", mock_prompt
-    )
-
-
-def add_folder_prompt_handling(base_handler: Any) -> Any:
-    """Wrap a click.prompt handler to add folder name prompt support.
-
-    Args:
-        base_handler: The base async prompt handler function
-
-    Returns:
-        Wrapped handler that handles folder name prompts with defaults
+    Applies default behavior immediately. Call the returned function with a
+    base_handler to handle other prompts differently.
     """
 
-    async def wrapper(message: str, **kwargs: Any) -> str:
-        # Handle folder name prompts by returning default
-        if "Folder name" in message:
+    def setup(base_handler: Any | None = None) -> None:
+        async def wrapper(message: str, **kwargs: Any) -> str:
+            if "Folder name" in message:
+                return str(kwargs.get("default", ""))
+            if base_handler is not None:
+                return str(await base_handler(message, **kwargs))
             return str(kwargs.get("default", ""))
-        # Delegate to base handler for other prompts
-        result = await base_handler(message, **kwargs)
-        return str(result)
 
-    return wrapper
+        monkeypatch.setattr(
+            "workato_platform_cli.cli.utils.config.manager.click.prompt",
+            wrapper,
+        )
+
+    setup()
+    return setup
 
 
 class StubUsersAPI:
@@ -172,7 +166,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """__init__ should run credential validation when not skipped."""
 
@@ -200,7 +194,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """initialize() should invoke validation guard and setup flow."""
 
@@ -294,7 +288,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Non-interactive setup should create workspace and project configs."""
 
@@ -345,7 +339,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Providing project_id should reuse existing remote project."""
 
@@ -389,7 +383,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Custom region should accept URL and honor running from subdirectory."""
 
@@ -432,7 +426,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Unknown project_id should raise a descriptive ClickException."""
 
@@ -466,7 +460,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Missing project name and ID should raise ClickException."""
 
@@ -499,7 +493,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Non-interactive mode should use environment variables automatically."""
         monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-ni")
@@ -554,7 +548,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Non-interactive mode should detect EU region from WORKATO_HOST."""
         monkeypatch.setenv("WORKATO_API_TOKEN", "env-token-eu")
@@ -606,7 +600,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """When both env vars detected and user accepts, profile should use env vars."""
         # Setup environment variables
@@ -677,7 +671,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """When env vars detected but user declines, should follow normal flow."""
         # Setup environment variables
@@ -743,7 +737,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """When only WORKATO_API_TOKEN set, should prompt for region selection."""
         # Setup only token env var (no host)
@@ -832,7 +826,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """When only WORKATO_HOST set, should prompt for token input."""
         # Setup only host env var (no token)
@@ -927,7 +921,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """When existing profile selected and user confirms, should overwrite."""
         # Setup environment variables
@@ -1015,7 +1009,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """When existing profile selected but user declines overwrite, should exit."""
         # Setup environment variables
@@ -1108,7 +1102,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Test ConfigManager finds nearest .workatoenv when no config_dir provided."""
         project_dir = tmp_path / "project"
@@ -1344,7 +1338,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Region helpers should validate and persist settings."""
 
@@ -1395,7 +1389,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Custom region should reject insecure URLs."""
 
@@ -1531,7 +1525,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """When no projects exist, handler returns None."""
 
@@ -1555,7 +1549,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """User selection should update workspace config with chosen project."""
 
@@ -1684,7 +1678,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """When project path invalid, selection helper should run."""
 
@@ -1850,7 +1844,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Cover happy path for profile setup and project creation."""
 
@@ -1891,10 +1885,7 @@ class TestConfigManager:
             assert values, f"Unexpected prompt: {message}"
             return values.pop(0)
 
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".click.prompt",
-            add_folder_prompt_handling(base_fake_prompt),
-        )
+        mock_folder_prompt(base_fake_prompt)
 
         # Mock asyncio.to_thread to avoid calling the real get_token_with_smart_paste
         async def fake_to_thread(func: Any, *args: Any, **kwargs: Any) -> str:
@@ -1948,7 +1939,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Missing selection should abort setup."""
 
@@ -1976,7 +1967,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Entering an empty profile name should exit."""
 
@@ -2036,7 +2027,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Existing profiles branch should select the chosen profile."""
 
@@ -2080,7 +2071,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Existing profile with valid credentials should not prompt for re-entry."""
 
@@ -2129,7 +2120,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Existing profile with missing credentials should prompt for re-entry."""
 
@@ -2200,7 +2191,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Cover custom region handling and token storage."""
 
@@ -2247,7 +2238,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """User cancellation at region prompt should exit."""
 
@@ -2269,7 +2260,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Blank token should abort profile creation."""
 
@@ -2293,7 +2284,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Test successful credential prompt and validation."""
         from workato_platform_cli.cli.utils.config.models import RegionInfo
@@ -2341,7 +2332,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Test that empty token raises ClickException."""
         from workato_platform_cli.cli.utils.config.models import RegionInfo
@@ -2380,7 +2371,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Test that API validation failure raises appropriate exception."""
         from workato_platform_cli.cli.utils.config.models import RegionInfo
@@ -2440,7 +2431,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Test credential validation returns correct data."""
         from workato_platform_cli.cli.utils.config.models import RegionInfo
@@ -2486,7 +2477,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Choosing 'Create new profile' should call helper and return name."""
 
@@ -2525,7 +2516,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Selecting an existing remote project should configure directories."""
 
@@ -2583,7 +2574,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """When running from subdirectory, project should be created there."""
 
@@ -2630,10 +2621,7 @@ class TestConfigManager:
         async def base_prompt(message: str, **_: Any) -> str:
             return "NestedProj" if message == "Enter project name" else "token"
 
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".click.prompt",
-            add_folder_prompt_handling(base_prompt),
-        )
+        mock_folder_prompt(base_prompt)
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
         await manager._setup_project("dev", workspace_root)
@@ -2646,7 +2634,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Existing matching project should reconfigure without errors."""
 
@@ -2707,7 +2695,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Invalid JSON in existing project config should use to blocking logic."""
 
@@ -2773,7 +2761,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Different project ID in directory should raise error."""
 
@@ -2823,7 +2811,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """OS errors while listing directory contents should be ignored."""
 
@@ -2901,7 +2889,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """If selection is unknown, setup should exit."""
 
@@ -2946,7 +2934,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Validation errors should abort project setup."""
 
@@ -2996,10 +2984,7 @@ class TestConfigManager:
             ConfigManager.__module__ + ".inquirer.prompt",
             fake_prompt,
         )
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".click.prompt",
-            add_folder_prompt_handling(base_click_prompt),
-        )
+        mock_folder_prompt(base_click_prompt)
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
 
@@ -3019,7 +3004,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Non-empty directories without matching config should be rejected."""
 
@@ -3067,10 +3052,7 @@ class TestConfigManager:
         async def base_prompt5(message: str, **_: Any) -> str:
             return "NewProj" if message == "Enter project name" else "token"
 
-        monkeypatch.setattr(
-            ConfigManager.__module__ + ".click.prompt",
-            add_folder_prompt_handling(base_prompt5),
-        )
+        mock_folder_prompt(base_prompt5)
 
         manager = ConfigManager(config_dir=workspace_root, skip_validation=True)
 
@@ -3083,7 +3065,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Empty project name should trigger exit."""
 
@@ -3129,7 +3111,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """No selection should exit early."""
 
@@ -3185,7 +3167,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Old .workatoenv should NOT prompt before user selects project."""
         workspace_root = tmp_path
@@ -3281,7 +3263,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """After user selects project, detect if it exists locally."""
         workspace_root = tmp_path
@@ -3353,7 +3335,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """User declining reinitialization should cancel setup."""
         workspace_root = tmp_path
@@ -3421,7 +3403,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Non-interactive mode should fail if project already exists locally."""
         workspace_root = tmp_path
@@ -3476,7 +3458,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Corrupted .workatoenv files should be skipped during detection."""
         workspace_root = tmp_path
@@ -3535,7 +3517,7 @@ class TestConfigManager:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Project detection should match by project_id, not by name."""
         workspace_root = tmp_path
@@ -3677,7 +3659,7 @@ class TestConfigManager:
         self,
         tmp_path: Path,
         setup_folder_test_env: Callable,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Non-interactive setup with custom folder name creates custom folder."""
         manager, _outputs = setup_folder_test_env(tmp_path)
@@ -3714,7 +3696,7 @@ class TestConfigManager:
         self,
         tmp_path: Path,
         setup_folder_test_env: Callable,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Non-interactive setup without custom folder defaults to project name."""
         manager, _outputs = setup_folder_test_env(tmp_path)
@@ -3743,7 +3725,7 @@ class TestConfigManager:
         self,
         tmp_path: Path,
         setup_folder_test_env: Callable,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Non-interactive setup with empty string folder defaults to project name."""
         manager, _outputs = setup_folder_test_env(tmp_path)
@@ -3773,7 +3755,7 @@ class TestConfigManager:
         tmp_path: Path,
         setup_folder_test_env: Callable,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Interactive setup with custom folder name creates custom folder."""
         workspace_root = tmp_path / "workspace"
@@ -3822,7 +3804,7 @@ class TestConfigManager:
         monkeypatch: pytest.MonkeyPatch,
         setup_folder_test_env: Callable,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Interactive setup without custom folder defaults to project name."""
         workspace_root = tmp_path / "workspace"
@@ -3869,7 +3851,7 @@ class TestConfigManager:
         monkeypatch: pytest.MonkeyPatch,
         setup_folder_test_env: Callable,
         mock_profile_manager: Mock,
-        mock_folder_prompt: None,
+        mock_folder_prompt: Callable[..., None],
     ) -> None:
         """Interactive setup prompts for folder name when not provided."""
         workspace_root = tmp_path / "workspace"
