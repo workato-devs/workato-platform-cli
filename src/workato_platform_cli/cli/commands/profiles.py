@@ -3,15 +3,24 @@
 import json
 import os
 
+from pathlib import Path
 from typing import Any
 
 import asyncclick as click
+import certifi
 
 from dependency_injector.wiring import Provide, inject
 
+from workato_platform_cli import Workato
 from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils.config import ConfigData, ConfigManager
+from workato_platform_cli.cli.utils.config.models import (
+    AVAILABLE_REGIONS,
+    ProfileData,
+    RegionInfo,
+)
 from workato_platform_cli.cli.utils.exception_handler import handle_cli_exceptions
+from workato_platform_cli.client.workato_api.configuration import Configuration
 
 
 @click.group()
@@ -337,6 +346,164 @@ async def status(
             click.echo("   💡 Or set WORKATO_API_TOKEN environment variable")
 
 
+def _format_file_path(file_path: Path) -> str:
+    """Format file path for display, showing relative to current directory."""
+    try:
+        rel_path = file_path.relative_to(Path.cwd())
+        return f"./{rel_path}"
+    except ValueError:
+        # File is outside current directory (shouldn't happen with cwd search)
+        return str(file_path)
+
+
+def _update_workatoenv_files(old_name: str, new_name: str) -> list[Path]:
+    """Find and update all .workatoenv files that reference the old profile name.
+
+    Searches recursively from current directory.
+    Returns list of updated file paths.
+    """
+    updated_files = []
+    current_dir = Path.cwd()
+
+    # Search from current directory for .workatoenv files
+    for workatoenv_file in current_dir.rglob(".workatoenv"):
+        try:
+            # Open for reading and writing
+            with open(workatoenv_file, "r+") as f:
+                data = json.load(f)
+
+                # Check if profile field matches old name
+                if data.get("profile") == old_name:
+                    # Update to new name
+                    data["profile"] = new_name
+
+                    # Write back (truncate and write from beginning)
+                    f.seek(0)
+                    f.truncate()
+                    json.dump(data, f, indent=2)
+                    f.write("\n")  # Add trailing newline
+
+                    updated_files.append(workatoenv_file)
+        except (OSError, json.JSONDecodeError):
+            # Skip files we can't read or parse
+            continue
+
+    return updated_files
+
+
+@profiles.command()
+@click.argument("old_name")
+@click.argument("new_name")
+@click.option(
+    "--output-mode",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format: table (default) or json",
+)
+@click.option(
+    "--yes",
+    is_flag=True,
+    help="Skip confirmation prompt",
+)
+@handle_cli_exceptions
+@inject
+async def rename(
+    old_name: str,
+    new_name: str,
+    output_mode: str = "table",
+    yes: bool = False,
+    config_manager: ConfigManager = Provide[Container.config_manager],
+) -> None:
+    """Rename a profile"""
+    # Check if old profile exists
+    old_profile = config_manager.profile_manager.get_profile(old_name)
+    if not old_profile:
+        if output_mode == "json":
+            error_msg = f"Profile '{old_name}' not found"
+            output_data: dict[str, Any] = {"status": "error", "error": error_msg}
+            click.echo(json.dumps(output_data))
+        else:
+            click.echo(f"❌ Profile '{old_name}' not found")
+            click.echo("💡 Use 'workato profiles list' to see available profiles")
+        return
+
+    # Check if new name already exists
+    if config_manager.profile_manager.get_profile(new_name):
+        if output_mode == "json":
+            error_msg = f"Profile '{new_name}' already exists"
+            output_data = {"status": "error", "error": error_msg}
+            click.echo(json.dumps(output_data))
+        else:
+            click.echo(f"❌ Profile '{new_name}' already exists")
+            click.echo(
+                "💡 Choose a different name or delete the existing profile first"
+            )
+        return
+
+    # Show confirmation prompt (skip in JSON mode or if --yes flag)
+    if (
+        not yes
+        and output_mode != "json"
+        and not click.confirm(f"Rename profile '{old_name}' to '{new_name}'?")
+    ):
+        click.echo("❌ Rename cancelled")
+        return
+
+    # Get the token from keyring
+    old_token = config_manager.profile_manager._get_token_from_keyring(old_name)
+
+    # Create new profile with same data and token
+    try:
+        config_manager.profile_manager.set_profile(new_name, old_profile, old_token)
+    except ValueError as e:
+        if output_mode == "json":
+            output_data = {"status": "error", "error": str(e)}
+            click.echo(json.dumps(output_data))
+        else:
+            click.echo(f"❌ Failed to create new profile: {e}")
+        return
+
+    # If old profile was current, set new profile as current
+    current_profile = config_manager.profile_manager.get_current_profile_name()
+    was_current = current_profile == old_name
+    if was_current:
+        config_manager.profile_manager.set_current_profile(new_name)
+
+    # Delete old profile
+    config_manager.profile_manager.delete_profile(old_name)
+
+    # Update all .workatoenv files that reference the old profile
+    if output_mode == "table":
+        click.echo("🔄 Updating project configurations...")
+    updated_files = _update_workatoenv_files(old_name, new_name)
+
+    # JSON output mode
+    if output_mode == "json":
+        output_data = {
+            "status": "success",
+            "old_name": old_name,
+            "new_name": new_name,
+            "was_current_profile": was_current,
+            "updated_files": [str(f) for f in updated_files],
+            "updated_files_count": len(updated_files),
+        }
+        click.echo(json.dumps(output_data))
+        return
+
+    # Table output mode (default)
+    click.echo("✅ Profile renamed successfully")
+    if was_current:
+        click.echo(f"✅ Set '{new_name}' as the active profile")
+
+    # Display updated files
+    if not updated_files:
+        return
+
+    click.echo(f"✅ Updated {len(updated_files)} project configuration(s)")
+    for file_path in updated_files:
+        click.echo(f"   • {_format_file_path(file_path)}")
+
+
 @profiles.command()
 @click.argument("profile_name")
 @click.confirmation_option(prompt="Are you sure you want to delete this profile?")
@@ -360,12 +527,83 @@ async def delete(
         click.echo(f"❌ Failed to delete profile '{profile_name}'")
 
 
+async def _create_profile_non_interactive(
+    region: str | None,
+    api_token: str | None,
+    api_url: str | None,
+) -> tuple[ProfileData, str] | None:
+    """Create profile data non-interactively.
+
+    Returns (ProfileData, token) on success, or None on error (error already echoed).
+    """
+    # Validate required parameters
+    if not region:
+        click.echo("❌ --region is required in non-interactive mode")
+        return None
+    if not api_token:
+        click.echo("❌ --api-token is required in non-interactive mode")
+        return None
+    if region == "custom" and not api_url:
+        click.echo("❌ --api-url is required when region=custom")
+        return None
+
+    # Get region info
+    if region == "custom":
+        region_info = RegionInfo(region="custom", name="Custom", url=api_url)
+    else:
+        region_info_lookup = AVAILABLE_REGIONS.get(region)
+        if not region_info_lookup:
+            click.echo(f"❌ Invalid region: {region}")
+            return None
+        region_info = region_info_lookup
+
+    # Validate credentials and get workspace info
+    api_config = Configuration(
+        access_token=api_token, host=region_info.url, ssl_ca_cert=certifi.where()
+    )
+    try:
+        async with Workato(configuration=api_config) as workato_api_client:
+            user_info = await workato_api_client.users_api.get_workspace_details()
+    except Exception as e:
+        click.echo(f"❌ Authentication failed: {e}")
+        return None
+
+    profile_data = ProfileData(
+        region=region_info.region,
+        region_url=region_info.url,
+        workspace_id=user_info.id,
+    )
+    return profile_data, api_token
+
+
 @profiles.command()
 @click.argument("profile_name")
+@click.option(
+    "--region",
+    type=click.Choice(["us", "eu", "jp", "au", "sg", "custom"]),
+    help="Workato region",
+)
+@click.option(
+    "--api-token",
+    help="Workato API token",
+)
+@click.option(
+    "--api-url",
+    help="Custom API URL (required when region=custom)",
+)
+@click.option(
+    "--non-interactive",
+    is_flag=True,
+    help="Run in non-interactive mode (requires --region and --api-token)",
+)
 @handle_cli_exceptions
 @inject
 async def create(
     profile_name: str,
+    region: str | None = None,
+    api_token: str | None = None,
+    api_url: str | None = None,
+    non_interactive: bool = False,
     config_manager: ConfigManager = Provide[Container.config_manager],
 ) -> None:
     """Create a new profile with API credentials"""
@@ -377,31 +615,38 @@ async def create(
         click.echo("💡 Or use 'workato profiles delete' to remove it first")
         return
 
-    click.echo(f"🔧 Creating profile: {profile_name}")
-    click.echo()
+    # Get profile data and token (either interactively or non-interactively)
+    if non_interactive:
+        result = await _create_profile_non_interactive(region, api_token, api_url)
+        if result is None:
+            return
+        profile_data, token = result
+    else:
+        click.echo(f"🔧 Creating profile: {profile_name}")
+        click.echo()
 
-    # Create profile interactively
-    try:
-        (
-            profile_data,
-            token,
-        ) = await config_manager.profile_manager.create_profile_interactive(
-            profile_name
-        )
-    except click.ClickException:
-        click.echo("❌ Profile creation cancelled")
-        return
+        try:
+            (
+                profile_data,
+                token,
+            ) = await config_manager.profile_manager.create_profile_interactive(
+                profile_name
+            )
+        except click.ClickException:
+            click.echo("❌ Profile creation cancelled")
+            return
 
-    # Save profile
+    # Save profile (common for both modes)
     try:
         config_manager.profile_manager.set_profile(profile_name, profile_data, token)
     except ValueError as e:
         click.echo(f"❌ Failed to save profile: {e}")
         return
 
-    # Set as current profile
+    # Set as current profile (common for both modes)
     config_manager.profile_manager.set_current_profile(profile_name)
 
+    # Success message (common for both modes)
     click.echo(f"✅ Profile '{profile_name}' created successfully")
     click.echo(f"✅ Set '{profile_name}' as the active profile")
     click.echo()

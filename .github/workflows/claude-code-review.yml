@@ -1,0 +1,59 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+    # Optional: Only run on specific file changes
+    # paths:
+    #   - "src/**/*.py"
+
+jobs:
+  claude-review:
+    # Optional: Filter by PR author
+    # if: |
+    #   github.event.pull_request.user.login == 'external-contributor' ||
+    #   github.event.pull_request.user.login == 'new-developer' ||
+    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write  # Changed to write so Claude can comment
+      issues: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # Use workflow token to respect permissions
+          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
+          plugins: 'code-review@claude-code-plugins'
+          claude_args: '--allowedTools WebSearch,WebFetch,Bash,Skill,Read,Glob'
+          prompt: |
+            /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }} --comment
+
+            Before reviewing, research best practices for writing Python CLI tools:
+            - Search for official documentation on asyncclick, pydantic, and aiohttp
+            - Look for common patterns in popular open-source Python CLIs
+            - Understand proper use of async/await patterns
+            - Review examples of testing strategies for Python CLI tools
+            - Check for proper use of type annotations and mypy compliance
+
+            Also research Workato-specific knowledge:
+            - Research Workato platform concepts
+            - Review Workato Developer API documentation and patterns
+            - Understand Workato resource relationships and data models
+
+            Review instructions:
+            - Focus ONLY on critical issues and best practices violations
+            - Use bullet points, max 5 items total
+            - Be extremely concise - one sentence per issue
+            - Skip minor style/formatting issues
+            - Highlight any deviations from Python CLI development patterns

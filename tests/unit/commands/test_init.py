@@ -2,6 +2,7 @@
 
 import json
 
+from collections.abc import Callable
 from io import StringIO
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
@@ -13,59 +14,28 @@ from workato_platform_cli.cli.commands import init as init_module
 
 
 @pytest.mark.asyncio
-async def test_init_interactive_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_init_interactive_mode(
+    mock_init_dependencies: Callable[..., dict[str, Mock | AsyncMock]],
+) -> None:
     """Test interactive mode (default behavior)."""
-    mock_config_manager = Mock()
-    mock_workato_client = Mock()
-    workato_context = AsyncMock()
+    mocks = mock_init_dependencies(profile="default", token="token")
 
-    with (
-        patch.object(
-            mock_config_manager, "load_config", return_value=Mock(profile="default")
-        ),
-        patch.object(
-            mock_config_manager,
-            "get_project_directory",
-            return_value=None,
-        ),
-        patch.object(
-            mock_config_manager.profile_manager,
-            "resolve_environment_variables",
-            return_value=("token", "https://api.workato.com"),
-        ),
-        patch.object(workato_context, "__aenter__", return_value=mock_workato_client),
-        patch.object(workato_context, "__aexit__", return_value=False),
-    ):
-        mock_initialize = AsyncMock(return_value=mock_config_manager)
-        monkeypatch.setattr(
-            init_module.ConfigManager,
-            "initialize",
-            mock_initialize,
-        )
+    assert init_module.init.callback
+    await init_module.init.callback()
 
-        mock_pull = AsyncMock()
-        monkeypatch.setattr(init_module, "_pull_project", mock_pull)
-
-        monkeypatch.setattr(init_module, "Workato", lambda **_: workato_context)
-        monkeypatch.setattr(init_module, "Configuration", lambda **_: Mock())
-
-        monkeypatch.setattr(init_module.click, "echo", lambda _="": None)
-
-        assert init_module.init.callback
-        await init_module.init.callback()
-
-        # Should call initialize with no parameters (interactive mode)
-        mock_initialize.assert_awaited_once_with(
-            profile_name=None,
-            region=None,
-            api_token=None,
-            api_url=None,
-            project_name=None,
-            project_id=None,
-            output_mode="table",
-            non_interactive=False,
-        )
-        mock_pull.assert_awaited_once()
+    # Should call initialize with no parameters (interactive mode)
+    mocks["initialize_mock"].assert_awaited_once_with(
+        profile_name=None,
+        region=None,
+        api_token=None,
+        api_url=None,
+        project_name=None,
+        project_id=None,
+        output_mode="table",
+        non_interactive=False,
+        folder_name=None,
+    )
+    mocks["pull_mock"].assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -137,6 +107,7 @@ async def test_init_non_interactive_success(monkeypatch: pytest.MonkeyPatch) -> 
             project_id=None,
             output_mode="table",
             non_interactive=True,
+            folder_name=None,
         )
         mock_pull.assert_awaited_once()
 
@@ -205,6 +176,7 @@ async def test_init_non_interactive_custom_region(
             project_id=123,
             output_mode="table",
             non_interactive=True,
+            folder_name=None,
         )
 
 
@@ -369,6 +341,7 @@ async def test_init_non_interactive_with_region_and_token(
             project_id=None,
             output_mode="table",
             non_interactive=True,
+            folder_name=None,
         )
 
 
@@ -1553,3 +1526,88 @@ async def test_init_non_interactive_new_profile_with_region_and_token(
 
         # Should proceed without error and not check credentials
         mock_pull.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_init_with_custom_folder_name_non_interactive(
+    mock_init_dependencies: Callable[..., dict[str, Mock | AsyncMock]],
+) -> None:
+    """Test non-interactive mode with custom folder name."""
+    mocks = mock_init_dependencies(profile="test-profile", token="test-token")
+
+    assert init_module.init.callback
+    await init_module.init.callback(
+        profile="test-profile",
+        project_name="test-project",
+        non_interactive=True,
+        folder_name="custom-folder",
+    )
+
+    # Should call initialize with custom folder name
+    mocks["initialize_mock"].assert_awaited_once_with(
+        profile_name="test-profile",
+        region=None,
+        api_token=None,
+        api_url=None,
+        project_name="test-project",
+        project_id=None,
+        output_mode="table",
+        non_interactive=True,
+        folder_name="custom-folder",
+    )
+    mocks["pull_mock"].assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_init_with_empty_folder_name_non_interactive(
+    mock_init_dependencies: Callable[..., dict[str, Mock | AsyncMock]],
+) -> None:
+    """Test non-interactive mode with empty string folder_name falls back to None."""
+    mocks = mock_init_dependencies(profile="test-profile", token="test-token")
+
+    assert init_module.init.callback
+    await init_module.init.callback(
+        profile="test-profile",
+        project_name="test-project",
+        non_interactive=True,
+        folder_name="",  # Empty string should be treated as None
+    )
+
+    # Should call initialize with folder_name="" (empty string is passed through)
+    mocks["initialize_mock"].assert_awaited_once_with(
+        profile_name="test-profile",
+        region=None,
+        api_token=None,
+        api_url=None,
+        project_name="test-project",
+        project_id=None,
+        output_mode="table",
+        non_interactive=True,
+        folder_name="",  # Empty string is passed as-is to ConfigManager.initialize
+    )
+    mocks["pull_mock"].assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_init_with_custom_folder_name_interactive(
+    mock_init_dependencies: Callable[..., dict[str, Mock | AsyncMock]],
+) -> None:
+    """Test interactive mode with custom folder name."""
+    mocks = mock_init_dependencies(profile="default", token="token")
+
+    assert init_module.init.callback
+    await init_module.init.callback(folder_name="my-custom-folder")
+
+    # Should call initialize with custom folder name
+    mocks["initialize_mock"].assert_awaited_once_with(
+        profile_name=None,
+        region=None,
+        api_token=None,
+        api_url=None,
+        project_name=None,
+        project_id=None,
+        output_mode="table",
+        non_interactive=False,
+        folder_name="my-custom-folder",
+    )
+    mocks["pull_mock"].assert_awaited_once()

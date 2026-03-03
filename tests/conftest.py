@@ -1,8 +1,9 @@
 """Pytest configuration and shared fixtures."""
 
+import json
 import tempfile
 
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, Mock, patch
@@ -144,3 +145,80 @@ def prevent_keyring_errors() -> None:
         minimal_keyring.delete_password.return_value = None
 
         sys.modules["keyring"] = minimal_keyring
+
+
+# Shared test helpers
+
+
+def parse_json_output(capsys: pytest.CaptureFixture[str]) -> dict[str, Any]:
+    """Parse JSON output from capsys."""
+    output = capsys.readouterr().out
+    result: dict[str, Any] = json.loads(output)
+    return result
+
+
+def create_workatoenv_file(
+    tmp_path: Path,
+    dir_name: str,
+    profile: str,
+    project_id: int = 123,
+    **extra_fields: Any,
+) -> Path:
+    """Create a test .workatoenv file.
+
+    Args:
+        tmp_path: Temporary directory path
+        dir_name: Name of the project directory to create
+        profile: Profile name to set in the workatoenv file
+        project_id: Project ID (default: 123)
+        **extra_fields: Additional fields to include in the workatoenv file
+    """
+    project_dir = tmp_path / dir_name
+    project_dir.mkdir()
+    workatoenv = project_dir / ".workatoenv"
+
+    data = {"project_id": project_id, "profile": profile}
+    data.update(extra_fields)
+
+    workatoenv.write_text(json.dumps(data))
+    return workatoenv
+
+
+def _make_workatoenv_updater(tmp_path: Path) -> Callable[[str, str], list[Path]]:
+    """Create a mock _update_workatoenv_files function for testing.
+
+    Returns a function that searches tmp_path instead of home directory.
+    """
+
+    def mock_update(old_name: str, new_name: str) -> list[Path]:
+        updated_files = []
+        for workatoenv_file in tmp_path.rglob(".workatoenv"):
+            try:
+                with open(workatoenv_file, "r+") as f:
+                    data = json.load(f)
+                    if data.get("profile") == old_name:
+                        data["profile"] = new_name
+                        f.seek(0)
+                        f.truncate()
+                        json.dump(data, f, indent=2)
+                        f.write("\n")
+                        updated_files.append(workatoenv_file)
+            except (OSError, json.JSONDecodeError):
+                continue
+        return updated_files
+
+    return mock_update
+
+
+def mock_workatoenv_updates(tmp_path: Path) -> Any:
+    """Context manager for mocking workatoenv file updates.
+
+    Use this to mock the _update_workatoenv_files function in profiles module.
+    Must import profiles_module in your test file to use this helper.
+    """
+    from workato_platform_cli.cli.commands import profiles as profiles_module
+
+    mock_update = _make_workatoenv_updater(tmp_path)
+    return patch.object(
+        profiles_module, "_update_workatoenv_files", side_effect=mock_update
+    )
