@@ -298,6 +298,36 @@ class TestProfileManager:
             assert saved_data["current_profile"] == "dev"
             assert "dev" in saved_data["profiles"]
 
+    def test_save_profiles_overwrites_existing(self, tmp_path: Path) -> None:
+        """Test saving profiles overwrites existing file (Windows compatibility)."""
+        with patch("pathlib.Path.home", return_value=tmp_path):
+            manager = ProfileManager()
+
+            # First save
+            profile1 = ProfileData(
+                region="us", region_url="https://www.workato.com", workspace_id=123
+            )
+            config1 = ProfilesConfig(current_profile="dev", profiles={"dev": profile1})
+            manager.save_profiles(config1)
+
+            # Second save should overwrite without error
+            profile2 = ProfileData(
+                region="eu", region_url="https://app.eu.workato.com", workspace_id=456
+            )
+            config2 = ProfilesConfig(
+                current_profile="prod", profiles={"dev": profile1, "prod": profile2}
+            )
+            manager.save_profiles(config2)
+
+            # Verify the second save succeeded
+            profiles_file = tmp_path / ".workato" / "profiles"
+            with open(profiles_file) as f:
+                saved_data = json.load(f)
+
+            assert saved_data["current_profile"] == "prod"
+            assert "dev" in saved_data["profiles"]
+            assert "prod" in saved_data["profiles"]
+
     def test_get_profile_success(self, tmp_path: Path) -> None:
         """Test getting profile data."""
         profile = ProfileData(

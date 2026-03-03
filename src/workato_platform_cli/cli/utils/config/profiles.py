@@ -296,8 +296,8 @@ class ProfileManager:
         # Set secure permissions (only user can read/write)
         temp_file.chmod(0o600)
 
-        # Atomic rename
-        temp_file.rename(self.profiles_file)
+        # Atomic replace (works cross-platform, including Windows)
+        temp_file.replace(self.profiles_file)
 
     def get_profile(self, profile_name: str) -> ProfileData | None:
         """Get profile data by name"""
