@@ -939,7 +939,9 @@ def pick_lists(adapter: str | None = None) -> None:
     """List available pick lists by adapter"""
 
     # Load the bundled picklist data
-    data_file = Path(__file__).parent.parent / "resources" / "data" / "picklist-data.json"
+    data_file = (
+        Path(__file__).parent.parent / "resources" / "data" / "picklist-data.json"
+    )
 
     if not data_file.exists():
         click.echo(

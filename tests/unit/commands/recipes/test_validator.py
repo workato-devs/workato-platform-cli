@@ -119,6 +119,17 @@ def test_recipe_line_limits_job_report_entries() -> None:
         )
 
 
+def test_recipe_line_accepts_format_version_as_int() -> None:
+    """format_version is exported as integer by Workato API."""
+    line = RecipeLine(
+        number=0,
+        keyword=Keyword.TRIGGER,
+        uuid="test-uuid",
+        format_version=2,
+    )
+    assert line.format_version == 2
+
+
 def test_is_expression_detects_formulas_jinja_and_data_pills(
     validator: RecipeValidator,
 ) -> None:
