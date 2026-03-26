@@ -269,7 +269,7 @@ def test_pick_lists(
     expected: str,
 ) -> None:
     module_root = tmp_path / "cli" / "commands"
-    data_dir = module_root.parent / "data"
+    data_dir = module_root.parent / "resources" / "data"
     data_dir.mkdir(parents=True)
 
     picklist_file = data_dir / "picklist-data.json"
@@ -320,7 +320,7 @@ def test_pick_lists_invalid_json(
     monkeypatch: pytest.MonkeyPatch, capture_echo: list[str], tmp_path: Path
 ) -> None:
     module_root = tmp_path / "cli" / "commands"
-    data_dir = module_root.parent / "data"
+    data_dir = module_root.parent / "resources" / "data"
     data_dir.mkdir(parents=True)
     invalid_file = data_dir / "picklist-data.json"
     invalid_file.write_text("not-json")
