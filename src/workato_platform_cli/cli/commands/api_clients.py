@@ -576,8 +576,9 @@ def display_client_summary(client: ApiClient) -> None:
     click.echo(f"    🔐 Auth Type: {client.auth_type}")
 
     # Show API collections if available
-    for collection in client.api_collections:
-        click.echo(f"    📚 {collection.name} (ID: {collection.id})")
+    if client.api_collections:
+        for collection in client.api_collections:
+            click.echo(f"    📚 {collection.name} (ID: {collection.id})")
 
     # Show email if available (API portal integration)
     if client.email:
