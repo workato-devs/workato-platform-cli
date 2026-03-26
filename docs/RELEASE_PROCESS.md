@@ -92,17 +92,30 @@ The workflow will automatically:
 
 ### Verify Test PyPI Installation
 
+Using pipx (recommended):
+
 ```bash
-pip install --index-url https://test.pypi.org/simple/ \
-    --extra-index-url https://pypi.org/simple/ \
-    workato-platform-cli
+pipx install --python python3.12 \
+    --index-url https://test.pypi.org/simple/ \
+    --pip-args="--extra-index-url https://pypi.org/simple/" \
+    workato-platform-cli==1.0.6.dev0
 
 workato --version
 ```
 
-## Stage 6: Publish to Production PyPI
+Using pip:
 
-**IMPORTANT:** Follow this exact order to avoid workflow failures.
+```bash
+pip install --index-url https://test.pypi.org/simple/ \
+    --extra-index-url https://pypi.org/simple/ \
+    workato-platform-cli==1.0.6.dev0
+
+workato --version
+```
+
+**Note:** Replace `1.0.6.dev0` with the actual dev version published. Check Test PyPI for available versions: https://test.pypi.org/project/workato-platform-cli/
+
+## Stage 6: Publish to Production PyPI
 
 ### Step 1: Determine the new version number
 
@@ -115,7 +128,22 @@ git tag --sort=-v:refname | head -5
 
 Increment appropriately (e.g., `1.0.5` → `1.0.6`).
 
-### Step 2: Merge main into release and push
+### Step 2: Create the version tag on main
+
+The version tag must exist before pushing to release, as `hatch-vcs` uses it to determine the package version.
+
+```bash
+git checkout main
+git pull origin main
+
+# Create the version tag
+git tag 1.0.6
+
+# Push the tag (this does NOT trigger the PyPI workflow)
+git push origin 1.0.6
+```
+
+### Step 3: Merge main into release and push
 
 ```bash
 # Switch to release branch
@@ -125,82 +153,56 @@ git pull origin release
 # Merge main into release
 git merge origin/main -m "Merge main into release for v1.0.6"
 
-# Push release branch
+# Push release branch (this triggers the PyPI workflow)
 git push origin release
 ```
 
-### Step 3: Create and push the version tag
+### How Versioning Works
 
-**Only after the release branch is pushed:**
+The PyPI workflow only triggers on branch pushes (`test` or `release`), not on tag pushes. However, tags are still essential:
 
-```bash
-# Switch to main (or stay on release - they should be at same commit)
-git checkout main
-git pull origin main
+- `hatch-vcs` reads git tags to determine the package version
+- When the `release` branch is pushed, the workflow runs `git describe --tags --exact-match` to find the version
+- If no exact tag exists on the current commit, the build fails with "Production releases require an exact git tag"
 
-# Create the version tag
-git tag 1.0.6
-
-# Push the tag
-git push origin 1.0.6
-```
-
-### Why This Order Matters
-
-The PyPI workflow triggers on:
-
-- Push to `release` branch
-- Push of version tags (e.g., `1.0.6`)
-
-The workflow requires an exact git tag for production releases. If you push the tag first:
-
-1. Tag push triggers workflow
-2. Workflow tries to deploy to `release` environment
-3. **FAILS** - Tag is not allowed by environment protection rules (only `release` branch is)
-
-By pushing the `release` branch first:
-
-1. Branch push triggers workflow
-2. Workflow finds the tag (created locally or already pushed)
-3. **SUCCEEDS** - `release` branch is allowed to deploy
+This is why the tag must be created before (or at the same time as) pushing the release branch.
 
 ## Workflow Triggers Summary
 
-| Trigger                  | Environment | PyPI Target                                     |
-| ------------------------ | ----------- | ----------------------------------------------- |
-| Push to `test` branch    | test        | Test PyPI                                       |
-| Push to `release` branch | release     | Production PyPI                                 |
-| Push version tag         | release     | Production PyPI (but may fail protection rules) |
-| Manual workflow_dispatch | Selected    | Depends on selection                            |
+| Trigger                  | Environment | PyPI Target      |
+| ------------------------ | ----------- | ---------------- |
+| Push to `test` branch    | test        | Test PyPI        |
+| Push to `release` branch | release     | Production PyPI  |
+| Manual workflow_dispatch | Selected    | Depends on input |
+
+**Note:** Tag pushes do not trigger the workflow. Tags are only used for version detection by `hatch-vcs`.
 
 ## Troubleshooting
 
 ### "Production releases require an exact git tag"
 
-The release branch was pushed but no matching tag exists. Create and push the tag:
+The release branch was pushed but no matching tag exists on the current commit. Create and push the tag:
 
 ```bash
+git checkout main
+git pull origin main
 git tag 1.0.X
 git push origin 1.0.X
 ```
 
-### "Tag is not allowed to deploy to release due to environment protection rules"
-
-The tag was pushed before the release branch. This workflow run will fail - ignore it. Push the release branch to trigger a successful run:
-
-```bash
-git checkout release
-git merge origin/main
-git push origin release
-```
+Then push the release branch again (or wait for the tag to be available and re-run the workflow).
 
 ### Version mismatch or wrong version published
 
 The version is derived from git tags using `hatch-vcs`. Ensure:
 
 1. The tag follows semver format: `X.Y.Z` (no `v` prefix)
-2. The tag points to the commit being released
+2. The tag points to the exact commit being released
 3. You've fetched all tags: `git fetch --tags`
+
+### Test PyPI shows unexpected dev version
+
+Test PyPI versions are automatically generated as dev versions (e.g., `1.0.6.dev3`). The number increments based on commits since the last tag. This is expected behavior for the test environment.
 
 ## Quick Reference: Complete Release Commands
 
@@ -217,14 +219,14 @@ git pull origin test
 git merge origin/main -m "Merge main into test"
 git push origin test
 
-# 3. Release to Production PyPI
+# 3. Create version tag
+git checkout main
+git tag X.Y.Z
+git push origin X.Y.Z
+
+# 4. Release to Production PyPI
 git checkout release
 git pull origin release
 git merge origin/main -m "Merge main into release for vX.Y.Z"
 git push origin release
-
-# 4. Create version tag (after release branch push)
-git checkout main
-git tag X.Y.Z
-git push origin X.Y.Z
 ```

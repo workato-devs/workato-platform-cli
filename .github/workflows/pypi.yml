@@ -5,13 +5,10 @@ on:
     branches:
       - test
       - release
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
-      - '[0-9]+.[0-9]+.[0-9]+-*'
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Deployment environment'
+        description: "Deployment environment"
         required: true
         type: choice
         options:
@@ -24,28 +21,28 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       environment: ${{ steps.determine-env.outputs.environment }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for hatch-vcs versioning
-      
+          fetch-depth: 0 # Required for hatch-vcs versioning
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      
+          python-version: "3.11"
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
-      
+
       - name: Install build dependencies
         run: |
           uv pip install --system build hatch hatch-vcs twine
-      
+
       - name: Determine environment
         id: determine-env
         run: |
@@ -56,7 +53,7 @@ jobs:
           elif [[ "${{ github.ref }}" == "refs/heads/release" ]] || [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "environment=release" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Get version and configure for environment
         id: version
         run: |
@@ -73,18 +70,18 @@ jobs:
             fi
             echo "Production version: $VERSION"
           fi
-          
+
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-      
+
       - name: Build package
         run: python -m build
-      
+
       - name: Check package
         run: |
           twine check dist/*
           ls -lh dist/
           echo "Package version: ${{ steps.version.outputs.version }}"
-      
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -98,46 +95,46 @@ jobs:
     environment:
       name: test
       url: https://test.pypi.org/project/workato-platform-cli/
-    
+
     permissions:
-      id-token: write  # Required for trusted publishing
-    
+      id-token: write # Required for trusted publishing
+
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: dist-test
           path: dist/
-      
+
       - name: Publish to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
           skip-existing: true
           print-hash: true
-      
+
       - name: Set up Python for testing
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      
+          python-version: "3.11"
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
-      
+
       - name: Test installation
         run: |
           echo "Waiting for Test PyPI to process the package..."
           sleep 30
-          
+
           echo "Attempting to install latest workato-platform-cli from TestPyPI"
           uv pip install --system \
             --index-url https://test.pypi.org/simple/ \
             --extra-index-url https://pypi.org/simple/ \
             workato-platform-cli || echo "Package not yet available on Test PyPI"
-          
+
           # Verify CLI if installation succeeded
           workato --version || echo "CLI check skipped"
 
@@ -148,26 +145,26 @@ jobs:
     environment:
       name: release
       url: https://pypi.org/project/workato-platform-cli/
-    
+
     permissions:
-      id-token: write  # Required for trusted publishing
-      contents: write  # For creating GitHub releases
-    
+      id-token: write # Required for trusted publishing
+      contents: write # For creating GitHub releases
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: dist-release
           path: dist/
-      
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           print-hash: true
-      
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
