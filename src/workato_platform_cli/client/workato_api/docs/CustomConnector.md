@@ -8,7 +8,7 @@ Name | Type | Description | Notes
 **id** | **int** |  | 
 **name** | **str** |  | 
 **title** | **str** |  | 
-**latest_released_version** | **int** |  | 
+**latest_released_version** | **int** | Null when the connector has no released versions yet. | 
 **latest_released_version_note** | **str** |  | 
 **released_versions** | [**List[ConnectorVersion]**](ConnectorVersion.md) |  | 
 **static_webhook_url** | **str** |  | 

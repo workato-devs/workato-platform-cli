@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from workato_platform_cli.client.workato_api.models.connector_version import ConnectorVersion
 from typing import Optional, Set
@@ -30,7 +30,7 @@ class CustomConnector(BaseModel):
     id: StrictInt
     name: StrictStr
     title: StrictStr
-    latest_released_version: StrictInt
+    latest_released_version: Optional[StrictInt] = Field(description="Null when the connector has no released versions yet.")
     latest_released_version_note: Optional[StrictStr]
     released_versions: List[ConnectorVersion]
     static_webhook_url: Optional[StrictStr]
@@ -82,6 +82,11 @@ class CustomConnector(BaseModel):
                 if _item_released_versions:
                     _items.append(_item_released_versions.to_dict())
             _dict['released_versions'] = _items
+        # set to None if latest_released_version (nullable) is None
+        # and model_fields_set contains the field
+        if self.latest_released_version is None and "latest_released_version" in self.model_fields_set:
+            _dict['latest_released_version'] = None
+
         # set to None if latest_released_version_note (nullable) is None
         # and model_fields_set contains the field
         if self.latest_released_version_note is None and "latest_released_version_note" in self.model_fields_set:

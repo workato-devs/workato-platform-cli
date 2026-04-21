@@ -2532,6 +2532,8 @@ components:
           example: "Apps by Workato"
         latest_released_version:
           type: integer
+          nullable: true
+          description: "Null when the connector has no released versions yet."
           example: 2
         latest_released_version_note:
           type: string
