@@ -21,6 +21,16 @@ class ConfigData(BaseModel):
     )
     folder_id: int | None = Field(None, description="Folder ID")
     profile: str | None = Field(None, description="Profile override")
+    export_include_tags: bool | None = Field(
+        None,
+        description="Default value for include_tags when exporting project manifests",
+    )
+    export_include_test_cases: bool | None = Field(
+        None,
+        description=(
+            "Default value for include_test_cases when exporting project manifests"
+        ),
+    )
 
 
 class RegionInfo(BaseModel):

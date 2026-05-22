@@ -23,6 +23,8 @@ workato init                        # Initialize CLI configuration
 workato workspace                   # Show current workspace info
 workato pull                       # Pull latest from remote
 workato push [--restart-recipes]   # Push local changes (recipes won't restart by default)
+workato projects config --include-tags|--no-include-tags [--include-test-cases|--no-include-test-cases]
+workato projects config show [--output-mode table|json]
 ```
 
 ### Recipe Management

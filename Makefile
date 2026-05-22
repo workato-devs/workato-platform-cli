@@ -73,8 +73,8 @@ clean:
 	rm -rf *.egg-info/
 	rm -rf .coverage
 	rm -rf htmlcov/
-	find . -type d -name __pycache__ -delete
 	find . -type f -name "*.pyc" -delete
+	find . -type d -name __pycache__ -delete
 
 build: clean
 	python -m build

@@ -104,13 +104,80 @@ class ProjectManager:
         )
         return assets
 
+    @staticmethod
+    def _parse_bool_value(value: str | None) -> bool | None:
+        """Parse common string boolean formats to bool."""
+        if value is None:
+            return None
+
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "y", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "n", "off"}:
+            return False
+        return None
+
+    def _resolve_export_manifest_flags(
+        self,
+        include_tags: bool | None,
+        include_test_cases: bool | None,
+    ) -> tuple[bool, bool]:
+        """Resolve export manifest flags."""
+        config_include_tags: bool | None = None
+        config_include_test_cases: bool | None = None
+
+        try:
+            from workato_platform_cli.cli.utils.config import ConfigManager
+
+            config_data = ConfigManager(skip_validation=True).load_config()
+            config_include_tags = config_data.export_include_tags
+            config_include_test_cases = config_data.export_include_test_cases
+        except Exception:
+            # Export should still work even if local config cannot be loaded.
+            click.echo("⚠️  Could not load config, using defaults")
+            pass
+
+        env_include_tags = self._parse_bool_value(
+            os.environ.get("WORKATO_INCLUDE_TAGS")
+        )
+        env_include_test_cases = self._parse_bool_value(
+            os.environ.get("WORKATO_INCLUDE_TEST_CASES")
+        )
+
+        resolved_include_tags = (
+            include_tags
+            if include_tags is not None
+            else config_include_tags
+            if config_include_tags is not None
+            else env_include_tags
+            if env_include_tags is not None
+            else False
+        )
+        resolved_include_test_cases = (
+            include_test_cases
+            if include_test_cases is not None
+            else config_include_test_cases
+            if config_include_test_cases is not None
+            else env_include_test_cases
+            if env_include_test_cases is not None
+            else False
+        )
+
+        return resolved_include_tags, resolved_include_test_cases
+
     async def export_project(
         self,
         folder_id: int,
         project_name: str,
         target_dir: str = "project",
+        include_tags: bool | None = None,
+        include_test_cases: bool | None = None,
     ) -> str | None:
         """Export project assets and return project directory path"""
+        resolved_include_tags, resolved_include_test_cases = (
+            self._resolve_export_manifest_flags(include_tags, include_test_cases)
+        )
+
         # Check if project has any assets before attempting export
         assets = await self.check_folder_assets(folder_id)
 
@@ -131,6 +198,8 @@ class ProjectManager:
                         name=project_name,
                         folder_id=folder_id,
                         auto_generate_assets=True,
+                        include_tags=resolved_include_tags,
+                        include_test_cases=resolved_include_test_cases,
                     )
                 )
             )

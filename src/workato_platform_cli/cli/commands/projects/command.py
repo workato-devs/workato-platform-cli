@@ -286,6 +286,85 @@ async def switch(
         click.echo(f"❌ Failed to switch to project '{selected_project_name}': {e}")
 
 
+@projects.group(name="config", invoke_without_command=True)
+@click.option(
+    "--include-tags/--no-include-tags",
+    default=None,
+    help=(
+        "Set export_include_tags default in .workatoenv for project export manifests"
+    ),
+)
+@click.option(
+    "--include-test-cases/--no-include-test-cases",
+    default=None,
+    help=(
+        "Set export_include_test_cases default in .workatoenv for project "
+        "export manifests"
+    ),
+)
+@handle_cli_exceptions
+@inject
+async def set_project_config(
+    include_tags: bool | None = None,
+    include_test_cases: bool | None = None,
+    config_manager: ConfigManager = Provide[Container.config_manager],
+) -> None:
+    """Set project export defaults in local .workatoenv config."""
+
+    if include_tags is None and include_test_cases is None:
+        click.echo("❌ No config values provided")
+        click.echo(
+            "💡 Use --include-tags/--no-include-tags and/or "
+            "--include-test-cases/--no-include-test-cases"
+        )
+        return
+
+    config_data = config_manager.load_config()
+
+    if include_tags is not None:
+        config_data.export_include_tags = include_tags
+    if include_test_cases is not None:
+        config_data.export_include_test_cases = include_test_cases
+
+    config_manager.save_config(config_data)
+
+    click.echo("✅ Updated project export defaults")
+    click.echo(f"   export_include_tags: {config_data.export_include_tags}")
+    click.echo(f"   export_include_test_cases: {config_data.export_include_test_cases}")
+
+
+@set_project_config.command(name="show")
+@click.option(
+    "--output-mode",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format: table (default) or json",
+)
+@handle_cli_exceptions
+@inject
+async def show_project_config(
+    output_mode: str = "table",
+    config_manager: ConfigManager = Provide[Container.config_manager],
+) -> None:
+    """Show project export defaults from local .workatoenv config."""
+    config_data = config_manager.load_config()
+
+    if output_mode == "json":
+        click.echo(
+            json.dumps(
+                {
+                    "export_include_tags": config_data.export_include_tags,
+                    "export_include_test_cases": config_data.export_include_test_cases,
+                }
+            )
+        )
+        return
+
+    click.echo("📋 Project export defaults:")
+    click.echo(f"   export_include_tags: {config_data.export_include_tags}")
+    click.echo(f"   export_include_test_cases: {config_data.export_include_test_cases}")
+
+
 async def _get_local_projects(
     config_manager: ConfigManager,
 ) -> list[tuple[Any, str, ConfigData | None]]:

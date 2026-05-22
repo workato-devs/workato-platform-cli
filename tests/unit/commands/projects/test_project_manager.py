@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, Mock, call, patch
 import pytest
 
 from workato_platform_cli.cli.commands.projects.project_manager import ProjectManager
+from workato_platform_cli.cli.utils.config import ConfigData
 from workato_platform_cli.client.workato_api.models.project import Project
 
 
@@ -223,6 +224,121 @@ async def test_export_project_happy_path(
         mock_export_package.assert_awaited_once_with(id="88")
         mock_download_extract.assert_awaited_once_with(44, str(project_dir))
         assert result == str(project_dir)
+
+
+@pytest.mark.asyncio
+async def test_export_project_uses_config_defaults_for_manifest_flags(
+    project_manager: ProjectManager,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest = Mock(result=Mock(id=88))
+    project_dir = tmp_path / "extracted"
+
+    class StubConfigManager:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def load_config(self) -> ConfigData:
+            return ConfigData(
+                export_include_tags=True,
+                export_include_test_cases=False,
+            )
+
+    monkeypatch.setattr(
+        "workato_platform_cli.cli.utils.config.ConfigManager",
+        StubConfigManager,
+    )
+
+    with (
+        patch.object(
+            project_manager, "check_folder_assets", AsyncMock(return_value=[Mock()])
+        ),
+        patch.object(
+            project_manager.client.export_api,
+            "create_export_manifest",
+            AsyncMock(return_value=manifest),
+        ) as mock_create_manifest,
+        patch.object(
+            project_manager.client.packages_api,
+            "export_package",
+            AsyncMock(return_value=Mock(id=44)),
+        ),
+        patch.object(
+            project_manager,
+            "download_and_extract_package",
+            AsyncMock(return_value=project_dir),
+        ),
+    ):
+        await project_manager.export_project(
+            folder_id=9,
+            project_name="Demo",
+            target_dir=str(project_dir),
+        )
+
+        assert mock_create_manifest.await_args is not None
+        request = mock_create_manifest.await_args.kwargs[
+            "create_export_manifest_request"
+        ]
+        assert request.export_manifest.include_tags is True
+        assert request.export_manifest.include_test_cases is False
+
+
+@pytest.mark.asyncio
+async def test_export_project_defaults_manifest_flags_to_false(
+    project_manager: ProjectManager,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest = Mock(result=Mock(id=88))
+    project_dir = tmp_path / "extracted"
+
+    class StubConfigManager:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def load_config(self) -> ConfigData:
+            return ConfigData()
+
+    monkeypatch.setattr(
+        "workato_platform_cli.cli.utils.config.ConfigManager",
+        StubConfigManager,
+    )
+    monkeypatch.delenv("WORKATO_INCLUDE_TAGS", raising=False)
+    monkeypatch.delenv("WORKATO_INCLUDE_TEST_CASES", raising=False)
+
+    with (
+        patch.object(
+            project_manager, "check_folder_assets", AsyncMock(return_value=[Mock()])
+        ),
+        patch.object(
+            project_manager.client.export_api,
+            "create_export_manifest",
+            AsyncMock(return_value=manifest),
+        ) as mock_create_manifest,
+        patch.object(
+            project_manager.client.packages_api,
+            "export_package",
+            AsyncMock(return_value=Mock(id=44)),
+        ),
+        patch.object(
+            project_manager,
+            "download_and_extract_package",
+            AsyncMock(return_value=project_dir),
+        ),
+    ):
+        await project_manager.export_project(
+            folder_id=9,
+            project_name="Demo",
+            target_dir=str(project_dir),
+        )
+
+        assert mock_create_manifest.await_args is not None
+        request = mock_create_manifest.await_args.kwargs[
+            "create_export_manifest_request"
+        ]
+        assert request.export_manifest.include_tags is False
+        assert request.export_manifest.include_test_cases is False
 
 
 @pytest.mark.asyncio

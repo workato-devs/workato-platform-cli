@@ -74,6 +74,12 @@ workato connections list
 
 # Check project status
 workato workspace
+
+# Configure project export defaults
+workato projects config --include-tags --no-include-test-cases
+
+# Show current project export defaults
+workato projects config show
 ```
 
 ## Next Steps

@@ -1138,3 +1138,86 @@ async def test_list_projects_with_profile(
     mock_create_config.assert_called_once_with(
         config_manager=config_manager, cli_profile="test-profile"
     )
+
+
+@pytest.mark.asyncio
+async def test_projects_config_sets_include_defaults(capture_echo: list[str]) -> None:
+    """Projects config command should persist include defaults."""
+    config_manager = Mock()
+    config_data = ConfigData()
+    config_manager.load_config.return_value = config_data
+    config_manager.save_config = Mock()
+
+    await command.set_project_config.callback(  # type: ignore[misc]
+        # ctx=Mock(invoked_subcommand=None),
+        include_tags=True,
+        include_test_cases=False,
+        config_manager=config_manager,
+    )
+
+    saved_config = config_manager.save_config.call_args.args[0]
+    assert saved_config.export_include_tags is True
+    assert saved_config.export_include_test_cases is False
+    output = "\n".join(capture_echo)
+    assert "Updated project export defaults" in output
+
+
+@pytest.mark.asyncio
+async def test_projects_config_requires_at_least_one_value(
+    capture_echo: list[str],
+) -> None:
+    """Projects config command should reject empty updates."""
+    config_manager = Mock()
+    config_manager.load_config = Mock()
+    config_manager.save_config = Mock()
+
+    await command.set_project_config.callback(  # type: ignore[misc]
+        # ctx=Mock(invoked_subcommand=None),
+        include_tags=None,
+        include_test_cases=None,
+        config_manager=config_manager,
+    )
+
+    config_manager.load_config.assert_not_called()
+    config_manager.save_config.assert_not_called()
+    output = "\n".join(capture_echo)
+    assert "No config values provided" in output
+
+
+@pytest.mark.asyncio
+async def test_projects_config_show_outputs_table(capture_echo: list[str]) -> None:
+    """Projects config show should print table output by default."""
+    config_manager = Mock()
+    config_manager.load_config.return_value = ConfigData(
+        export_include_tags=True,
+        export_include_test_cases=False,
+    )
+
+    await command.show_project_config.callback(  # type: ignore[misc]
+        output_mode="table",
+        config_manager=config_manager,
+    )
+
+    output = "\n".join(capture_echo)
+    assert "Project export defaults" in output
+    assert "export_include_tags: True" in output
+    assert "export_include_test_cases: False" in output
+
+
+@pytest.mark.asyncio
+async def test_projects_config_show_outputs_json(capture_echo: list[str]) -> None:
+    """Projects config show should support JSON output."""
+    config_manager = Mock()
+    config_manager.load_config.return_value = ConfigData(
+        export_include_tags=False,
+        export_include_test_cases=True,
+    )
+
+    await command.show_project_config.callback(  # type: ignore[misc]
+        output_mode="json",
+        config_manager=config_manager,
+    )
+
+    data = json.loads("".join(capture_echo))
+    assert data["export_include_tags"] is False
+    assert data["export_include_test_cases"] is True
