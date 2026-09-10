@@ -14,7 +14,7 @@ authors = [
 ]
 keywords = ["workato", "cli", "automation", "api"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 7 - Inactive",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
