@@ -270,6 +270,51 @@ async def test_download_and_extract_package_success(
 
 
 @pytest.mark.asyncio
+async def test_download_and_extract_package_preserves_non_ascii_filenames(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ZIP files with non-ASCII filenames (e.g. Japanese) should be extracted correctly.
+
+    Python's zipfile defaults to CP437 for metadata decoding, which garbles
+    UTF-8 encoded filenames. metadata_encoding="utf-8" must be passed explicitly.
+    """
+    client = Mock()
+    client.packages_api = Mock()
+    client.packages_api.get_package = AsyncMock(return_value=Mock(status="completed"))
+
+    manager = ProjectManager(client)
+
+    monkeypatch.setattr("time.time", Mock(side_effect=[0, 10, 20]))
+    monkeypatch.setattr("time.sleep", lambda *_args, **_kwargs: None)
+
+    target_dir = tmp_path / "project"
+    monkeypatch.chdir(tmp_path)
+
+    # Build a ZIP whose filename is stored as raw UTF-8 bytes (no UTF-8 flag),
+    # matching what the Workato API returns.
+    japanese_filename = "日本語レシピ_japanese.recipe.json"
+    zip_path = tmp_path / "dummy.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zip_info = zipfile.ZipInfo(japanese_filename)
+        zip_info.date_time = (2024, 1, 1, 0, 0, 0)
+        zip_info.flag_bits &= ~0x800  # Clear UTF-8 flag to simulate Workato API ZIP
+        zf.writestr(zip_info, "{}")
+    data = zip_path.read_bytes()
+
+    with patch.object(
+        manager.client.packages_api, "download_package", AsyncMock(return_value=data)
+    ):
+        result = await manager.download_and_extract_package(
+            12, target_dir=str(target_dir)
+        )
+
+    extracted_files = [f.name for f in target_dir.iterdir()]
+    assert japanese_filename in extracted_files, (
+        f"Expected '{japanese_filename}' but got: {extracted_files}"
+    )
+
+
+@pytest.mark.asyncio
 async def test_download_and_extract_package_handles_failure(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
