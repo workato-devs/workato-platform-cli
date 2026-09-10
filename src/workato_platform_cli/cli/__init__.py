@@ -10,6 +10,7 @@ from workato_platform_cli.cli.commands import (
     assets,
     connections,
     data_tables,
+    deprecation_warning,
     guide,
     init,
     profiles,
@@ -107,6 +108,7 @@ cli.add_command(init.init)
 cli.add_command_with_alias(projects.projects, alias="project")
 cli.add_command(profiles.profiles)
 cli.add_command_with_alias(properties.properties, alias="property")
+cli.add_command(deprecation_warning.deprecation_warning)
 
 # Development commands
 cli.add_command(guide.guide)

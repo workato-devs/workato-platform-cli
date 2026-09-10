@@ -1,5 +1,6 @@
-"""Version checking utilities for the Workato CLI."""
+"""Version checking and deprecation notice utilities for the Workato CLI."""
 
+import asyncio
 import contextlib
 import json
 import os
@@ -38,6 +39,9 @@ PACKAGE_NAME = "workato-platform-cli"
 PYPI_API_URL = f"https://pypi.org/pypi/{PACKAGE_NAME}/json"
 CHECK_INTERVAL = 86400  # 24 hours in seconds
 REQUEST_TIMEOUT = 2  # seconds
+
+NEW_CLI_URL = "https://workato-devs.github.io/labs/"
+DEPRECATION_DISABLE_FLAG = "deprecation_warning_disabled"
 
 
 class VersionChecker:
@@ -169,8 +173,77 @@ class VersionChecker:
             click.echo("Failed to check for updates")
 
 
+class DeprecationNotifier:
+    """Handles deprecation warnings for the retired Python CLI."""
+
+    def __init__(self) -> None:
+        """Initialize the deprecation notifier."""
+        self.cache_dir = Path.home() / ".cache" / "workato-platform-cli"
+        self.disable_flag_file = self.cache_dir / DEPRECATION_DISABLE_FLAG
+        self._ensure_cache_dir()
+
+    def _ensure_cache_dir(self) -> None:
+        """Ensure cache directory exists."""
+        self.cache_dir.mkdir(parents=True, exist_ok=True, mode=0o755)
+
+    def is_disabled(self) -> bool:
+        """Return True if the deprecation warning has been suppressed.
+
+        Checks both the environment variable and the persistent disable flag file.
+        """
+        if os.getenv("WORKATO_DISABLE_DEPRECATION_WARNING", "").lower() in (
+            "1",
+            "true",
+            "yes",
+        ):
+            return True
+        return self.disable_flag_file.exists()
+
+    def disable(self) -> None:
+        """Persist the disable flag so the warning is suppressed on future runs."""
+        with contextlib.suppress(OSError):
+            self.disable_flag_file.touch()
+
+    def enable(self) -> None:
+        """Remove the disable flag so the warning is shown again."""
+        with contextlib.suppress(OSError):
+            if self.disable_flag_file.exists():
+                self.disable_flag_file.unlink()
+
+    def show(self) -> None:
+        """Print the deprecation warning to stderr."""
+        click.echo(file=None, err=False)  # blank line separator
+        click.echo(
+            "⚠️  DEPRECATION NOTICE: workato-platform-cli is no longer supported.",
+            err=True,
+        )
+        click.echo(
+            "   This Python CLI has been replaced by a new, faster Go-based CLI.",
+            err=True,
+        )
+        click.echo(
+            f"   Install the new CLI: {NEW_CLI_URL}",
+            err=True,
+        )
+        click.echo(
+            "   To silence this warning, run:  workato deprecation-warning disable",
+            err=True,
+        )
+        click.echo(
+            "   Or set:  export WORKATO_DISABLE_DEPRECATION_WARNING=1",
+            err=True,
+        )
+
+    def run(self) -> None:
+        """Show the deprecation warning unless it has been disabled."""
+        if self.is_disabled():
+            return
+        with contextlib.suppress(Exception):
+            self.show()
+
+
 def check_updates_async(func: Callable) -> Callable:
-    """Decorator to add background update checking to CLI commands."""
+    """Decorator: show deprecation notice and update check after each command."""
 
     @wraps(func)
     async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -180,6 +253,11 @@ def check_updates_async(func: Callable) -> Callable:
         try:
             # Run main command first
             result = await func(*args, **kwargs)
+
+            # Show deprecation warning (always, unless disabled — no rate limit needed
+            # for an EOL notice)
+            deprecation_notifier = DeprecationNotifier()
+            deprecation_notifier.run()
 
             # Check updates in background (non-blocking)
             config_manager = Container.config_manager()
@@ -209,6 +287,11 @@ def check_updates_async(func: Callable) -> Callable:
             # Run main command first
             result = func(*args, **kwargs)
 
+            # Show deprecation warning (always, unless disabled — no rate limit needed
+            # for an EOL notice)
+            deprecation_notifier = DeprecationNotifier()
+            deprecation_notifier.run()
+
             # Check updates in background (non-blocking)
             config_manager = Container.config_manager()
             version_checker = VersionChecker(config_manager)
@@ -227,9 +310,6 @@ def check_updates_async(func: Callable) -> Callable:
         except Exception:
             # If anything goes wrong with update checking, just run the main command
             return func(*args, **kwargs)
-
-    # Return appropriate wrapper based on whether function is async
-    import asyncio
 
     if asyncio.iscoroutinefunction(func):
         return async_wrapper

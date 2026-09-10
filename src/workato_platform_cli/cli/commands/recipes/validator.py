@@ -110,7 +110,7 @@ class RecipeLine(BaseModel):
     clear_scope: bool | None = Field(None, alias="clear_scope")
     repeat_mode: str | None = Field(None, alias="repeat_mode")
     source: str | None = None
-    format_version: str | None = Field(None, alias="format_version")
+    format_version: int | None = Field(None, alias="format_version")
     job_report_config: dict[str, Any] | None = None
     job_report_schema: list[dict[str, Any]] | None = None
     param: dict[str, Any] | None = None

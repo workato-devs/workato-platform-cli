@@ -18,8 +18,8 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from workato_platform_cli.client.workato_api.models.import_results import ImportResults
 from typing import Optional, Set
 from typing_extensions import Self
@@ -30,7 +30,7 @@ class ApiCollection(BaseModel):
     """ # noqa: E501
     id: StrictInt
     name: StrictStr
-    project_id: StrictStr
+    project_id: Optional[Union[StrictStr, StrictInt]] = None
     url: StrictStr
     api_spec_url: StrictStr
     version: StrictStr
@@ -39,6 +39,14 @@ class ApiCollection(BaseModel):
     message: Optional[StrictStr] = Field(default=None, description="Only present in creation/import responses")
     import_results: Optional[ImportResults] = None
     __properties: ClassVar[List[str]] = ["id", "name", "project_id", "url", "api_spec_url", "version", "created_at", "updated_at", "message", "import_results"]
+
+    @field_validator('project_id', mode='before')
+    @classmethod
+    def coerce_project_id_to_string(cls, v):
+        """Coerce project_id to string since API may return int or string"""
+        if v is not None:
+            return str(v)
+        return v
 
     model_config = ConfigDict(
         populate_by_name=True,

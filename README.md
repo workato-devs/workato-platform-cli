@@ -1,5 +1,13 @@
 # Workato Platform CLI
 
+> [!WARNING]
+> **This package is deprecated and no longer maintained.**
+>
+> `workato-platform-cli` has been replaced by a new, faster Go-based CLI.
+> No further updates, bug fixes, or security patches will be released for this package.
+>
+> **➡️ Install the new CLI: https://workato-devs.github.io/labs/**
+
 A modern, type-safe command-line interface for the Workato API, designed for automation and AI agent interaction. **Perfect for AI agents helping developers build, validate, and manage Workato recipes, connections, and projects.**
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)

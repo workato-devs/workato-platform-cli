@@ -14,9 +14,21 @@ from workato_platform_cli.cli.containers import Container
 from workato_platform_cli.cli.utils.config import ConfigManager
 from workato_platform_cli.cli.utils.version_checker import (
     CHECK_INTERVAL,
+    DeprecationNotifier,
     VersionChecker,
     check_updates_async,
 )
+
+
+# ---------------------------------------------------------------------------
+# Shared patch: silence DeprecationNotifier.run() across all check_updates_async
+# tests so they remain focused on the update-check logic only.
+# ---------------------------------------------------------------------------
+@pytest.fixture(autouse=True)
+def silence_deprecation_notifier() -> None:
+    """Prevent DeprecationNotifier.run() from firing during version-checker tests."""
+    with patch.object(DeprecationNotifier, "run", return_value=None):
+        yield
 
 
 class TestVersionChecker:

@@ -45,8 +45,8 @@ class ApiClient(BaseModel):
     mtls_enabled: Optional[StrictBool] = None
     validation_formula: Optional[StrictStr] = None
     cert_bundle_ids: Optional[List[StrictInt]] = None
-    api_policies: List[ApiClientApiPoliciesInner] = Field(description="List of API policies associated with the client")
-    api_collections: List[ApiClientApiCollectionsInner] = Field(description="List of API collections associated with the client")
+    api_policies: Optional[List[ApiClientApiPoliciesInner]] = Field(default=None, description="List of API policies associated with the client")
+    api_collections: Optional[List[ApiClientApiCollectionsInner]] = Field(default=None, description="List of API collections associated with the client")
     __properties: ClassVar[List[str]] = ["id", "name", "description", "active_api_keys_count", "total_api_keys_count", "created_at", "updated_at", "logo", "logo_2x", "is_legacy", "email", "auth_type", "api_token", "mtls_enabled", "validation_formula", "cert_bundle_ids", "api_policies", "api_collections"]
 
     @field_validator('auth_type')
