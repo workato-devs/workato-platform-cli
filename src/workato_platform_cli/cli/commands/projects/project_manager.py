@@ -238,7 +238,7 @@ class ProjectManager:
             with open(zip_path, "wb") as f:
                 f.write(download_response)
 
-            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            with zipfile.ZipFile(zip_path, "r", metadata_encoding="utf-8") as zip_ref:
                 zip_ref.extractall(project_dir)
 
             os.remove(zip_path)
